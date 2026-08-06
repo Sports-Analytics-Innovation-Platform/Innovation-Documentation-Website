@@ -1,0 +1,62 @@
+site_name: FPL Analytics & Optimisation Engine
+site_description: Documentation for the COMS3011A FPL Analytics & Optimisation Engine
+repo_url: https://github.com/Sports-Analytics-Innovation-Platform/Innovation-Documentation-Website.git
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - content.code.copy
+    - content.action.edit
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - toc:
+      permalink: true
+  - tables
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Architecture:
+      - Overview: design/architecture.md
+      - ERD: design/erd.md
+      - API Design: design/api-design.md
+      - Wireframes: design/wireframes.md
+      - Feature Tiers: design/feature-tiers.md
+      - Roadmap: design/roadmap.md
+  - Process:
+      - Methodology: methodology.md
+      - Git Methodology: git-methodology.md
+      - Definition of Done: definition-of-done.md
+      - Coding Conventions: coding-conventions.md
+      - Requirements Traceability: requirements.md
+      - AI Usage Ledger: ai-usage.md
+  - Decisions (ADRs):
+      - Index: decisions/index.md
+      - "ADR-001: Database": decisions/adr-001-database.md
+      - "ADR-002: Auth": decisions/adr-002-auth.md
+      - "ADR-003: Hosting Topology": decisions/adr-003-hosting-topology.md
+  - Tech Stack: tech-stack.md
+  - Security: security.md
+  - Meetings: meetings/index.md
