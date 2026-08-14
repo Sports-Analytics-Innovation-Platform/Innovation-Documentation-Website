@@ -1,3 +1,8 @@
+---
+hide:
+  - toc
+---
+
 # Client Meetings
 
 ??? note "2026-08-13 — Client meeting"
