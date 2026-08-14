@@ -1,3 +1,7 @@
+---
+hide:
+  - toc
+---
 # Standups
 
 ??? note "2026-08-12 — Standup"
