@@ -59,4 +59,7 @@ nav:
       - "ADR-003: Hosting Topology": decisions/adr-003-hosting-topology.md
   - Tech Stack: tech-stack.md
   - Security: security.md
-  - Meetings: meetings/index.md
+  - Meetings:
+      - Overview: meetings/index.md
+      - Client Meetings: meetings/client/index.md
+      - Standups: meetings/standups/index.md
