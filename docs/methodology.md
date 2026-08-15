@@ -16,7 +16,7 @@ Reference: [Scrum Guide (scrumguides.org)](https://scrumguides.org) — our cere
 |---|---|---|
 | **Standup** | Weekly | Quick sync in person (Tuesday/Friday labs) or on WhatsApp: what's done, what's next, what's blocking. Whoever's starting a new feature announces it so two people don't build the same thing. |
 | **Sprint planning** | Start of each sprint | Team reviews the sprint's rubric weighting, agrees the scope for the sprint, and turns it into sized issues on the work tracker. |
-| **Client/tutor check-in** | Weekly | Meeting with the client tutor to validate direction and surface blockers — minuted in [Client Meetings](../meetings/client/index.md). |
+| **Client/tutor check-in** | Weekly | Meeting with the client tutor to validate direction and surface blockers — minuted in [Client Meetings](meetings/client/index.md). |
 | **Sprint review** | End of each sprint | Demo of what was actually built against what sprint planning agreed, before the milestone deadline. |
 | **Retrospective** | End of each sprint | What worked, what didn't, one or two concrete changes for the next sprint. Minuted alongside the sprint review. |
 

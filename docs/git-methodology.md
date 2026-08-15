@@ -1,6 +1,6 @@
 # Git Methodology
 
-We use a lightweight, PR-based branching workflow on **Gitea**, which hosts the project's `apps/api` and `apps/web` repos per the university's requirement to use university-provided version control. This documentation site is a separate case — it's built with MkDocs and deployed via **GitHub Pages** for public static hosting (see [Documentation Site](../getting-started.md)), but the actual codebase and issue tracking live on Gitea, not GitHub.
+We use a lightweight, PR-based branching workflow on **Gitea**, which hosts the project's `apps/api` and `apps/web` repos per the university's requirement to use university-provided version control. This documentation site is a separate case — it's built with MkDocs and deployed via **GitHub Pages** for public static hosting (see [Documentation Site](getting-started.md)), but the actual codebase and issue tracking live on Gitea, not GitHub.
 
 Nothing reaches `main` without review.
 
