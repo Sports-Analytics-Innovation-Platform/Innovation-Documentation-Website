@@ -15,8 +15,8 @@ This page should get a new contributor from a clean clone to a running app in un
 ## 1. Clone the repo
 
 ```bash
-git clone <gitea-repo-url>
-cd <repo-name>
+git clone https://sdp.ms.wits.ac.za/innovation/sportsanalytics.git
+cd sportsanalytics
 ```
 
 ## 2. Set up environment variables
@@ -26,7 +26,7 @@ cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env
 ```
 
-Fill in the values `.env.example` documents (database connection string, Passport/session secret, etc.) — never commit the filled-in `.env` files. See [Security](security.md) for why.
+Fill in the values `.env.example` documents — database connection string, and a **Google OAuth client ID/secret** for BetterAuth (not a Passport/session secret; auth was migrated, see [ADR-002](decisions/adr-002-auth.md)). Never commit the filled-in `.env` files. See [Security](security.md) for why.
 
 ## 3. Start Postgres
 
@@ -70,14 +70,12 @@ Vite's dev server will print the local URL (default `http://localhost:5173`).
 ## 7. Run tests
 
 ```bash
-# from apps/api
+# from apps/api (Vitest + Supertest, integration tests run against a real disposable Postgres DB)
 npm run test
 
-# from apps/web
+# from apps/web (Vitest + React Testing Library)
 npm run test
 ```
-
-(Test setup isn't finalised yet — see the open item in [Tech Stack](tech-stack.md). Update this section once a framework is chosen.)
 
 ## Troubleshooting
 
@@ -85,10 +83,8 @@ npm run test
 |---|---|
 | API can't connect to Postgres | Docker Compose isn't running, or the connection string in `apps/api/.env` doesn't match the Compose service | 
 | Prisma migration fails | Database not reachable yet — wait a few seconds after `docker compose up -d` before migrating, or check `docker compose logs` |
-| Frontend shows no data / requests to `/api/...` 404 or fail with a CORS error | The frontend calls a **relative** path (`/api/v1/...`), not `http://localhost:3000`. This only works if `vite.config.ts` proxies `/api` to the backend — if that proxy isn't configured, local dev won't work at all. Check for a `server.proxy` block in `vite.config.ts` first before assuming your own env is broken. |
-
-!!! warning "Unconfirmed: dev proxy setup"
-    See [Tech Stack](tech-stack.md#not-yet-decided) — whether `vite.config.ts` actually proxies `/api` to the backend hasn't been confirmed. If it doesn't exist yet, add it before this getting-started guide can be verified end-to-end.
+| Frontend shows no data / requests to `/api/...` 404 or fail with a CORS error | Confirmed working via `vite.config.ts`'s `/api` → `http://localhost:4000` proxy — if you're still seeing this, check the backend is actually running on port 4000, not that the proxy is missing. |
+| Google sign-in fails locally | Check `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` (or equivalent) are set in `apps/api/.env` and the redirect URI is registered for `localhost` in the Google Cloud console — a common first-run gap after the BetterAuth migration. |
 
 If you hit something not covered here, add it to this table once you've solved it — that's the point of this page.
 
