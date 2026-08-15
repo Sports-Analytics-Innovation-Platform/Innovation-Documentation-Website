@@ -50,6 +50,28 @@ This satisfies the brief's non-monolithic requirement (§2.1): `apps/web` and `a
 - **Production hosting topology** — not decided (see the not-yet-written ADR-003).
 - **Whether any endpoint is actually auth-gated yet** — the three confirmed routes don't appear to require a logged-in user, based on `PlayersListPage.tsx` and `PlayerProfilePage.tsx` calling them unconditionally on mount.
 
+## Prediction / optimisation component (new)
+
+Previously the biggest open box in this diagram — now scoped, though not yet built. See [Feature Tiers](feature-tiers.md) and [Roadmap](roadmap.md) for the full breakdown. In short:
+
+```
+PostgreSQL (historical game/player data)
+        │
+        ▼
+┌───────────────────┐
+│  Prediction model   │   Basic/Intermediate: team- and player-level
+│  (not yet built)    │   outcome prediction, trained on event-derived
+└─────────┬──────────┘   season stats
+          │
+          ▼ (Advanced tier only)
+┌───────────────────┐
+│  Recommendation     │   Given roster/lineup options, suggest the one
+│  layer (stretch)    │   that maximises predicted win probability
+└───────────────────┘
+```
+
+Not yet decided: where this runs (inside `apps/api` as a NestJS service, or a separate Python service given the ML ecosystem is stronger there — same question already open for `nba_api` ingestion, and possibly the same answer), or which model/algorithm.
+
 ---
 
 *AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5]*
