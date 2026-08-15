@@ -2,11 +2,13 @@
 
 ## Authentication
 
-Sign up, sign in, password reset, and account deletion are implemented via **Passport.js** (see [Tech Stack](tech-stack.md)) rather than a hand-rolled auth system, per the brief's requirement to rely on established practices and libraries (§2.1).
+Sign in is implemented via **BetterAuth** with **Google OAuth** (see [Tech Stack](tech-stack.md) and [ADR-002](decisions/adr-002-auth.md)) rather than a hand-rolled auth system, per the brief's requirement to rely on established practices and libraries (§2.1). This replaces the initial scaffold's Passport.js local-strategy + bcrypt implementation.
 
-- Passwords are hashed (bcrypt/argon2 via the Passport strategy in use) — never stored or logged in plaintext.
-- Password reset is token-based with expiry, sent via email — not a "security question" or similarly weak fallback.
-- Account deletion removes the user's personal data and returns a confirmation, satisfying the brief's requirement that users can delete their account, not just deactivate it.
+!!! danger "Open compliance question — needs a team decision"
+    The brief requires sign up, sign in, **password reset**, and account deletion (§2.1, verbatim). Google-OAuth-only sign-in has no password on our side to reset. This needs to be resolved — either confirmed with the client/tutor as satisfied by "reset via your Google account," or a second sign-in path added. See [ADR-002](decisions/adr-002-auth.md) for the full detail. Don't let this surface for the first time in a Milestone 4 demo.
+
+- Account deletion cascades through `Session` and `Account` rows tied to a `User`, satisfying the brief's requirement that users can delete their account, not just deactivate it.
+- Session tokens, IP address, and user agent are tracked per `Session` row (BetterAuth's default schema) — useful for a "sign out of all devices" feature if the team wants one, not yet built.
 
 ## Authorization
 
