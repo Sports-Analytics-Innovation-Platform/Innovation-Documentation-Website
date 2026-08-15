@@ -1,8 +1,8 @@
-site_name: FPL Analytics & Optimisation Engine
-site_description: Documentation for the COMS3011A FPL Analytics & Optimisation Engine
+site_name: NBA Analytics & Optimisation Engine
+site_description: Documentation for the COMS3011A NBA Analytics & Optimisation Engine
 repo_url: https://github.com/Sports-Analytics-Innovation-Platform/Innovation-Documentation-Website.git
 edit_uri: edit/main/docs/
-
+ 
 theme:
   name: material
   palette:
@@ -42,7 +42,7 @@ nav:
       - Overview: design/architecture.md
       - ERD: design/erd.md
       - API Design: design/api-design.md
-      - Wireframes: design/wireframes.md
+      - UI Overview: design/wireframes.md
       - Feature Tiers: design/feature-tiers.md
       - Roadmap: design/roadmap.md
   - Process:
