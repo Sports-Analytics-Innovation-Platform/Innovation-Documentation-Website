@@ -15,10 +15,10 @@ Every component below is listed with why it was chosen, not just what it is — 
 
 | Choice | Why |
 |---|---|
-| **`nba_api`** (Python client for stats.nba.com) | Free, MIT-licensed, actively maintained, and covers historical seasons, the current season, and a live in-progress-game endpoint — broader and more current than the StatsBomb EPL data the team originally considered (limited to two dated seasons). See [NBA vs EPL pitch](../decisions/index.md) for the full comparison. |
+| **`nba_api`** (Python client for stats.nba.com) | Free, MIT-licensed, actively maintained, and covers historical seasons, the current season, and a live in-progress-game endpoint — broader and more current than the StatsBomb EPL data the team originally considered (limited to two dated seasons). See [NBA vs EPL pitch](decisions/index.md) for the full comparison. |
 
 !!! warning "Open question: `nba_api` is Python, the API is TypeScript"
-    `nba_api` is a Python package, but the backend is NestJS/TypeScript. This doc doesn't yet capture how the two talk to each other — e.g. a separate scheduled Python ingestion script that writes to Postgres directly, which NestJS then reads, versus something else. Worth pinning down and folding into [Architecture](../design/architecture.md) once decided, since it affects the non-monolithic and hand-written-API requirements too.
+    `nba_api` is a Python package, but the backend is NestJS/TypeScript. This doc doesn't yet capture how the two talk to each other — e.g. a separate scheduled Python ingestion script that writes to Postgres directly, which NestJS then reads, versus something else. Worth pinning down and folding into [Architecture](design/architecture.md) once decided, since it affects the non-monolithic and hand-written-API requirements too.
 
 Per the brief's requirement that statistics be derived from individual event records rather than stored totals, `nba_api`'s precomputed advanced stats (offensive rating, PIE, usage%) are used only for **verification** — the team calculates these itself from event-level data.
 
