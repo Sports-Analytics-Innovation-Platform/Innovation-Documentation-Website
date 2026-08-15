@@ -25,7 +25,7 @@ hide:
     - The team will use date-based versioning because it makes changes easier to track historically. The team noted that GitHub actions, pushes, and documentation already provide additional information about when changes were made.
     - The team agreed to follow the Git methodology discussed in class and document it. The team considered this important because the methodology may be checked against the rubric.
     - The project methodology will describe the team's process as a Scrum adaptation with three sprints, including sprint planning and a review/retrospective at the end of each milestone.
-    - GitHub Projects and GitHub Issues will be used as the work tracker. Issues will be used for tasks and assignments.
+    - Gitea Projects and Gitea Issues will be used as the work tracker. Issues will be used for tasks and assignments.
     - The team will meet weekly and have a weekly tutor check-in to validate work and stay synchronized.
     - Work will be organized feature-by-feature, with the team aiming to build features vertically rather than working separately on isolated horizontal layers.
     - Team members should announce in the WhatsApp group which feature they are working on so that multiple people do not implement conflicting features simultaneously.
