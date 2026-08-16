@@ -1,4 +1,4 @@
-# FPL Analytics & Optimisation Engine
+# NBA Analytics & Optimisation Engine
 
 COMS3011A — Sport Analytics Tool project documentation.
 
@@ -13,6 +13,7 @@ to `main`.
 - [Architecture Overview](design/architecture.md) — system design
 - [Methodology](methodology.md) — how we work
 - [Decisions](decisions/index.md) — why we chose what we chose
+- [Rubric Quick Links](rubric-links.md) — marking a milestone? Start here
 
 ## Status
 
