@@ -2,9 +2,9 @@
 hide:
   - toc
 ---
-# Standups
+# Scrum Meetings
 
-??? note "2026-08-12 — Standup"
+??? note "2026-08-12 — Scrum"
 
     **Attendees:** Adrian, Daniel, Owen, Sanele, Kieran, Josh
 
@@ -66,5 +66,5 @@ hide:
     - For the game component, possible ideas discussed included a house/area-based concept, a card-based concept, and a medieval/dungeon-crawler concept. The card idea was questioned because the project requires three levels. A dungeon-crawler was discussed, but boss AI was identified as too difficult for the scope.
 
     ####note "Raw transcript (Craig):"
-    [2026-08-12-standup.txt](../../transcripts/meeting-transcripts/2026-08-12-standup.txt)
+    [2026-08-12-scrum.txt](../../transcripts/meeting-transcripts/2026-08-12-scrum.txt)
     
