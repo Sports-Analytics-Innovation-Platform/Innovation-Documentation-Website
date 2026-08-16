@@ -64,4 +64,4 @@ nav:
   - Meetings:
       - Overview: meetings/index.md
       - Client Meetings: meetings/client/index.md
-      - Standups: meetings/standups/index.md
+      - Scrum Meetings: meetings/scrum/index.md
