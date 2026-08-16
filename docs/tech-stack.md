@@ -57,8 +57,8 @@ These four are confirmed decisions (team's stack list) but **not yet built** as 
 | **Vitest** | Unit testing on both apps — **confirmed built**: Vitest + Supertest for backend integration tests (against a real disposable Postgres DB), Vitest + React Testing Library on the frontend. |
 | **MkDocs Material + GitHub Pages** | Documentation site. MkDocs Material was chosen over Docusaurus/mdBook for a lower setup cost with strong out-of-the-box search, admonitions, and theming; GitHub Pages is used specifically for the docs site's static hosting (separate from Gitea, which hosts the actual codebase). |
 
-!!! warning "CI/CD host — needs confirming"
-    The team's own dev log describes "a GitLab CI pipeline... publishing to GitLab Pages" for test coverage, but everywhere else (including the same log) the codebase is on **Gitea**, not GitLab. This is most likely Gitea Actions (which looks similar to GitHub/GitLab-style YAML pipelines) described loosely as "GitLab CI" — but I'm not guessing which. Confirm which host is actually running the pipeline before this goes in the group report.
+!!! success "CI/CD host confirmed: Gitea"
+    The team has confirmed the pipeline runs on Gitea, matching everywhere else the repo is described. The "GitLab CI / GitLab Pages" wording in the team's own dev log was a naming slip, not a second CI host — safe to treat as Gitea Actions throughout.
 
 ## Not yet decided
 
