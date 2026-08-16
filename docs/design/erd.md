@@ -25,6 +25,9 @@ Indexed on `[gameId, sequence]`.
 `id`, `playerId` → Player, `gameId` → Game, `minutes`, `points`, `rebounds`, `assists`, `steals`, `blocks`, `turnovers`, `fieldGoalsMade/Attempted`, `threesMade/Attempted`, `freeThrowsMade/Attempted`
 Unique on `[playerId, gameId]`.
 
+!!! success "Confirmed: season averages are computed on read, not stored"
+    `/v1/players/:id/stats` (in `players.controller.ts`) computes `seasonAverages` and `gameLog` at request time from `PlayerGameStat` rows via `statsService`. There is no `SeasonAverages` table in the schema — it was never a stored model, only an API response shape. This confirms the brief's "derived from events, not stored totals" requirement is actually being followed, not just documented as an intent.
+
 ## Auth entities (added for the BetterAuth migration — see ADR-002)
 
 **User**
