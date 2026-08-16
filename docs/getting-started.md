@@ -77,6 +77,27 @@ npm run test
 npm run test
 ```
 
+!!! note "No test files exist yet"
+    Both apps have the test tooling installed but no actual test files. `apps/api`'s suite passes only because CI uses `--passWithNoTests`; `apps/web` has no `test` script at all yet. See [CI/CD Pipeline](ci-cd.md).
+
+## 8. Run the same checks CI runs
+
+Before pushing, run locally what [CI](ci-cd.md) will run on your branch — a failure here is a failure there:
+
+```bash
+# apps/api
+npm ci
+npx prisma generate     # required before typecheck; needs no database
+npm run lint            # ESLint 10, flat config
+npx tsc --noEmit
+npm test -- --passWithNoTests
+
+# apps/web
+npm ci
+npm run lint            # oxlint
+npx tsc -b --noEmit     # -b is required: tsconfig.json is solution-style
+```
+
 ## Troubleshooting
 
 | Problem | Likely cause |
@@ -85,6 +106,7 @@ npm run test
 | Prisma migration fails | Database not reachable yet — wait a few seconds after `docker compose up -d` before migrating, or check `docker compose logs` |
 | Frontend shows no data / requests to `/api/...` 404 or fail with a CORS error | Confirmed working via `vite.config.ts`'s `/api` → `http://localhost:4000` proxy — if you're still seeing this, check the backend is actually running on port 4000, not that the proxy is missing. |
 | Google sign-in fails locally | Check `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` (or equivalent) are set in `apps/api/.env` and the redirect URI is registered for `localhost` in the Google Cloud console — a common first-run gap after the BetterAuth migration. |
+| `tsc` reports ~19 "Cannot find module" errors in `apps/api` for packages that *are* in `package.json` (`@nestjs/passport`, `bcryptjs`, `passport`), or missing Prisma fields like `passwordHash` | Stale local install, not real errors. Your `node_modules` predates recent dependency additions and the generated Prisma client is out of date. Run `npm ci && npm run prisma:generate` in `apps/api`. Confirmed clean on a fresh install — see [CI/CD Pipeline](ci-cd.md#local-parity). |
 
 If you hit something not covered here, add it to this table once you've solved it — that's the point of this page.
 

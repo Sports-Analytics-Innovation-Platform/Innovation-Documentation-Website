@@ -29,7 +29,7 @@ Unlike a project that imports a user's own account from a third-party service (e
 
 ## Secrets management
 
-- No secret (API keys, database credentials, tokens) is ever committed — enforced by a pre-commit check and a CI secret scanner (`gitleaks`/`trufflehog`) on every PR, per [Git Methodology](git-methodology.md).
+- No secret (API keys, database credentials, tokens) is ever committed — enforced by a pre-commit check per [Git Methodology](git-methodology.md). A CI secret scanner (`gitleaks`/`trufflehog`) on every PR is the intended backstop but is **not yet in the pipeline** ([CI/CD Pipeline](ci-cd.md)), so the manual check is currently the only control.
 - All secrets live in Gitea Actions secrets or host environment variables, never in `.env` files that are tracked in git (`.env` is gitignored; `.env.example` documents required variables without values).
 - If a secret is ever committed by mistake, the fix is **rotate the credential**, not just remove it from the latest commit — it remains in git history otherwise.
 

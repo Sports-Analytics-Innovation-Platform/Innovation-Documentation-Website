@@ -36,7 +36,8 @@ Adhere to Create / Read / Update / Delete separation when designing functions an
 
 ## Enforcement
 
-- Linting and formatting are run in CI on every PR (see [Git Methodology](git-methodology.md)) and must pass before merge.
+- Linting is run in CI on every push and PR and must pass before merge — **ESLint 10** (flat config, `apps/api/eslint.config.js`) for the API, **oxlint** (`.oxlintrc.json`) for the web app, alongside a typecheck of each app. See [CI/CD Pipeline](ci-cd.md) for the full pipeline and [Git Methodology](git-methodology.md) for where it sits in the PR flow.
+- The API config turns off two rules on purpose (`no-undef` for TS files, `no-empty-object-type` in `.d.ts`) — both are documented in [CI/CD Pipeline](ci-cd.md#the-api-eslint-config). Don't re-enable them without reading why.
 - Naming and structure issues that tooling can't catch are a normal part of code review — call them out on the PR rather than after merge.
 
 !!! note "AI-assisted code"

@@ -5,7 +5,7 @@ A story or task is not "done" when the code runs on someone's laptop. It's done 
 A story is **Done** when:
 
 1. **Code is reviewed and merged** via a Gitea pull request against `main`, with at least one team-member approval (see [Git Methodology](git-methodology.md)).
-2. **Tests are written and passing in CI** — unit tests at minimum; integration or E2E tests where the change touches an API route or a critical user journey (auth, import, optimiser run).
+2. **Tests are written and passing in CI** — unit tests at minimum; integration or E2E tests where the change touches an API route or a critical user journey (auth, import, optimiser run). CI currently passes an empty API suite via `--passWithNoTests` because no test files exist yet, so a green test stage is **not** evidence of coverage — the reviewer has to confirm the PR actually adds tests. See [CI/CD Pipeline](ci-cd.md).
 3. **Documentation is updated** — the relevant page on this docs site, the OpenAPI spec, or an ADR, as appropriate to the change. A feature isn't done if the docs site doesn't reflect it.
 4. **Accessibility is checked**, if the change touches UI — keyboard navigation works, and `axe-core` reports no new critical/serious violations.
 5. **Deployed to staging and manually verified** — not just "CI is green." Someone has clicked through the actual behaviour.

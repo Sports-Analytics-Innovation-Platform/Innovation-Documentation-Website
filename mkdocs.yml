@@ -52,6 +52,7 @@ nav:
       - Git Methodology: git-methodology.md
       - Definition of Done: definition-of-done.md
       - Coding Conventions: coding-conventions.md
+      - CI/CD Pipeline: ci-cd.md
       - Requirements Traceability: requirements.md
       - AI Usage Ledger: ai-usage.md
   - Decisions (ADRs):

@@ -55,7 +55,7 @@ Practically:
 2. If something sensitive shows up, stop — don't commit it. Move it to a `.env` file (gitignored) or an untracked config file instead.
 3. If a secret was already committed in an earlier commit, flag it separately: removing it from the latest commit isn't enough, since it's still in git history, and the key must be rotated.
 
-CI also runs a secret scanner (`gitleaks`/`trufflehog`) on every PR as a backstop — see [Definition of Done](definition-of-done.md).
+The intent is for CI to also run a secret scanner (`gitleaks`/`trufflehog`) on every PR as a backstop — see [Definition of Done](definition-of-done.md). **This is not yet implemented**: the current pipeline runs lint, typecheck, and test only (see [CI/CD Pipeline](ci-cd.md)), so the manual check above is the only line of defence today.
 
 ## Opening and merging PRs
 
@@ -64,7 +64,7 @@ CI also runs a secret scanner (`gitleaks`/`trufflehog`) on every PR as a backsto
 3. Push the feature branch and open a pull request on Gitea against `main`.
 4. **At least one team member reviews and approves.** Only merge once the team has reviewed the code and agrees it's good and finished — don't assume; confirm it.
 5. If there's no confirmation everyone agrees, don't merge — keep the PR open for review instead.
-6. Gitea Actions CI (lint, typecheck, tests, build) must pass before merge is allowed.
+6. Gitea Actions CI must pass before merge is allowed. The pipeline runs **lint, typecheck, and test** for `apps/api` and `apps/web` as two parallel jobs on every push and pull request — see [CI/CD Pipeline](ci-cd.md) for what it does and doesn't cover. Newer pushes cancel in-flight runs on the same ref, so only the latest commit's result counts.
 
 ## Repo hygiene
 

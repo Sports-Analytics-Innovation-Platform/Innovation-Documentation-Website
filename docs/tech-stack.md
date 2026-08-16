@@ -54,11 +54,13 @@ These four are confirmed decisions (team's stack list) but **not yet built** as 
 |---|---|
 | **Docker Compose** | Runs Postgres (and any other services) locally with one command, so every team member's dev environment matches without a manual install. |
 | **Gitea** | Version control, hosted per the university's own requirement to use university-provided infrastructure — see [Git Methodology](git-methodology.md). |
-| **Vitest** | Unit testing on both apps — **confirmed built**: Vitest + Supertest for backend integration tests (against a real disposable Postgres DB), Vitest + React Testing Library on the frontend. |
+| **Gitea Actions** (CI) | Pipeline defined in `.gitea/workflows/ci.yml`, running lint → typecheck → test as two parallel jobs (`api`, `web`) on every push and PR, pinned to Node 24. **Confirmed built.** Chosen simply because it's built into the Gitea instance already hosting the code — no second platform to register runners with. See [CI/CD Pipeline](ci-cd.md). |
+| **ESLint 10** (API) / **oxlint** (web) | Two linters rather than one, because the apps already shipped with different toolchains and unifying them would be churn without benefit — oxlint is dramatically faster on the frontend, and the API's flat config composes `@eslint/js` + `typescript-eslint`. Both are enforced in CI. |
+| **Vitest** | Unit testing on both apps — Vitest + Supertest for backend integration tests (against a real disposable Postgres DB), Vitest + React Testing Library on the frontend. ⚠️ **Tooling is installed, but no test files exist yet** in either `src` tree, as found while wiring up CI — `apps/api` has a `vitest run` script, `apps/web` has no `test` script at all. Treat this row as the agreed choice, not as working coverage; see [CI/CD Pipeline](ci-cd.md). |
 | **MkDocs Material + GitHub Pages** | Documentation site. MkDocs Material was chosen over Docusaurus/mdBook for a lower setup cost with strong out-of-the-box search, admonitions, and theming; GitHub Pages is used specifically for the docs site's static hosting (separate from Gitea, which hosts the actual codebase). |
 
 !!! success "CI/CD host confirmed: Gitea"
-    The team has confirmed the pipeline runs on Gitea, matching everywhere else the repo is described. The "GitLab CI / GitLab Pages" wording in the team's own dev log was a naming slip, not a second CI host — safe to treat as Gitea Actions throughout.
+    The team has confirmed the pipeline runs on Gitea, matching everywhere else the repo is described. The "GitLab CI / GitLab Pages" wording in the team's own dev log was a naming slip, not a second CI host — safe to treat as Gitea Actions throughout. The workflow is now written and in the tree (`.gitea/workflows/ci.yml`) — **CI only, no CD**, since no deploy target exists yet ([ADR-003](decisions/adr-003-hosting-topology.md) is still a stub).
 
 ## Not yet decided
 
