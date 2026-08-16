@@ -10,6 +10,7 @@ One page mapping every rubric criterion (from the COMS3011A project brief) to wh
 | Criterion | Weight | Evidence |
 |---|---|---|
 | Version Control | 10% | Repo itself (Gitea, not linkable from this site) + [Git Methodology](git-methodology.md) for how it's used |
+| CI/CD (brief §2.1, not a weighted line) | — | [CI/CD Pipeline](ci-cd.md) — Gitea Actions running lint/typecheck/test on every push and PR. CI only; no CD until hosting is decided ([ADR-003](decisions/adr-003-hosting-topology.md)) |
 | Documentation Site | 10% | This site |
 | Getting Started / Dev Guides | 5% | [Getting Started](getting-started.md) |
 | Work Tracker | 5% | Gitea Projects/Issues (external — not part of this docs site) |
@@ -25,7 +26,7 @@ One page mapping every rubric criterion (from the COMS3011A project brief) to wh
 | Criterion | Weight | Evidence |
 |---|---|---|
 | Core Features | 25% | [Feature Tiers](design/feature-tiers.md) (basic tier) + [Requirements Traceability](requirements.md) — traceability table still has `TBD` Owner/Issue columns as of this writing |
-| Automated Testing | 10% | ⚠️ No dedicated page — [Tech Stack](tech-stack.md) confirms Vitest is set up, but there's no testing-strategy documentation. Testing Documentation (below) is a separate, also-missing rubric line — worth writing one page that covers both. |
+| Automated Testing | 10% | ⚠️ [CI/CD Pipeline](ci-cd.md) documents the automated pipeline (lint/typecheck/test on every push and PR) and Vitest is installed, but **no test files exist yet** and there's no testing-strategy page. Testing Documentation (below) is a separate, also-missing rubric line — worth writing one page that covers both. |
 | Stakeholder Reviews | 10% | [Client Meetings](meetings/client/index.md) |
 | API | 15% | [API Design](design/api-design.md) |
 | User Feedback | 10% | ⚠️ No page exists. No formal user-testing/feedback-collection process is documented anywhere on this site. |
