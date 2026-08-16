@@ -36,7 +36,9 @@ markdown_extensions:
   - tables
 
 nav:
-  - Home: index.md
+  - Home:
+      - Overview: index.md
+      - Rubric Quick Links: rubric-links.md
   - Getting Started: getting-started.md
   - Architecture:
       - Overview: design/architecture.md
