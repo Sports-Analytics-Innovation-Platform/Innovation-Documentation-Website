@@ -16,7 +16,7 @@ One page mapping every rubric criterion (from the COMS3011A project brief) to wh
 | Git Methodology | 5% | [Git Methodology](git-methodology.md) |
 | Project Methodology | 10% | [Methodology](methodology.md) |
 | Tech Stack | 5% | [Tech Stack](tech-stack.md) |
-| Stakeholder Interaction | 10% | [Client Meetings](meetings/client/index.md), [Standups](meetings/standups/index.md) |
+| Stakeholder Interaction | 10% | [Client Meetings](meetings/client/index.md), [Scrum](meetings/scrum/index.md) |
 | Initial Design & Dev Plan | 20% | [Architecture](design/architecture.md), [ERD](design/erd.md), [API Design](design/api-design.md), [UI Overview](design/wireframes.md), [Feature Tiers](design/feature-tiers.md), [Roadmap](design/roadmap.md) |
 | Implementation | 20% | Codebase itself (Gitea) — this docs site can't demonstrate working code directly; point the tutor at the repo |
 
