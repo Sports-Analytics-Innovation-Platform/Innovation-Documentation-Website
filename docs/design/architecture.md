@@ -6,7 +6,7 @@
 ┌─────────────────────┐        HTTPS/fetch         ┌──────────────────────┐
 │   apps/web           │ ───── /api/v1/... ───────▶ │   apps/api            │
 │   React + Vite       │ ◀──── JSON, cookies ─────  │   NestJS              │
-│   (Tailwind, Recharts│                             │   (Passport, Prisma)  │
+│   (Tailwind, Recharts│                             │   (BetterAuth, Prisma)│
 │   React Router)      │                             │                       │
 └─────────────────────┘                             └──────────┬────────────┘
                                                                   │
@@ -14,12 +14,19 @@
                                                         ┌──────────────────┐
                                                         │   PostgreSQL       │
                                                         └──────────────────┘
+                                                                  ▲
+                                                                  │ writes predictions/lineups
+                                                        ┌──────────────────┐
+                                                        │  apps/optimizer    │
+                                                        │  (Python, PuLP/CBC)│
+                                                        └──────────────────┘
 
                                               ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐
                                               │  nba_api (Python) ingestion  │
-                                              │  — integration path with the │
-                                              │  TypeScript backend not yet  │
-                                              │  confirmed (see Tech Stack)  │
+                                              │  — not yet started; the      │
+                                              │  optimizer above establishes │
+                                              │  the intended pattern for it │
+                                              │  (see Tech Stack)            │
                                               └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
 ```
 
@@ -36,18 +43,22 @@ This satisfies the brief's non-monolithic requirement (§2.1): `apps/web` and `a
 ## Backend (`apps/api`)
 
 - **NestJS** on top of **Prisma** and **PostgreSQL** — see [ADR-001](../decisions/adr-001-database.md).
-- **Passport.js** for auth — see [ADR-002](../decisions/adr-002-auth.md).
-- Routes are versioned under `/v1/` (`/v1/players`, `/v1/players/:id`, `/v1/players/:id/stats`), served under an `/api` base path the frontend proxies to — see [API Design](api-design.md) for the full picture of what's confirmed vs. open.
+- **BetterAuth** (Google OAuth) for auth — see [ADR-002](../decisions/adr-002-auth.md).
+- Routes are versioned under `/v1/` (`/v1/players`, `/v1/teams`, `/v1/games`, `/v1/optimizer/lineup`, plus `/health` and `/auth/*`), served under an `/api` base path the frontend proxies to — see [API Design](api-design.md).
+
+## Optimizer (`apps/optimizer`)
+
+A separate Python service (see [Tech Stack](../tech-stack.md#optimizer-appsoptimizer)) that writes predictions and lineups directly into the same Postgres database. NestJS only reads from the tables it writes — it doesn't invoke the Python scripts itself.
 
 ## Local development
 
-**Docker Compose** runs Postgres locally; both apps run with their own dev server (`npm run start:dev` / `npm run dev`) against it — see [Getting Started](../getting-started.md).
+**Docker Compose** runs Postgres locally; both `apps/api` and `apps/web` run with their own dev server (`npm run dev`) against it — see [Getting Started](../getting-started.md).
 
 ## Open questions
 
-- **`nba_api` (Python) integration path** — still unresolved (also flagged in [Tech Stack](../tech-stack.md)). Is there a separate scheduled ingestion service, a one-off import script, or something else that populates Postgres? This is the single biggest gap in this diagram — everything left of the database is confirmed from code, everything ingesting *into* it is not.
-- **Production hosting topology** — not decided (see the not-yet-written ADR-003).
-- **Whether any endpoint is actually auth-gated yet** — the three confirmed routes don't appear to require a logged-in user, based on `PlayersListPage.tsx` and `PlayerProfilePage.tsx` calling them unconditionally on mount.
+- **`nba_api` (Python) integration path** — not yet started (also flagged in [Tech Stack](../tech-stack.md)). `apps/optimizer` establishes the intended pattern (a separate Python process writing straight into Postgres, NestJS only reading), but the actual `nba_api` ingestion pipeline pulling real league data doesn't exist yet — everything currently in the database is mock-seeded.
+- **Production hosting topology** — not decided (see the not-yet-written [ADR-003](../decisions/adr-003-hosting-topology.md)).
+- **Whether any endpoint is actually auth-gated yet** — no route currently requires a logged-in user; `SessionAuthGuard`/`RolesGuard` exist and are unit-tested but aren't applied to any route yet.
 
 ---
 

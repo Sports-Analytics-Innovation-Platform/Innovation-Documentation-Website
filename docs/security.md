@@ -2,11 +2,13 @@
 
 ## Authentication
 
-Sign up, sign in, password reset, and account deletion are implemented via **Passport.js** (see [Tech Stack](tech-stack.md)) rather than a hand-rolled auth system, per the brief's requirement to rely on established practices and libraries (§2.1).
+Sign-in is implemented via **[BetterAuth](https://better-auth.com)** (see [Tech Stack](tech-stack.md)) rather than a hand-rolled auth system, per the brief's requirement to rely on established practices and libraries (§2.1). This replaced an earlier Passport.js local-strategy prototype on 2026-08-06 — BetterAuth's Prisma adapter and session handling fit the NestJS/Prisma stack more directly, and Google OAuth avoids the project ever handling or storing a password itself.
 
-- Passwords are hashed (bcrypt/argon2 via the Passport strategy in use) — never stored or logged in plaintext.
-- Password reset is token-based with expiry, sent via email — not a "security question" or similarly weak fallback.
-- Account deletion removes the user's personal data and returns a confirmation, satisfying the brief's requirement that users can delete their account, not just deactivate it.
+- Sign-in is **Google OAuth only** — there is no password to hash, reset, or leak, since BetterAuth owns the OAuth redirect flow and session cookies end-to-end.
+- `role` (`PUBLIC`/`USER`/`ANALYST`/`ADMIN`) is a custom BetterAuth user field that only a direct database update can set — never settable via sign-up or the Google profile sync.
+
+!!! warning "Known gap against the brief's key requirements (§2.1)"
+    The brief requires users be able to "sign up, sign in, reset their passwords, and delete their accounts." Sign-up/sign-in are covered by Google OAuth; **password reset doesn't apply** (no password exists to reset under OAuth-only sign-in), but **self-service account deletion is not yet built** — no route currently lets a signed-in user delete their account and associated data. This needs to land before Milestone 4 at the latest; see [Roadmap](design/roadmap.md).
 
 ## Authorization
 
@@ -28,7 +30,7 @@ Unlike a project that imports a user's own account from a third-party service (e
 ## Secrets management
 
 - No secret (API keys, database credentials, tokens) is ever committed — enforced by a pre-commit check and a CI secret scanner (`gitleaks`/`trufflehog`) on every PR, per [Git Methodology](git-methodology.md).
-- All secrets live in Gitea Actions secrets or host environment variables, never in `.env` files that are tracked in git (`.env` is gitignored; `.env.example` documents required variables without values).
+- All secrets live in GitLab CI/CD variables or host environment variables, never in `.env` files that are tracked in git (`.env` is gitignored; `.env.example` documents required variables without values).
 - If a secret is ever committed by mistake, the fix is **rotate the credential**, not just remove it from the latest commit — it remains in git history otherwise.
 
 ## Transport and API hardening

@@ -1,11 +1,11 @@
-# FPL Analytics & Optimisation Engine
+# NBA Analytics & Optimisation Engine
 
 COMS3011A — Sport Analytics Tool project documentation.
 
 This site is the public documentation for the project, covering architecture, API reference,
-process, and decision records. Source code lives in the team's Gitea organisation; this site
-is built from the `docs/` folder in this repository and deployed automatically on every push
-to `main`.
+process, and decision records. Source code lives in the team's GitLab organisation
+(`sdp.ms.wits.ac.za`); this site is built from the `docs/` folder in this repository and
+deployed automatically on every push to `main`.
 
 ## Start here
 

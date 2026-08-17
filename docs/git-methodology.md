@@ -1,6 +1,6 @@
 # Git Methodology
 
-We use a lightweight, PR-based branching workflow on **Gitea**, which hosts the project's `apps/api` and `apps/web` repos per the university's requirement to use university-provided version control. This documentation site is a separate case — it's built with MkDocs and deployed via **GitHub Pages** for public static hosting (see [Documentation Site](getting-started.md)), but the actual codebase and issue tracking live on Gitea, not GitHub.
+We use a lightweight, MR-based branching workflow on **GitLab** (`sdp.ms.wits.ac.za`), which hosts the project's `apps/api`, `apps/web`, and `apps/optimizer` code per the university's requirement to use university-provided version control. This documentation site is a separate case — it's built with MkDocs and deployed via **GitHub Pages** for public static hosting (see [Documentation Site](getting-started.md)), but the actual codebase and issue tracking live on GitLab, not GitHub.
 
 Nothing reaches `main` without review.
 
@@ -61,10 +61,10 @@ CI also runs a secret scanner (`gitleaks`/`trufflehog`) on every PR as a backsto
 
 1. Branch off `main` for the feature.
 2. Do the work, committing in the small units described above.
-3. Push the feature branch and open a pull request on Gitea against `main`.
+3. Push the feature branch and open a merge request on GitLab against `main`.
 4. **At least one team member reviews and approves.** Only merge once the team has reviewed the code and agrees it's good and finished — don't assume; confirm it.
 5. If there's no confirmation everyone agrees, don't merge — keep the PR open for review instead.
-6. Gitea Actions CI (lint, typecheck, tests, build) must pass before merge is allowed.
+6. GitLab CI (tests, build — lint/typecheck not wired in yet, see [Definition of Done](definition-of-done.md)) must pass before merge is allowed.
 
 ## Repo hygiene
 
