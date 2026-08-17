@@ -36,7 +36,9 @@ markdown_extensions:
   - tables
 
 nav:
-  - Home: index.md
+  - Home:
+      - Overview: index.md
+      - Rubric Quick Links: rubric-links.md
   - Getting Started: getting-started.md
   - Architecture:
       - Overview: design/architecture.md
@@ -62,4 +64,4 @@ nav:
   - Meetings:
       - Overview: meetings/index.md
       - Client Meetings: meetings/client/index.md
-      - Standups: meetings/standups/index.md
+      - Scrum Meetings: meetings/scrum/index.md

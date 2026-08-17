@@ -91,6 +91,7 @@ npm test                        # or npm run test:cov for coverage
 | API can't connect to Postgres | Docker Compose isn't running, or `DATABASE_URL` in `apps/api/.env` doesn't match — check it points at port `55432` (or your Postgres's actual port, if not using Docker) |
 | Prisma migration fails | Database not reachable yet — wait a few seconds after starting Postgres before migrating, or check `docker compose logs` |
 | Frontend shows no data | The API isn't running, or `apps/api/.env` is missing — check the API terminal for errors first |
+| Google sign-in fails locally | Check `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` are set in `apps/api/.env` and the redirect URI is registered for `localhost` in the Google Cloud console. Without them the API still runs — everything except signing in works. |
 
 If you hit something not covered here, add it to this table once you've solved it — that's the point of this page.
 

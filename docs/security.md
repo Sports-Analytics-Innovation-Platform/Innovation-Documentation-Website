@@ -2,13 +2,17 @@
 
 ## Authentication
 
-Sign-in is implemented via **[BetterAuth](https://better-auth.com)** (see [Tech Stack](tech-stack.md)) rather than a hand-rolled auth system, per the brief's requirement to rely on established practices and libraries (§2.1). This replaced an earlier Passport.js local-strategy prototype on 2026-08-06 — BetterAuth's Prisma adapter and session handling fit the NestJS/Prisma stack more directly, and Google OAuth avoids the project ever handling or storing a password itself.
+Sign in is implemented via **[BetterAuth](https://better-auth.com)** with **Google OAuth** (see [Tech Stack](tech-stack.md) and [ADR-002](decisions/adr-002-auth.md)) rather than a hand-rolled auth system, per the brief's requirement to rely on established practices and libraries (§2.1). This replaces the initial scaffold's Passport.js local-strategy + bcrypt implementation, migrated on 2026-08-06.
 
 - Sign-in is **Google OAuth only** — there is no password to hash, reset, or leak, since BetterAuth owns the OAuth redirect flow and session cookies end-to-end.
 - `role` (`PUBLIC`/`USER`/`ANALYST`/`ADMIN`) is a custom BetterAuth user field that only a direct database update can set — never settable via sign-up or the Google profile sync.
+- Session tokens, IP address, and user agent are tracked per `Session` row (BetterAuth's default schema) — useful for a future "sign out of all devices" feature, not yet built.
 
-!!! warning "Known gap against the brief's key requirements (§2.1)"
-    The brief requires users be able to "sign up, sign in, reset their passwords, and delete their accounts." Sign-up/sign-in are covered by Google OAuth; **password reset doesn't apply** (no password exists to reset under OAuth-only sign-in), but **self-service account deletion is not yet built** — no route currently lets a signed-in user delete their account and associated data. This needs to land before Milestone 4 at the latest; see [Roadmap](design/roadmap.md).
+!!! danger "Open compliance question — needs a team decision"
+    The brief requires, verbatim, that users be able to "sign up, sign in, reset their passwords, and delete their accounts" (§2.1). Google-OAuth-only sign-in has no password on our side to reset — this needs to be resolved with the client/tutor: either confirmed as satisfied by "reset via your Google account," or a second credential-based sign-in path added alongside Google OAuth. Don't let this surface for the first time in a Milestone 4 demo.
+
+!!! warning "Known gap: self-service account deletion not built"
+    Checked directly against `apps/api/src` — there is no route that lets a signed-in user delete their own account. The Prisma schema does cascade-delete `Session`/`Account` rows *if* a `User` row is deleted (`onDelete: Cascade`), but nothing in the API currently triggers that from a user action — cascade behaviour on delete isn't the same as a delete feature existing. This needs to land before Milestone 4 at the latest; see [Roadmap](design/roadmap.md).
 
 ## Authorization
 
