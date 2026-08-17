@@ -22,7 +22,7 @@ Reference: [Scrum Guide (scrumguides.org)](https://scrumguides.org) — our cere
 
 ## Work tracking
 
-**Gitea Projects and Gitea Issues** are the work tracker. This was a change from the initial plan at the first standup (2026-08-12), which proposed GitHub Projects/Issues — the team moved to Gitea's built-in tracker once it was clear the codebase itself would live on Gitea, per the university's version-control requirement, to keep code and issue tracking on the same platform. Every task is an issue with an owner; issues are assigned and closed throughout the sprint rather than in a batch immediately before the deadline.
+**GitLab Issues and Boards** are the work tracker. This was a change from the initial plan at the first standup (2026-08-12), which proposed GitHub Projects/Issues — the team moved to GitLab's built-in tracker once it was clear the codebase itself would live on GitLab (`sdp.ms.wits.ac.za`), per the university's version-control requirement, to keep code and issue tracking on the same platform. Every task is an issue with an owner; issues are assigned and closed throughout the sprint rather than in a batch immediately before the deadline.
 
 ## How we split work
 
@@ -30,7 +30,7 @@ Rather than horizontal layers (one person "does the backend," another "does the 
 
 ## Versioning
 
-We use **date-based versioning** rather than semantic version numbers, since Gitea's commit history and Actions runs already provide a detailed record of when and what changed, and a semantic version adds overhead without a corresponding release process to justify it.
+We use **date-based versioning** rather than semantic version numbers, since GitLab's commit history and CI pipeline runs already provide a detailed record of when and what changed, and a semantic version adds overhead without a corresponding release process to justify it.
 
 ---
 
