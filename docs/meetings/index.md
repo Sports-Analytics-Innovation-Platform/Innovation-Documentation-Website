@@ -4,7 +4,7 @@ Two kinds of meeting are recorded here, evidencing different rubric criteria:
 
 - **[Client meetings](client/index.md)** — weekly meeting with our tutor/client. Evidences
   *Stakeholder Interaction*. One file per meeting, filename `YYYY-MM-DD.md`.
-- **[Standups](standups/index.md)** — internal team standups. Evidences *Project Methodology
+- **[Scrum Mettings](scrum/index.md)** — internal team standups. Evidences *Project Methodology
   used with evidence*. One file per standup, filename `YYYY-MM-DD.md`.
 
 Each entry is a short structured summary, not a raw transcript. Full transcripts (generated via

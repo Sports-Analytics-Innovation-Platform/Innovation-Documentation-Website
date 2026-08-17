@@ -1,0 +1,638 @@
+
+Converting team files into project documentation
+Shared by WHITE BOY OF THE CENTURY
+This is a copy of a chat between Claude and WHITE BOY OF THE CENTURY. Content may include unverified or unsafe content that do not represent the views of Anthropic. Shared snapshot may contain attachments and data not displayed here.
+
+
+Context.md
+7 lines
+
+md
+
+
+mkdocs.yml
+66 lines
+
+yml
+
+above are all the files that have been sent by my team that can potentially be modified into the needed documentation for our project. I have already set up a doc website with mk docs the structure is in the yml.
+
+
+Ran 5 commands, viewed 3 files
+Ran 5 commands, viewed 3 files
+I've gone through everything — here's what's actually in the pile, and one thing you should sort out before I start writing pages.
+
+What I found:
+
+Context.md and the coding-conventions_skill.zip are the same content (SOLID, noun/verb naming, no disinformation, units in names, small functions) — the zip is just that written up as a reusable Claude skill, plus two more skills: code-cleanup (tidy-up workflow: survey → lint/format → delete dead code → summarize) and team-git-workflow (branch-per-feature off main, ask-before-commit, scoped commit tags like feat:/fix:, secret-scan before committing, merge only after full team review).
+ai_policy.pdf — Wits' COMS3011A AI attribution rules (tool/model/purpose, commit trailers, README declarations, doc footers).
+project_briefs.pdf — the full course brief (tiers, milestones, rubrics, key requirements).
+Sprint_1_Roles.pdf — your team's actual Sprint 1 work split for a "Sports Analytics Tool" built on Express 5 + TypeScript + Prisma + Postgres + Passport.js + nba_api, tracked on a Gitea board.
+NBAPitch.pdf — the pitch arguing for NBA data over EPL/StatsBomb for that same Sports Analytics Tool project.
+fpl-capstone-delivery-plan.pdf — a full delivery plan for a different project, "FPL Analytics & Optimisation Engine" (Supabase question, HiGHS optimiser, Dixon-Coles, Hetzner hosting, etc.) — completely different stack and scope from the NBA plan.
+mkdocs.yml — your live doc site structure, but its site_name is set to "FPL Analytics & Optimisation Engine," not the NBA Sports Analytics Tool.
+The mismatch to sort out: everything except the FPL delivery plan points to your team building the NBA-based Sports Analytics Tool, but the mkdocs site is titled and presumably scaffolded around the FPL project. Either the site_name is a leftover from a template you copied, or the FPL plan was sent to you by mistake (e.g. it's another group's doc, useful only as a formatting example). I don't want to populate the whole nav around the wrong project name.
+
+Once that's settled, I can turn these into the actual pages your mkdocs.yml nav expects (coding-conventions.md, git-methodology.md, ai-usage.md, methodology.md, definition-of-done.md, requirements.md, ADRs, etc.) — most of the raw material for several of those already exists in what you've sent.
+
+Q: Is the FPL delivery plan relevant to your project, or is your team doing the NBA Sports Analytics Tool?
+A: Both are relevant (explain)
+
+Q: Which doc page(s) should I write first?
+A: Coding Conventions + Git Methodology
+
+
+Created 2 files, viewed a file, ran a command
+Created 2 files, viewed a file, ran a command
+Both are ready to drop straight into docs/ — the paths match your mkdocs.yml nav exactly (coding-conventions.md, git-methodology.md).
+
+A couple of calls I made that are worth a quick sanity check:
+
+Git host: I wrote it around Gitea (PRs, branch protection on main), since that's what Sprint_1_Roles.pdf and the delivery plan's CI story both point to. If you're actually on GitHub, just say so and I'll swap the terminology.
+Commit tags: used the feat:/fix:/chore: style with no scopes, from your team-git-workflow skill, rather than the FPL plan's scoped Conventional Commits — since that skill reads like your team's actual convention.
+Both docs cross-link to ai-usage.md for the Assisted-by: trailer and declaration rules, even though that page doesn't exist yet.
+Since you said both the NBA and FPL material are relevant, I held off guessing how — if you can tell me in a sentence (e.g. "FPL plan is just a formatting example," or "we actually pivoted," or something else), I can get ai-usage.md and definition-of-done.md — or whatever's next — right without another round of back-and-forth.
+
+
+Coding conventions
+Document · MD 
+
+Git methodology
+Document · MD 
+okay so the flp was the inital plan and iincludeds how we thought about the project then we decided to move onto NBA basketball instead of football. we want to edit the sports analytics to be an analytics and ooptimisation engine but we are doing basketball now since the external API and databases are easier to work with.
+
+That clears it up — so the FPL plan is the thinking, not the product: same "analytics + optimisation engine" shape (ingestion → models → optimiser → API), just re-pointed at NBA data because the API/DB story is cleaner than EPL's. That also explains why Sprint_1_Roles.pdf already has the NBA-flavoured stack (Express/TS/Prisma/Postgres/Passport.js/nba_api).
+
+One mismatch to fix now: your mkdocs.yml still says site_name: FPL Analytics & Optimisation Engine. I'll update that to match the pivot.
+
+
+Ran 2 commands, edited a file, read a file
+Ran 2 commands, edited a file, read a file
+I went with "NBA Analytics & Optimisation Engine" as the new title — repo URL and nav structure untouched, everything else the same. Rename it if your team's landed on different wording.
+
+Given the pivot, a few things from the FPL plan carry over conceptually and a few don't:
+
+Carries over (same shape, swap sport)	Football-specific, drop
+Ingestion → derived stats → optimiser → API pipeline	FPL entry ID import, gameweeks, chips (Wildcard/Bench Boost)
+MILP-style optimisation, Monte Carlo simulation	Dixon-Coles, xG/xA, Understat/FBref sourcing
+Empirical-Bayes shrinkage for projections	Supabase discussion (unless your NBA stack hits the same issue)
+Rubric-driven prioritisation (process >> model sophistication)	—
+That's useful context for architecture.md and roadmap.md later, but for now — want me to carry on with AI Usage Ledger + Definition of Done next, or something else?
+
+
+Mkdocs
+YML 
+
+ai-usage.md
+11 lines
+
+md
+
+Remember we need a AI declaration at the bottom of each doc. I will add it to the docs you have already made but use one going forward like it is used at the end of the AI policy doc.
+
+the ai usage ledger is done. not sure if anything should be added.
+but yes lets move forward deff of done
+
+Good — the ledger already has everything the AI policy requires (date, author, tool, model, purpose, files affected), so nothing to add there.
+
+Got it on the declaration format — I'll append it to every new doc from here going forward, matching the AI policy's style.
+
+
+Created a file, read a file
+Created a file, read a file
+That's docs/definition-of-done.md, cross-linked with the two docs from before and item 7 tying straight back to the ledger.
+
+Next up on the nav is methodology.md (Scrum/Kanban + ceremonies) or requirements.md (traceability table mapping brief requirements → components) — either is a natural follow-on. Which one, or something else?
+
+
+Definition of done
+Document · MD 
+
+index.md
+85 lines
+
+md
+
+
+index.md
+71 lines
+
+md
+
+this might help for more context. these are meeting summaries from our first meeting. but yeah you can move on.
+
+Good catch opportunity here — these meeting notes surface a conflict with what I wrote earlier: the standup says "GitHub Projects and GitHub Issues will be used as the work tracker," and your mkdocs.yml repo_url also points to github.com, not Gitea. That contradicts Sprint_1_Roles.pdf, which I built git-methodology.md around (Gitea board, .gitea/workflows/). Since the repo URL and the actual meeting decision both say GitHub, I'll fix that doc now rather than let it drift.
+
+
+Ran 2 commands, edited 2 files
+Ran 2 commands, edited 2 files
+Now, methodology.md — the standup notes give me exactly what's needed for the rubric's "cites a source, defines ceremonies, states why chosen over Kanban/XP" acceptance bar:
+
+
+Created a file, read a file
+Created a file, read a file
+Two things from me:
+
+git-methodology.md corrected — Gitea → GitHub throughout, matching the repo URL and the standup's tracker decision.
+methodology.md written — Scrum-with-3-sprints, cited, ceremonies table, and the Kanban/XP justification the rubric explicitly wants. Note: it links to ../meetings/client/index.md, which assumes your meeting docs live where the nav says (meetings/client/index.md) — flag it if that path's different.
+I didn't add an AI declaration to git-methodology.md's re-edit since you said you're handling declarations on the docs already made yourself.
+
+Next on the nav: requirements.md (traceability table) or ai_policy-adjacent tech-stack.md — which one?
+
+
+Methodology
+Document · MD 
+
+Git methodology
+Document · MD 
+No we are using GitTea its just the doc site that is on github. the actual project is on gitea because it is required by the university. we were initially going to use github projects but we moved to gitea projects and issues. 
+
+next erquirement.md.
+
+Ah — my mistake, I over-corrected. Let me put Gitea back for the actual repo/workflow, and keep GitHub only for the doc site's hosting.
+
+
+Edited 2 files
+Edited 2 files
+Now methodology.md's work-tracker section — the standup notes describe the initial decision (GitHub Projects), but you've since moved to Gitea. I'll reflect where things actually landed rather than the outdated meeting decision:
+
+
+Edited 2 files
+Edited 2 files
+Now requirements.md — the traceability table the brief and rubric ask for, mapping every key requirement to a component, owner, and issue:
+
+
+Created a file, read a file
+Created a file, read a file
+All three: requirements.md is new, git-methodology.md and methodology.md are corrected back to Gitea.
+
+I left most Owner and Issue columns as TBD in requirements.md — I don't have your actual issue numbers or who's officially responsible for auth vs. accessibility vs. the API. Worth filling in as you assign it, or hand me the info and I'll fill it in.
+
+
+Requirements
+Document · MD 
+
+Git methodology
+Document · MD 
+
+Methodology
+Document · MD 
+alright what is next?
+
+The Process section of your nav is now fully covered (methodology, git methodology, DoD, coding conventions, requirements, AI usage). What's left:
+
+Tech Stack — full stack list + justification (NestJS, Prisma, Postgres, Passport.js, nba_api, React+Vite+Tailwind, Docker Compose — all mentioned across your docs, but not yet written up as its own page)
+Security — auth approach, secrets handling, POPIA-style considerations for any NBA data you touch
+Architecture section (Overview, ERD, API Design, Wireframes, Feature Tiers, Roadmap) — bigger, needs more input from you (diagrams, schema, wireframes I don't have yet)
+Decisions (ADRs) — ADR-001 Database, ADR-002 Auth, ADR-003 Hosting — short "what we chose and why" records
+Q: Which one next?
+A: Tech Stack
+
+
+Created a file, read a file
+Created a file, read a file
+That's docs/tech-stack.md, sitting at the top level per your nav.
+
+One real gap I flagged inline rather than papering over: nba_api is a Python package, but your API is NestJS/TypeScript — I don't actually know how those two connect (separate Python ingestion job writing to Postgres? something else?), so I left it as an open callout instead of guessing. Worth settling before architecture.md, since it'll shape that diagram directly.
+
+Also linked out to ../decisions/index.md for the NBA-vs-EPL comparison and ../design/architecture.md for the integration question — neither exists yet, so those'll be dead links until you get to them.
+
+What's next — one of the ADRs, security, or something else?
+
+
+Tech stack
+Document · MD 
+security.
+
+
+Created a file, read a file
+Created a file, read a file
+That's docs/security.md.
+
+Two things I marked rather than assumed, since I don't have confirmation either way:
+
+RBAC roles table — I proposed public/user/analyst/admin based on the brief's Sport Analytics Tool description ("approved users submit and manage statistics"), but flagged it as unconfirmed. If write-access isn't actually in scope for your project, this section should shrink or go.
+Hosting/TLS/rate limiting — left as an open "not yet implemented" list since those decisions haven't been made.
+Both files (tech-stack.md, security.md) now cross-reference each other on the hosting gap.
+
+Remaining on your nav: getting-started.md, decisions/ (ADR-001 Database, ADR-002 Auth, ADR-003 Hosting), and the design/ section (architecture, ERD, API design, wireframes, feature tiers, roadmap). What's next?
+
+
+Security
+Document · MD 
+getting started.
+
+
+Created a file, read a file
+Created a file, read a file
+That's docs/getting-started.md — but I want to flag it more than the others: I wrote this from the stack list and the scaffold description in your AI usage ledger, not from the actual repo, so several bits are placeholders (<gitea-repo-url>, exact .env variable names, port numbers, test commands). The rubric specifically wants this verified by a teammate doing a clean setup — that check will also catch anything I guessed wrong here.
+
+Remaining: decisions/ (the three ADRs) and the design/ section (architecture, ERD, API design, wireframes, feature tiers, roadmap). Which next?
+
+
+Getting started
+Document · MD 
+never guess always make a note of things yiui do not yet know. as for what is next how much context do we even have to do the rest of the docs do we have enough?
+
+Fair, and good moment to check — let me audit what we actually have versus what's still open before writing anything else.
+
+Decisions (ADRs):
+
+ADR	Do we have enough?
+ADR-001: Database	Mostly — we know the decision (Postgres + Prisma) and part of the rationale (relational shape, Prisma type safety). We do not have a record of what alternatives were considered or rejected, or who made the call and when — a real ADR needs that.
+ADR-002: Auth	Same situation — decision (Passport.js) is known, rationale is thin, alternatives/rejection reasons aren't documented anywhere I've seen.
+ADR-003: Hosting Topology	No — tech-stack.md already flags hosting as undecided. There's no decision to record yet. Writing this now would mean inventing one.
+Design section — this is where the real gap is:
+
+Page	Do we have enough?
+Architecture (Overview)	No — the nba_api (Python) ↔ NestJS (TypeScript) integration is an open question I flagged in tech-stack.md. A diagram would have to guess the topology.
+ERD	No — I have zero schema info. Sprint_1_Roles.pdf references a schema.prisma file existing, but no entities, fields, or relationships.
+API Design	No — the ai-usage ledger mentions "auth, players/teams/stats endpoints" existing, but no actual route list, request/response shapes, or versioning scheme.
+Wireframes	No — this needs actual visual designs (Figma or similar) that I don't have and can't infer.
+Feature Tiers	No — this is the biggest unknown. The brief's own "Sport Analytics Tool" description doesn't mention optimisation at all; you've said you want an "analytics and optimisation engine," but I don't know what it's actually optimising (fantasy lineups à la FPL? real-team roster/strategy analysis? something else). Without that, a basic/intermediate/advanced split would be me inventing your product.
+Roadmap	No — Sprint_1_Roles.pdf covers Sprint 1 only. Sprint 2–4 planning for the NBA project doesn't exist anywhere I've seen (the FPL plan's sprints are for the abandoned project).
+Bottom line: Process docs are essentially done. The Decisions/Design section needs real input from you and the team first — mainly: the schema (or a description of the main entities), the actual API routes, what "optimisation" means for this project, and any wireframes that exist. I can draft ADR-001/002 now with an explicit "alternatives not recorded" gap noted, but everything else is blocked on that missing input rather than something I should paper over.
+
+Want me to draft ADR-001 and ADR-002 with the gaps flagged, or would it be more useful to just list out the specific questions you'd need to answer (schema fields, endpoint list, optimisation scope) so you can bring that back in one go?
+
+
+App.tsx
+25 lines
+
+tsx
+
+
+PlayerTraitsRadar.tsx
+62 lines
+
+tsx
+
+
+PointsTrendChart.tsx
+35 lines
+
+tsx
+
+
+Sidebar.tsx
+36 lines
+
+tsx
+
+
+StatTile.tsx
+14 lines
+
+tsx
+
+
+index.css
+27 lines
+
+css
+
+
+apiClient.ts
+10 lines
+
+ts
+
+
+nbaApi.ts
+15 lines
+
+ts
+
+
+main.tsx
+11 lines
+
+tsx
+
+
+HomePage.tsx
+19 lines
+
+tsx
+
+
+PlayerProfilePage.tsx
+98 lines
+
+tsx
+
+
+PlayersListPage.tsx
+52 lines
+
+tsx
+
+
+nba.ts
+57 lines
+
+ts
+
+well we didn't build wireframes we found inspiring designs and let AI make them for us this is our initial creation. above. I think that is the UI. if this is enough maybe we can do the wireframe section or rename it. tell me.
+
+yes but you can make a draft of ARD1 and 2 so long  I would also like some questions I can bring forth to my team to get the other docs sorted.
+
+Real code is a big help — this gives me actual entities (Player, Team, SeasonAverages, GameLogEntry), actual routes (GET /v1/players, /v1/players/:id, /v1/players/:id/stats), and actual pages (Home, Players List, Player Profile with radar + trend charts). That's much stronger evidence than a mockup would be for the rubric's "UI design" line.
+
+On wireframes — my take: this isn't a wireframe (a wireframe precedes the build and is deliberately low-fidelity). This is the build. I'd rename the nav entry from "Wireframes" to something like "UI Overview" or "Interface Design" and document what's actually built, rather than backfill a wireframe stage that didn't happen. That's also more honest for the AI declaration — this describes a real artifact, not a planning document.
+
+
+UI Overview doc page (renamed from Wireframes) documenting the actual built interface
+UI Overview doc page (renamed from Wireframes) documenting the actual built interface
+Now the two ADRs. I'm keeping "alternatives considered" honestly marked as unrecorded rather than inventing a deliberation that didn't happen on paper:
+
+
+Created 2 files, read a file
+Created 2 files, read a file
+Both ADRs are drafts with a real decision and real context, but the "alternatives considered" section is honestly marked unrecorded rather than invented — that's the part your team needs to fill in from memory if you want these to actually demonstrate judgement for the report, not just log an outcome.
+
+Questions to bring back to the team, grouped by what they unblock:
+
+Schema / ERD
+
+Can someone paste or share the actual schema.prisma? The frontend types (Player, Team, SeasonAverages, GameLogEntry) give me a strong proxy, but I don't know if the real DB schema matches them exactly, or how stats are actually stored (per-event rows, or pre-aggregated into SeasonAverages at write time?).
+Is there a User model yet, separate from Player/Team? Auth needs one but I haven't seen it.
+API design
+
+Full route list beyond the three I can see (/v1/players, /v1/players/:id, /v1/players/:id/stats) — anything for teams, auth, or write access?
+What's the actual Passport strategy (session? JWT? something else)?
+Is there an OpenAPI/Swagger spec anywhere, even a draft?
+Feature tiers / optimisation scope — the biggest gap
+
+What does "optimisation" actually mean for this project? Lineup building? Trade/roster analysis? Something FPL-style adapted to real NBA rosters? Without this I can't write feature-tiers.md or roadmap.md without guessing your product.
+ADRs
+
+For ADR-001/002: does anyone remember what was actually weighed against Postgres+Prisma and Passport.js, and why? Even a rough memory is better than a blank.
+Is hosting decided yet (unlocks ADR-003)?
+Misc
+
+Is /teams planned for this sprint or later?
+Confirm: rename "Wireframes" → "UI Overview" in mkdocs.yml, or leave the nav label as-is?
+
+Wireframes
+Document · MD 
+
+Adr 001 database
+Document · MD 
+
+Adr 002 auth
+Document · MD 
+with the new code files is there any other docs you can now make?
+
+Yes — the code closes real gaps in three more design docs. I can draft Architecture, ERD, and API Design now, each grounded in what the code actually does rather than invented. feature-tiers.md and roadmap.md are still blocked on the optimisation-scope question from last time.
+
+
+Created 3 files, read a file
+Created 3 files, read a file
+All three are drafted, and each is explicit about where it's standing on confirmed code versus inference:
+
+architecture.md — the frontend↔backend↔DB shape is confirmed from code; the nba_api ingestion path is still the one open box in the diagram.
+erd.md — entities are a hypothesis from the frontend's TypeScript types, flagged as needing a real schema.prisma to confirm. Also surfaces that User and any role/permission tables are completely invisible from the frontend — they must exist somewhere, just not documented.
+api-design.md — the three real endpoints are documented with confidence; it also catches a genuine gap worth fixing (no structured error envelope yet — just a generic thrown Error), which is worth knowing before it's expensive to retrofit.
+Still fully blocked: feature-tiers.md and roadmap.md — nothing in this code touches optimisation at all, so those still need the scope answer from your team before I can write them without guessing.
+
+
+Architecture
+Document · MD 
+
+Erd
+Document · MD 
+
+Api design
+Document · MD 
+thanks just do a last check to see if any docs need to be revisited now that you have new context.
+
+Good idea — let me cross-check the whole set against what the code actually confirmed. Found a few things worth fixing.
+
+
+Ran a command
+Ran a command
+Found two real issues:
+
+tech-stack.md's frontend table is now incomplete — the code confirms React Router and Recharts are in use, neither was listed.
+A genuine architectural gap I missed: apiClient.ts fetches a relative path (/api/v1/...), not an absolute URL. On localhost, Vite (port 5173) and NestJS (a different port) are different origins — a relative fetch from the Vite dev server only reaches the API if something proxies /api through to it (typically a server.proxy entry in vite.config.ts). I don't have that file, so I can't confirm it exists — but if it doesn't, local dev simply won't work, and getting-started.md doesn't currently mention it at all. That's worth flagging loudly rather than letting a teammate hit a silent wall.
+Fixing both:
+
+
+Edited 2 files
+Edited 2 files
+Now the same warning needs to reach getting-started.md, since that's where a teammate would actually hit it:
+
+
+Edited a file, read a file
+Edited a file, read a file
+Everything else checked out fine against the code — security.md's cookie-based auth assumption matches credentials: "include", erd.md/api-design.md/architecture.md are already internally consistent since they were written from this same code, and the process docs (coding conventions, git methodology, methodology, DoD) don't touch implementation details that could drift.
+
+Two real fixes made:
+
+tech-stack.md — added React Router and Recharts, which the code confirms are in use but weren't listed.
+The important one: flagged in both tech-stack.md and getting-started.md that apiClient.ts fetches a relative /api/... path, which only works locally if Vite is proxying it to the backend — something I can't confirm without vite.config.ts. Worth someone checking before it costs a teammate an hour debugging a phantom CORS issue during setup.
+Still standing from before, unchanged: feature-tiers.md, roadmap.md, and ADR-003 are blocked on the optimisation-scope and hosting questions.
+
+
+Tech stack
+Document · MD 
+
+Getting started
+Document · MD 
+okay now can you make a commit message for me for all of this I have basically made the first draft of all these docs with you. remember to use the git methodology and ai policy guide to make the message.
+
+Per your git-methodology.md (tag + imperative description, body for detail) and the AI policy's Assisted-by: trailer format:
+
+docs: add first-draft process and design documentation
+
+Adds initial drafts of:
+- coding-conventions.md, git-methodology.md, methodology.md,
+  definition-of-done.md, requirements.md
+- tech-stack.md, security.md, getting-started.md
+- design/architecture.md, design/erd.md, design/api-design.md,
+  design/wireframes.md
+- decisions/adr-001-database.md, decisions/adr-002-auth.md
+- mkdocs.yml: site_name updated to NBA Analytics & Optimisation
+  Engine following the pivot from the FPL project
+
+Several pages flag open questions (schema.prisma confirmation,
+API error envelope, local dev proxy setup, feature-tier/
+optimisation scope) rather than assuming answers not yet
+confirmed by the team.
+
+Assisted-by: Claude-Web[Claude Sonnet 5]
+A couple of notes on this before you commit it:
+
+This bundles everything into one commit since it's one logical unit ("first draft of the docs set") — if your team prefers one commit per file/page per the "one commit per independent unit of work" rule, split the file list into separate commits instead and reuse the same trailer on each.
+Since these are drafts with known gaps (not finished, reviewed docs), you may want docs: add first-draft... rather than implying they're final — worth a second pass/commit later once the open questions get answered and the ADRs/feature-tiers get filled in.
+Double-check the tool/model name matches what you actually want logged — I used Claude-Web[Claude Sonnet 5] to match the declarations already on each doc, but confirm against your ai-usage.md ledger naming convention before committing.
+
+excerpt_from_previous_claude_message.txt
+1 line
+
+txt
+
+okay you can write a commit message for each unit of work and I will split them accourdingly with my github desktop.
+
+Here's one commit message per file, each on its own so you can apply them individually in GitHub Desktop:
+
+mkdocs.yml
+
+chore: update site name for NBA project pivot
+
+Renames site_name/site_description from FPL Analytics &
+Optimisation Engine to NBA Analytics & Optimisation Engine,
+reflecting the team's move from the football/FPL concept to
+the NBA-based project.
+
+Assisted-by: Claude-Web[Claude Sonnet 5]
+docs/coding-conventions.md
+
+docs: add coding conventions page
+
+SOLID principles, noun/verb naming, no disinformation, units
+in variable names, small functions, CRUD separation.
+
+Assisted-by: Claude-Web[Claude Sonnet 5]
+docs/git-methodology.md
+
+docs: add git methodology page
+
+Gitea branching workflow, commit tag format, secret-scanning
+before commit, PR review requirements. Docs site itself is
+hosted separately via GitHub Pages, noted explicitly.
+
+Assisted-by: Claude-Web[Claude Sonnet 5]
+docs/methodology.md
+
+docs: add project methodology page
+
+Scrum-with-3-sprints, cited and justified over Kanban/XP,
+ceremonies table, Gitea Projects/Issues as work tracker,
+date-based versioning rationale.
+
+Assisted-by: Claude-Web[Claude Sonnet 5]
+docs/definition-of-done.md
+
+docs: add definition of done page
+
+Nine-point checklist covering review, tests, docs,
+accessibility, staging verification, AI usage logging, and
+coding-convention adherence.
+
+Assisted-by: Claude-Web[Claude Sonnet 5]
+docs/requirements.md
+
+docs: add requirements traceability table
+
+Maps each brief key requirement (§2.1) to component and
+owner. Owner/issue columns left as TBD pending team
+assignment.
+
+Assisted-by: Claude-Web[Claude Sonnet 5]
+docs/tech-stack.md
+
+docs: add tech stack page
+
+Lists and justifies NestJS, Prisma, Postgres, Passport.js,
+nba_api, React/Vite/Tailwind/React Router/Recharts, Docker
+Compose, Gitea, MkDocs. Flags two open items: how nba_api
+(Python) integrates with the TS backend, and whether the
+Vite dev server actually proxies /api to the NestJS backend.
+
+Assisted-by: Claude-Web[Claude Sonnet 5]
+docs/security.md
+
+docs: add security page
+
+Auth flow, proposed RBAC roles (unconfirmed), secrets
+management, and a note that the project holds no third-party
+credentials since nba_api needs none. Flags hosting/TLS/rate
+limiting as not yet implemented.
+
+Assisted-by: Claude-Web[Claude Sonnet 5]
+docs/getting-started.md
+
+docs: add getting started guide
+
+Setup steps for apps/api and apps/web against local Postgres.
+Several values are placeholders pending confirmation against
+the real repo. Flags an unconfirmed Vite proxy dependency for
+local API calls to work at all.
+
+Assisted-by: Claude-Web[Claude Sonnet 5]
+docs/design/architecture.md
+
+docs: add architecture overview page
+
+Frontend/backend/DB diagram confirmed from apps/web source.
+Flags nba_api ingestion path and production hosting as open
+questions.
+
+Assisted-by: Claude-Web[Claude Sonnet 5]
+docs/design/erd.md
+
+docs: add ERD page (inferred, unconfirmed)
+
+Entities reverse-engineered from apps/web/src/types/nba.ts.
+Explicitly marked as unconfirmed against the real
+schema.prisma. Notes User/role tables aren't visible from the
+frontend at all.
+
+Assisted-by: Claude-Web[Claude Sonnet 5]
+docs/design/api-design.md
+
+docs: add API design page
+
+Documents the three confirmed endpoints (players list,
+detail, stats) and response shapes from apps/web source.
+Flags missing structured error envelope and unconfirmed
+write/auth/teams endpoints.
+
+Assisted-by: Claude-Web[Claude Sonnet 5]
+docs/design/wireframes.md
+
+docs: add UI overview page (renamed from wireframes)
+
+Documents the actual built interface (Home, Players list,
+Player profile) rather than a pre-build wireframe stage, since
+no formal wireframing happened. Suggests renaming the nav
+label from "Wireframes" to "UI Overview".
+
+Assisted-by: Claude-Web[Claude Sonnet 5]
+docs/decisions/adr-001-database.md
+
+docs: add ADR-001 (database)
+
+Records the Postgres + Prisma decision and its rationale.
+Alternatives-considered section left explicitly unrecorded —
+no documented reasoning exists for what was rejected.
+
+Assisted-by: Claude-Web[Claude Sonnet 5]
+docs/decisions/adr-002-auth.md
+
+docs: add ADR-002 (auth)
+
+Records the Passport.js decision. Flags the specific Passport
+strategy in use (session/JWT/OAuth) as unconfirmed, and notes
+RBAC is proposed, not verified in scope.
+
+Assisted-by: Claude-Web[Claude Sonnet 5]
+lastly create a doc for me with the questions I need to talk to my team about so we can get the rest of the docs sorted. and them make a handoff doc for the next new convo I have with claude. I will send the brief and ai policy guide to him along with the handoff doc as well as any other docs you ask him to prompt me with. we can call this convo the first iteration of many thanks to the handoff doc.
+
+
+Created 2 files, read a file
+Created 2 files, read a file
+Both are outside docs/ on purpose — they're working documents for the team/next-Claude, not site pages, so nothing needs adding to mkdocs.yml's nav.
+
+team-questions.md — everything blocking the remaining docs, grouped by which page it unblocks.
+claude-handoff.md — full project state for the next conversation: stack, what's done vs. blocked, corrections already made (so Gitea-vs-GitHub doesn't get re-litigated), the house rules we settled on (never guess, AI declaration format, commit convention), and exactly what files/answers to bring.
+When you start the next chat: brief + AI policy + this handoff + team-questions.md answers should be enough for it to pick up cleanly without re-deriving context or re-making the same mistakes.
+
+
+Team questions
+Document · MD 
+
+Claude handoff
+Document · MD 

@@ -1,41 +1,64 @@
 # ERD
 
-!!! warning "Inferred, not confirmed"
-    Nothing here comes from the actual `schema.prisma` — I don't have it. This is reverse-engineered from the frontend's TypeScript types (`apps/web/src/types/nba.ts`) and the API responses they describe. Frontend types describe the *API's response shape*, which is not guaranteed to match the *database schema* one-for-one (e.g. `SeasonAverages` looks aggregated/computed, not a raw table). Treat every entity below as a hypothesis to confirm against the real schema, not documentation of it.
+!!! success "Confirmed from `schema.prisma`"
+    This page previously reverse-engineered entities from frontend TypeScript types. It's now built directly from the real `apps/api/prisma/schema.prisma` and its BetterAuth-related migration (see [ADR-002](../decisions/adr-002-auth.md)).
 
-## Entities inferred from `nba.ts`
+!!! warning "One caveat on freshness"
+    The schema snapshot I have predates some later frontend/backend work described in the team's own dev log (e.g. a `GET /v1/games` endpoint, broadened mock data). The core entities below are unlikely to have changed shape, but if new tables were added after this snapshot, they won't appear here — re-confirm against the live `schema.prisma` if this page is being relied on for the group report.
+
+## Entities
 
 **Team**
-- `id`, `nbaTeamId` (external NBA API ID), `name`, `abbreviation`, `city`, `conference`, `division`, `logoUrl`
+`id`, `nbaTeamId` (unique, external NBA API ID), `name`, `abbreviation`, `city`, `conference`, `division`, `logoUrl?`
 
 **Player**
-- `id`, `nbaPlayerId`, `firstName`, `lastName`, `position`, `heightInches`, `weightLbs`, `jerseyNumber`, `headshotUrl`, `teamId` (→ Team)
+`id`, `nbaPlayerId` (unique), `firstName`, `lastName`, `position`, `heightInches?`, `weightLbs?`, `jerseyNumber?`, `headshotUrl?`, `teamId?` → Team
 
-**GameLogEntry** (per player, per game)
-- `gameId`, `gameDate`, `points`
-- Only `points` is exposed to the frontend chart, but a real per-game stat row for the brief's "derived from individual events" requirement would plausibly need rebounds, assists, etc. too — worth confirming whether those fields already exist server-side and just aren't wired into this chart yet, or don't exist at all.
+**Game**
+`id`, `nbaGameId` (unique), `gameDate`, `season`, `homeTeamId` → Team, `awayTeamId` → Team, `homeScore?`, `awayScore?`
 
-**SeasonAverages** (likely *computed*, not stored)
-- `gamesPlayed`, `pointsPerGame`, `reboundsPerGame`, `assistsPerGame`, `stealsPerGame`, `blocksPerGame`, `turnoversPerGame`, `fieldGoalPercentage`, `threePointPercentage`, `freeThrowPercentage`
-- The brief requires stats to be derived from event data rather than stored totals — if this is implemented as intended, these numbers are calculated on read from a `GameLogEntry`-like table, not persisted as their own row. **Confirm this is actually true** — it's exactly the kind of requirement that's easy to violate accidentally by caching an aggregate.
+**GameEvent** — raw play-by-play; the source of truth every derived stat traces back to, per the brief's requirement that statistics come from event records, not typed totals
+`id`, `gameId` → Game, `sequence`, `period`, `clock`, `eventType`, `playerId?`, `description`, `createdAt`
+Indexed on `[gameId, sequence]`.
 
-## Proposed relationship diagram
+**PlayerGameStat** — per-game boxscore, derived from `GameEvent` rows, never entered by hand
+`id`, `playerId` → Player, `gameId` → Game, `minutes`, `points`, `rebounds`, `assists`, `steals`, `blocks`, `turnovers`, `fieldGoalsMade/Attempted`, `threesMade/Attempted`, `freeThrowsMade/Attempted`
+Unique on `[playerId, gameId]`.
+
+!!! success "Confirmed: season averages are computed on read, not stored"
+    `/v1/players/:id/stats` (in `players.controller.ts`) computes `seasonAverages` and `gameLog` at request time from `PlayerGameStat` rows via `statsService`. There is no `SeasonAverages` table in the schema — it was never a stored model, only an API response shape. This confirms the brief's "derived from events, not stored totals" requirement is actually being followed, not just documented as an intent.
+
+## Auth entities (added for the BetterAuth migration — see ADR-002)
+
+**User**
+`id`, `name`, `email` (unique), `emailVerified`, `image?`, `role` (`PUBLIC`/`USER`/`ANALYST`/`ADMIN`, project-specific RBAC field layered on BetterAuth's schema, non-writable by the OAuth flow itself), `createdAt`, `updatedAt` — has many `Session`, many `Account`
+
+**Session**
+`id`, `userId` → User (cascade delete), `token` (unique), `expiresAt`, `ipAddress?`, `userAgent?`, `createdAt`, `updatedAt`
+
+**Account** — one row per linked sign-in method (currently just Google)
+`id`, `userId` → User (cascade delete), `accountId`, `providerId`, `accessToken?`, `refreshToken?`, token expiries, `scope?`, `idToken?`, `password?`, `createdAt`, `updatedAt`
+
+**Verification** — short-lived tokens (e.g. email verification); present because it's part of BetterAuth's core schema, currently unused while Google OAuth is the only provider — see the password-reset risk flagged in [ADR-002](../decisions/adr-002-auth.md)
+
+## Relationship diagram
 
 ```
-Team (1) ──────────< (many) Player
-Player (1) ──────────< (many) GameLogEntry [event-level, per game]
-Player (1) ──────────  SeasonAverages [derived/computed, not necessarily its own table]
+Team (1) ──────< (many) Player
+Team (1) ──────< (many) Game [as home team]
+Team (1) ──────< (many) Game [as away team]
+Game (1) ──────< (many) GameEvent
+Game (1) ──────< (many) PlayerGameStat
+Player (1) ────< (many) PlayerGameStat
+
+User (1) ──────< (many) Session
+User (1) ──────< (many) Account
 ```
 
-## Known gaps — not in the frontend types at all
+## Still open
 
-- **User** — no model for authenticated users appears anywhere in the frontend code, but Passport auth exists per [ADR-002](../decisions/adr-002-auth.md). This table has to exist somewhere in `schema.prisma`; it's just not visible from the frontend.
-- **Roles / permissions** — if the proposed RBAC in [Security](../security.md) is real, there's presumably a role field or a join table somewhere, unconfirmed.
-- **Any table backing the "optimisation" side of the product** — nothing in the current frontend code touches optimisation at all; the whole feature is still undefined (see the open question in [Feature Tiers](feature-tiers.md), not yet written).
-
-## What would close this gap
-
-The actual `schema.prisma` file, or even just a `prisma migrate` diff/output pasted in — that would let this page go from "inferred" to "confirmed" in one pass.
+- **Any table backing "optimisation"** — nothing in the schema touches optimisation at all. See the open question in [Feature Tiers](feature-tiers.md) (still a stub) — this needs the team's plain-English answer on what's actually being optimised before a schema addition makes sense.
+- **Submissions / review workflow** — an early feature-breakdown draft mentioned approved-submitter roles and a review flow, but nothing matching that exists in the schema or codebase as of this snapshot. Don't assume it's coming unless the team confirms it's still planned.
 
 ---
 

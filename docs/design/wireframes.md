@@ -1,7 +1,7 @@
 # UI Overview
 
-!!! note "Not wireframes"
-    This project didn't go through a formal low-fidelity wireframing stage — the team found reference dashboards for inspiration and used AI to help generate the initial React implementation directly. This page documents that initial build, not a planning artifact. If you'd rather have this nav entry read as "Wireframes," rename it back in `mkdocs.yml`; otherwise it's titled to match what it actually is.
+!!! success "Confirmed: UI Overview, not Wireframes"
+    This project didn't go through a formal low-fidelity wireframing stage — the team found reference dashboards for inspiration and used AI to help generate the initial React implementation directly. This page documents that initial build, not a planning artifact. The team has confirmed "UI Overview" is the right title (no wireframes exist) — the nav entry in `mkdocs.yml` already matches.
 
 ## Screens
 
