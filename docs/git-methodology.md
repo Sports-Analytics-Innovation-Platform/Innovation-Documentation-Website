@@ -64,7 +64,7 @@ CI also runs a secret scanner (`gitleaks`/`trufflehog`) on every PR as a backsto
 3. Push the feature branch and open a pull request on Gitea against `main`.
 4. **At least one team member reviews and approves.** Only merge once the team has reviewed the code and agrees it's good and finished — don't assume; confirm it.
 5. If there's no confirmation everyone agrees, don't merge — keep the PR open for review instead.
-6. Gitea Actions CI (tests, build — lint/typecheck not wired in yet, see [Definition of Done](definition-of-done.md)) must pass before merge is allowed.
+6. Gitea Actions CI (lint, typecheck, and test for both apps, including a real Postgres service for the API's e2e suite) must pass before merge is allowed.
 
 ## Repo hygiene
 
