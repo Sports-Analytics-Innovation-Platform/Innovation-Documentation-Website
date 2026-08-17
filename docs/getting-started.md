@@ -6,7 +6,7 @@ This page gets a new contributor from a clean clone to a running app. Steps belo
 
 - **Node.js 20+** and **npm** — for both `apps/api` (NestJS) and `apps/web` (React + Vite)
 - **Docker** and **Docker Compose** — runs Postgres locally (a native or WSL-hosted Postgres on port 5432 works too, if you point `DATABASE_URL` at it instead)
-- **Git**, with access to the project's GitLab repository (`sdp.ms.wits.ac.za`)
+- **Git**, with access to the project's Gitea repository (`sdp.ms.wits.ac.za`)
 - **Python 3** — only if you're running `apps/optimizer` (the MILP lineup optimizer)
 
 ## 1. Clone the repo

@@ -34,7 +34,7 @@ Unlike a project that imports a user's own account from a third-party service (e
 ## Secrets management
 
 - No secret (API keys, database credentials, tokens) is ever committed — enforced by a pre-commit check and a CI secret scanner (`gitleaks`/`trufflehog`) on every PR, per [Git Methodology](git-methodology.md).
-- All secrets live in GitLab CI/CD variables or host environment variables, never in `.env` files that are tracked in git (`.env` is gitignored; `.env.example` documents required variables without values).
+- All secrets live in Gitea Actions secrets or host environment variables, never in `.env` files that are tracked in git (`.env` is gitignored; `.env.example` documents required variables without values). A runner-registration token was briefly committed in `docker-compose.yml` and has since been moved out — see the Gitea Actions runner setup commit for the fix.
 - If a secret is ever committed by mistake, the fix is **rotate the credential**, not just remove it from the latest commit — it remains in git history otherwise.
 
 ## Transport and API hardening

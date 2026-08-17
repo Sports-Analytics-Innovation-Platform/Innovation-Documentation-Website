@@ -4,7 +4,7 @@ A story or task is not "done" when the code runs on someone's laptop. It's done 
 
 A story is **Done** when:
 
-1. **Code is reviewed and merged** via a GitLab merge request against `main`, with at least one team-member approval (see [Git Methodology](git-methodology.md)).
+1. **Code is reviewed and merged** via a Gitea pull request against `main`, with at least one team-member approval (see [Git Methodology](git-methodology.md)).
 2. **Tests are written and passing in CI** — unit tests at minimum; integration or E2E tests where the change touches an API route or a critical user journey (auth, import, optimiser run).
 3. **Documentation is updated** — the relevant page on this docs site, the OpenAPI spec, or an ADR, as appropriate to the change. A feature isn't done if the docs site doesn't reflect it.
 4. **Accessibility is checked**, if the change touches UI — keyboard navigation works, and `axe-core` reports no new critical/serious violations.
