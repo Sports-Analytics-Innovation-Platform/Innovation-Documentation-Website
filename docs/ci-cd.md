@@ -9,32 +9,49 @@ Before this workflow existed there was no CI of any kind in the repo — no `.gi
 
 ## What runs
 
-Two **independent, parallel jobs** — `api` and `web` — because the monorepo root `package.json` does not use npm workspaces (it drives sub-apps via `--prefix` scripts) and each app carries its own `package-lock.json`. Separate lockfiles mean separate installs, so a shared job would be a lie about the dependency graph.
+**Three independent, parallel jobs**: `api`, `web`, and `coverage`. None of them declares `needs:`, so all three start together — a lint failure in `api` does **not** skip the coverage run, and you get every failure from a single push instead of discovering them one job at a time.
 
-Each job runs the same three stages, in order: **lint → typecheck → test**.
+| Job | Display name | Timeout | What it does |
+|---|---|---|---|
+| `api` | *API — lint, typecheck* | 15 min | Static checks on `apps/api` |
+| `web` | *Web — lint, typecheck* | 15 min | Static checks on `apps/web` |
+| `coverage` | *API and Web — test coverage* | 20 min | Runs both test suites against a real Postgres, merges the reports, uploads the artifact |
+
+`api` and `web` are split rather than merged because the monorepo root `package.json` does not use npm workspaces (it drives sub-apps via `--prefix` scripts) and each app carries its own `package-lock.json`. Separate lockfiles mean separate installs, so a shared job would be a lie about the dependency graph. Each sets `defaults.run.working-directory` to its own app.
+
+The `coverage` job is the exception: it needs *both* apps installed in one workspace so the combined report can be built, so it uses `npm ci --prefix` per app instead of a working directory.
+
+### Static checks
 
 | Stage | `apps/api` | `apps/web` |
 |---|---|---|
 | Install | `npm ci` | `npm ci` |
-| Codegen | `npx prisma generate` | — |
-| Lint | `npm run lint` (ESLint 10, flat config) | `npm run lint` (oxlint + `.oxlintrc.json`) |
-| Typecheck | `npx tsc --noEmit` | `npx tsc -b --noEmit` |
-| Test | `npm test -- --passWithNoTests` (Vitest) | `npm run test --if-present` |
+| Codegen | `npm run prisma:generate` | — |
+| Lint | `npm run lint`, behind an `eslint.config.*` probe (see below) | `npm run lint` (oxlint + `.oxlintrc.json`) |
+| Typecheck | `npx tsc --noEmit -p tsconfig.json` | `npx tsc -b --noEmit` |
 
-Runner: `ubuntu-latest`, `actions/checkout@v4`, `actions/setup-node@v4` pinned to **Node 24** (matching the team's local Node v24.14.0 / npm 11.9.0). Each job has `timeout-minutes: 15`.
+### Coverage
+
+The `coverage` job runs, in order: install API deps → install web deps → `npm run prisma:generate --prefix apps/api` → `npm run test:cov --prefix apps/api` → `npm run test:cov --prefix apps/web` → `npm run coverage:report` (root script, merging both) → upload the `coverage-report` directory as a build artifact.
+
+Runner: all three jobs use `runs-on: default` — the label the Wits `act_runner` actually registers, not GitHub's `ubuntu-latest`. `actions/checkout@v4` and `actions/setup-node@v4` pinned to **Node 24** (matching the team's local Node v24.14.0 / npm 11.9.0).
 
 Abridged shape of the workflow — the real file is the authority:
 
 ```yaml
-on: [push, pull_request]
+name: CI
+
+on:
+  push:
+  pull_request:
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  api:  # runs in parallel with `web`
-    runs-on: ubuntu-latest
+  api:
+    runs-on: default
     timeout-minutes: 15
     defaults:
       run:
@@ -45,10 +62,49 @@ jobs:
         with:
           node-version: 24
       - run: npm ci
-      - run: npx prisma generate     # prerequisite of the typecheck, made explicit
-      - run: npm run lint
-      - run: npx tsc --noEmit
-      - run: npm test -- --passWithNoTests
+      - run: npm run prisma:generate   # prerequisite of the typecheck, made explicit
+      - run: |                         # lint, guarded — see "the two pre-existing gaps"
+          if ls eslint.config.* 2>/dev/null; then npm run lint; else echo "::warning::..."; fi
+      - run: npx tsc --noEmit -p tsconfig.json
+
+  web:
+    runs-on: default
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: apps/web
+    steps: [checkout, setup-node@24, npm ci, npm run lint, npx tsc -b --noEmit]
+
+  coverage:
+    runs-on: default
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env: { POSTGRES_USER: postgres, POSTGRES_PASSWORD: postgres, POSTGRES_DB: nba_analytics_test }
+        options: >-
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/nba_analytics_test?schema=public
+      BETTER_AUTH_SECRET: ci-secret-not-for-production-use
+      BETTER_AUTH_URL: http://localhost:4000
+      WEB_ORIGIN: http://localhost:5173
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - run: npm ci --prefix apps/api
+      - run: npm ci --prefix apps/web
+      - run: npm run prisma:generate --prefix apps/api
+      - run: npm run test:cov --prefix apps/api
+      - run: npm run test:cov --prefix apps/web
+      - run: npm run coverage:report
+      - uses: actions/upload-artifact@v3.2.2   # not v4 — see "Gitea version constraints"
+        with:
+          name: coverage-report
+          path: coverage-report
+          if-no-files-found: error
 ```
 
 ## Why it's built this way
@@ -56,11 +112,39 @@ jobs:
 Each of these is a decision that changes behaviour, not a style preference.
 
 - **Split by app, not one job.** Two lockfiles, two dependency trees, two toolchains (ESLint vs oxlint, TS 5.9 vs TS 6.0). Running them in parallel also means a web-only failure doesn't hide behind a slow API install.
+- **Coverage is its own job, not a stage inside `api` and `web`.** Tests are the slow, stateful part — they need a database container and a 20-minute budget. Keeping them separate means the fast static checks report back in a couple of minutes instead of queueing behind Postgres coming up, and the combined report can only be built somewhere both apps are installed.
 - **`concurrency` with `cancel-in-progress`.** A newer push supersedes an in-flight run. This matters specifically because the Gitea runner is shared and self-hosted — stale runs queueing behind each other cost everyone else wall-clock time.
-- **npm caching is deliberately omitted.** `setup-node`'s `cache: npm` routes through `@actions/cache`, whose restore errors reach `core.setFailed` — so if the `act_runner` cache server is unreachable, the step *fails* rather than degrading to an uncached install. The Wits runner's cache configuration couldn't be inspected, so the pipeline was built to work unconditionally rather than to save ~45s. The workflow carries a commented-out block to enable caching once the runner's cache server is confirmed.
-- **`prisma generate` is an explicit step.** The API typecheck genuinely cannot pass without a generated Prisma client, so it's a visible step rather than an implicit reliance on npm's `postinstall` side-effect. It needs **no database and no `DATABASE_URL`** — it reads `schema.prisma` only, which is why CI needs no Postgres service container.
-- **`--noEmit` for API, `tsc -b` for web.** The API's `build` script emits to `dist/`, so the check uses `--noEmit` to typecheck without producing artifacts. `apps/web/tsconfig.json` is solution-style (`files: []` plus `references`), so `tsc -b` is mandatory — a plain `tsc --noEmit` there would check *nothing* and pass silently.
+- **npm caching is deliberately omitted.** `setup-node`'s `cache: npm` routes through `@actions/cache`, whose restore errors reach `core.setFailed` — so if the `act_runner` cache server is unreachable, the step *fails* rather than degrading to an uncached install. The pipeline was built to work unconditionally rather than to save ~45s. The workflow carries the exact commented-out block to enable it (`cache: npm` plus `cache-dependency-path: apps/api/package-lock.json`) once the runner's cache server is confirmed.
+- **`prisma generate` is an explicit step**, in both the `api` job and the `coverage` job. The API typecheck genuinely cannot pass without a generated Prisma client — `src/` references model fields, so `tsc` fails outright — so it's a visible step rather than an implicit reliance on npm's `postinstall` side-effect. Generation itself needs **no database**: it reads `schema.prisma` only. Postgres is needed by the *tests*, not by codegen, which is why the `api` job has no service container.
+- **`--noEmit` for API, `tsc -b` for web.** The API's `build` script emits to `dist/`, so the check uses `--noEmit -p tsconfig.json` to typecheck without producing artifacts. `apps/web/tsconfig.json` is solution-style (`files: []` plus `references` to the app and node projects), so `tsc -b` is mandatory — a plain `tsc --noEmit` there would check *nothing* and pass silently.
 - **No CD stages.** Scope was CI only, and there is no deploy target: production hosting is still undecided (see [ADR-003](decisions/adr-003-hosting-topology.md)). Deployment stages get added when a host exists, not before.
+
+## The test database
+
+The API e2e suite needs a real, disposable Postgres, so the `coverage` job declares a `postgres:16-alpine` **service container** with `POSTGRES_DB: nba_analytics_test` and a `pg_isready` healthcheck (10s interval, 5s timeout, 5 retries) so steps don't start against a database that isn't listening yet.
+
+!!! warning "The connection string uses `postgres:5432`, not `localhost`"
+    Jobs on this runner execute **inside containers**, not directly on the host. That puts the job and the service on the same container network, so the service is reached by its **hostname** (`postgres`) on its **normal container port** (5432) — there is no host port mapping to go through. Copying `localhost:5432` in from a GitHub-hosted example is the classic way to break this job.
+
+Four environment variables are set at job level, so every step in the job sees them:
+
+| Variable | Value | Why |
+|---|---|---|
+| `DATABASE_URL` | `postgresql://postgres:postgres@postgres:5432/nba_analytics_test?schema=public` | Points Prisma at the service container |
+| `BETTER_AUTH_SECRET` | `ci-secret-not-for-production-use` | BetterAuth refuses to boot without one. The value is deliberately a self-documenting dummy — it is **not** a secret, is not read from Gitea Actions secrets, and must never be reused outside CI (see [Security](security.md)) |
+| `BETTER_AUTH_URL` | `http://localhost:4000` | The API's own origin, as the test process sees it |
+| `WEB_ORIGIN` | `http://localhost:5173` | CORS origin the API expects from the Vite dev server |
+
+Note that the workflow itself runs **no migration step** — no `prisma migrate deploy`, no `db push`. Applying the schema to the fresh container is the test harness's responsibility, not the pipeline's. If the e2e suite ever starts failing on missing tables, that's the thing to check first.
+
+## Gitea version constraints
+
+Two places where the workflow is shaped by the server, not by preference:
+
+- **`actions/upload-artifact` is pinned to `v3.2.2`, not `v4`.** The Gitea instance is **1.24.7**, which implements the *legacy* artifact protocol. `upload-artifact@v4` talks to a v4 backend and needs a patched action to work against Gitea at all. Staying on v3 keeps the step working with the stock action; revisit when the server is upgraded.
+- **`runs-on: default`.** Self-hosted `act_runner` instances register whatever labels their config gives them, and this one registers `default`. `ubuntu-latest` would simply never be picked up.
+
+`if-no-files-found: error` on the upload is a deliberate choice: if `coverage:report` silently produces nothing, the job fails instead of uploading an empty artifact and reporting green.
 
 ## Handling the two pre-existing gaps
 
@@ -69,11 +153,12 @@ The repo had two gaps at the time CI was introduced, both handled inside the wor
 **1. `apps/api` had no ESLint config.** `npm run lint` failed outright with *"ESLint couldn't find an eslint.config.(js|mjs|cjs) file"*. Rather than blanket `continue-on-error` (which masks genuine failures forever) or a hard fail (a red pipeline on arrival for a pre-existing gap), the lint step **probes for `eslint.config.*`**: if absent it emits a `::warning::` and passes; if present it runs the real lint and lets a non-zero exit propagate.
 
 !!! success "The lint guard is now enforcing, not warning"
-    `apps/api/eslint.config.js` has since been added (see below), so the guard takes its live branch. **A lint error now fails the build.** The warning branch remains only as a safety net.
+    `apps/api/eslint.config.js` has since been added (see below), so the guard takes its live branch. **A lint error now fails the build.** The warning branch remains only as a safety net, and its message spells out the fix for anyone who hits it.
 
-**2. No test files existed anywhere in either `src` tree.** The API's `vitest run` exited 1 with *"No test files found"*. The API step passes `--passWithNoTests`; the web step uses `npm run test --if-present`, which self-activates the moment a `test` script is added to `apps/web/package.json`.
+**2. No test files existed anywhere in either `src` tree**, so the API's `vitest run` exited 1 with *"No test files found"* and the API step was given `--passWithNoTests` as a temporary accommodation.
 
-`--passWithNoTests` tolerates **zero** tests, not *failing* tests — this was verified by injecting a deliberately failing probe test, confirming exit 1, then removing it. It is a temporary accommodation: see [Open items](#open-items).
+!!! success "`--passWithNoTests` has been retired"
+    Tests now exist. The `api` and `web` jobs no longer run tests at all — the `coverage` job runs `npm run test:cov` in both apps against a real database, with no tolerance flag. An empty or failing suite now fails the pipeline.
 
 ## The API ESLint config
 
@@ -88,28 +173,50 @@ Adding CI surfaced that `apps/api` was missing its lint config entirely. Fixing 
 
 Across the whole API source that left exactly **one** genuine error: an unused `cors` import in `apps/api/src/main.ts`, since deleted. It was verified dead first — `cors` appears nowhere else in `src/`, and CORS is actually configured through Nest's built-in `app.enableCors({...})` at `main.ts:19`.
 
-## Current status
+## What each job enforces
 
-| Stage | API before CI work | API now | Web |
-|---|---|---|---|
-| Lint | ❌ no config | ✅ exit 0 | ✅ exit 0 |
-| Typecheck | ✅ (on a clean install) | ✅ exit 0 | ✅ exit 0 |
-| Test | ❌ exit 1 (no test files) | ✅ exit 0 (no tests yet) | ✅ exit 0 (no test script yet) |
+| Check | Enforced? | Notes |
+|---|---|---|
+| API lint | ✅ | Live branch of the guard; a lint error fails the build |
+| API typecheck | ✅ | `tsc --noEmit`, after Prisma codegen |
+| Web lint | ✅ | oxlint |
+| Web typecheck | ✅ | `tsc -b` — solution-style config, build mode required |
+| API tests | ✅ | Against a real Postgres service container |
+| Web tests | ✅ | |
+| Combined coverage report | ⚠️ produced, **not gated** | The report is built and uploaded; nothing fails on a low coverage number |
 
-Green here means *"the pipeline runs and the code is clean"* — it does **not** yet mean *"the code is tested."* No test files exist in either app. Treat a green test stage as a placeholder until real suites land.
+That last row is the one to read carefully. CI proves the suites **run and pass**; it does not yet enforce any coverage floor. Download the `coverage-report` artifact from the run to see the actual numbers — a green `coverage` job on its own says nothing about how much of the code is exercised.
 
 ## What CI does not do yet
 
 Other pages on this site describe CI steps that are planned but **not in `ci.yml` today**. Stated plainly so nobody assumes coverage that doesn't exist:
 
-- **No build step.** Lint, typecheck, and test only.
+- **No build step.** Lint, typecheck, and test only — nothing verifies that `apps/api` or `apps/web` actually builds.
+- **No coverage threshold.** See above: reported, not gated.
 - **No secret scanning.** [Git Methodology](git-methodology.md) and [Security](security.md) describe `gitleaks`/`trufflehog` as a PR backstop — that's the intent, not yet the implementation. The manual pre-commit check is currently the only line of defence.
 - **No `axe-core` accessibility checks.** [Requirements Traceability](requirements.md) lists these for `apps/web`; they aren't wired up.
 - **No deployment.** CI only — see the "No CD stages" note above.
 
 ## Local parity
 
-CI runs the same commands you can run locally, with one wrinkle worth knowing.
+CI runs the same commands you can run locally, with two wrinkles worth knowing.
+
+To reproduce the `coverage` job you need a Postgres to point at, and the same four environment variables the job sets. Locally the host *is* `localhost` (you are not inside the runner's container network), so the connection string differs from the one in the workflow:
+
+```bash
+docker run --rm -d --name nba-test-db -p 5432:5432 \
+  -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=nba_analytics_test postgres:16-alpine
+
+export DATABASE_URL='postgresql://postgres:postgres@localhost:5432/nba_analytics_test?schema=public'
+export BETTER_AUTH_SECRET='local-dev-only'
+export BETTER_AUTH_URL='http://localhost:4000'
+export WEB_ORIGIN='http://localhost:5173'
+
+npm run test:cov --prefix apps/api
+npm run test:cov --prefix apps/web
+npm run coverage:report        # writes ./coverage-report
+```
 
 !!! warning "Phantom typecheck errors from a stale local install"
     A local `apps/api` checkout that predates recent dependency additions produces ~19 bogus errors — `Cannot find module '@nestjs/passport'`, `'bcryptjs'`, `'passport'` — for packages that *are* declared in `package.json`, plus missing Prisma model fields (e.g. `passwordHash`, declared at `schema.prisma:24`, absent from the generated client).
@@ -130,12 +237,13 @@ CI runs the same commands you can run locally, with one wrinkle worth knowing.
 
 Tracked here rather than lost in a chat log:
 
-1. **Verify the `ubuntu-latest` runner label** against the Gitea runner's actual registration. This is the single most likely line to need changing on first run — self-hosted `act_runner` instances often register different labels.
-2. **Enable npm caching** via the commented-out block once the runner's cache server is confirmed reachable.
-3. **Drop `--passWithNoTests`** as soon as real API tests land, so an accidentally-empty run fails instead of quietly passing.
-4. **Remove the now-unused `cors` dependency** (`apps/api/package.json:32`). Deliberately deferred: it touches the lockfile, so it belongs in its own change.
-5. **Consider stricter linting** by swapping to `recommendedTypeChecked` + `projectService`. Expect considerably more findings — worth its own pass rather than bundling into unrelated work.
-6. **Add the missing stages** as they become real: build, secret scanning, `axe-core`, and eventually CD once hosting is decided.
+1. **Enable npm caching** via the commented-out block once the runner's cache server is confirmed reachable. This is now the only remaining runner-environment unknown — the `runs-on` label question is settled (`default`).
+2. **Move to `actions/upload-artifact@v4`** once the Gitea server is upgraded past 1.24.7 and exposes the v4 artifact backend.
+3. **Gate on coverage.** Add a threshold so the `coverage` job fails below an agreed floor, instead of only proving the suites pass. Agree the number first — a threshold set above current coverage lands as an immediately-red pipeline.
+4. **Confirm where the test schema comes from.** The workflow runs no migration against the service container; if that is handled by the test harness it should be stated in the testing docs, and if it isn't, the job needs a `prisma migrate deploy` step.
+5. **Remove the now-unused `cors` dependency** (`apps/api/package.json:32`). Deliberately deferred: it touches the lockfile, so it belongs in its own change.
+6. **Consider stricter linting** by swapping to `recommendedTypeChecked` + `projectService`. Expect considerably more findings — worth its own pass rather than bundling into unrelated work.
+7. **Add the missing stages** as they become real: build, secret scanning, `axe-core`, and eventually CD once hosting is decided.
 
 ---
 
