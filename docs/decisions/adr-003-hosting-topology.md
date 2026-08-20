@@ -2,14 +2,14 @@
 
 - **Status:** Proposed — awaiting team review before acceptance. Do not
   implement until the team has signed off (see
-  [`GIT_METHODOLOGY.md`](../GIT_METHODOLOGY.md), "Requirements for merging").
+  `GIT_METHODOLOGY.md`, "Requirements for merging").
 - **Date:** 2026-08-19
 - **Updated:** 2026-08-19 — database moved from Azure PostgreSQL Flexible
   Server to Supabase; frontend moved to Cloudflare Pages; API and batch jobs
   moved to Render after Azure for Students' region policy blocked Azure Static
   Web Apps and Fly.io's free tier proved unreliable for long-running always-on
   compute.
-- **Fills:** the `ADR-003` stub referenced in [`README.md`](../../README.md)
+- **Fills:** the `ADR-003` stub referenced in `README.md`
   ("production deployment/hosting generally — not decided") and on the public
   docs site's *Decisions* section.
 
@@ -28,7 +28,7 @@ deployed anywhere yet. Locally everything is run by hand:
 | CI | Gitea Actions (`sdp.ms.wits.ac.za`) | Lint/typecheck/test; **no deploy stage** |
 
 Two things about the API are decisive for hosting, and both come straight from
-[`apps/api/src/main.ts`](../../apps/api/src/main.ts):
+`apps/api/src/main.ts`:
 
 1. **It is a long-running server, not a stateless function.** `main.ts` builds a
    plain `express()` instance, mounts `helmet`, `cors`, the BetterAuth handler
@@ -104,7 +104,7 @@ data, per the brief.
 | Layer | Service | Why this service |
 |---|---|---|
 | Frontend SPA | Cloudflare Pages | `apps/web` builds to static `dist/`. Cloudflare Pages gives a global CDN, managed TLS, custom domain support, and a generous free tier. The repo is on Gitea, so deploy is a local build followed by Wrangler CLI upload or dashboard drag-and-drop — no Git-provider integration required. |
-| NestJS API | Render Web Service (Node.js runtime, free plan) | Render's free plan spins the API down after 15 minutes of inactivity; the team has accepted the resulting ~30-second cold start. BetterAuth sessions are stored in Supabase, so they survive a cold start. Render's Blueprint ([`render.yaml`](../../render.yaml)) declares the service and build/start commands. Prisma migrations must be run manually (or from CI) because `preDeployCommand` is not available on Render's free tier. |
+| NestJS API | Render Web Service (Node.js runtime, free plan) | Render's free plan spins the API down after 15 minutes of inactivity; the team has accepted the resulting ~30-second cold start. BetterAuth sessions are stored in Supabase, so they survive a cold start. Render's Blueprint (`render.yaml`) declares the service and build/start commands. Prisma migrations must be run manually (or from CI) because `preDeployCommand` is not available on Render's free tier. |
 | Postgres | Supabase (managed Postgres) | Managed Postgres with a generous free tier and built-in connection pooling. Supabase's auto REST/Auth/Storage APIs are deliberately unused — the NestJS API stays the only HTTP path to the data, per the brief. Reached over TLS via the pooled connection string. |
 | Python batch apps | Render Cron Job or Background Worker | `apps/ingestion`/`optimizer`/`predictor` are scripts that write straight to Postgres. They run on a schedule (Render Cron) or as an always-on/off Worker — no long-running web server needed, and they stay off the API's HTTP path as the brief requires. |
 | Secrets | Render env vars + Cloudflare Pages env vars | `DATABASE_URL`, `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, and `WEB_ORIGIN` are set in the Render Dashboard for the API and via the Cloudflare Pages dashboard for the build-time `VITE_API_BASE_URL`. They are never in the repo or the image. |
@@ -207,8 +207,8 @@ benefits with a simpler Gitea-compatible deploy path, so Vercel was not chosen.
 - Prisma migrations: on the free tier Render does not run `preDeployCommand`,
   so `npx prisma migrate deploy` must be run manually or from a Gitea Actions
   workflow before the API deploy.
-- Updating [`PROJECT_OVERVIEW.md`](../PROJECT_OVERVIEW.md) "Known gaps" and
-  [`README.md`](../../README.md) to mark hosting as decided once accepted.
+- Updating `PROJECT_OVERVIEW.md` "Known gaps" and
+  `README.md` to mark hosting as decided once accepted.
 
 ## Open questions for the team
 
@@ -225,12 +225,12 @@ benefits with a simpler Gitea-compatible deploy path, so Vercel was not chosen.
 
 ## References
 
-- [`apps/api/src/main.ts`](../../apps/api/src/main.ts) — the Express/BetterAuth
+- `apps/api/src/main.ts` — the Express/BetterAuth
   bootstrap that drives the long-running-server requirement.
-- [`render.yaml`](../../render.yaml) — the Render Blueprint for the API.
-- [`docker-compose.yml`](../../docker-compose.yml) — local Postgres setup this
+- `render.yaml` — the Render Blueprint for the API.
+- `docker-compose.yml` — local Postgres setup this
   parallels.
-- [`docs/PROJECT_OVERVIEW.md`](../PROJECT_OVERVIEW.md) — tech stack and the
+- `docs/PROJECT_OVERVIEW.md` — tech stack and the
   "Production deployment — not done" known gap.
-- [`docs/GIT_METHODOLOGY.md`](../GIT_METHODOLOGY.md) — review gate this ADR's
+- `docs/GIT_METHODOLOGY.md` — review gate this ADR's
   *Proposed* status respects.

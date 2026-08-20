@@ -66,3 +66,5 @@ nav:
       - Overview: meetings/index.md
       - Client Meetings: meetings/client/index.md
       - Scrum Meetings: meetings/scrum/index.md
+      - Meeting Template: meetings/_template.md
+      - How to Summarise: meetings/how-to-summarize.md
