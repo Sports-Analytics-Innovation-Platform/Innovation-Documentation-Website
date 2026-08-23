@@ -8,20 +8,17 @@ Sign in is implemented via **BetterAuth** with **Google OAuth** (see [Tech Stack
     The brief requires sign up, sign in, **password reset**, and account deletion (§2.1, verbatim). Google-OAuth-only sign-in has no password on our side to reset. This needs to be resolved — either confirmed with the client/tutor as satisfied by "reset via your Google account," or a second sign-in path added. See [ADR-002](decisions/adr-002-auth.md) for the full detail. Don't let this surface for the first time in a Milestone 4 demo.
 
 - Account deletion cascades through `Session` and `Account` rows tied to a `User`, satisfying the brief's requirement that users can delete their account, not just deactivate it.
-- Session tokens, IP address, and user agent are tracked per `Session` row (BetterAuth's default schema) — useful for a "sign out of all devices" feature if the team wants one, not yet built.
+- Session tokens, IP address, and user agent are tracked per `Session` row (BetterAuth's default schema) — useful for a "sign out of all devices" feature if the team wants one.
 
 ## Authorization
 
-If the project needs write access for approved users to submit or manage statistics (per the brief's Sport Analytics Tool description), role-based access should be enforced **in our own API middleware/guards**, not left to the database or a third-party service to decide. A proposed role set:
+Role-based access control is implemented via NestJS guards. The schema defines four roles (`PUBLIC`, `USER`, `ANALYST`, `ADMIN`) with `role` defaulting to `USER` and marked non-writable in the BetterAuth config so a Google profile can't grant itself elevated access.
 
-| Role | Can do |
-|---|---|
-| `public` | Read-only access to player/team/stat endpoints, no account needed |
-| `user` | Same as public, plus saved preferences/favourites if we build that |
-| `analyst` / `admin` | Submit or correct statistics, manage data quality flags |
-
-!!! note "Not yet confirmed"
-    This role table is a proposed design, not a decided one — confirm with the team whether write-access roles are actually in scope before treating this as final, and update this page once they are.
+| Role | Can do | Status |
+|---|---|---|
+| `public` | Read-only access to player/team/stat endpoints, no account needed | Implemented — player and team endpoints have no auth guard |
+| `user` | Access to predictions, games, and optimizer endpoints (auth-gated) | Implemented — `SessionAuthGuard` on games, predictions, optimizer |
+| `analyst` / `admin` | Submit or correct statistics, manage data quality flags | Schema exists, not yet used by any endpoint |
 
 ## Third-party data and credentials
 
@@ -30,24 +27,28 @@ Unlike a project that imports a user's own account from a third-party service (e
 ## Secrets management
 
 - No secret (API keys, database credentials, tokens) is ever committed — enforced by a pre-commit check per [Git Methodology](git-methodology.md). A CI secret scanner (`gitleaks`/`trufflehog`) on every PR is the intended backstop but is **not yet in the pipeline** ([CI/CD Pipeline](ci-cd.md)), so the manual check is currently the only control.
-- All secrets live in Gitea Actions secrets or host environment variables, never in `.env` files that are tracked in git (`.env` is gitignored; `.env.example` documents required variables without values).
+- All secrets live in Gitea Actions secrets, Render environment variables, or Cloudflare Pages environment variables — never in `.env` files that are tracked in git (`.env` is gitignored; `.env.example` documents required variables without values).
 - If a secret is ever committed by mistake, the fix is **rotate the credential**, not just remove it from the latest commit — it remains in git history otherwise.
 
 ## Transport and API hardening
 
+Implemented:
+
+- **HTTPS/TLS** — Cloudflare Pages provides managed TLS for the frontend. Render provides managed TLS for the API. Supabase connections use TLS via the pooled connection string.
+- **CORS** — configured in `apps/api/src/main.ts` with `credentials: true` and `origin: process.env.WEB_ORIGIN`, restricting cross-origin requests to the known frontend domain(s).
+
 Not yet implemented — tracked here so it isn't forgotten before Milestone 4:
 
-- **HTTPS/TLS** on whatever production host is chosen (see [Tech Stack](tech-stack.md) — hosting isn't decided yet).
-- **Rate limiting** on public API endpoints, both to protect our own DB and because `nba_api` itself depends on stats.nba.com not banning our IP for excessive scraping — see the ingestion note below.
-- **Security headers** (e.g. `helmet` middleware in NestJS) — CSP, HSTS, X-Frame-Options, etc.
+- **Rate limiting** on public API endpoints, both to protect our own DB and because `nba_api` itself depends on stats.nba.com not banning our IP for excessive scraping — see the ingestion risk section below.
+- **Security headers** (e.g. `helmet` middleware in NestJS) — CSP, HSTS, X-Frame-Options, etc. Note: `helmet` is already imported in `main.ts` but the full header suite should be verified in production.
 - **Input validation** on every endpoint (NestJS `ValidationPipe`/DTOs), especially any endpoint that accepts analyst/admin-submitted stat corrections.
 
 ## Data ingestion risk
 
 `nba_api` is an **unofficial** client for `stats.nba.com` — it can break or get rate-limited without warning. This isn't a security hole in our own system, but it is an availability risk worth documenting here since a scraping ban would look identical to an attack from the outside if it isn't understood:
 
-- Pull and cache the data we need locally/in our own DB early, rather than hitting `stats.nba.com` live on every user request.
-- Any scheduled ingestion job should throttle its own request rate rather than assuming the upstream API will do it for us.
+- Pull and cache the data we need locally/in our own DB early, rather than hitting `stats.nba.com` live on every user request. The ingestion service (`apps/ingestion`) already does this — data is fetched into Postgres, and the API reads from Postgres.
+- Any scheduled ingestion job should throttle its own request rate rather than assuming the upstream API will do it for us. The ingestion service includes a `throttle.py` module for this purpose.
 
 ---
 

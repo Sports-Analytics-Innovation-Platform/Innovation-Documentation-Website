@@ -827,10 +827,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#sprint-1-infra-foundation-due-2026-08-25" class="md-nav__link">
+  <a href="#sprint-1-infra-foundation-due-2026-08-25-complete" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sprint 1 — infra &amp; foundation (due 2026-08-25)
+        Sprint 1 — infra &amp; foundation (due 2026-08-25) — COMPLETE
       
     </span>
   </a>
@@ -838,10 +838,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#sprint-2-real-data-first-prediction-model-due-2026-09-15" class="md-nav__link">
+  <a href="#sprint-2-real-data-expanded-features-due-2026-09-15" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sprint 2 — real data + first prediction model (due 2026-09-15)
+        Sprint 2 — real data + expanded features (due 2026-09-15)
       
     </span>
   </a>
@@ -1631,10 +1631,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#sprint-1-infra-foundation-due-2026-08-25" class="md-nav__link">
+  <a href="#sprint-1-infra-foundation-due-2026-08-25-complete" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sprint 1 — infra &amp; foundation (due 2026-08-25)
+        Sprint 1 — infra &amp; foundation (due 2026-08-25) — COMPLETE
       
     </span>
   </a>
@@ -1642,10 +1642,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#sprint-2-real-data-first-prediction-model-due-2026-09-15" class="md-nav__link">
+  <a href="#sprint-2-real-data-expanded-features-due-2026-09-15" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sprint 2 — real data + first prediction model (due 2026-09-15)
+        Sprint 2 — real data + expanded features (due 2026-09-15)
       
     </span>
   </a>
@@ -1715,36 +1715,64 @@
 <p class="admonition-title">Unblocked</p>
 <p>Same source as <a href="../feature-tiers/">Feature Tiers</a> — the team's plain-English answer on what the ML component does. This maps those tiers onto the brief's actual sprint dates.</p>
 </div>
-<div class="admonition warning">
-<p class="admonition-title">Draft, not assigned</p>
-<p>This is a proposed sequencing, not a committed plan — it doesn't assign individual owners (that needs the team's own input, e.g. via <code>team-questions.md</code>), and it isn't confirmed against your actual velocity so far in Sprint 1.</p>
-</div>
-<h2 id="sprint-1-infra-foundation-due-2026-08-25">Sprint 1 — infra &amp; foundation (due 2026-08-25)<a class="headerlink" href="#sprint-1-infra-foundation-due-2026-08-25" title="Permanent link">&para;</a></h2>
-<p>Already largely covered by what's built: NestJS/Prisma/Postgres backend, React/Vite/Tailwind frontend, BetterAuth migration, TanStack Query + shadcn/ui, Vitest test suites, CI/CD. Remaining for this sprint:</p>
+<h2 id="sprint-1-infra-foundation-due-2026-08-25-complete">Sprint 1 — infra &amp; foundation (due 2026-08-25) — COMPLETE<a class="headerlink" href="#sprint-1-infra-foundation-due-2026-08-25-complete" title="Permanent link">&para;</a></h2>
+<p>Sprint 1 delivered a working increment across the full stack:</p>
+<p><strong>Backend &amp; data</strong>
+- NestJS/Prisma/Postgres API with BetterAuth (Google OAuth) migration
+- <code>nba_api</code> ingestion service (<code>apps/ingestion</code>) — fetches teams, rosters, games, and box scores
+- GamePrediction model + predictor service (Elo win probability, Four Factors margin)
+- <code>GET /v1/games/:id/prediction</code> endpoint with e2e tests
+- Fantasy-lineup optimizer (<code>apps/optimizer</code>) with MILP solve
+- Player and team search endpoints
+- Authenticated route and API protection (predictions, games, optimizer)
+- Real team logos and player headshots from nba.com's CDN
+- Player bio fields from CommonPlayerInfo endpoint</p>
+<p><strong>Frontend</strong>
+- React/Vite/Tailwind frontend with TanStack Query + shadcn/ui
+- Teams list and profile pages
+- Predictions page with court view visualisation
+- Game detail page with win probability and predicted top scorers
+- Optimizer page (auth-gated)
+- Top navbar replacing sidebar navigation
+- Landing page with hero section</p>
+<p><strong>Infrastructure &amp; CI/CD</strong>
+- Gitea Actions CI pipeline (lint, typecheck, test coverage)
+- Code coverage reporting with combined HTML dashboard
+- ADR-003: hosting topology decided (Cloudflare Pages + Render + Supabase)
+- API deployed to Render, frontend deployed to Cloudflare Pages
+- Gitea → GitHub mirror for auto-deploy</p>
+<p><strong>Documentation</strong>
+- MkDocs documentation site with GitHub Pages deploy
+- Full audit of all doc pages against actual codebase
+- AI/Codex usage transcripts added</p>
+<p>See the <a href="../../sprint-log/">Sprint Log</a> for the complete task-by-task record.</p>
+<h2 id="sprint-2-real-data-expanded-features-due-2026-09-15">Sprint 2 — real data + expanded features (due 2026-09-15)<a class="headerlink" href="#sprint-2-real-data-expanded-features-due-2026-09-15" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>nba_api</code> ingestion path — still the single biggest open item in <a href="../../tech-stack/">Tech Stack</a> and <a href="../architecture/">Architecture</a>. No ML work depends on this being <em>finished</em>, but it does need a plan.</li>
-<li>No ML work is expected yet — the client explicitly said (per the <a href="../../meetings/client/">client meeting notes</a>) a working model is realistic around <strong>Sprint 3</strong>, not before.</li>
-</ul>
-<h2 id="sprint-2-real-data-first-prediction-model-due-2026-09-15">Sprint 2 — real data + first prediction model (due 2026-09-15)<a class="headerlink" href="#sprint-2-real-data-first-prediction-model-due-2026-09-15" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Get <code>nba_api</code> ingestion actually flowing into Postgres (real data, not just mock seed data)</li>
-<li>Build the <strong>Basic-tier</strong> prediction: team-level matchup win-probability, trained on whatever real historical data is available by this point</li>
-<li>Redis/BullMQ, Zod, S3/MinIO — the confirmed-but-unbuilt stack items — likely belong here if the ingestion pipeline needs batch/scheduled processing</li>
+<li>Get <code>nba_api</code> ingestion flowing with real full-league data into Supabase (not just mock seed data)</li>
+<li>Swagger/OpenAPI setup for API documentation alongside this docs site</li>
+<li>Hosting topology pinger (per client meeting 2026-08-21)</li>
+<li>Database integration with signup functionality</li>
+<li><code>axe-core</code> accessibility checks in CI</li>
+<li>Redis/BullMQ, Zod if the ingestion pipeline needs batch/scheduled processing</li>
+<li>Frontend polish and responsiveness pass</li>
 </ul>
 <h2 id="sprint-3-model-maturity-due-2026-09-29">Sprint 3 — model maturity (due 2026-09-29)<a class="headerlink" href="#sprint-3-model-maturity-due-2026-09-29" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Intermediate-tier</strong> prediction: player-level predictions, predicted-vs-actual accuracy view</li>
 <li>This is the sprint the client flagged as the realistic target for "a working ML model" — treat this as the sprint where prediction quality actually needs to be defensible in a review, not just present</li>
+<li>Target accuracy: 75–80% (per client meeting), with 64% as an achievable baseline</li>
+<li>Refine prediction model beyond Elo + Four Factors as real data accumulates</li>
 </ul>
 <h2 id="submission-due-2026-10-11">Submission (due 2026-10-11)<a class="headerlink" href="#submission-due-2026-10-11" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Advanced-tier</strong> recommendation layer, if time allows — this is explicitly the highest-risk, most-optional item; the client's own guidance ("last two weeks are mostly touch-ups if ML isn't ready") suggests treating this as a stretch goal, not a commitment</li>
 <li>Polish, responsiveness/accessibility pass, final documentation pass</li>
+<li>Review client's reference project (<a href="https://github.com/Race1q/RaceIQ">RaceIQ</a>) for inspiration</li>
 </ul>
 <h2 id="still-open">Still open<a class="headerlink" href="#still-open" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Individual ownership of each sprint's work</li>
 <li>Whether the advanced-tier recommendation layer is a real commitment or an explicit stretch goal — worth deciding as a team rather than leaving implicit</li>
+<li>Individual ownership of Sprint 2/3 work (Sprint 1 was completed with initiative-based task selection per the <a href="../../methodology/">Methodology</a>)</li>
 </ul>
 <hr />
 <p><em>AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5]</em></p>

@@ -1736,57 +1736,61 @@
 </div>
 <ul>
 <li>Account deletion cascades through <code>Session</code> and <code>Account</code> rows tied to a <code>User</code>, satisfying the brief's requirement that users can delete their account, not just deactivate it.</li>
-<li>Session tokens, IP address, and user agent are tracked per <code>Session</code> row (BetterAuth's default schema) — useful for a "sign out of all devices" feature if the team wants one, not yet built.</li>
+<li>Session tokens, IP address, and user agent are tracked per <code>Session</code> row (BetterAuth's default schema) — useful for a "sign out of all devices" feature if the team wants one.</li>
 </ul>
 <h2 id="authorization">Authorization<a class="headerlink" href="#authorization" title="Permanent link">&para;</a></h2>
-<p>If the project needs write access for approved users to submit or manage statistics (per the brief's Sport Analytics Tool description), role-based access should be enforced <strong>in our own API middleware/guards</strong>, not left to the database or a third-party service to decide. A proposed role set:</p>
+<p>Role-based access control is implemented via NestJS guards. The schema defines four roles (<code>PUBLIC</code>, <code>USER</code>, <code>ANALYST</code>, <code>ADMIN</code>) with <code>role</code> defaulting to <code>USER</code> and marked non-writable in the BetterAuth config so a Google profile can't grant itself elevated access.</p>
 <table>
 <thead>
 <tr>
 <th>Role</th>
 <th>Can do</th>
+<th>Status</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>public</code></td>
 <td>Read-only access to player/team/stat endpoints, no account needed</td>
+<td>Implemented — player and team endpoints have no auth guard</td>
 </tr>
 <tr>
 <td><code>user</code></td>
-<td>Same as public, plus saved preferences/favourites if we build that</td>
+<td>Access to predictions, games, and optimizer endpoints (auth-gated)</td>
+<td>Implemented — <code>SessionAuthGuard</code> on games, predictions, optimizer</td>
 </tr>
 <tr>
 <td><code>analyst</code> / <code>admin</code></td>
 <td>Submit or correct statistics, manage data quality flags</td>
+<td>Schema exists, not yet used by any endpoint</td>
 </tr>
 </tbody>
 </table>
-<div class="admonition note">
-<p class="admonition-title">Not yet confirmed</p>
-<p>This role table is a proposed design, not a decided one — confirm with the team whether write-access roles are actually in scope before treating this as final, and update this page once they are.</p>
-</div>
 <h2 id="third-party-data-and-credentials">Third-party data and credentials<a class="headerlink" href="#third-party-data-and-credentials" title="Permanent link">&para;</a></h2>
 <p>Unlike a project that imports a user's own account from a third-party service (e.g. an FPL-style "enter your team" flow, which would mean storing that service's session cookie), our data source (<code>nba_api</code>) pulls <strong>public league data</strong> — there's no user credential from a third party to store, and no equivalent liability. Worth stating explicitly in the group report as a deliberate design point, not an oversight: we don't hold third-party credentials because the data source doesn't require them.</p>
 <h2 id="secrets-management">Secrets management<a class="headerlink" href="#secrets-management" title="Permanent link">&para;</a></h2>
 <ul>
 <li>No secret (API keys, database credentials, tokens) is ever committed — enforced by a pre-commit check per <a href="../git-methodology/">Git Methodology</a>. A CI secret scanner (<code>gitleaks</code>/<code>trufflehog</code>) on every PR is the intended backstop but is <strong>not yet in the pipeline</strong> (<a href="../ci-cd/">CI/CD Pipeline</a>), so the manual check is currently the only control.</li>
-<li>All secrets live in Gitea Actions secrets or host environment variables, never in <code>.env</code> files that are tracked in git (<code>.env</code> is gitignored; <code>.env.example</code> documents required variables without values).</li>
+<li>All secrets live in Gitea Actions secrets, Render environment variables, or Cloudflare Pages environment variables — never in <code>.env</code> files that are tracked in git (<code>.env</code> is gitignored; <code>.env.example</code> documents required variables without values).</li>
 <li>If a secret is ever committed by mistake, the fix is <strong>rotate the credential</strong>, not just remove it from the latest commit — it remains in git history otherwise.</li>
 </ul>
 <h2 id="transport-and-api-hardening">Transport and API hardening<a class="headerlink" href="#transport-and-api-hardening" title="Permanent link">&para;</a></h2>
+<p>Implemented:</p>
+<ul>
+<li><strong>HTTPS/TLS</strong> — Cloudflare Pages provides managed TLS for the frontend. Render provides managed TLS for the API. Supabase connections use TLS via the pooled connection string.</li>
+<li><strong>CORS</strong> — configured in <code>apps/api/src/main.ts</code> with <code>credentials: true</code> and <code>origin: process.env.WEB_ORIGIN</code>, restricting cross-origin requests to the known frontend domain(s).</li>
+</ul>
 <p>Not yet implemented — tracked here so it isn't forgotten before Milestone 4:</p>
 <ul>
-<li><strong>HTTPS/TLS</strong> on whatever production host is chosen (see <a href="../tech-stack/">Tech Stack</a> — hosting isn't decided yet).</li>
-<li><strong>Rate limiting</strong> on public API endpoints, both to protect our own DB and because <code>nba_api</code> itself depends on stats.nba.com not banning our IP for excessive scraping — see the ingestion note below.</li>
-<li><strong>Security headers</strong> (e.g. <code>helmet</code> middleware in NestJS) — CSP, HSTS, X-Frame-Options, etc.</li>
+<li><strong>Rate limiting</strong> on public API endpoints, both to protect our own DB and because <code>nba_api</code> itself depends on stats.nba.com not banning our IP for excessive scraping — see the ingestion risk section below.</li>
+<li><strong>Security headers</strong> (e.g. <code>helmet</code> middleware in NestJS) — CSP, HSTS, X-Frame-Options, etc. Note: <code>helmet</code> is already imported in <code>main.ts</code> but the full header suite should be verified in production.</li>
 <li><strong>Input validation</strong> on every endpoint (NestJS <code>ValidationPipe</code>/DTOs), especially any endpoint that accepts analyst/admin-submitted stat corrections.</li>
 </ul>
 <h2 id="data-ingestion-risk">Data ingestion risk<a class="headerlink" href="#data-ingestion-risk" title="Permanent link">&para;</a></h2>
 <p><code>nba_api</code> is an <strong>unofficial</strong> client for <code>stats.nba.com</code> — it can break or get rate-limited without warning. This isn't a security hole in our own system, but it is an availability risk worth documenting here since a scraping ban would look identical to an attack from the outside if it isn't understood:</p>
 <ul>
-<li>Pull and cache the data we need locally/in our own DB early, rather than hitting <code>stats.nba.com</code> live on every user request.</li>
-<li>Any scheduled ingestion job should throttle its own request rate rather than assuming the upstream API will do it for us.</li>
+<li>Pull and cache the data we need locally/in our own DB early, rather than hitting <code>stats.nba.com</code> live on every user request. The ingestion service (<code>apps/ingestion</code>) already does this — data is fetched into Postgres, and the API reads from Postgres.</li>
+<li>Any scheduled ingestion job should throttle its own request rate rather than assuming the upstream API will do it for us. The ingestion service includes a <code>throttle.py</code> module for this purpose.</li>
 </ul>
 <hr />
 <p><em>AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5]</em></p>

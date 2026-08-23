@@ -787,10 +787,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#not-yet-confirmed-not-built" class="md-nav__link">
+  <a href="#auth-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Not yet confirmed / not built
+        Auth model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#not-yet-built" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not yet built
       
     </span>
   </a>
@@ -1675,10 +1686,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#not-yet-confirmed-not-built" class="md-nav__link">
+  <a href="#auth-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Not yet confirmed / not built
+        Auth model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#not-yet-built" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not yet built
       
     </span>
   </a>
@@ -1712,12 +1734,13 @@
 
 <h1 id="api-design">API Design<a class="headerlink" href="#api-design" title="Permanent link">&para;</a></h1>
 <h2 id="confirmed-endpoints">Confirmed endpoints<a class="headerlink" href="#confirmed-endpoints" title="Permanent link">&para;</a></h2>
-<p>Confirmed directly from the backend controllers (<code>apps/api/src/players/players.controller.ts</code>, <code>teams/teams.controller.ts</code>) as of my code snapshot — not just what the frontend happens to call:</p>
+<p>Confirmed directly from the backend controllers in <code>apps/api/src/</code>:</p>
 <table>
 <thead>
 <tr>
 <th>Method</th>
 <th>Path</th>
+<th>Auth</th>
 <th>Query params</th>
 <th>Returns</th>
 </tr>
@@ -1725,44 +1748,84 @@
 <tbody>
 <tr>
 <td><code>GET</code></td>
+<td><code>/health</code></td>
+<td>None</td>
+<td>—</td>
+<td><code>{ status: "ok" }</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
 <td><code>/v1/players</code></td>
-<td><code>teamId</code>, <code>position</code>, <code>page</code>, <code>pageSize</code></td>
+<td>None (public)</td>
+<td><code>teamId</code>, <code>position</code>, <code>search</code>, <code>page</code>, <code>pageSize</code></td>
 <td><code>PagedResult&lt;Player&gt;</code></td>
 </tr>
 <tr>
 <td><code>GET</code></td>
 <td><code>/v1/players/:id</code></td>
+<td>None (public)</td>
 <td>—</td>
 <td><code>Player</code>, or <code>404 NOT_FOUND</code></td>
 </tr>
 <tr>
 <td><code>GET</code></td>
 <td><code>/v1/players/:id/stats</code></td>
+<td>None (public)</td>
 <td>—</td>
 <td><code>{ playerId, seasonAverages, gameLog }</code>, both derived at request time from <code>PlayerGameStat</code> rows</td>
 </tr>
 <tr>
 <td><code>GET</code></td>
 <td><code>/v1/teams</code></td>
-<td>(same list-query pattern as players)</td>
+<td>None (public)</td>
+<td><code>search</code>, <code>page</code>, <code>pageSize</code></td>
 <td><code>PagedResult&lt;Team&gt;</code></td>
 </tr>
 <tr>
 <td><code>GET</code></td>
 <td><code>/v1/teams/:id</code></td>
+<td>None (public)</td>
 <td>—</td>
 <td><code>Team</code>, or <code>404 NOT_FOUND</code></td>
 </tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/v1/games</code></td>
+<td><code>SessionAuthGuard</code></td>
+<td>varies</td>
+<td>Game list with predictions joined in</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/v1/games/:id</code></td>
+<td><code>SessionAuthGuard</code></td>
+<td>—</td>
+<td>Game detail with win probability, predicted margin, and predicted top scorers</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/v1/games/:id/prediction</code></td>
+<td><code>SessionAuthGuard</code></td>
+<td>—</td>
+<td><code>GamePrediction</code> (Elo win probability, Four Factors margin), or <code>404</code> if no prediction generated yet</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/v1/optimizer/lineup</code></td>
+<td><code>SessionAuthGuard</code></td>
+<td>—</td>
+<td>Latest <code>Lineup</code> with <code>LineupSlot</code> entries, or <code>404</code> if no lineup generated yet</td>
+</tr>
 </tbody>
 </table>
-<p>The team's own dev log also mentions a <code>GET /v1/games</code> endpoint added later — not yet confirmed from source, since it postdates this snapshot.</p>
+<p>BetterAuth mounts its own route set at <code>/api/auth/*</code> (sign in, sign out, session management, Google OAuth redirect). These are not hand-written NestJS controllers — they are managed by the BetterAuth library.</p>
 <p>All requests go through a single wrapper (<code>apiClient.ts</code>):</p>
-<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">API_BASE_URL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/api&quot;</span><span class="p">;</span>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">API_BASE_URL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">import</span><span class="p">.</span><span class="nx">meta</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">VITE_API_BASE_URL</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s2">&quot;/api&quot;</span><span class="p">;</span>
 <span class="nx">fetch</span><span class="p">(</span><span class="sb">`</span><span class="si">${</span><span class="nx">API_BASE_URL</span><span class="si">}${</span><span class="nx">path</span><span class="si">}</span><span class="sb">`</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">credentials</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;include&quot;</span><span class="w"> </span><span class="p">})</span>
 </code></pre></div>
-<p>So the full path hit on the wire is <code>/api/v1/players</code>, etc. — <code>/api</code> is the Vite dev proxy prefix (confirmed, see <a href="../../tech-stack/">Tech Stack</a>) in front of the versioned <code>/v1/</code> routes.</p>
+<p>In dev, <code>vite.config.ts</code> proxies <code>/api/*</code> to <code>http://localhost:4000</code>. In production, <code>VITE_API_BASE_URL</code> points at the Render API URL directly.</p>
 <h2 id="response-shapes-from-typesnbats">Response shapes (from <code>types/nba.ts</code>)<a class="headerlink" href="#response-shapes-from-typesnbats" title="Permanent link">&para;</a></h2>
-<p><strong><code>PagedResult&lt;T&gt;</code></strong> — the pagination envelope used at minimum by <code>/v1/players</code>:</p>
+<p><strong><code>PagedResult&lt;T&gt;</code></strong> — the pagination envelope used by <code>/v1/players</code> and <code>/v1/teams</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"> </span><span class="nx">data</span><span class="o">:</span><span class="w"> </span><span class="kt">T</span><span class="p">[],</span><span class="w"> </span><span class="nx">page</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">,</span><span class="w"> </span><span class="nx">pageSize</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">,</span><span class="w"> </span><span class="nx">total</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="w"> </span><span class="p">}</span>
 </code></pre></div>
 <p><strong><code>Player</code></strong>:</p>
@@ -1775,21 +1838,21 @@
 <p><strong><code>PlayerStatsResponse</code></strong>:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"> </span><span class="nx">playerId</span><span class="p">,</span><span class="w"> </span><span class="nx">seasonAverages</span><span class="o">:</span><span class="w"> </span><span class="kt">SeasonAverages</span><span class="p">,</span><span class="w"> </span><span class="nx">gameLog</span><span class="o">:</span><span class="w"> </span><span class="kt">GameLogEntry</span><span class="p">[]</span><span class="w"> </span><span class="p">}</span>
 </code></pre></div>
-<p>(See <a href="../erd/">ERD</a> for the full field lists of <code>SeasonAverages</code> and <code>GameLogEntry</code> — same caveat applies: these are response shapes, not confirmed DB structure.)</p>
+<p>(See <a href="../erd/">ERD</a> for the full field lists of <code>SeasonAverages</code> and <code>GameLogEntry</code>.)</p>
 <h2 id="error-handling">Error handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h2>
 <p><strong>Confirmed from source</strong> (<code>common/api-exception.ts</code>, <code>common/all-exceptions.filter.ts</code>): every error response uses a structured envelope, applied globally:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"> </span><span class="nx">error</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">code</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">message</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
 </code></pre></div>
-<p><code>ApiException</code> bodies pass through as-is; other Nest <code>HttpException</code>s get wrapped with a generic <code>HTTP_ERROR</code> code; anything unhandled becomes a <code>500</code> with <code>INTERNAL_ERROR</code>, logged server-side. This resolves what was previously an open gap — the envelope exists and matches the shape this doc had proposed. <code>apiClient.ts</code> on the frontend hasn't been confirmed to actually parse <code>error.code</code>/<code>error.message</code> yet rather than just checking <code>response.ok</code> — worth a quick check before assuming the frontend surfaces these usefully.</p>
+<p><code>ApiException</code> bodies pass through as-is; other Nest <code>HttpException</code>s get wrapped with a generic <code>HTTP_ERROR</code> code; anything unhandled becomes a <code>500</code> with <code>INTERNAL_ERROR</code>, logged server-side.</p>
 <h2 id="pagination">Pagination<a class="headerlink" href="#pagination" title="Permanent link">&para;</a></h2>
 <p><strong>Confirmed from source</strong> (<code>common/pagination.ts</code>): <code>?page=</code> and <code>?pageSize=</code>, both optional. Defaults: <code>page=1</code>, <code>pageSize=25</code>, capped at <code>pageSize=100</code>. Applies to <code>/v1/players</code> and <code>/v1/teams</code>.</p>
-<h2 id="not-yet-confirmed-not-built">Not yet confirmed / not built<a class="headerlink" href="#not-yet-confirmed-not-built" title="Permanent link">&para;</a></h2>
+<h2 id="auth-model">Auth model<a class="headerlink" href="#auth-model" title="Permanent link">&para;</a></h2>
+<p>Player and team endpoints are <strong>public</strong> — no authentication required. Games, predictions, and optimizer endpoints are <strong>auth-gated</strong> via <code>SessionAuthGuard</code> — a valid BetterAuth session cookie is required. This matches the frontend routing: <code>/players</code> and <code>/teams</code> are accessible to anyone, while <code>/predictions</code>, <code>/optimizer</code>, and <code>/games/:gameId</code> are wrapped in <code>&lt;ProtectedRoute&gt;</code>.</p>
+<h2 id="not-yet-built">Not yet built<a class="headerlink" href="#not-yet-built" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Versioning beyond <code>/v1/</code></strong> — no <code>/v2/</code> or deprecation policy exists yet, which is fine at this stage but worth deciding before it matters.</li>
 <li><strong>Write endpoints</strong> — nothing in the current code writes data (no POST/PUT/PATCH/DELETE calls exist). If the proposed analyst/admin roles in <a href="../../security/">Security</a> are real, these don't exist yet.</li>
-<li><strong>Auth endpoints</strong> — not confirmed from this snapshot; BetterAuth typically mounts its own route set (e.g. <code>/api/auth/*</code>) rather than routes written by hand in a controller — worth confirming the actual paths once someone can check.</li>
-<li><strong>OpenAPI/Swagger spec</strong> — not confirmed to exist. The client mentioned Swagger as a tool they used previously, not something this team has adopted yet.</li>
-<li><strong>Prediction/recommendation endpoints</strong> — not built yet, see <a href="../feature-tiers/">Feature Tiers</a>.</li>
+<li><strong>Versioning beyond <code>/v1/</code></strong> — no <code>/v2/</code> or deprecation policy exists yet, which is fine at this stage but worth deciding before it matters.</li>
+<li><strong>OpenAPI/Swagger spec</strong> — planned for Sprint 2 per client meeting (2026-08-21). Not yet adopted.</li>
 </ul>
 <hr />
 <p><em>AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5]</em></p>

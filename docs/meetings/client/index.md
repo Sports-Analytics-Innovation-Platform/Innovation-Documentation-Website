@@ -67,13 +67,13 @@ hide:
 
     | Action | Owner | Due |
     |---|---|---|
-    | Add a pinger to the hosting topology | Team | TBD |
-    | Implement the predictive ML model (target: 75–80% accuracy) | Team | TBD |
-    | Have the team's API consume another API | Team | TBD |
-    | Integrate signup functionality with the database | Team | TBD |
-    | Ensure the database includes API data | Team | TBD |
-    | Set up Swagger for API documentation | Team | TBD |
-    | Review the client's reference project for inspiration | Team | TBD |
+    | Add a pinger to the hosting topology | Team | Sprint 2 |
+    | Implement the predictive ML model (target: 75–80% accuracy) | Team | Sprint 3 |
+    | Have the team's API consume another API | Team | Sprint 2 |
+    | Integrate signup functionality with the database | Team | Sprint 2 |
+    | Ensure the database includes API data | Team | Sprint 2 |
+    | Set up Swagger for API documentation | Team | Sprint 2 |
+    | Review the client's reference project for inspiration | Team | Sprint 2 |
 
 
     ## Notes
@@ -129,15 +129,15 @@ hide:
     | Action | Owner | Due |
     |---|---|---|
     | Continue setting up the project infrastructure, database, hosting, and core functionality for Sprint 1 | Team | Sprint 1 |
-    | Investigate and integrate the selected NBA API | Pace / Team | TBD |
-    | Align the database schema with the structure of the selected API where appropriate | Team | TBD |
+    | Investigate and integrate the selected NBA API | Pace / Team | Sprint 1 |
+    | Align the database schema with the structure of the selected API where appropriate | Team | Sprint 1 |
     | Prepare basic API functionality for Sprint 1 as a safety net for potential marking requirements | Team | Sprint 1 |
     | Continue building the documentation site and required Sprint 1 documentation | Team | Sprint 1 |
     | Deploy the documentation site using static web hosting | Team | Sprint 1 |
-    | Continue developing the front-end from the current mock-data implementation | Team | TBD |
+    | Continue developing the front-end from the current mock-data implementation | Team | Sprint 2 |
     | Demonstrate ongoing project progress and current implementation during client meetings | Team | Ongoing |
-    | Hold another client meeting after the next lab / during the agreed Tuesday or Friday meeting window | Team and Kovendan | TBD |
-    | Assign the existing GitHub/GitTea issues to team members | Sanele | TBD |
+    | Hold another client meeting after the next lab / during the agreed Tuesday or Friday meeting window | Team and Kovendan | Ongoing |
+    | Assign the existing GitHub/GitTea issues to team members | Sanele | Sprint 1 |
     | Ensure issues are assigned and closed throughout development rather than only immediately before presentation | Team | Ongoing |
 
 
@@ -164,5 +164,5 @@ hide:
     - The client described the team's topic positively and said it appeared to be a good project to work on.
 
 
-    ####note "Raw transcript (Craig)"
+    ??? note "Raw transcript (Craig)"
     [2026-08-13-client.txt](../../transcripts/meeting-transcripts/2026-08-13-client.txt)

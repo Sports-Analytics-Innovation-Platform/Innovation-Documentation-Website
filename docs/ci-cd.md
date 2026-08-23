@@ -117,7 +117,7 @@ Each of these is a decision that changes behaviour, not a style preference.
 - **npm caching is deliberately omitted.** `setup-node`'s `cache: npm` routes through `@actions/cache`, whose restore errors reach `core.setFailed` — so if the `act_runner` cache server is unreachable, the step *fails* rather than degrading to an uncached install. The pipeline was built to work unconditionally rather than to save ~45s. The workflow carries the exact commented-out block to enable it (`cache: npm` plus `cache-dependency-path: apps/api/package-lock.json`) once the runner's cache server is confirmed.
 - **`prisma generate` is an explicit step**, in both the `api` job and the `coverage` job. The API typecheck genuinely cannot pass without a generated Prisma client — `src/` references model fields, so `tsc` fails outright — so it's a visible step rather than an implicit reliance on npm's `postinstall` side-effect. Generation itself needs **no database**: it reads `schema.prisma` only. Postgres is needed by the *tests*, not by codegen, which is why the `api` job has no service container.
 - **`--noEmit` for API, `tsc -b` for web.** The API's `build` script emits to `dist/`, so the check uses `--noEmit -p tsconfig.json` to typecheck without producing artifacts. `apps/web/tsconfig.json` is solution-style (`files: []` plus `references` to the app and node projects), so `tsc -b` is mandatory — a plain `tsc --noEmit` there would check *nothing* and pass silently.
-- **No CD stages.** Scope was CI only, and there is no deploy target: production hosting is still undecided (see [ADR-003](decisions/adr-003-hosting-topology.md)). Deployment stages get added when a host exists, not before.
+- **CD is live.** The Gitea repo is mirrored to GitHub, which triggers auto-deploys: Cloudflare Pages for the frontend, Render for the API. See the [CD Pipeline](#cd-pipeline) section below.
 
 ## The test database
 
@@ -187,15 +187,30 @@ Across the whole API source that left exactly **one** genuine error: an unused `
 
 That last row is the one to read carefully. CI proves the suites **run and pass**; it does not yet enforce any coverage floor. Download the `coverage-report` artifact from the run to see the actual numbers — a green `coverage` job on its own says nothing about how much of the code is exercised.
 
+## CD Pipeline
+
+Continuous deployment is live, running via a Gitea → GitHub mirror that triggers auto-deploys on each host:
+
+| Component | Host | Deploy trigger |
+|---|---|---|
+| Frontend (`apps/web`) | Cloudflare Pages | GitHub mirror push → Cloudflare auto-deploy (builds `apps/web` with `npm run build`, serves `dist/`) |
+| API (`apps/api`) | Render | GitHub mirror push → Render auto-deploy (build with `npm run build`, start with `npm run start:prod`) |
+| Docs site | GitHub Pages | Separate docs repo push to `main` → GitHub Actions build and deploy (`.github/workflows/deploy-docs.yml`) |
+| Database | Supabase | Prisma migrations run manually or from CI (Render free tier doesn't support `preDeployCommand`) |
+| Python services | Render (planned) | Not yet auto-deployed — planned as Render Cron Jobs or Background Workers |
+
+The Gitea → GitHub push mirror was set up during Sprint 1 (week of 18 Aug). GitHub is used only as a deploy trigger — the source of truth remains on Gitea, and all CI (lint, typecheck, test) still runs on Gitea Actions.
+
+Per [ADR-003](decisions/adr-003-hosting-topology.md): Cloudflare Pages provides a global CDN with managed TLS for the SPA; Render hosts the NestJS API as a long-running Node.js web service (free tier, ~30s cold start); Supabase provides managed Postgres with connection pooling over TLS.
+
 ## What CI does not do yet
 
 Other pages on this site describe CI steps that are planned but **not in `ci.yml` today**. Stated plainly so nobody assumes coverage that doesn't exist:
 
-- **No build step.** Lint, typecheck, and test only — nothing verifies that `apps/api` or `apps/web` actually builds.
+- **No build step.** Lint, typecheck, and test only — nothing verifies that `apps/api` or `apps/web` actually builds in the CI pipeline (the build is verified by the CD deploy step instead).
 - **No coverage threshold.** See above: reported, not gated.
 - **No secret scanning.** [Git Methodology](git-methodology.md) and [Security](security.md) describe `gitleaks`/`trufflehog` as a PR backstop — that's the intent, not yet the implementation. The manual pre-commit check is currently the only line of defence.
-- **No `axe-core` accessibility checks.** [Requirements Traceability](requirements.md) lists these for `apps/web`; they aren't wired up.
-- **No deployment.** CI only — see the "No CD stages" note above.
+- **No `axe-core` accessibility checks.** [Requirements Traceability](requirements.md) lists these for `apps/web`; they aren't wired up yet.
 
 ## Local parity
 
@@ -243,7 +258,7 @@ Tracked here rather than lost in a chat log:
 4. **Confirm where the test schema comes from.** The workflow runs no migration against the service container; if that is handled by the test harness it should be stated in the testing docs, and if it isn't, the job needs a `prisma migrate deploy` step.
 5. **Remove the now-unused `cors` dependency** (`apps/api/package.json:32`). Deliberately deferred: it touches the lockfile, so it belongs in its own change.
 6. **Consider stricter linting** by swapping to `recommendedTypeChecked` + `projectService`. Expect considerably more findings — worth its own pass rather than bundling into unrelated work.
-7. **Add the missing stages** as they become real: build, secret scanning, `axe-core`, and eventually CD once hosting is decided.
+7. **Add the missing stages** as they become real: build (in CI), secret scanning, `axe-core`.
 
 ---
 

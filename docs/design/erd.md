@@ -1,12 +1,9 @@
 # ERD
 
 !!! success "Confirmed from `schema.prisma`"
-    This page previously reverse-engineered entities from frontend TypeScript types. It's now built directly from the real `apps/api/prisma/schema.prisma` and its BetterAuth-related migration (see [ADR-002](../decisions/adr-002-auth.md)).
+    This page is built directly from the real `apps/api/prisma/schema.prisma` (257 lines, 12 models). Last verified against the current schema.
 
-!!! warning "One caveat on freshness"
-    The schema snapshot I have predates some later frontend/backend work described in the team's own dev log (e.g. a `GET /v1/games` endpoint, broadened mock data). The core entities below are unlikely to have changed shape, but if new tables were added after this snapshot, they won't appear here — re-confirm against the live `schema.prisma` if this page is being relied on for the group report.
-
-## Entities
+## Core entities
 
 **Team**
 `id`, `nbaTeamId` (unique, external NBA API ID), `name`, `abbreviation`, `city`, `conference`, `division`, `logoUrl?`
@@ -28,7 +25,27 @@ Unique on `[playerId, gameId]`.
 !!! success "Confirmed: season averages are computed on read, not stored"
     `/v1/players/:id/stats` (in `players.controller.ts`) computes `seasonAverages` and `gameLog` at request time from `PlayerGameStat` rows via `statsService`. There is no `SeasonAverages` table in the schema — it was never a stored model, only an API response shape. This confirms the brief's "derived from events, not stored totals" requirement is actually being followed, not just documented as an intent.
 
-## Auth entities (added for the BetterAuth migration — see ADR-002)
+## Prediction entities
+
+Added to support game-outcome prediction (`apps/predictor`) and the fantasy-lineup optimizer (`apps/optimizer`). NestJS only reads these tables — the Python services write to them directly.
+
+**GamePrediction** — one row per game (unique on `gameId`, upserted on rerun)
+`id`, `gameId` (unique) → Game, `homeWinProbability` (Elo-based, in [0, 1]), `homeTeamEloPre`, `awayTeamEloPre`, `predictedMarginHome?` (Four Factors-based, home minus away, in points), `marginMethod?` ("regression" or "heuristic"), `createdAt`
+
+**PlayerPrediction** — one row per player per optimizer run (append-and-take-latest shape)
+`id`, `playerId` → Player, `predictedFantasyPoints`, `salary` (synthetic DFS-style cost, not a real market price), `asOf`
+Indexed on `[playerId, asOf]`.
+
+**Lineup** — a single optimizer run's chosen lineup (MILP solve)
+`id`, `totalPredictedPoints`, `totalSalary`, `budget`, `createdAt`
+
+**LineupSlot** — one player slot in a lineup
+`id`, `lineupId` → Lineup (cascade delete), `playerId` → Player
+Unique on `[lineupId, playerId]`.
+
+## Auth entities
+
+Added for the BetterAuth migration — see [ADR-002](../decisions/adr-002-auth.md).
 
 **User**
 `id`, `name`, `email` (unique), `emailVerified`, `image?`, `role` (`PUBLIC`/`USER`/`ANALYST`/`ADMIN`, project-specific RBAC field layered on BetterAuth's schema, non-writable by the OAuth flow itself), `createdAt`, `updatedAt` — has many `Session`, many `Account`
@@ -49,7 +66,12 @@ Team (1) ──────< (many) Game [as home team]
 Team (1) ──────< (many) Game [as away team]
 Game (1) ──────< (many) GameEvent
 Game (1) ──────< (many) PlayerGameStat
+Game (1) ────── (0..1) GamePrediction
 Player (1) ────< (many) PlayerGameStat
+Player (1) ────< (many) PlayerPrediction
+Player (1) ────< (many) LineupSlot
+
+Lineup (1) ────< (many) LineupSlot
 
 User (1) ──────< (many) Session
 User (1) ──────< (many) Account
@@ -57,8 +79,7 @@ User (1) ──────< (many) Account
 
 ## Still open
 
-- **Any table backing "optimisation"** — nothing in the schema touches optimisation at all. See the open question in [Feature Tiers](feature-tiers.md) (still a stub) — this needs the team's plain-English answer on what's actually being optimised before a schema addition makes sense.
-- **Submissions / review workflow** — an early feature-breakdown draft mentioned approved-submitter roles and a review flow, but nothing matching that exists in the schema or codebase as of this snapshot. Don't assume it's coming unless the team confirms it's still planned.
+- **Submissions / review workflow** — an early feature-breakdown draft mentioned approved-submitter roles and a review flow, but nothing matching that exists in the schema or codebase. Don't assume it's coming unless the team confirms it's still planned.
 
 ---
 

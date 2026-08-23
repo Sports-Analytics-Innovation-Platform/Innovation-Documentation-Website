@@ -1637,65 +1637,64 @@
 <tbody>
 <tr>
 <td><strong>Version control</strong></td>
-<td>Git-compliant VCS, hosted on Gitea per the university requirement</td>
+<td>Git-compliant VCS, hosted on Gitea per the university requirement. Repo mirrored to GitHub for CI/CD auto-deploy</td>
 <td>Whole repo</td>
-<td>Josh</td>
-<td>TBD</td>
+<td>Josh Sawyer</td>
+<td>Gitea org</td>
 </tr>
 <tr>
 <td><strong>Responsiveness &amp; accessibility</strong></td>
-<td>Responsive layouts (mobile/tablet/desktop breakpoints), keyboard navigation, <code>axe-core</code> checks in CI — ⚠️ the <code>axe-core</code> step is planned, not yet in the pipeline</td>
+<td>Responsive layouts (mobile/tablet/desktop breakpoints), keyboard navigation with skip-to-content link, <code>axe-core</code> checks planned for Sprint 2</td>
 <td><code>apps/web</code></td>
-<td>TBD</td>
-<td>TBD</td>
+<td>Owen Pace</td>
+<td>—</td>
 </tr>
 <tr>
 <td><strong>CI/CD</strong></td>
-<td>✅ Gitea Actions workflow (<code>.gitea/workflows/ci.yml</code>) — lint, typecheck, test as parallel <code>api</code>/<code>web</code> jobs on every push and PR. <strong>CI is built; CD is not</strong> (no deploy target yet — see <a href="../decisions/adr-003-hosting-topology/">ADR-003</a>). Full detail: <a href="../ci-cd/">CI/CD Pipeline</a></td>
+<td>Gitea Actions workflow (<code>.gitea/workflows/ci.yml</code>) — lint, typecheck, test as parallel <code>api</code>/<code>web</code>/<code>coverage</code> jobs on every push and PR. CD is live: frontend auto-deploys to Cloudflare Pages, API auto-deploys to Render via GitHub mirror. Full detail: <a href="../ci-cd/">CI/CD Pipeline</a></td>
 <td>Whole repo</td>
-<td>Kiran</td>
-<td>TBD</td>
+<td>Kiran Soodyall</td>
+<td>—</td>
 </tr>
 <tr>
 <td><strong>Non-monolithic front-end and back-end</strong></td>
-<td>Separate <code>apps/api</code> (NestJS) and <code>apps/web</code> (React + Vite) apps, communicating only over HTTP, independently deployable</td>
+<td>Separate <code>apps/api</code> (NestJS) and <code>apps/web</code> (React + Vite) apps, communicating only over HTTP, independently deployed (Cloudflare Pages + Render)</td>
 <td><code>apps/api</code>, <code>apps/web</code></td>
-<td>TBD</td>
-<td>TBD</td>
+<td>Owen Pace</td>
+<td>—</td>
 </tr>
 <tr>
 <td><strong>Hand-written API</strong></td>
 <td>All endpoints implemented directly in NestJS controllers/services — no auto-generated CRUD layer (e.g. no Supabase/Firebase-style generation)</td>
 <td><code>apps/api</code></td>
-<td>TBD</td>
-<td>TBD</td>
+<td>Owen Pace</td>
+<td>—</td>
 </tr>
 <tr>
 <td><strong>Authentication &amp; security</strong></td>
-<td>Sign up, sign in, account deletion via BetterAuth (Google OAuth) — an established auth library rather than hand-rolled auth. ⚠️ Password reset is unresolved for OAuth-only sign-in, see <a href="../decisions/adr-002-auth/">ADR-002</a></td>
+<td>Sign up, sign in, account deletion via BetterAuth (Google OAuth) — an established auth library rather than hand-rolled auth. Authenticated route protection on predictions, games, and optimizer endpoints. ⚠️ Password reset is unresolved for OAuth-only sign-in, see <a href="../decisions/adr-002-auth/">ADR-002</a></td>
 <td><code>apps/api</code> (auth module)</td>
-<td>TBD</td>
-<td>TBD</td>
+<td>Owen Pace</td>
+<td>—</td>
 </tr>
 <tr>
 <td><strong>Integration with an external API</strong></td>
-<td><code>nba_api</code> (Python client for stats.nba.com) as the core data source; statistics derived from individual event data rather than precomputed league totals, per the brief</td>
-<td><code>apps/api</code> (ingestion)</td>
-<td>TBD</td>
-<td>TBD</td>
+<td><code>nba_api</code> (Python client for stats.nba.com) as the core data source; ingestion service (<code>apps/ingestion</code>) fetches teams, rosters, games, and box scores into Postgres. Statistics derived from individual event data rather than precomputed league totals, per the brief</td>
+<td><code>apps/ingestion</code>, <code>apps/api</code></td>
+<td>Josh Sawyer</td>
+<td>—</td>
 </tr>
 <tr>
 <td><strong>Documentation website</strong></td>
-<td>This MkDocs Material site, deployed via GitHub Pages static hosting</td>
+<td>This MkDocs Material site, deployed via GitHub Pages static hosting on every push to <code>main</code></td>
 <td>Docs site</td>
-<td>Adrian</td>
-<td>TBD</td>
+<td>Adrian Draxl</td>
+<td>—</td>
 </tr>
 </tbody>
 </table>
 <h2 id="notes">Notes<a class="headerlink" href="#notes" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>"TBD" owners/issues</strong> are placeholders — fill these in as work is assigned on the Gitea board, and keep this table in sync rather than letting it drift from what's actually tracked.</li>
 <li>The <strong>hand-written API requirement</strong> is a specific risk area: <code>nba_api</code> itself is fine to depend on for <em>data</em>, but no part of our own API surface may be auto-generated from the database schema — every route in <code>apps/api</code> must be explicitly written.</li>
 <li>This table should be walked row-by-row with the client tutor at each milestone, per the brief's Milestone 4 expectation ("verify every brief requirement... each row has evidence linked").</li>
 </ul>

@@ -17,5 +17,4 @@ to `main`.
 
 ## Status
 
-This site is under active construction (Sprint 1). See the [roadmap](design/roadmap.md) for
-what's coming.
+Sprint 1 is complete. The platform ships a working increment: NestJS API with BetterAuth (Google OAuth), React frontend with player/team browsing and search, game listings, predictions with Elo win-probability and Four Factors scoring, a fantasy-lineup optimizer, `nba_api` ingestion service, CI/CD pipeline (Gitea Actions), and production deployment on Cloudflare Pages (frontend), Render (API), and Supabase (Postgres). See the [Sprint Log](sprint-log.md) for the full record of what was delivered and the [Roadmap](design/roadmap.md) for what's next.

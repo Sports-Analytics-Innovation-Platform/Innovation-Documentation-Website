@@ -1693,39 +1693,37 @@
 <p class="admonition-title">Unblocked</p>
 <p>Previously blocked on "what does the optimisation engine actually optimise?" The team's answer: compile team/player analytics from real game data, use ML to <strong>predict</strong> outcomes, then (as an advanced-tier feature) <strong>recommend</strong> actions that improve a team's win chances. Tiers below follow the brief's own definitions (§1.1): Basic = MVP, Intermediate = functional and useful, Advanced = market-ready.</p>
 </div>
-<div class="admonition warning">
-<p class="admonition-title">What's still a proposal, not a decision</p>
-<p>The tier <em>shape</em> comes directly from the team's answers. The specifics inside each tier (which model type, which exact features go into it, exact UI treatment) are my draft of what a reasonable build-out looks like — not something the team has signed off on. Treat anything below as a starting point to edit, not a spec to build against blindly.</p>
-</div>
 <h2 id="basic-tier-mvp">Basic tier (MVP)<a class="headerlink" href="#basic-tier-mvp" title="Permanent link">&para;</a></h2>
-<p>Core analytics platform (mostly already built — see <a href="../../requirements/">Requirements</a> and <a href="../erd/">ERD</a>):</p>
+<p>Core analytics platform — built and deployed:</p>
 <ul>
-<li>Team/player browsing with event-derived season stats (<code>GameEvent</code> → <code>PlayerGameStat</code>, confirmed in schema)</li>
-<li>Auth via BetterAuth (Google OAuth) — see <a href="../../decisions/adr-002-auth/">ADR-002</a></li>
-</ul>
-<p>Prediction (new, not yet built):</p>
-<ul>
-<li><strong>Team-level matchup prediction</strong>: given two teams, output a win-probability estimate, trained on historical game results and season stats already in the database.</li>
-<li>Exposed via one API endpoint and shown in the UI as a single probability with the underlying stats that informed it — not a black box.</li>
-<li>Model choice is intentionally left simple at this tier (e.g. logistic regression over aggregate team stats) — the point of Basic is a working end-to-end pipeline (data → model → API → UI), not model sophistication.</li>
+<li>Team/player browsing with event-derived season stats (<code>GameEvent</code> → <code>PlayerGameStat</code>, confirmed in schema). Teams list and profile pages are live with real team logos and player headshots from nba.com's CDN.</li>
+<li>Player and team search across the full dataset with pagination (server-side search query params).</li>
+<li>Auth via BetterAuth (Google OAuth) — see <a href="../../decisions/adr-002-auth/">ADR-002</a>.</li>
+<li>Game listings with <code>GET /v1/games</code> endpoint (auth-gated).</li>
+<li><strong>Team-level matchup prediction</strong>: Elo-based home win probability and Four Factors-based predicted score margin, computed by <code>apps/predictor</code> and stored in the <code>GamePrediction</code> table. Exposed via <code>GET /v1/games/:id/prediction</code>. Shown in the UI on the Predictions page and the game detail page.</li>
+<li><strong>Court view</strong> visualisation showing predicted top scorers by position on a basketball court.</li>
+<li><strong>Fantasy-lineup optimizer</strong>: <code>apps/optimizer</code> predicts per-player fantasy points and solves a 5-player lineup under a salary cap via MILP (PuLP/CBC). Exposed via <code>GET /v1/optimizer/lineup</code> and shown on the Optimizer page (auth-gated).</li>
+<li><strong><code>nba_api</code> ingestion service</strong>: <code>apps/ingestion</code> fetches teams, rosters, games, and box scores from stats.nba.com into Postgres. Orchestrated by <code>ingest.py</code>.</li>
 </ul>
 <h2 id="intermediate-tier-functional-and-useful">Intermediate tier (functional and useful)<a class="headerlink" href="#intermediate-tier-functional-and-useful" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Player-level prediction</strong> added alongside team-level: predicted individual performance (e.g. points/rebounds/assists) for an upcoming or hypothetical matchup, per the team's confirmed scope.</li>
-<li><strong>Model accuracy shown, not just asserted</strong> — a view comparing predicted vs. actual outcomes for games that have already happened, so the prediction isn't just a number nobody can verify. This also gives you something concrete to show in Sprint 3 reviews.</li>
+<li><strong>Model accuracy shown, not just asserted</strong> — a view comparing predicted vs. actual outcomes for games that have already happened, so the prediction isn't just a number nobody can verify. This also gives something concrete to show in Sprint 3 reviews.</li>
 <li>Richer feature set feeding the model where the data supports it (recent form, home/away split, head-to-head history) — exact feature list still open.</li>
+<li><strong>Target accuracy</strong>: 75–80% (per client meeting 2026-08-21), with 64% as an achievable baseline.</li>
 </ul>
 <h2 id="advanced-tier-market-ready">Advanced tier (market-ready)<a class="headerlink" href="#advanced-tier-market-ready" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Recommendation layer</strong> — the actual "optimisation" in the product name: given a team's current roster/available lineup options, recommend the lineup or rotation that maximises predicted win probability. This is a materially different problem from prediction (search/decision over options vs. estimating one fixed outcome) — budget for it accordingly.</li>
+<li><strong>Recommendation layer</strong> — the actual "optimisation" in the product name: given a team's current roster/available lineup options, recommend the lineup or rotation that maximises predicted win probability. The fantasy-lineup optimizer (built in Sprint 1) is a stepping stone toward this — it already solves a lineup selection problem under constraints, but for DFS-style fantasy points rather than win probability.</li>
 <li>Possibly a "what-if" simulator: user picks a hypothetical lineup change, sees the predicted effect.</li>
 <li>Model comparison/versioning if time allows.</li>
 </ul>
 <h2 id="still-open">Still open<a class="headerlink" href="#still-open" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Exact model/algorithm choices at each tier</li>
-<li>Exact feature set feeding the prediction model</li>
-<li>Whether the recommendation layer (advanced tier) is in-scope for this semester at all, or explicitly a stretch goal — see <a href="../roadmap/">Roadmap</a> for how this maps to sprint dates, including the client's own guidance on ML timing.</li>
+<li>Exact model/algorithm choices at each tier beyond Elo + Four Factors (current Basic tier implementation)</li>
+<li>Exact feature set feeding the prediction model for Intermediate tier</li>
+<li>Whether the recommendation layer (advanced tier) is in-scope for this semester at all, or explicitly a stretch goal — see <a href="../roadmap/">Roadmap</a> for how this maps to sprint dates, including the client's own guidance on ML timing</li>
+<li>Whether the current Four Factors regression model or heuristic approach will be superseded by a more sophisticated model as more real data flows through the ingestion pipeline</li>
 </ul>
 <hr />
 <p><em>AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5]</em></p>

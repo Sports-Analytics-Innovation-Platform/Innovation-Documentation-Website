@@ -8,69 +8,75 @@
 │   React + Vite       │ ◀──── JSON, cookies ─────  │   NestJS              │
 │   (Tailwind, Recharts│                             │   (BetterAuth, Prisma)│
 │   React Router)      │                             │                       │
+│   Cloudflare Pages   │                             │   Render              │
 └─────────────────────┘                             └──────────┬────────────┘
                                                                   │
                                                                   ▼
                                                         ┌──────────────────┐
-                                                        │   PostgreSQL       │
+                                                        │   Supabase        │
+                                                        │   PostgreSQL      │
                                                         └──────────────────┘
-
-                                              ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐
-                                              │  nba_api (Python) ingestion  │
-                                              │  — integration path with the │
-                                              │  TypeScript backend not yet  │
-                                              │  confirmed (see Tech Stack)  │
-                                              └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
+                                                                  ▲
+                                                                  │
+                                              ┌───────────────────┼───────────────────┐
+                                              │                   │                   │
+                                    ┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐
+                                    │  apps/ingestion   │ │  apps/predictor   │ │  apps/optimizer   │
+                                    │  (Python)         │ │  (Python)         │ │  (Python)         │
+                                    │  nba_api → PG     │ │  Elo + Four Fac.  │ │  MILP lineup      │
+                                    └──────────────────┘ └──────────────────┘ └──────────────────┘
 ```
 
-This satisfies the brief's non-monolithic requirement (§2.1): `apps/web` and `apps/api` are separate, independently buildable applications that only communicate over HTTP — confirmed directly from the code (`apiClient.ts` calls `fetch` against a base URL, nothing shares in-process state).
+This satisfies the brief's non-monolithic requirement (§2.1): `apps/web` and `apps/api` are separate, independently deployed applications that only communicate over HTTP — confirmed directly from the code (`apiClient.ts` calls `fetch` against `VITE_API_BASE_URL`, nothing shares in-process state). The three Python services (`ingestion`, `predictor`, `optimizer`) write directly to Postgres as separate processes, never through the API.
 
 ## Frontend (`apps/web`)
 
 - **React + Vite**, **Tailwind CSS v4** (via `@theme` custom properties in `index.css`, not the older `tailwind.config.js` token approach).
-- **React Router** — client-side routing, three routes currently: `/`, `/players`, `/players/:playerId`.
+- **React Router** — client-side routing with eight routes: `/` (Home), `/players`, `/players/:playerId`, `/teams`, `/teams/:teamId`, `/predictions` (auth-gated), `/optimizer` (auth-gated), `/games/:gameId` (auth-gated).
 - **Recharts** — `RadarChart` (player traits) and `LineChart` (points trend), both themed against the same CSS variables as the rest of the UI.
-- All backend calls go through `lib/apiClient.ts`, a single `fetchJson<T>` wrapper — one place controls the base URL and request options, which is a solid pattern for API changes later.
-- `credentials: "include"` on every request implies cookie-based auth is expected once auth-gated routes exist, even though the three current endpoints appear to be public reads.
-- **TanStack Query** and **shadcn/ui** are confirmed added (Teams pages, filters/sort/pagination on Players) — see [Tech Stack](../tech-stack.md).
+- **TanStack Query** for data-fetching/caching against the API.
+- **shadcn/ui** for component library, paired with Tailwind.
+- All backend calls go through `lib/apiClient.ts`, a single `fetchJson<T>` wrapper — one place controls the base URL and request options.
+- `credentials: "include"` on every request for cookie-based auth.
+- **Top navbar** with five nav links (Home, Players, Teams, Optimizer, Predictions), a recent-result widget, and an auth status button.
+- **Court view** visualisation for predicted top scorers by position on a basketball court.
+- Deployed on **Cloudflare Pages** (global CDN, managed TLS, auto-deploy from GitHub mirror).
 
 ## Backend (`apps/api`)
 
-- **NestJS** on top of **Prisma** and **PostgreSQL** — see [ADR-001](../decisions/adr-001-database.md).
-- **BetterAuth** (Google OAuth) for auth — see [ADR-002](../decisions/adr-002-auth.md), including an open compliance question this introduces.
-- Routes are versioned under `/v1/` (`/v1/players`, `/v1/players/:id`, `/v1/players/:id/stats`), served under an `/api` base path the frontend proxies to — see [API Design](api-design.md) for the full picture of what's confirmed vs. open.
+- **NestJS** on top of **Prisma** and **PostgreSQL (Supabase)** — see [ADR-001](../decisions/adr-001-database.md).
+- **BetterAuth** (Google OAuth) for auth — see [ADR-002](../decisions/adr-002-auth.md). BetterAuth mounts its own route set at `/api/auth/*`.
+- Routes are versioned under `/v1/` — see [API Design](api-design.md) for the full endpoint table.
+- **Auth-gated endpoints**: Games, predictions, and optimizer endpoints require an authenticated session (`SessionAuthGuard`). Player and team browsing is public.
+- **Health check** at `/health` for Render liveness probes.
+- Deployed on **Render** (Node.js web service, free tier with ~30s cold start after 15 min inactivity).
+
+## Python services
+
+Three Python services run alongside the TypeScript apps, writing directly to Postgres:
+
+- **`apps/ingestion`** — `nba_api` client that fetches teams, rosters, games, and box scores into Postgres. Orchestrated by `ingest.py`. Built during Sprint 1 (week of 18 Aug).
+- **`apps/predictor`** — computes Elo-based home win probability and Four Factors-based predicted score margin for each game. Writes to the `GamePrediction` table.
+- **`apps/optimizer`** — predicts per-player fantasy points and solves a 5-player lineup under a salary cap via MILP (PuLP/CBC). Writes to `PlayerPrediction`, `Lineup`, and `LineupSlot` tables.
+
+These are planned to run as Render Cron Jobs or Background Workers in production.
 
 ## Local development
 
 **Docker Compose** runs Postgres locally; both apps run with their own dev server (`npm run start:dev` / `npm run dev`) against it — see [Getting Started](../getting-started.md).
 
-## Open questions
+## Deployment topology
 
-- **`nba_api` (Python) integration path** — still unresolved (also flagged in [Tech Stack](../tech-stack.md)). Is there a separate scheduled ingestion service, a one-off import script, or something else that populates Postgres? This is the single biggest gap in this diagram — everything left of the database is confirmed from code, everything ingesting *into* it is not.
-- **Production hosting topology** — not decided (see the not-yet-written ADR-003).
-- **Whether any endpoint is actually auth-gated yet** — the three confirmed routes don't appear to require a logged-in user, based on `PlayersListPage.tsx` and `PlayerProfilePage.tsx` calling them unconditionally on mount.
+Production hosting per [ADR-003](../decisions/adr-003-hosting-topology.md):
 
-## Prediction / optimisation component (new)
-
-Previously the biggest open box in this diagram — now scoped, though not yet built. See [Feature Tiers](feature-tiers.md) and [Roadmap](roadmap.md) for the full breakdown. In short:
-
-```
-PostgreSQL (historical game/player data)
-        │
-        ▼
-┌───────────────────┐
-│  Prediction model   │   Basic/Intermediate: team- and player-level
-│  (not yet built)    │   outcome prediction, trained on event-derived
-└─────────┬──────────┘   season stats
-          │
-          ▼ (Advanced tier only)
-┌───────────────────┐
-│  Recommendation     │   Given roster/lineup options, suggest the one
-│  layer (stretch)    │   that maximises predicted win probability
-└───────────────────┘
-```
-
-Not yet decided: where this runs (inside `apps/api` as a NestJS service, or a separate Python service given the ML ecosystem is stronger there — same question already open for `nba_api` ingestion, and possibly the same answer), or which model/algorithm.
+| Component | Host | Deploy method |
+|---|---|---|
+| Frontend (`apps/web`) | Cloudflare Pages | Auto-deploy from GitHub mirror |
+| API (`apps/api`) | Render | Auto-deploy from GitHub mirror |
+| Database | Supabase (managed Postgres) | Direct connection from API and Python services |
+| Python services | Render (Cron/Worker, planned) | Manual or scheduled |
+| CI | Gitea Actions | Lint, typecheck, test on every push/PR |
+| Docs site | GitHub Pages | Auto-deploy on push to `main` |
 
 ---
 

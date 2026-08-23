@@ -715,10 +715,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#entities" class="md-nav__link">
+  <a href="#core-entities" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Entities
+        Core entities
       
     </span>
   </a>
@@ -726,10 +726,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#auth-entities-added-for-the-betterauth-migration-see-adr-002" class="md-nav__link">
+  <a href="#prediction-entities" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Auth entities (added for the BetterAuth migration — see ADR-002)
+        Prediction entities
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#auth-entities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auth entities
       
     </span>
   </a>
@@ -1620,10 +1631,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#entities" class="md-nav__link">
+  <a href="#core-entities" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Entities
+        Core entities
       
     </span>
   </a>
@@ -1631,10 +1642,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#auth-entities-added-for-the-betterauth-migration-see-adr-002" class="md-nav__link">
+  <a href="#prediction-entities" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Auth entities (added for the BetterAuth migration — see ADR-002)
+        Prediction entities
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#auth-entities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auth entities
       
     </span>
   </a>
@@ -1691,13 +1713,9 @@
 <h1 id="erd">ERD<a class="headerlink" href="#erd" title="Permanent link">&para;</a></h1>
 <div class="admonition success">
 <p class="admonition-title">Confirmed from <code>schema.prisma</code></p>
-<p>This page previously reverse-engineered entities from frontend TypeScript types. It's now built directly from the real <code>apps/api/prisma/schema.prisma</code> and its BetterAuth-related migration (see <a href="../../decisions/adr-002-auth/">ADR-002</a>).</p>
+<p>This page is built directly from the real <code>apps/api/prisma/schema.prisma</code> (257 lines, 12 models). Last verified against the current schema.</p>
 </div>
-<div class="admonition warning">
-<p class="admonition-title">One caveat on freshness</p>
-<p>The schema snapshot I have predates some later frontend/backend work described in the team's own dev log (e.g. a <code>GET /v1/games</code> endpoint, broadened mock data). The core entities below are unlikely to have changed shape, but if new tables were added after this snapshot, they won't appear here — re-confirm against the live <code>schema.prisma</code> if this page is being relied on for the group report.</p>
-</div>
-<h2 id="entities">Entities<a class="headerlink" href="#entities" title="Permanent link">&para;</a></h2>
+<h2 id="core-entities">Core entities<a class="headerlink" href="#core-entities" title="Permanent link">&para;</a></h2>
 <p><strong>Team</strong>
 <code>id</code>, <code>nbaTeamId</code> (unique, external NBA API ID), <code>name</code>, <code>abbreviation</code>, <code>city</code>, <code>conference</code>, <code>division</code>, <code>logoUrl?</code></p>
 <p><strong>Player</strong>
@@ -1714,7 +1732,20 @@ Unique on <code>[playerId, gameId]</code>.</p>
 <p class="admonition-title">Confirmed: season averages are computed on read, not stored</p>
 <p><code>/v1/players/:id/stats</code> (in <code>players.controller.ts</code>) computes <code>seasonAverages</code> and <code>gameLog</code> at request time from <code>PlayerGameStat</code> rows via <code>statsService</code>. There is no <code>SeasonAverages</code> table in the schema — it was never a stored model, only an API response shape. This confirms the brief's "derived from events, not stored totals" requirement is actually being followed, not just documented as an intent.</p>
 </div>
-<h2 id="auth-entities-added-for-the-betterauth-migration-see-adr-002">Auth entities (added for the BetterAuth migration — see ADR-002)<a class="headerlink" href="#auth-entities-added-for-the-betterauth-migration-see-adr-002" title="Permanent link">&para;</a></h2>
+<h2 id="prediction-entities">Prediction entities<a class="headerlink" href="#prediction-entities" title="Permanent link">&para;</a></h2>
+<p>Added to support game-outcome prediction (<code>apps/predictor</code>) and the fantasy-lineup optimizer (<code>apps/optimizer</code>). NestJS only reads these tables — the Python services write to them directly.</p>
+<p><strong>GamePrediction</strong> — one row per game (unique on <code>gameId</code>, upserted on rerun)
+<code>id</code>, <code>gameId</code> (unique) → Game, <code>homeWinProbability</code> (Elo-based, in [0, 1]), <code>homeTeamEloPre</code>, <code>awayTeamEloPre</code>, <code>predictedMarginHome?</code> (Four Factors-based, home minus away, in points), <code>marginMethod?</code> ("regression" or "heuristic"), <code>createdAt</code></p>
+<p><strong>PlayerPrediction</strong> — one row per player per optimizer run (append-and-take-latest shape)
+<code>id</code>, <code>playerId</code> → Player, <code>predictedFantasyPoints</code>, <code>salary</code> (synthetic DFS-style cost, not a real market price), <code>asOf</code>
+Indexed on <code>[playerId, asOf]</code>.</p>
+<p><strong>Lineup</strong> — a single optimizer run's chosen lineup (MILP solve)
+<code>id</code>, <code>totalPredictedPoints</code>, <code>totalSalary</code>, <code>budget</code>, <code>createdAt</code></p>
+<p><strong>LineupSlot</strong> — one player slot in a lineup
+<code>id</code>, <code>lineupId</code> → Lineup (cascade delete), <code>playerId</code> → Player
+Unique on <code>[lineupId, playerId]</code>.</p>
+<h2 id="auth-entities">Auth entities<a class="headerlink" href="#auth-entities" title="Permanent link">&para;</a></h2>
+<p>Added for the BetterAuth migration — see <a href="../../decisions/adr-002-auth/">ADR-002</a>.</p>
 <p><strong>User</strong>
 <code>id</code>, <code>name</code>, <code>email</code> (unique), <code>emailVerified</code>, <code>image?</code>, <code>role</code> (<code>PUBLIC</code>/<code>USER</code>/<code>ANALYST</code>/<code>ADMIN</code>, project-specific RBAC field layered on BetterAuth's schema, non-writable by the OAuth flow itself), <code>createdAt</code>, <code>updatedAt</code> — has many <code>Session</code>, many <code>Account</code></p>
 <p><strong>Session</strong>
@@ -1728,15 +1759,19 @@ Team (1) ──────&lt; (many) Game [as home team]
 Team (1) ──────&lt; (many) Game [as away team]
 Game (1) ──────&lt; (many) GameEvent
 Game (1) ──────&lt; (many) PlayerGameStat
+Game (1) ────── (0..1) GamePrediction
 Player (1) ────&lt; (many) PlayerGameStat
+Player (1) ────&lt; (many) PlayerPrediction
+Player (1) ────&lt; (many) LineupSlot
+
+Lineup (1) ────&lt; (many) LineupSlot
 
 User (1) ──────&lt; (many) Session
 User (1) ──────&lt; (many) Account
 </code></pre></div>
 <h2 id="still-open">Still open<a class="headerlink" href="#still-open" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Any table backing "optimisation"</strong> — nothing in the schema touches optimisation at all. See the open question in <a href="../feature-tiers/">Feature Tiers</a> (still a stub) — this needs the team's plain-English answer on what's actually being optimised before a schema addition makes sense.</li>
-<li><strong>Submissions / review workflow</strong> — an early feature-breakdown draft mentioned approved-submitter roles and a review flow, but nothing matching that exists in the schema or codebase as of this snapshot. Don't assume it's coming unless the team confirms it's still planned.</li>
+<li><strong>Submissions / review workflow</strong> — an early feature-breakdown draft mentioned approved-submitter roles and a review flow, but nothing matching that exists in the schema or codebase. Don't assume it's coming unless the team confirms it's still planned.</li>
 </ul>
 <hr />
 <p><em>AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5]</em></p>

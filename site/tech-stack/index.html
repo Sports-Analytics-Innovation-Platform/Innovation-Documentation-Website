@@ -1366,17 +1366,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#not-yet-decided" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Not yet decided
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#confirmed-local-dev-proxy" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1703,17 +1692,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#not-yet-decided" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Not yet decided
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#confirmed-local-dev-proxy" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1766,19 +1744,18 @@
 </tr>
 <tr>
 <td><strong>Prisma</strong> (ORM)</td>
-<td>Type-safe query builder and migration tool over Postgres. Keeps the schema in one place (<code>schema.prisma</code>), generates TypeScript types automatically, and makes migrations reviewable in PRs rather than hand-written SQL drifting from the actual DB state. <strong>Confirmed in use</strong> — a real <code>schema.prisma</code> and migration (<code>20260806085439_init</code>) exist in the repo.</td>
+<td>Type-safe query builder and migration tool over Postgres. Keeps the schema in one place (<code>schema.prisma</code>), generates TypeScript types automatically, and makes migrations reviewable in PRs rather than hand-written SQL drifting from the actual DB state. Confirmed as the team's choice — a real <code>schema.prisma</code> with 12 models and multiple migrations exist in the repo.</td>
 </tr>
 <tr>
 <td><strong>PostgreSQL</strong></td>
-<td>Relational DB, matches the naturally relational shape of NBA data (players, teams, games, events) and is well-supported by Prisma and every hosting option we're likely to use.</td>
+<td>Relational DB, matches the naturally relational shape of NBA data (players, teams, games, events, predictions) and is well-supported by Prisma and Supabase's managed hosting.</td>
+</tr>
+<tr>
+<td><strong>BetterAuth</strong> (Google OAuth)</td>
+<td>Established authentication library, satisfying the brief's ban on hand-rolled auth (§2.1). Replaces the initial scaffold's Passport.js local-strategy. BetterAuth mounts its own route set at <code>/api/auth/*</code> and manages sessions via cookies. See <a href="../decisions/adr-002-auth/">ADR-002</a> for the full history.</td>
 </tr>
 </tbody>
 </table>
-<div class="admonition warning">
-<p class="admonition-title">Open question: Prisma vs. Drizzle</p>
-<p>The team's own stack list still poses this as <code>Prisma (or Drizzle)</code>. What's actually built and merged is Prisma — but the team has told me this isn't formally decided, just what's in place so far. Treat Prisma as "current default," not "final decision," until someone says otherwise.</p>
-</div>
-<p>| <strong>BetterAuth</strong> (Google OAuth) | Established authentication library, satisfying the brief's ban on hand-rolled auth (§2.1). Replaces the initial scaffold's Passport.js local-strategy — the team's confirmed target stack always specified BetterAuth + Google OAuth; the scaffold shipped with Passport first and was migrated on top of it. See <a href="../decisions/adr-002-auth/">ADR-002</a> for the full history, including a real ⚠️ compliance risk this migration introduces. |</p>
 <h2 id="data-source">Data source<a class="headerlink" href="#data-source" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1794,13 +1771,10 @@
 </tr>
 </tbody>
 </table>
-<div class="admonition warning">
-<p class="admonition-title">Open question: <code>nba_api</code> is Python, the API is TypeScript</p>
-<p><code>nba_api</code> is a Python package, but the backend is NestJS/TypeScript. This doc doesn't yet capture how the two talk to each other — e.g. a separate scheduled Python ingestion script that writes to Postgres directly, which NestJS then reads, versus something else. Worth pinning down and folding into <a href="../design/architecture/">Architecture</a> once decided, since it affects the non-monolithic and hand-written-API requirements too.</p>
-</div>
+<p><code>nba_api</code> is a Python package, and the backend is NestJS/TypeScript. This is resolved by running <code>nba_api</code> as a separate Python ingestion service (<code>apps/ingestion</code>) that writes directly to Postgres — NestJS then reads from the same database. The two languages coexist without needing an inter-process bridge because Postgres is the shared data layer. See <a href="../design/architecture/">Architecture</a> for the full diagram.</p>
 <p>Per the brief's requirement that statistics be derived from individual event records rather than stored totals, <code>nba_api</code>'s precomputed advanced stats (offensive rating, PIE, usage%) are used only for <strong>verification</strong> — the team calculates these itself from event-level data.</p>
 <h2 id="jobs-queue-cache-validation-storage">Jobs / queue, cache, validation, storage<a class="headerlink" href="#jobs-queue-cache-validation-storage" title="Permanent link">&para;</a></h2>
-<p>These four are confirmed decisions (team's stack list) but <strong>not yet built</strong> as of the last code snapshot I have — noting that distinction so this table isn't read as "already working":</p>
+<p>These four are confirmed decisions (team's stack list). Their implementation status:</p>
 <table>
 <thead>
 <tr>
@@ -1813,22 +1787,22 @@
 <tr>
 <td><strong>Redis + BullMQ</strong></td>
 <td>Batch submission/ingestion processing and incremental recomputation jobs.</td>
-<td>Decided, not yet implemented</td>
+<td>Planned for Sprint 2 if ingestion pipeline needs batch/scheduled processing</td>
 </tr>
 <tr>
 <td><strong>Redis</strong> (cache / rate limiting)</td>
 <td>Doubles as the cache layer and a rate-limit store — relevant given <code>nba_api</code> itself is rate-limit-sensitive (see <a href="../security/">Security</a>).</td>
-<td>Decided, not yet implemented</td>
+<td>Planned for Sprint 2</td>
 </tr>
 <tr>
 <td><strong>Zod</strong></td>
 <td>Schema validation for incoming data (e.g. event/stat submissions), with descriptive rejection errors.</td>
-<td>Decided, not yet implemented</td>
+<td>Planned for Sprint 2</td>
 </tr>
 <tr>
 <td><strong>S3-compatible storage</strong> (MinIO for self-hosted/course use)</td>
 <td>For any exported/versioned data artifacts.</td>
-<td>Decided, not yet implemented</td>
+<td>Planned if needed</td>
 </tr>
 </tbody>
 </table>
@@ -1855,7 +1829,7 @@
 </tr>
 <tr>
 <td><strong>React Router</strong></td>
-<td>Client-side routing (<code>/</code>, <code>/players</code>, <code>/players/:playerId</code> confirmed in <code>App.tsx</code>).</td>
+<td>Client-side routing with eight routes: <code>/</code>, <code>/players</code>, <code>/players/:playerId</code>, <code>/teams</code>, <code>/teams/:teamId</code>, <code>/predictions</code>, <code>/optimizer</code>, <code>/games/:gameId</code>.</td>
 </tr>
 <tr>
 <td><strong>Recharts</strong></td>
@@ -1863,11 +1837,11 @@
 </tr>
 <tr>
 <td><strong>TanStack Query</strong></td>
-<td>Data-fetching/caching against the API. <strong>Confirmed built</strong> — added as part of the "frontend foundations" work alongside the BetterAuth migration.</td>
+<td>Data-fetching/caching against the API. Confirmed built — added as part of the frontend foundations work.</td>
 </tr>
 <tr>
 <td><strong>shadcn/ui</strong></td>
-<td>Component library, paired with Tailwind. <strong>Confirmed built</strong> — used for the new Teams pages and general UI (hand-set-up after hitting a CLI bug, per the team's own dev log).</td>
+<td>Component library, paired with Tailwind. Confirmed built — used for Teams pages, general UI components, and the court view.</td>
 </tr>
 </tbody>
 </table>
@@ -1882,7 +1856,7 @@
 <tbody>
 <tr>
 <td><strong>Docker Compose</strong></td>
-<td>Runs Postgres (and any other services) locally with one command, so every team member's dev environment matches without a manual install.</td>
+<td>Runs Postgres locally with one command, so every team member's dev environment matches without a manual install.</td>
 </tr>
 <tr>
 <td><strong>Gitea</strong></td>
@@ -1890,7 +1864,7 @@
 </tr>
 <tr>
 <td><strong>Gitea Actions</strong> (CI)</td>
-<td>Pipeline defined in <code>.gitea/workflows/ci.yml</code>, running lint → typecheck → test as two parallel jobs (<code>api</code>, <code>web</code>) on every push and PR, pinned to Node 24. <strong>Confirmed built.</strong> Chosen simply because it's built into the Gitea instance already hosting the code — no second platform to register runners with. See <a href="../ci-cd/">CI/CD Pipeline</a>.</td>
+<td>Pipeline defined in <code>.gitea/workflows/ci.yml</code>, running lint → typecheck → test as three parallel jobs (<code>api</code>, <code>web</code>, <code>coverage</code>) on every push and PR, pinned to Node 24. Confirmed built. Chosen simply because it's built into the Gitea instance already hosting the code — no second platform to register runners with. See <a href="../ci-cd/">CI/CD Pipeline</a>.</td>
 </tr>
 <tr>
 <td><strong>ESLint 10</strong> (API) / <strong>oxlint</strong> (web)</td>
@@ -1898,24 +1872,32 @@
 </tr>
 <tr>
 <td><strong>Vitest</strong></td>
-<td>Unit testing on both apps — Vitest + Supertest for backend integration tests (against a real disposable Postgres DB), Vitest + React Testing Library on the frontend. ⚠️ <strong>Tooling is installed, but no test files exist yet</strong> in either <code>src</code> tree, as found while wiring up CI — <code>apps/api</code> has a <code>vitest run</code> script, <code>apps/web</code> has no <code>test</code> script at all. Treat this row as the agreed choice, not as working coverage; see <a href="../ci-cd/">CI/CD Pipeline</a>.</td>
+<td>Unit testing on both apps — Vitest + Supertest for backend integration tests (against a real disposable Postgres DB), Vitest + React Testing Library on the frontend. Test files exist in both <code>apps/api</code> and <code>apps/web</code> — the CI <code>coverage</code> job runs both suites against a real Postgres with no <code>--passWithNoTests</code> tolerance.</td>
 </tr>
 <tr>
 <td><strong>MkDocs Material + GitHub Pages</strong></td>
 <td>Documentation site. MkDocs Material was chosen over Docusaurus/mdBook for a lower setup cost with strong out-of-the-box search, admonitions, and theming; GitHub Pages is used specifically for the docs site's static hosting (separate from Gitea, which hosts the actual codebase).</td>
 </tr>
+<tr>
+<td><strong>Cloudflare Pages</strong></td>
+<td>Static CDN hosting for the frontend SPA (<code>apps/web</code> build output). Global edge network, managed TLS, auto-deploy from GitHub mirror. Per <a href="../decisions/adr-003-hosting-topology/">ADR-003</a>.</td>
+</tr>
+<tr>
+<td><strong>Render</strong></td>
+<td>NestJS API hosting (Node.js web service, free tier). Auto-deploy from GitHub mirror. ~30s cold start after 15 min inactivity accepted by the team. Per <a href="../decisions/adr-003-hosting-topology/">ADR-003</a>.</td>
+</tr>
+<tr>
+<td><strong>Supabase</strong></td>
+<td>Managed PostgreSQL hosting with built-in connection pooling and a free tier. Supabase's auto REST/Auth/Storage APIs are deliberately unused — the NestJS API stays the only HTTP path to the data. Per <a href="../decisions/adr-003-hosting-topology/">ADR-003</a>.</td>
+</tr>
 </tbody>
 </table>
 <div class="admonition success">
-<p class="admonition-title">CI/CD host confirmed: Gitea</p>
-<p>The team has confirmed the pipeline runs on Gitea, matching everywhere else the repo is described. The "GitLab CI / GitLab Pages" wording in the team's own dev log was a naming slip, not a second CI host — safe to treat as Gitea Actions throughout. The workflow is now written and in the tree (<code>.gitea/workflows/ci.yml</code>) — <strong>CI only, no CD</strong>, since no deploy target exists yet (<a href="../decisions/adr-003-hosting-topology/">ADR-003</a> is still a stub).</p>
+<p class="admonition-title">CI/CD host confirmed: Gitea + GitHub mirror</p>
+<p>CI runs on Gitea Actions, matching everywhere else the repo is described. CD is now live: the Gitea repo is mirrored to GitHub, which triggers auto-deploys to Cloudflare Pages (frontend) and Render (API). The docs site deploys separately via GitHub Pages from the docs repo.</p>
 </div>
-<h2 id="not-yet-decided">Not yet decided<a class="headerlink" href="#not-yet-decided" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>Production hosting</strong> for the API and frontend — no equivalent to the FPL plan's Hetzner VPS decision has been made yet for the NBA project. See <a href="../decisions/adr-003-hosting-topology/">ADR-003</a> (still a stub).</li>
-</ul>
 <h2 id="confirmed-local-dev-proxy">Confirmed: local dev proxy<a class="headerlink" href="#confirmed-local-dev-proxy" title="Permanent link">&para;</a></h2>
-<p><code>vite.config.ts</code> proxies <code>/api/*</code> to <code>http://localhost:4000</code> (with the <code>/api</code> prefix stripped before forwarding), so <code>apiClient.ts</code>'s relative <code>/api/v1/...</code> calls do reach the NestJS backend in dev. This was an open question in a prior pass — it's now confirmed from the actual file.</p>
+<p><code>vite.config.ts</code> proxies <code>/api/*</code> to <code>http://localhost:4000</code> (with the <code>/api</code> prefix stripped before forwarding), so <code>apiClient.ts</code>'s relative <code>/api/v1/...</code> calls do reach the NestJS backend in dev. In production, <code>VITE_API_BASE_URL</code> points at the Render API URL directly.</p>
 <hr />
 <p><em>AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5]</em></p>
 
