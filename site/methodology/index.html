@@ -14,7 +14,7 @@
         <link rel="prev" href="../design/roadmap/">
       
       
-        <link rel="next" href="../git-methodology/">
+        <link rel="next" href="../sprint-log/">
       
       
         
@@ -958,6 +958,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#sprint-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprint Log
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#versioning" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -972,6 +983,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sprint-log/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sprint Log
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1647,6 +1686,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#sprint-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprint Log
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#versioning" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1683,7 +1733,7 @@
 
 
 <h1 id="methodology">Methodology<a class="headerlink" href="#methodology" title="Permanent link">&para;</a></h1>
-<p>We follow a <strong>Scrum adaptation across three sprints</strong>, agreed at the first team standup (2026-08-12), plus a fourth milestone for final submission and polish.</p>
+<p>We follow a <strong>dynamic Scrum adaptation across three sprints</strong>, agreed at the first team standup (2026-08-12), plus a fourth milestone for final submission and polish. Rather than assigning work to individuals during sprint planning, team members pull tasks based on initiative and capacity — anyone can pick up any unassigned issue from the backlog and start working on it.</p>
 <h2 id="why-scrum-not-kanban-or-xp">Why Scrum, not Kanban or XP<a class="headerlink" href="#why-scrum-not-kanban-or-xp" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Kanban</strong> suits continuous flow with no fixed deadlines. Our project has three hard milestone dates set by the course, so working in timeboxed sprints with a planning and review cycle around each one maps directly onto how we're actually graded — rather than a continuous board with no natural checkpoint for a retro.</li>
@@ -1709,7 +1759,7 @@
 <tr>
 <td><strong>Sprint planning</strong></td>
 <td>Start of each sprint</td>
-<td>Team reviews the sprint's rubric weighting, agrees the scope for the sprint, and turns it into sized issues on the work tracker.</td>
+<td>Team reviews the sprint's rubric weighting, agrees the scope for the sprint, and turns it into sized issues on the product backlog. Work is not pre-assigned — team members self-select tasks based on initiative and capacity throughout the sprint.</td>
 </tr>
 <tr>
 <td><strong>Client/tutor check-in</strong></td>
@@ -1717,21 +1767,24 @@
 <td>Meeting with the client tutor to validate direction and surface blockers — minuted in <a href="../meetings/client/">Client Meetings</a>.</td>
 </tr>
 <tr>
-<td><strong>Sprint review</strong></td>
+<td><strong>Sprint reflection (Sprint Log)</strong></td>
 <td>End of each sprint</td>
-<td>Demo of what was actually built against what sprint planning agreed, before the milestone deadline.</td>
+<td>A tabulated record of every task completed during the sprint, grouped by week and owner, documenting <em>what was done, by whom, and when</em>. This supplements the retrospective by providing a concrete performance picture — see <a href="#sprint-log">Sprint Log</a> below.</td>
 </tr>
 <tr>
 <td><strong>Retrospective</strong></td>
 <td>End of each sprint</td>
-<td>What worked, what didn't, one or two concrete changes for the next sprint. Minuted alongside the sprint review.</td>
+<td>What worked, what didn't, one or two concrete changes for the next sprint. Informed by the Sprint Log data. Minuted alongside the sprint reflection.</td>
 </tr>
 </tbody>
 </table>
 <h2 id="work-tracking">Work tracking<a class="headerlink" href="#work-tracking" title="Permanent link">&para;</a></h2>
-<p><strong>Gitea Projects and Gitea Issues</strong> are the work tracker. This was a change from the initial plan at the first standup (2026-08-12), which proposed GitHub Projects/Issues — the team moved to Gitea's built-in tracker once it was clear the codebase itself would live on Gitea, per the university's version-control requirement, to keep code and issue tracking on the same platform. Every task is an issue with an owner; issues are assigned and closed throughout the sprint rather than in a batch immediately before the deadline.</p>
+<p><strong>Gitea Projects and Gitea Issues</strong> are the work tracker. This was a change from the initial plan at the first standup (2026-08-12), which proposed GitHub Projects/Issues — the team moved to Gitea's built-in tracker once it was clear the codebase itself would live on Gitea, per the university's version-control requirement, to keep code and issue tracking on the same platform. The <strong>product backlog</strong> holds all issues for the current sprint; tasks are not pre-assigned to individuals during planning. Instead, team members take initiative by self-selecting and claiming issues as they have capacity, which encourages ownership and flexibility. Issues are closed throughout the sprint rather than in a batch immediately before the deadline.</p>
 <h2 id="how-we-split-work">How we split work<a class="headerlink" href="#how-we-split-work" title="Permanent link">&para;</a></h2>
 <p>Rather than horizontal layers (one person "does the backend," another "does the frontend"), we build <strong>feature-by-feature, vertically</strong> — one person takes a feature from schema/API through to UI where practical. Sprint 1 is the exception: because the foundational work (schema, docs site, CI/CD, methodology, auth) has to exist before vertical feature ownership makes sense, Sprint 1 is split by the six things it's actually marked on instead — see <a href="../coding-conventions/">Coding Conventions</a> and <a href="../git-methodology/">Git Methodology</a> for the process pieces that came out of that split.</p>
+<h2 id="sprint-log">Sprint Log<a class="headerlink" href="#sprint-log" title="Permanent link">&para;</a></h2>
+<p>At the end of each sprint the team produces a <strong>Sprint Log</strong> — a week-by-week, tabulated record of every task that was completed, categorised by type (<code>feat</code>, <code>fix</code>, <code>refactor</code>, <code>chore</code>, <code>docs</code>, <code>test</code>, <code>style</code>) and attributed to the team member who did the work. The Sprint Log serves as a <strong>sprint reflection</strong>: it supplements the retrospective with hard evidence of who contributed what and when, giving a clear picture of individual and team performance across the sprint.</p>
+<p>The Sprint Log is maintained at <a href="../sprint-log/">Sprint Log</a> in this documentation site.</p>
 <h2 id="versioning">Versioning<a class="headerlink" href="#versioning" title="Permanent link">&para;</a></h2>
 <p>We use <strong>date-based versioning</strong> rather than semantic version numbers, since Gitea's commit history and Actions runs already provide a detailed record of when and what changed, and a semantic version adds overhead without a corresponding release process to justify it.</p>
 <hr />

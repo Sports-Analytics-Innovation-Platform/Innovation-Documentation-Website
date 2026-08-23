@@ -1,6 +1,6 @@
 # Methodology
 
-We follow a **Scrum adaptation across three sprints**, agreed at the first team standup (2026-08-12), plus a fourth milestone for final submission and polish.
+We follow a **dynamic Scrum adaptation across three sprints**, agreed at the first team standup (2026-08-12), plus a fourth milestone for final submission and polish. Rather than assigning work to individuals during sprint planning, team members pull tasks based on initiative and capacity — anyone can pick up any unassigned issue from the backlog and start working on it.
 
 ## Why Scrum, not Kanban or XP
 
@@ -15,18 +15,24 @@ Reference: [Scrum Guide (scrumguides.org)](https://scrumguides.org) — our cere
 | Ceremony | Cadence | What happens |
 |---|---|---|
 | **Standup** | Weekly | Quick sync in person (Tuesday/Friday labs) or on WhatsApp: what's done, what's next, what's blocking. Whoever's starting a new feature announces it so two people don't build the same thing. |
-| **Sprint planning** | Start of each sprint | Team reviews the sprint's rubric weighting, agrees the scope for the sprint, and turns it into sized issues on the work tracker. |
+| **Sprint planning** | Start of each sprint | Team reviews the sprint's rubric weighting, agrees the scope for the sprint, and turns it into sized issues on the product backlog. Work is not pre-assigned — team members self-select tasks based on initiative and capacity throughout the sprint. |
 | **Client/tutor check-in** | Weekly | Meeting with the client tutor to validate direction and surface blockers — minuted in [Client Meetings](meetings/client/index.md). |
-| **Sprint review** | End of each sprint | Demo of what was actually built against what sprint planning agreed, before the milestone deadline. |
-| **Retrospective** | End of each sprint | What worked, what didn't, one or two concrete changes for the next sprint. Minuted alongside the sprint review. |
+| **Sprint reflection (Sprint Log)** | End of each sprint | A tabulated record of every task completed during the sprint, grouped by week and owner, documenting *what was done, by whom, and when*. This supplements the retrospective by providing a concrete performance picture — see [Sprint Log](#sprint-log) below. |
+| **Retrospective** | End of each sprint | What worked, what didn't, one or two concrete changes for the next sprint. Informed by the Sprint Log data. Minuted alongside the sprint reflection. |
 
 ## Work tracking
 
-**Gitea Projects and Gitea Issues** are the work tracker. This was a change from the initial plan at the first standup (2026-08-12), which proposed GitHub Projects/Issues — the team moved to Gitea's built-in tracker once it was clear the codebase itself would live on Gitea, per the university's version-control requirement, to keep code and issue tracking on the same platform. Every task is an issue with an owner; issues are assigned and closed throughout the sprint rather than in a batch immediately before the deadline.
+**Gitea Projects and Gitea Issues** are the work tracker. This was a change from the initial plan at the first standup (2026-08-12), which proposed GitHub Projects/Issues — the team moved to Gitea's built-in tracker once it was clear the codebase itself would live on Gitea, per the university's version-control requirement, to keep code and issue tracking on the same platform. The **product backlog** holds all issues for the current sprint; tasks are not pre-assigned to individuals during planning. Instead, team members take initiative by self-selecting and claiming issues as they have capacity, which encourages ownership and flexibility. Issues are closed throughout the sprint rather than in a batch immediately before the deadline.
 
 ## How we split work
 
 Rather than horizontal layers (one person "does the backend," another "does the frontend"), we build **feature-by-feature, vertically** — one person takes a feature from schema/API through to UI where practical. Sprint 1 is the exception: because the foundational work (schema, docs site, CI/CD, methodology, auth) has to exist before vertical feature ownership makes sense, Sprint 1 is split by the six things it's actually marked on instead — see [Coding Conventions](coding-conventions.md) and [Git Methodology](git-methodology.md) for the process pieces that came out of that split.
+
+## Sprint Log
+
+At the end of each sprint the team produces a **Sprint Log** — a week-by-week, tabulated record of every task that was completed, categorised by type (`feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `style`) and attributed to the team member who did the work. The Sprint Log serves as a **sprint reflection**: it supplements the retrospective with hard evidence of who contributed what and when, giving a clear picture of individual and team performance across the sprint.
+
+The Sprint Log is maintained at [Sprint Log](sprint-log.md) in this documentation site.
 
 ## Versioning
 

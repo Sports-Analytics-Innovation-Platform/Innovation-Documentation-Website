@@ -882,6 +882,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../sprint-log/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sprint Log
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../git-methodology/" class="md-nav__link">
         
   
@@ -1671,6 +1699,46 @@
 <td><code>.qoder/skills/**</code>, <code>.gitea/workflows/mirror.yml</code>, <code>render.yaml</code></td>
 <td>not recoverable</td>
 <td><a href="../transcripts/ai_transcripts/2026-08-20-adrian-qoder-cloudflare-deploy.jsonl">2026-08-20-adrian-qoder-cloudflare-deploy.jsonl</a></td>
+</tr>
+<tr>
+<td>2026-08-21</td>
+<td>Adrian</td>
+<td>Qoder</td>
+<td>Qoder Lite</td>
+<td>Diagnosed and resolved MkDocs strict-mode build failures (14 warnings aborting GitHub Pages deploy): fixed broken transcript links in <code>ai-usage.md</code> (wrong folder name <code>ai-transcripts</code> → <code>ai_transcripts</code>, missing <code>.txt</code> extension, non-existent <code>OwenPace_01.txt</code>), converted 11 out-of-repo links in ADR-003 to plain code references, renamed <code>ADR-003-hosting-topology.md</code> to lowercase to match nav, and added <code>_template.md</code> / <code>how-to-summarize.md</code> to the Meetings nav</td>
+<td><code>docs/ai-usage.md</code>, <code>docs/decisions/adr-003-hosting-topology.md</code>, <code>mkdocs.yml</code></td>
+<td>not recoverable</td>
+<td><a href="../transcripts/ai_transcripts/2026-08-21-adrian-qoder-fix-broken-links.jsonl">2026-08-21-adrian-qoder-fix-broken-links.jsonl</a></td>
+</tr>
+<tr>
+<td>2026-08-21</td>
+<td>Daniel Passos</td>
+<td>OpenAI Codex</td>
+<td>GPT-5.6 Sol</td>
+<td>Added code coverage reporting to Gitea Actions, including API and Web coverage runs, a combined HTML coverage dashboard, downloadable CI artifact, and related documentation updates; reviewed and tested the workflow on the Gitea runner</td>
+<td><code>.gitea/workflows/ci.yml</code>, <code>README.md</code>, <code>docs/PROJECT_OVERVIEW.md</code></td>
+<td></td>
+<td><a href="../transcripts/ai_transcripts/DanielPassos_01_CoverageReporting.txt">Coverage reporting</a></td>
+</tr>
+<tr>
+<td>2026-08-21</td>
+<td>Daniel Passos</td>
+<td>OpenAI Codex</td>
+<td>GPT-5.6 Sol</td>
+<td>Implemented server-side player and team search across the full dataset with pagination, existing filters, frontend debounce and API/frontend tests; also added authenticated route and API protection for predictions, games and optimizer while keeping player and team pages public</td>
+<td><code>apps/api/src/players/**</code>, <code>apps/api/src/teams/**</code>, <code>apps/api/src/games/**</code>, <code>apps/api/src/optimizer/**</code>, <code>apps/web/src/pages/PlayersListPage.tsx</code>, <code>apps/web/src/pages/TeamsListPage.tsx</code>, <code>apps/web/src/components/PlayersFilterBar.tsx</code>, <code>apps/web/src/components/ProtectedRoute.tsx</code>, <code>apps/web/src/components/AuthStatus.tsx</code>, <code>apps/web/src/components/RecentResultWidget.tsx</code>, <code>apps/web/src/lib/nbaApi.ts</code>, <code>apps/web/src/lib/authClient.ts</code>, <code>apps/web/src/App.tsx</code></td>
+<td></td>
+<td><a href="../transcripts/ai_transcripts/DanielPassos_02_Actions.txt">Search and access-control work</a></td>
+</tr>
+<tr>
+<td>2026-08-23</td>
+<td>Adrian</td>
+<td>Qoder</td>
+<td>Qoder</td>
+<td>Documented client meeting notes from 2026-08-18 and 2026-08-21: added collapsible meeting entries to the client meetings page with attendees, agenda, decisions, actions (with due dates), and notes; captured feature priorities including custom API, database integration, code coverage, diagrams, project board, ML model targets, Swagger setup, and hosting topology pinger</td>
+<td><code>docs/meetings/client/index.md</code></td>
+<td></td>
+<td><a href="../transcripts/ai_transcripts/2026-08-23-adrian-qoder-client-meeting-docs.txt">2026-08-23-adrian-qoder-client-meeting-docs.txt</a></td>
 </tr>
 </tbody>
 </table>

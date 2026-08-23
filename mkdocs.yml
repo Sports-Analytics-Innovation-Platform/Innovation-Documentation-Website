@@ -49,6 +49,7 @@ nav:
       - Roadmap: design/roadmap.md
   - Process:
       - Methodology: methodology.md
+      - Sprint Log: sprint-log.md
       - Git Methodology: git-methodology.md
       - Definition of Done: definition-of-done.md
       - Coding Conventions: coding-conventions.md
