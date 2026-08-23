@@ -5,46 +5,9 @@ hide:
 
 # Client Meetings
 
-??? note "2026-08-18 — Client meeting"
-
-    **Attendees:** Adrian, Owen, Josh, Sanele, Kovendan Raman (client)
-
-    ## Agenda
-
-
-    - Review of progress so far
-    - Features to be implemented in the coming week
-
-
-    ## Decisions
-
-
-    - The team identified the following features as priorities for the current week.
-
-
-    ## Actions
-
-
-    | Action | Owner | Due |
-    |---|---|---|
-    | Implement the team's own API | Team | 2026-08-24 |
-    | Download and use API data from a database | Team | 2026-08-24 |
-    | Set up code coverage reporting in actions on Gitea | Team | 2026-08-24 |
-    | Create project diagrams (architecture, ERD, etc.) | Team | 2026-08-24 |
-    | Set up and maintain a project board | Team | 2026-08-24 |
-
-
-    ## Notes
-
-
-    - The team presented a progress update to the client covering what had been completed so far.
-    - The client outlined the key features that still need to be implemented: a custom API, database integration for API data, code coverage in Gitea actions, diagrams, and a project board.
-    - All action items are due by 2026-08-24.
-
-
 ??? note "2026-08-21 — Client meeting"
 
-    **Attendees:** Adrian, Owen, Josh, Sanele, Kovendan Raman (client)
+    **Attendees:** Adrian, Josh, Daniel, Sanele, Kovendan Raman (client)
 
     ## Agenda
 
@@ -87,6 +50,43 @@ hide:
     - Signup functionality has been implemented and needs database integration.
     - The team's API should consume another API as part of the architecture.
     - Swagger should be used alongside the documentation site for API documentation.
+
+
+??? note "2026-08-18 — Client meeting"
+
+    **Attendees:** Adrian, Owen, Josh, Sanele, Kovendan Raman (client)
+
+    ## Agenda
+
+
+    - Review of progress so far
+    - Features to be implemented in the coming week
+
+
+    ## Decisions
+
+
+    - The team identified the following features as priorities for the current week.
+
+
+    ## Actions
+
+
+    | Action | Owner | Due |
+    |---|---|---|
+    | Implement the team's own API | Team | 2026-08-24 |
+    | Download and use API data from a database | Team | 2026-08-24 |
+    | Set up code coverage reporting in actions on Gitea | Team | 2026-08-24 |
+    | Create project diagrams (architecture, ERD, etc.) | Team | 2026-08-24 |
+    | Set up and maintain a project board | Team | 2026-08-24 |
+
+
+    ## Notes
+
+
+    - The team presented a progress update to the client covering what had been completed so far.
+    - The client outlined the key features that still need to be implemented: a custom API, database integration for API data, code coverage in Gitea actions, diagrams, and a project board.
+    - All action items are due by 2026-08-24.
 
 
 ??? note "2026-08-13 — Client meeting"
