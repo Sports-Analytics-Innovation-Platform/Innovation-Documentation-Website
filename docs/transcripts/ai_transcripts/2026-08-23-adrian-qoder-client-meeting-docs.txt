@@ -1,0 +1,56 @@
+# AI Session Transcript: Client Meeting Documentation
+# Date: 2026-08-23
+# Author: Adrian
+# Tool: Qoder
+
+## Summary
+
+This session involved documenting client meeting notes from two recent meetings (2026-08-18 and 2026-08-21) into the project's documentation website.
+
+## Tasks Completed
+
+### 1. Added 2026-08-18 Client Meeting Entry
+- Created a new collapsible meeting entry in docs/meetings/client/index.md
+- Attendees: Adrian, Owen, Josh, Sanele, Kovendan Raman (client)
+- Captured action items with due dates (2026-08-24):
+  - Implement the team's own API
+  - Download and use API data from a database
+  - Set up code coverage reporting in actions on Gitea
+  - Create project diagrams (architecture, ERD, etc.)
+  - Set up and maintain a project board
+- Noted that the team presented a progress update to the client
+
+### 2. Added 2026-08-21 Client Meeting Entry
+- Created a second collapsible meeting entry
+- Same attendees as the Aug 18 meeting
+- Captured extensive notes from the meeting discussion:
+  - Search bar feature completed
+  - ML predictive model target: 75-80% accuracy (64% baseline)
+  - Second API implementation using buckets to pull data
+  - Hosting topology pinger requirement
+  - Swagger for API documentation
+  - Signup functionality implemented, needs database integration
+  - Client's reference project: RaceIQ (https://github.com/Race1Q/RaceIQ)
+- Listed 7 action items from the meeting
+
+### 3. Date Corrections
+- Initially created the Aug 18 entry with date 2026-08-23 (user forgot the actual date)
+- Corrected to 2026-08-18 per user clarification
+- Updated due dates from "This week" to specific date (initially 2026-08-26, then corrected to 2026-08-24)
+
+### 4. AI Usage Ledger Entry
+- Added entry to docs/ai-usage.md documenting this session
+- Created transcript file: 2026-08-23-adrian-qoder-client-meeting-docs.txt
+
+## Files Modified
+
+- docs/meetings/client/index.md (added two new meeting entries)
+- docs/ai-usage.md (added ledger entry)
+- docs/transcripts/ai_transcripts/2026-08-23-adrian-qoder-client-meeting-docs.txt (this file)
+
+## Notes
+
+- Meetings are now in reverse chronological order: Aug 21 → Aug 18 → Aug 13
+- The user had limited recall of meeting details but provided key action items and decisions
+- The client (Kovendan Raman) is a previous student who is now a tutor
+- Client's reference project RaceIQ was mentioned as inspiration
