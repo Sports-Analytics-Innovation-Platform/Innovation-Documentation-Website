@@ -72,6 +72,12 @@ In dev, `vite.config.ts` proxies `/api/*` to `http://localhost:4000`. In product
 
 Player and team endpoints are **public** — no authentication required. Games, predictions, and optimizer endpoints are **auth-gated** via `SessionAuthGuard` — a valid BetterAuth session cookie is required. This matches the frontend routing: `/players` and `/teams` are accessible to anyone, while `/predictions`, `/optimizer`, and `/games/:gameId` are wrapped in `<ProtectedRoute>`.
 
+### Request flow: `GET /v1/games/:id/prediction`
+
+![Sequence diagram: game prediction request](diagrams/sequence-game-prediction.png)
+
+Walks a single auth-gated request end to end, including why it works cross-origin in production (Cloudflare Pages calling Render): the CORS middleware checks the request's `Origin` against the `WEB_ORIGIN` allowlist before it ever reaches Nest, and the session cookie survives the cross-site request only because `auth.config.ts` sets `defaultCookieAttributes: { sameSite: "none" }` in production (paired with `Secure`, derived from `baseURL`'s `https://` scheme). Also shows the two-step 404 (game not found vs. game found but not yet predicted) and that the `GamePrediction` row itself comes from an out-of-band `apps/predictor` run, never from this request. PlantUML source: `docs/diagrams/sequence-game-prediction.puml` in the main app repo.
+
 ## Not yet built
 
 - **Write endpoints** — nothing in the current code writes data (no POST/PUT/PATCH/DELETE calls exist). If the proposed analyst/admin roles in [Security](../security.md) are real, these don't exist yet.
