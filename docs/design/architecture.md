@@ -49,7 +49,7 @@ This satisfies the brief's non-monolithic requirement (§2.1): `apps/web` and `a
 - Routes are versioned under `/v1/` — see [API Design](api-design.md) for the full endpoint table.
 - **Auth-gated endpoints**: Games, predictions, and optimizer endpoints require an authenticated session (`SessionAuthGuard`). Player and team browsing is public.
 - **Health check** at `/health` for Render liveness probes.
-- Deployed on **Render** (Node.js web service, free tier with ~30s cold start after 15 min inactivity).
+- Deployed on **Render** (Node.js web service, free tier). A pinger service keeps the instance warm to avoid cold-start delays.
 
 ## Python services
 
@@ -69,14 +69,14 @@ These are planned to run as Render Cron Jobs or Background Workers in production
 
 Production hosting per [ADR-003](../decisions/adr-003-hosting-topology.md):
 
-| Component | Host | Deploy method |
-|---|---|---|
-| Frontend (`apps/web`) | Cloudflare Pages | Auto-deploy from GitHub mirror |
-| API (`apps/api`) | Render | Auto-deploy from GitHub mirror |
-| Database | Supabase (managed Postgres) | Direct connection from API and Python services |
-| Python services | Render (Cron/Worker, planned) | Manual or scheduled |
-| CI | Gitea Actions | Lint, typecheck, test on every push/PR |
-| Docs site | GitHub Pages | Auto-deploy on push to `main` |
+| Component | Host | URL | Deploy method |
+|---|---|---|---|
+| Frontend (`apps/web`) | Cloudflare Pages | [sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/) | Auto-deploy from GitHub mirror |
+| API (`apps/api`) | Render | [sportsanalytics-api.onrender.com](https://sportsanalytics-api.onrender.com/) | Auto-deploy from GitHub mirror |
+| Database | Supabase (managed Postgres) | — | Direct connection from API and Python services |
+| Python services | Render (Cron/Worker, planned) | — | Manual or scheduled |
+| CI | Gitea Actions | — | Lint, typecheck, test on every push/PR |
+| Docs site | GitHub Pages | [sports-analytics-innovation-platform.github.io/Innovation-Documentation-Website](https://sports-analytics-innovation-platform.github.io/Innovation-Documentation-Website/) | Auto-deploy on push to `main` |
 
 ---
 

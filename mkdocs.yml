@@ -28,16 +28,33 @@ theme:
 
 markdown_extensions:
   - admonition
+  - attr_list
   - pymdownx.details
   - pymdownx.superfences
   - pymdownx.highlight
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - toc:
       permalink: true
   - tables
 
+extra:
+  social:
+    - icon: material/web
+      link: https://sportsanalytics.pages.dev/
+      name: Live Webapp (Cloudflare Pages)
+    - icon: material/api
+      link: https://sportsanalytics-api.onrender.com/
+      name: Live API (Render)
+    - icon: fontawesome/brands/git
+      link: https://sdp.ms.wits.ac.za/innovation/sportsanalytics
+      name: Source Code (Gitea)
+
 nav:
   - Home:
       - Overview: index.md
+      - Demo Guide: demo-guide.md
       - Rubric Quick Links: rubric-links.md
   - Getting Started: getting-started.md
   - Architecture:

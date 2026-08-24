@@ -7,6 +7,12 @@ process, and decision records. Source code lives in the team's Gitea organisatio
 is built from the `docs/` folder in this repository and deployed automatically on every push
 to `main`.
 
+## Live links
+
+- [:material-web: **Live Webapp**](https://sportsanalytics.pages.dev/){ .md-button .md-button--primary } — deployed frontend on Cloudflare Pages
+- [:material-api: **Live API**](https://sportsanalytics-api.onrender.com/health){ .md-button } — backend on Render (try `/health`)
+- [:material-server: **Gitea Source Repo**](https://sdp.ms.wits.ac.za/innovation/sportsanalytics) — the team's code repository
+
 ## Start here
 
 - [Getting Started](getting-started.md) — run the project locally
@@ -14,6 +20,14 @@ to `main`.
 - [Methodology](methodology.md) — how we work
 - [Decisions](decisions/index.md) — why we chose what we chose
 - [Rubric Quick Links](rubric-links.md) — marking a milestone? Start here
+
+!!! tip "Marking tutor? Start here"
+    The fastest path through the project:
+
+    1. **[Demo Guide](demo-guide.md)** — a 10-minute step-by-step walkthrough of the live app, mapped to the rubric
+    2. **[Rubric Quick Links](rubric-links.md)** — every rubric criterion linked to its evidence
+    3. **[Live Webapp](https://sportsanalytics.pages.dev/)** — try it yourself
+    4. **[Live API](https://sportsanalytics-api.onrender.com/health)** — check `/health` for a quick backend verification
 
 ## Status
 

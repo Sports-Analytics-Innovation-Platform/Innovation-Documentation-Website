@@ -191,17 +191,17 @@ That last row is the one to read carefully. CI proves the suites **run and pass*
 
 Continuous deployment is live, running via a Gitea → GitHub mirror that triggers auto-deploys on each host:
 
-| Component | Host | Deploy trigger |
-|---|---|---|
-| Frontend (`apps/web`) | Cloudflare Pages | GitHub mirror push → Cloudflare auto-deploy (builds `apps/web` with `npm run build`, serves `dist/`) |
-| API (`apps/api`) | Render | GitHub mirror push → Render auto-deploy (build with `npm run build`, start with `npm run start:prod`) |
-| Docs site | GitHub Pages | Separate docs repo push to `main` → GitHub Actions build and deploy (`.github/workflows/deploy-docs.yml`) |
-| Database | Supabase | Prisma migrations run manually or from CI (Render free tier doesn't support `preDeployCommand`) |
-| Python services | Render (planned) | Not yet auto-deployed — planned as Render Cron Jobs or Background Workers |
+| Component | Host | Deploy trigger | Live URL |
+|---|---|---|---|
+| Frontend (`apps/web`) | Cloudflare Pages | GitHub mirror push → Cloudflare auto-deploy (builds `apps/web` with `npm run build`, serves `dist/`) | [sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/) |
+| API (`apps/api`) | Render | GitHub mirror push → Render auto-deploy (build with `npm run build`, start with `npm run start:prod`) | [sportsanalytics-api.onrender.com](https://sportsanalytics-api.onrender.com/) |
+| Docs site | GitHub Pages | Separate docs repo push to `main` → GitHub Actions build and deploy (`.github/workflows/deploy-docs.yml`) | [Docs site](https://sports-analytics-innovation-platform.github.io/Innovation-Documentation-Website/) |
+| Database | Supabase | Prisma migrations run manually or from CI (Render free tier doesn't support `preDeployCommand`) | — |
+| Python services | Render (planned) | Not yet auto-deployed — planned as Render Cron Jobs or Background Workers | — |
 
 The Gitea → GitHub push mirror was set up during Sprint 1 (week of 18 Aug). GitHub is used only as a deploy trigger — the source of truth remains on Gitea, and all CI (lint, typecheck, test) still runs on Gitea Actions.
 
-Per [ADR-003](decisions/adr-003-hosting-topology.md): Cloudflare Pages provides a global CDN with managed TLS for the SPA; Render hosts the NestJS API as a long-running Node.js web service (free tier, ~30s cold start); Supabase provides managed Postgres with connection pooling over TLS.
+Per [ADR-003](decisions/adr-003-hosting-topology.md): Cloudflare Pages provides a global CDN with managed TLS for the SPA; Render hosts the NestJS API as a long-running Node.js web service (free tier, kept warm by a pinger); Supabase provides managed Postgres with connection pooling over TLS.
 
 ## What CI does not do yet
 

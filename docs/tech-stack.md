@@ -55,7 +55,7 @@ These four are confirmed decisions (team's stack list). Their implementation sta
 | **Vitest** | Unit testing on both apps — Vitest + Supertest for backend integration tests (against a real disposable Postgres DB), Vitest + React Testing Library on the frontend. Test files exist in both `apps/api` and `apps/web` — the CI `coverage` job runs both suites against a real Postgres with no `--passWithNoTests` tolerance. |
 | **MkDocs Material + GitHub Pages** | Documentation site. MkDocs Material was chosen over Docusaurus/mdBook for a lower setup cost with strong out-of-the-box search, admonitions, and theming; GitHub Pages is used specifically for the docs site's static hosting (separate from Gitea, which hosts the actual codebase). |
 | **Cloudflare Pages** | Static CDN hosting for the frontend SPA (`apps/web` build output). Global edge network, managed TLS, auto-deploy from GitHub mirror. Per [ADR-003](decisions/adr-003-hosting-topology.md). |
-| **Render** | NestJS API hosting (Node.js web service, free tier). Auto-deploy from GitHub mirror. ~30s cold start after 15 min inactivity accepted by the team. Per [ADR-003](decisions/adr-003-hosting-topology.md). |
+| **Render** | NestJS API hosting (Node.js web service, free tier). Auto-deploy from GitHub mirror. A pinger service keeps the instance warm to avoid cold-start delays. Per [ADR-003](decisions/adr-003-hosting-topology.md). |
 | **Supabase** | Managed PostgreSQL hosting with built-in connection pooling and a free tier. Supabase's auto REST/Auth/Storage APIs are deliberately unused — the NestJS API stays the only HTTP path to the data. Per [ADR-003](decisions/adr-003-hosting-topology.md). |
 
 !!! success "CI/CD host confirmed: Gitea + GitHub mirror"

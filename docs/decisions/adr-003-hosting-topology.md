@@ -2,6 +2,7 @@
 
 - **Status:** Accepted — implemented 2026-08-19. Frontend deployed on Cloudflare Pages (auto-deploy via GitHub mirror), API deployed on Render (auto-deploy via GitHub mirror), Postgres on Supabase.
 - **Date:** 2026-08-19
+- **Updated:** 2026-08-24 — a pinger service now keeps the Render API instance warm, eliminating the ~30s cold-start delay that was originally accepted below.
 - **Updated:** 2026-08-19 — database moved from Azure PostgreSQL Flexible
   Server to Supabase; frontend moved to Cloudflare Pages; API and batch jobs
   moved to Render after Azure for Students' region policy blocked Azure Static
