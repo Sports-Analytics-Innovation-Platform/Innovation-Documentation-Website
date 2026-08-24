@@ -72,7 +72,7 @@ Production hosting per [ADR-003](../decisions/adr-003-hosting-topology.md):
 | Component | Host | URL | Deploy method |
 |---|---|---|---|
 | Frontend (`apps/web`) | Cloudflare Pages | [sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/) | Auto-deploy from GitHub mirror |
-| API (`apps/api`) | Render | [sportsanalytics-api.onrender.com](https://sportsanalytics-api.onrender.com/) | Auto-deploy from GitHub mirror |
+| API (`apps/api`) | Render | [sportsanalytics-api.onrender.com/health](https://sportsanalytics-api.onrender.com/health) | Auto-deploy from GitHub mirror |
 | Database | Supabase (managed Postgres) | — | Direct connection from API and Python services |
 | Python services | Render (Cron/Worker, planned) | — | Manual or scheduled |
 | CI | Gitea Actions | — | Lint, typecheck, test on every push/PR |

@@ -45,7 +45,7 @@ extra:
       link: https://sportsanalytics.pages.dev/
       name: Live Webapp (Cloudflare Pages)
     - icon: material/api
-      link: https://sportsanalytics-api.onrender.com/
+      link: https://sportsanalytics-api.onrender.com/health
       name: Live API (Render)
     - icon: fontawesome/brands/git
       link: https://sdp.ms.wits.ac.za/innovation/sportsanalytics

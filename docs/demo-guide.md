@@ -8,7 +8,7 @@ A step-by-step walkthrough of the [live webapp](https://sportsanalytics.pages.de
 ## Before you start
 
 - **Live webapp**: [sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/)
-- **Live API**: [sportsanalytics-api.onrender.com](https://sportsanalytics-api.onrender.com/)
+- **Live API**: [sportsanalytics-api.onrender.com/health](https://sportsanalytics-api.onrender.com/health)
 - The API is kept warm by a pinger service, so it should respond immediately.
 
 ---

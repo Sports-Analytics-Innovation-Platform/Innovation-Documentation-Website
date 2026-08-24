@@ -10,7 +10,7 @@ One page mapping every rubric criterion (from the COMS3011A project brief) to wh
 | Criterion | Weight | Evidence |
 |---|---|---|
 | Version Control | 10% | Repo itself (Gitea, not linkable from this site) + [Git Methodology](git-methodology.md) for how it's used. All members have committed code |
-| CI/CD (brief §2.1, not a weighted line) | — | [CI/CD Pipeline](ci-cd.md) — Gitea Actions running lint/typecheck/test on every push and PR. CD is live: frontend auto-deploys to [Cloudflare Pages](https://sportsanalytics.pages.dev/), API auto-deploys to [Render](https://sportsanalytics-api.onrender.com/) via GitHub mirror ([ADR-003](decisions/adr-003-hosting-topology.md) accepted and implemented) |
+| CI/CD (brief §2.1, not a weighted line) | — | [CI/CD Pipeline](ci-cd.md) — Gitea Actions running lint/typecheck/test on every push and PR. CD is live: frontend auto-deploys to [Cloudflare Pages](https://sportsanalytics.pages.dev/), API auto-deploys to [Render](https://sportsanalytics-api.onrender.com/health) via GitHub mirror ([ADR-003](decisions/adr-003-hosting-topology.md) accepted and implemented) |
 | Documentation Site | 10% | This site — deployed via GitHub Pages on every push to `main` |
 | Getting Started / Dev Guides | 5% | [Getting Started](getting-started.md) |
 | Work Tracker | 5% | Gitea Projects/Issues (external — not part of this docs site) |
@@ -28,7 +28,7 @@ One page mapping every rubric criterion (from the COMS3011A project brief) to wh
 | Core Features | 25% | [Feature Tiers](design/feature-tiers.md) (basic tier built and deployed) + [Requirements Traceability](requirements.md) |
 | Automated Testing | 10% | Vitest + Supertest (API, against real Postgres) and Vitest + React Testing Library (web). CI `coverage` job runs both suites against a disposable Postgres service container — no `--passWithNoTests` tolerance. See [CI/CD Pipeline](ci-cd.md) |
 | Stakeholder Reviews | 10% | [Client Meetings](meetings/client/index.md), [Scrum](meetings/scrum/index.md) |
-| API | 15% | [API Design](design/api-design.md) — live at [sportsanalytics-api.onrender.com](https://sportsanalytics-api.onrender.com/). External integration: `nba_api` via [ingestion service](design/architecture.md) |
+| API | 15% | [API Design](design/api-design.md) — live at [sportsanalytics-api.onrender.com/health](https://sportsanalytics-api.onrender.com/health). External integration: `nba_api` via [ingestion service](design/architecture.md) |
 | User Feedback | 10% | ⚠️ No page exists. No formal user-testing/feedback-collection process is documented anywhere on this site |
 | Project Methodology | 10% | [Methodology](methodology.md) — this rubric line specifically wants evidence of *active* following, not just the document existing |
 | Bug Tracker | 5% | Gitea Issues (external) — no docs-site page tracks usage |
@@ -45,7 +45,7 @@ The brief lists weights only, no descriptions, for this milestone — criteria n
 | User Feedback | 10% | ⚠️ Same gap as Sprint 2 — no formal feedback collection process documented yet |
 | Automated Testing | 10% | Vitest + Supertest (API) and Vitest + React Testing Library (web), both running in CI against real Postgres — [CI/CD Pipeline](ci-cd.md) |
 | Feature Implementation | 20% | [Feature Tiers](design/feature-tiers.md) (basic tier deployed; intermediate tier is the target per the [Roadmap](design/roadmap.md)) |
-| API Implementation | 20% | [API Design](design/api-design.md) — live at [sportsanalytics-api.onrender.com](https://sportsanalytics-api.onrender.com/), with `nba_api` external integration via ingestion |
+| API Implementation | 20% | [API Design](design/api-design.md) — live at [sportsanalytics-api.onrender.com/health](https://sportsanalytics-api.onrender.com/health), with `nba_api` external integration via ingestion |
 | Performance | 5% | ⚠️ Property of the running system — [live webapp](https://sportsanalytics.pages.dev/) and [live API](https://sportsanalytics-api.onrender.com/health) can be evaluated directly |
 | Improvement | 5% | ⚠️ Would need a changelog or before/after comparison — doesn't exist yet |
 | Documentation | 15% | This site (deployed at [docs](https://sports-analytics-innovation-platform.github.io/Innovation-Documentation-Website/)), [API Design](design/api-design.md), [ERD](design/erd.md), [Architecture](design/architecture.md) |
@@ -58,9 +58,9 @@ The brief lists weights only, no descriptions, for this milestone — criteria n
 | Data | Database | 3% | [ERD](design/erd.md) — 12 models on Supabase managed Postgres, live |
 | Deployment | Database | 2% | [ADR-003: Hosting Topology](decisions/adr-003-hosting-topology.md) — accepted and implemented. Supabase managed Postgres with connection pooling over TLS |
 | Structure | Database | 5% | [ERD](design/erd.md), [ADR-001: Database](decisions/adr-001-database.md) |
-| Availability | API | 3% | Live at [sportsanalytics-api.onrender.com](https://sportsanalytics-api.onrender.com/) — kept responsive by a pinger service |
+| Availability | API | 3% | Live at [sportsanalytics-api.onrender.com/health](https://sportsanalytics-api.onrender.com/health) — kept responsive by a pinger service |
 | Architecture | API | 5% | [Architecture](design/architecture.md) — non-monolithic, `apps/web` and `apps/api` independently deployed, HTTP-only communication |
-| Deployment | API | 2% | [ADR-003](decisions/adr-003-hosting-topology.md) — Render auto-deploy from GitHub mirror. Live at [sportsanalytics-api.onrender.com](https://sportsanalytics-api.onrender.com/) |
+| Deployment | API | 2% | [ADR-003](decisions/adr-003-hosting-topology.md) — Render auto-deploy from GitHub mirror. Live at [sportsanalytics-api.onrender.com/health](https://sportsanalytics-api.onrender.com/health) |
 | Performance | API | 5% | ⚠️ Property of the running system — [live API](https://sportsanalytics-api.onrender.com/health) can be evaluated directly. A pinger keeps the Render instance warm so responses are immediate |
 | Design | API | 10% | [API Design](design/api-design.md) — versioned under `/v1/`, hand-written NestJS controllers/services |
 | Accessibility | App | 5% | ⚠️ Skip-to-content link, `aria-label`, responsive breakpoints built — see [UI Overview](design/wireframes.md). `axe-core` audit planned for Sprint 2 |
