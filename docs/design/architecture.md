@@ -41,6 +41,18 @@ Generated from [ADR-003](../decisions/adr-003-hosting-topology.md) and the curre
 
 The `apps/api` controller/service/guard structure: each feature module's controller depends on its own service(s), every service goes through the single `PrismaService`, and `SessionAuthGuard`/`RolesGuard` sit in front of the auth-gated controllers (Games, Optimizer). `RolesGuard` is wired up and tested but not yet used by any route — no endpoint currently requires a role above the default `USER`.
 
+### Database ERD
+
+![Database ERD](diagrams/database-erd.svg)
+
+Full schema grouped by concern: BetterAuth's core tables (User/Session/Account/Verification), the domain model (Team/Player/Game/GameEvent/PlayerGameStat), and the two Python-service-owned areas (PlayerPrediction/Lineup/LineupSlot for the optimizer, GamePrediction for the predictor) — NestJS only ever reads the latter two groups. See [ERD](erd.md) for the full field-by-field breakdown of every model.
+
+### Sequence diagram: `GET /v1/games/:id/prediction`
+
+![Sequence diagram: game prediction request](diagrams/sequence-game-prediction.svg)
+
+Walks a single auth-gated request end to end, including why it works cross-origin in production (Cloudflare Pages calling Render): the CORS middleware checks the request's `Origin` against the `WEB_ORIGIN` allowlist before it ever reaches Nest, and the session cookie survives the cross-site request only because `auth.config.ts` sets `defaultCookieAttributes: { sameSite: "none" }` in production (paired with `Secure`, derived from `baseURL`'s `https://` scheme). Also shows the two-step 404 (game not found vs. game found but not yet predicted) and that the `GamePrediction` row itself comes from an out-of-band `apps/predictor` run, never from this request. See [API Design](api-design.md) for the full endpoint table.
+
 ## Frontend (`apps/web`)
 
 - **React + Vite**, **Tailwind CSS v4** (via `@theme` custom properties in `index.css`, not the older `tailwind.config.js` token approach).
