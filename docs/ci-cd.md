@@ -262,4 +262,4 @@ Tracked here rather than lost in a chat log:
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Code[Claude Opus 5], Qoder [Qoder Lite]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Code[Claude Opus 5], Qoder[Qoder Lite]*

@@ -233,3 +233,7 @@ benefits with a simpler Gitea-compatible deploy path, so Vercel was not chosen.
   "Production deployment — not done" known gap.
 - `docs/GIT_METHODOLOGY.md` — review gate this ADR's
   *Proposed* status respects.
+
+---
+
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder[Qoder Lite]*

@@ -80,3 +80,5 @@
 | Add AI/Codex usage transcripts to docs site (PR #1, PR #2) | `docs` | Daniel Passos |
 
 ---
+
+*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite]*

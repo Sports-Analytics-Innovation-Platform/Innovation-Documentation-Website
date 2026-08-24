@@ -80,4 +80,4 @@ Production hosting per [ADR-003](../decisions/adr-003-hosting-topology.md):
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder [Qoder Lite]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder[Qoder Lite]*

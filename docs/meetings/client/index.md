@@ -166,3 +166,7 @@ hide:
 
     ??? note "Raw transcript (Craig)"
     [2026-08-13-client.txt](../../transcripts/meeting-transcripts/2026-08-13-client.txt)
+
+---
+
+*AI Declaration: The preceding document was generated with the assistance of the following: ChatGPT[GPT-5.6 Luna], Qoder[Qoder Lite]*
