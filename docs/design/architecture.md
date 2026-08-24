@@ -1,35 +1,8 @@
 # Architecture Overview
 
-## System shape
-
-```
-┌─────────────────────┐        HTTPS/fetch         ┌──────────────────────┐
-│   apps/web           │ ───── /api/v1/... ───────▶ │   apps/api            │
-│   React + Vite       │ ◀──── JSON, cookies ─────  │   NestJS              │
-│   (Tailwind, Recharts│                             │   (BetterAuth, Prisma)│
-│   React Router)      │                             │                       │
-│   Cloudflare Pages   │                             │   Render              │
-└─────────────────────┘                             └──────────┬────────────┘
-                                                                  │
-                                                                  ▼
-                                                        ┌──────────────────┐
-                                                        │   Supabase        │
-                                                        │   PostgreSQL      │
-                                                        └──────────────────┘
-                                                                  ▲
-                                                                  │
-                                              ┌───────────────────┼───────────────────┐
-                                              │                   │                   │
-                                    ┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐
-                                    │  apps/ingestion   │ │  apps/predictor   │ │  apps/optimizer   │
-                                    │  (Python)         │ │  (Python)         │ │  (Python)         │
-                                    │  nba_api → PG     │ │  Elo + Four Fac.  │ │  MILP lineup      │
-                                    └──────────────────┘ └──────────────────┘ └──────────────────┘
-```
+## Deployment diagram
 
 This satisfies the brief's non-monolithic requirement (§2.1): `apps/web` and `apps/api` are separate, independently deployed applications that only communicate over HTTP — confirmed directly from the code (`apiClient.ts` calls `fetch` against `VITE_API_BASE_URL`, nothing shares in-process state). The three Python services (`ingestion`, `predictor`, `optimizer`) write directly to Postgres as separate processes, never through the API.
-
-### Deployment diagram
 
 ![Deployment diagram](diagrams/deployment.svg)
 
