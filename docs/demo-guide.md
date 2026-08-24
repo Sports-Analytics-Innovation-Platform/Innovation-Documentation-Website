@@ -152,4 +152,4 @@ Full API documentation: [API Design](design/api-design.md)
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Qoder [Qoder Lite]*
