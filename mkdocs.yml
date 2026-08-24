@@ -26,6 +26,19 @@ theme:
     - content.code.copy
     - content.action.edit
 
+plugins:
+  - search
+  - glightbox:
+      touchNavigation: true
+      loop: false
+      effect: fade
+      slide_effect: slide
+      width: 90%
+      height: auto
+      zoomable: true
+      draggable: true
+      background: rgba(0, 0, 0, 0.85)
+
 markdown_extensions:
   - admonition
   - attr_list

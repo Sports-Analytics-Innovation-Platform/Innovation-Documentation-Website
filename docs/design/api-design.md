@@ -74,7 +74,7 @@ Player and team endpoints are **public** — no authentication required. Games, 
 
 ### Request flow: `GET /v1/games/:id/prediction`
 
-![Sequence diagram: game prediction request](diagrams/sequence-game-prediction.png)
+![Sequence diagram: game prediction request](diagrams/sequence-game-prediction.svg)
 
 Walks a single auth-gated request end to end, including why it works cross-origin in production (Cloudflare Pages calling Render): the CORS middleware checks the request's `Origin` against the `WEB_ORIGIN` allowlist before it ever reaches Nest, and the session cookie survives the cross-site request only because `auth.config.ts` sets `defaultCookieAttributes: { sameSite: "none" }` in production (paired with `Secure`, derived from `baseURL`'s `https://` scheme). Also shows the two-step 404 (game not found vs. game found but not yet predicted) and that the `GamePrediction` row itself comes from an out-of-band `apps/predictor` run, never from this request. PlantUML source: `docs/diagrams/sequence-game-prediction.puml` in the main app repo.
 

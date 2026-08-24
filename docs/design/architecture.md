@@ -31,13 +31,13 @@ This satisfies the brief's non-monolithic requirement (§2.1): `apps/web` and `a
 
 ### Deployment diagram
 
-![Deployment diagram](diagrams/deployment.png)
+![Deployment diagram](diagrams/deployment.svg)
 
 Generated from [ADR-003](../decisions/adr-003-hosting-topology.md) and the current `apps/api`/`apps/web` source (PlantUML source in the main app repo's `docs/diagrams/deployment.puml`). Shows the full production path (Cloudflare Pages → Render → Supabase), the OAuth and unofficial `stats.nba.com` dependencies, local dev as a separate parallel path, and CI. As of this diagram, the Python batch jobs (`ingestion`/`predictor`/`optimizer`) are still run manually from a developer machine — `render.yaml` only declares the API web service, not the Cron Jobs/Background Workers this page's table below still lists as "planned."
 
 ### Class diagram
 
-![Backend class diagram](diagrams/class-diagram.png)
+![Backend class diagram](diagrams/class-diagram.svg)
 
 The `apps/api` controller/service/guard structure: each feature module's controller depends on its own service(s), every service goes through the single `PrismaService`, and `SessionAuthGuard`/`RolesGuard` sit in front of the auth-gated controllers (Games, Optimizer). `RolesGuard` is wired up and tested but not yet used by any route — no endpoint currently requires a role above the default `USER`.
 

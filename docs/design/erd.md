@@ -5,7 +5,7 @@
 
 ## Diagram
 
-![Database ERD](diagrams/database-erd.png)
+![Database ERD](diagrams/database-erd.svg)
 
 Full schema grouped by concern: BetterAuth's core tables (User/Session/Account/Verification), the domain model (Team/Player/Game/GameEvent/PlayerGameStat), and the two Python-service-owned areas (PlayerPrediction/Lineup/LineupSlot for the optimizer, GamePrediction for the predictor) — NestJS only ever reads the latter two groups. PlantUML source lives alongside the main app repo's diagrams (`docs/diagrams/database-erd.puml`).
 
