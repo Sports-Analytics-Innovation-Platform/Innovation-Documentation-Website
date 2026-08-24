@@ -1,0 +1,300 @@
+================================================================
+CHAT EXPORT
+Gitea runner going offline - diagnosis and hosting options
+Date: 24 August 2026
+================================================================
+
+
+----------------------------------------------------------------
+[1] USER
+----------------------------------------------------------------
+my runner on gitea keeps randomly going offline halting my actions
+and deployment
+
+
+----------------------------------------------------------------
+[1] ASSISTANT
+----------------------------------------------------------------
+Established from the repo before asking anything:
+
+- CI is .gitea/workflows/ci.yml -> self-hosted act_runner against
+  sdp.ms.wits.ac.za (README.md:150, ADR-003 line 47)
+- The runner is NOT on this Windows box (no act_runner process or
+  service found)
+- Deployment itself is Render + Cloudflare Pages (render.yaml), so
+  the runner blocks you by leaving checks stuck pending, not by
+  running the deploy
+- The workflow already carries scar tissue from this: comments
+  about the cache server being unreachable, npm registry
+  connections stalling with no output, and artifact v4 being
+  unusable
+
+Three jobs each doing a full npm ci plus a Postgres service
+container is a heavy load. The "randomly offline" pattern usually
+traces to one of: the daemon getting OOM-killed mid-job, the host
+disk filling with stale act containers/images, or a reverse-proxy
+idle timeout cutting the runner's long-poll heartbeat.
+
+ASKED: Where is the act_runner actually running? And when it goes
+offline, what does the state look like?
+
+
+----------------------------------------------------------------
+[2] USER
+----------------------------------------------------------------
+https://sdp.ms.wits.ac.za/innovation/sportsanalytics/settings/
+actions/runners/
+im not sure what you mean by host but i mean the runner on this
+page
+
+(On failure mode: "I only know from Gitea's UI")
+
+
+----------------------------------------------------------------
+[2] ASSISTANT
+----------------------------------------------------------------
+WHAT "THE RUNNER" ACTUALLY IS
+
+That Gitea page isn't the runner - it's a status board. act_runner
+is a separate background program installed on some physical
+machine somewhere, which logs into Gitea and asks "any jobs for
+me?" every few seconds. Gitea flips it to Offline when those
+check-ins stop.
+
+So "the runner keeps going offline" almost always means a computer
+somewhere went to sleep, lost wifi, ran out of memory, or had
+Docker shut down. Nothing you change inside Gitea will fix it -
+you have to find the machine.
+
+FINDING THE MACHINE
+
+On the runners page, each row gives you evidence:
+
+  Name         Defaults to the hostname of the machine at
+               registration, e.g. DESKTOP-4F2A1 or owen-laptop.
+               Biggest clue.
+  Last Online  Correlate the offline windows. Overnight and
+               weekends = someone's laptop.
+  Version      An old act_runner against Gitea 1.24.7 is worth
+               noting.
+  Labels       Must include "default" - the workflow uses
+               runs-on: default on all three jobs.
+
+Worth ruling out: if no runner advertises the "default" label,
+jobs sit pending forever, which looks identical to "offline" from
+the Actions tab.
+
+LEADING HYPOTHESIS (later revised - see [4])
+
+A teammate's laptop, most likely Owen Pace's. They wrote
+essentially every CI commit, including 31dc651 "harden npm ci
+against runner network stalls". Name collision warning: their
+Gitea handle is Pace-Runner, which is a person, not the CI runner.
+
+The comments in ci.yml read like a laptop's symptom list:
+- "needs the act_runner cache server to be reachable" - the cache
+  server binds to a host IP job containers can't route to. Common
+  on Windows with Docker Desktop/WSL, or with a VPN.
+- "occasionally stalls a registry connection with no error output"
+  - home or campus wifi, not a datacentre link.
+- Random offline periods - a lid closing.
+
+THE FIX THAT DOESN'T DEPEND ON THE ANSWER
+
+Register a second runner with the same "default" label. Gitea
+hands each job to whichever matching runner is idle, so one
+machine disappearing stops being a total outage.
+
+  # docker-compose.runner.yml - needs Docker Desktop running
+  services:
+    runner:
+      image: gitea/act_runner:latest
+      restart: always
+      environment:
+        GITEA_INSTANCE_URL: https://sdp.ms.wits.ac.za
+        GITEA_RUNNER_REGISTRATION_TOKEN: <from runners page>
+        GITEA_RUNNER_NAME: kiran-backup
+        GITEA_RUNNER_LABELS: default:docker://node:24-bookworm
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+        - ./runner-data:/data
+
+restart: always is the part that matters - it survives reboots and
+Docker restarts, which a hand-started act_runner does not. The
+default:docker://... label syntax is what makes it answer
+runs-on: default, and running jobs in containers is required
+anyway for the Postgres service in the coverage job.
+
+Caveat: your machine has the same laptop problem, so this is
+redundancy rather than a cure. Don't delete or re-register the
+existing runner without talking to Owen first.
+
+
+----------------------------------------------------------------
+[3] USER
+----------------------------------------------------------------
+is there a way to make it so the runner isnt reliant on a local
+machine?
+
+
+----------------------------------------------------------------
+[3] ASSISTANT
+----------------------------------------------------------------
+Yes. ADR-003 makes the choice easier because you've already
+learned what doesn't work: Azure blocked by the student region
+policy, Fly.io's free tier rejected as unreliable for always-on
+compute. A CI runner has the same "must stay up" requirement, so
+those lessons transfer.
+
+Constraint: the coverage job uses a Postgres service container, so
+the host must run Docker. That rules out PaaS - including Render,
+where free services spin down and workers are paid. You need a
+real VM, or someone else's.
+
+THE OPTIONS
+
+  Ask SDP/Wits admins for a shared runner    Free
+    Their instance, their maintenance, nothing to babysit. Many
+    course Gitea instances already have one. Costs one email.
+
+  Oracle Cloud Always Free                   Free, permanently
+    ARM Ampere, up to 4 OCPU / 24 GB. Genuinely always-free, not a
+    credit. Needs a card for ID verification, ARM capacity often
+    unavailable in a given region, images must be arm64 - node:24
+    and postgres:16-alpine both publish arm64, so fine.
+
+  Hetzner CX22                               ~EUR 4/month
+    2 vCPU / 4 GB / 40 GB, up in ten minutes, boringly reliable.
+    Split six ways, about EUR 0.65 each per month.
+
+  Azure for Students credit                  $100 credit
+    A plain Linux VM is core compute and likelier to be allowed
+    than Static Web Apps was - but verify first. A 4 GB B2s burns
+    the credit in roughly three months; 1 GB tiers are too small.
+
+  Mirror to GitHub, run CI there             Free
+    No machine at all. ADR-003 already contemplates a Gitea->
+    GitHub mirror for Render deploys. Catch: checks stop appearing
+    on Gitea PRs unless posted back via the status API, and the
+    course probably wants CI visible on the Wits instance.
+
+RECOMMENDATION
+
+Email the SDP admins today asking whether a shared instance-level
+runner exists or can be provided - free, their infrastructure, and
+the correct answer if they say yes.
+
+Don't wait on the reply. In parallel, put up a Hetzner CX22.
+You've been burned twice by free tiers already. If the budget is
+strictly zero, Oracle Always Free is the substitute - start the
+signup early, the ARM capacity hunt can take a few attempts.
+
+Three things separate a VM runner that survives from one that
+repeats the current problem:
+- restart: always (or systemd Restart=always) so reboots don't
+  need a human
+- A prune cron - act_runner leaves stale containers and images,
+  and 40 GB fills fast with Node images
+- runner.capacity: 1 plus a swap file. Three jobs each running a
+  full npm ci, with coverage installing both apps, is slower
+  serially but stops the OOM killer taking down the daemon
+
+NOTE: ADR-003 is still Proposed - awaiting team review, and
+GIT_METHODOLOGY.md says don't implement until sign-off. Runner
+hosting is a peer decision and deserves the same treatment.
+
+
+----------------------------------------------------------------
+[4] USER
+----------------------------------------------------------------
+could my runner going offline be due to SDp/wits ?
+
+
+----------------------------------------------------------------
+[4] ASSISTANT
+----------------------------------------------------------------
+Yes - and this is the more likely explanation. The laptop
+hypothesis in [2] was wrong; the evidence was in the workflow the
+whole time.
+
+OWEN ALREADY SAID SO, IN A COMMENT
+
+ci.yml:35 reads: "The SHARED runner occasionally stalls a registry
+connection." Not "my runner" or "our runner" - shared. That's a
+machine serving multiple repos or teams, which on this instance
+means SDP/Wits provides it.
+
+Three more things point the same way:
+- ci.yml:151 - artifact v4 "avoided until the server is upgraded."
+  You're waiting on someone else to upgrade Gitea 1.24.7. You
+  don't administer that instance.
+- ci.yml:25 - the cache server being unreachable is a bind-address
+  setting. On a machine you own you fix it in two minutes. Instead
+  the team disabled npm caching entirely. People work around
+  things they can't reach.
+- runs-on: default on all three jobs reads like a label the team
+  discovered and conformed to, not one they chose.
+
+Add that nobody on the team knows where it lives, and the picture
+is consistent: it was never yours.
+
+CONFIRMING IT IN 30 SECONDS
+
+1. Look for a Remove/Delete button on the runner. If it's
+   inherited from the instance level, you won't get one - repo
+   admins can't delete a runner they don't own. Definitive tell.
+2. Read the Name. A server hostname rather than a laptop name.
+3. Ask another SDP team whether their CI stalls at the same times.
+   Cheapest and most convincing test. If everyone's pipelines die
+   together, it's the shared runner.
+
+WHAT FOLLOWS IF IT IS WITS
+
+The offline periods aren't your fault and you can't fix them. A
+shared runner serving every team on the course takes a beating,
+especially in the days before a submission when everyone is
+pushing at once. Contention, disk filling with everyone's
+node_modules, OOM kills, admin restarts and maintenance windows
+all produce exactly what you're seeing.
+
+Report it, with timestamps. Note the offline windows from the Last
+Online column and send them to the SDP admins or your lecturer.
+Several teams reporting the same thing carries far more weight
+than one. If CI being down near a deadline costs marks, you want
+that on record early rather than as an excuse afterwards.
+
+This strengthens the case for your own runner considerably. In [3]
+it was framed as redundancy against a flaky laptop. It's actually
+independence from contended shared infrastructure that will be at
+its worst precisely when you need it most - around a sprint
+submission.
+
+Caveat to check with admins first: some course setups require CI
+to run on the provided runner for marking purposes.
+
+
+----------------------------------------------------------------
+[5] USER
+----------------------------------------------------------------
+export this chat to a txt file
+
+
+----------------------------------------------------------------
+[5] ASSISTANT
+----------------------------------------------------------------
+Exported to AI Chat Docs/kiran-2026-08-24.txt, matching the format
+of kiran-2026-08-23.txt.
+
+OPEN ACTIONS FROM THIS CHAT
+- Check the runners page for a Remove button, the runner Name, and
+  the Last Online history
+- Ask another SDP team whether their CI stalls at the same times
+- Email SDP admins: report offline windows with timestamps, ask
+  whether a shared runner is provided/maintained, and whether
+  registering your own runner is permitted for marking
+- Offered but not yet written: ADR-004 CI runner hosting, plus the
+  compose file, systemd unit and setup runbook under docs/
+
+================================================================
+END OF EXPORT
+================================================================
