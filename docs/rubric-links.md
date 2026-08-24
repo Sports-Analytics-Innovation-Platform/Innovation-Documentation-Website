@@ -13,7 +13,7 @@ One page mapping every rubric criterion (from the COMS3011A project brief) to wh
 | CI/CD (brief §2.1, not a weighted line) | — | [CI/CD Pipeline](ci-cd.md) — Gitea Actions running lint/typecheck/test on every push and PR. CD is live: frontend auto-deploys to [Cloudflare Pages](https://sportsanalytics.pages.dev/), API auto-deploys to [Render](https://sportsanalytics-api.onrender.com/health) via GitHub mirror ([ADR-003](decisions/adr-003-hosting-topology.md) accepted and implemented) |
 | Documentation Site | 10% | This site — deployed via GitHub Pages on every push to `main` |
 | Getting Started / Dev Guides | 5% | [Getting Started](getting-started.md) |
-| Work Tracker | 5% | Gitea Projects/Issues (external — not part of this docs site) |
+| Work Tracker | 5% | [Gitea Projects Board](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/projects/8) (requires Gitea authorisation) |
 | Git Methodology | 5% | [Git Methodology](git-methodology.md) |
 | Project Methodology | 10% | [Methodology](methodology.md) |
 | Tech Stack | 5% | [Tech Stack](tech-stack.md) — fully listed and motivated |
@@ -31,7 +31,7 @@ One page mapping every rubric criterion (from the COMS3011A project brief) to wh
 | API | 15% | [API Design](design/api-design.md) — live at [sportsanalytics-api.onrender.com/health](https://sportsanalytics-api.onrender.com/health). External integration: `nba_api` via [ingestion service](design/architecture.md) |
 | User Feedback | 10% | ⚠️ No page exists. No formal user-testing/feedback-collection process is documented anywhere on this site |
 | Project Methodology | 10% | [Methodology](methodology.md) — this rubric line specifically wants evidence of *active* following, not just the document existing |
-| Bug Tracker | 5% | Gitea Issues (external) — no docs-site page tracks usage |
+| Bug Tracker | 5% | [Gitea Projects Board](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/projects/8) (requires Gitea authorisation) |
 | Database Documentation | 5% | [ERD](design/erd.md), [ADR-001: Database](decisions/adr-001-database.md) — Supabase managed Postgres, live and connected |
 | Third-Party Code Documentation | 5% | [Tech Stack](tech-stack.md) lists and motivates all libraries; [Architecture](design/architecture.md) documents how each third-party service (Cloudflare, Render, Supabase, BetterAuth, Prisma) is integrated |
 | Testing Documentation | 5% | [CI/CD Pipeline](ci-cd.md) documents the automated testing procedure (what runs, how, against which database). See also Automated Testing above |

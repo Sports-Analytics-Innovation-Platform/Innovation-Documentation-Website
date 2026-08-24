@@ -63,6 +63,9 @@ extra:
     - icon: fontawesome/brands/git
       link: https://sdp.ms.wits.ac.za/innovation/sportsanalytics
       name: Source Code (Gitea)
+    - icon: material/view-dashboard
+      link: https://sdp.ms.wits.ac.za/innovation/sportsanalytics/projects/8
+      name: Project Board (Gitea)
 
 nav:
   - Home:

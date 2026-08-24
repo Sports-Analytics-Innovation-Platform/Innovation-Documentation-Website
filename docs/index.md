@@ -12,6 +12,7 @@ to `main`.
 - [:material-web: **Live Webapp**](https://sportsanalytics.pages.dev/){ .md-button .md-button--primary } — deployed frontend on Cloudflare Pages
 - [:material-api: **Live API**](https://sportsanalytics-api.onrender.com/health){ .md-button } — backend on Render (try `/health`)
 - [:material-server: **Gitea Source Repo**](https://sdp.ms.wits.ac.za/innovation/sportsanalytics) — the team's code repository
+- [:material-view-dashboard: **Project Board**](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/projects/8){ .md-button } — Gitea Projects (requires Gitea authorisation)
 
 ## Start here
 
