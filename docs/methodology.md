@@ -14,8 +14,8 @@ Reference: [Scrum Guide (scrumguides.org)](https://scrumguides.org) — our cere
 
 | Ceremony | Cadence | What happens |
 |---|---|---|
-| **Standup** | Weekly | Quick sync in person (Tuesday/Friday labs) or on WhatsApp: what's done, what's next, what's blocking. Whoever's starting a new feature announces it so two people don't build the same thing. |
-| **Sprint planning** | Start of each sprint | Team reviews the sprint's rubric weighting, agrees the scope for the sprint, and turns it into sized issues on the product backlog. Work is not pre-assigned — team members self-select tasks based on initiative and capacity throughout the sprint. |
+| **Standup** | Weekly | Quick sync in person (Tuesday/Friday labs) or on WhatsApp: what's done, what's next, what's blocking. Whoever's starting a new feature announces it so two people don't build the same thing. In [Scrum Meetings](https://sports-analytics-innovation-platform.github.io/Innovation-Documentation-Website/meetings/scrum/) |
+| **Sprint planning** | Start of each sprint | Team reviews the sprint's rubric weighting, agrees the scope for the sprint, and turns it into sized issues on the product backlog. Work is not pre-assigned — team members self-select tasks based on initiative and capacity throughout the sprint. In [Roadmap](https://sports-analytics-innovation-platform.github.io/Innovation-Documentation-Website/design/roadmap/) and [Project Board](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/projects/8) |
 | **Client/tutor check-in** | Weekly | Meeting with the client tutor to validate direction and surface blockers — minuted in [Client Meetings](meetings/client/index.md). |
 | **Sprint reflection (Sprint Log)** | End of each sprint | A tabulated record of every task completed during the sprint, grouped by week and owner, documenting *what was done, by whom, and when*. This supplements the retrospective by providing a concrete performance picture — see [Sprint Log](#sprint-log) below. |
 | **Retrospective** | End of each sprint | What worked, what didn't, one or two concrete changes for the next sprint. Informed by the Sprint Log data. Minuted alongside the sprint reflection. |
