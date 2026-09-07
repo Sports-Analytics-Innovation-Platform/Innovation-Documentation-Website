@@ -39,7 +39,6 @@ E2E specs live in `apps/api/test/` and exercise the **full NestJS application** 
 | `test/teams.e2e-spec.ts` | Team endpoints — list, detail, roster lookup |
 | `test/games.e2e-spec.ts` | Game endpoints — list, detail, events, box scores |
 | `test/optimizer.e2e-spec.ts` | Optimizer endpoint — lineup generation, validation |
-| `test/feedback.e2e-spec.ts` | Feedback submission endpoint — validation, storage |
 | `test/not-found.e2e-spec.ts` | Unknown routes return 404 via the `NotFoundController` catch-all |
 
 ### Test infrastructure
@@ -97,6 +96,7 @@ Frontend specs live next to the components and pages they test (`src/**/*.spec.{
 | `src/pages/PlayersListPage.spec.tsx` | Players list renders, filters, and paginates |
 | `src/pages/PredictionsPage.spec.tsx` | Predictions page displays forecast data |
 | `src/pages/TeamsListPage.spec.tsx` | Teams list renders team cards |
+| `src/pages/ComparePage.spec.tsx` | Player comparison page renders and compares multiple players |
 
 ### Test setup
 
@@ -221,17 +221,16 @@ Beyond automated testing, the project collects **formal user feedback** to valid
 
 | Method | Tool | Status |
 |---|---|---|
-| **Structured survey** | Google Forms distributed via WhatsApp | Planned |
-| **In-app feedback form** | React form → NestJS `POST /v1/feedback` → Prisma `Feedback` table | Built (not yet deployed) |
+| **Structured survey** | Google Forms distributed via WhatsApp | Drafted — see [User Feedback Survey](feedback-survey.md) |
 | **Client meeting notes** | Meeting minutes with action items | Ongoing — see [Meetings](meetings/index.md) |
 
 ### How feedback is integrated
 
-1. Feedback is collected via the survey and in-app form during the testing window
+1. Feedback is collected via the survey during the testing window
 2. Responses are reviewed by the team and categorised (bug, feature request, UX improvement, data accuracy issue)
 3. Actionable items are converted into Gitea issues and prioritised in the sprint backlog
 4. Changes made in response to feedback are documented in the [Sprint Log](sprint-log.md) with a link back to the originating feedback
-5. The full feedback methodology, questions asked, distribution plan, findings, and integration actions will be documented on a dedicated Feedback Methodology page once the Google Forms survey has been distributed and responses collected
+5. The full feedback methodology, questions asked, distribution plan, findings, and integration actions are documented on the [User Feedback Survey](feedback-survey.md) page
 
 !!! note "Feedback methodology page"
     The dedicated feedback methodology page is created once the Google Forms survey has been distributed and responses collected. It will include the survey instrument, sharing method, raw findings, and a traceability table showing which feedback items led to which changes.

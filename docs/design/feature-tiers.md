@@ -18,7 +18,7 @@ Core analytics platform — built and deployed:
 
 ## Intermediate tier (functional and useful)
 
-- **Player-level prediction** added alongside team-level: predicted individual performance (e.g. points/rebounds/assists) for an upcoming or hypothetical matchup, per the team's confirmed scope.
+- **Player comparison endpoint** added alongside team-level prediction: `GET /v1/players/compare` returns side-by-side season averages, recent game logs, and head-to-head stats for 2–4 players. Per-player game-outcome prediction (e.g. predicted points/rebounds/assists for an upcoming matchup) is planned for a later sprint.
 - **Model accuracy shown, not just asserted** — a view comparing predicted vs. actual outcomes for games that have already happened, so the prediction isn't just a number nobody can verify. This also gives something concrete to show in Sprint 3 reviews.
 - Richer feature set feeding the model where the data supports it (recent form, home/away split, head-to-head history) — exact feature list still open.
 - **Target accuracy**: 75–80% (per client meeting 2026-08-21), with 64% as an achievable baseline.

@@ -1,8 +1,8 @@
 # API Reference (OpenAPI / Swagger)
 
-This page is the canonical API reference for the NBA Analytics API. It documents every endpoint, request/response shape, authentication requirement, and error format — and describes how the live Swagger UI is served from the running API.
+This page is the canonical API reference for the NBA Analytics API. It documents every endpoint, request/response shape, authentication requirement, and error format — and describes how Swagger UI is served from the running API (see [Setup](#swagger-setup) below).
 
-The API is hosted at **[sportsanalytics-api.onrender.com](https://sportsanalytics-api.onrender.com)**. Once Swagger UI is enabled (see [Setup](#swagger-setup) below), the interactive spec is available at:
+The API is hosted at **[sportsanalytics-api.onrender.com](https://sportsanalytics-api.onrender.com)**. Swagger UI is live at:
 
 - **Swagger UI:** `https://sportsanalytics-api.onrender.com/api/docs`
 - **OpenAPI JSON:** `https://sportsanalytics-api.onrender.com/api-json`
@@ -23,7 +23,9 @@ npm install @nestjs/swagger
 
 ### Bootstrap changes (`src/main.ts`)
 
-Add Swagger setup after the Nest app is created, before `app.listen()`:
+> **Status: Done.** `@nestjs/swagger@^7` is installed and configured. The Swagger setup below is active in production.
+
+Swagger setup in `src/main.ts`, after the Nest app is created and before `app.listen()`:
 
 ```typescript
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
@@ -50,7 +52,6 @@ const swaggerConfig = new DocumentBuilder()
   .addTag("teams", "Team data (public)")
   .addTag("games", "Game data and predictions (auth required)")
   .addTag("optimizer", "Fantasy lineup optimiser (auth required)")
-  .addTag("feedback", "User feedback submission")
   .build();
 
 const document = SwaggerModule.createDocument(app, swaggerConfig);
@@ -247,6 +248,75 @@ Season averages and per-game scoring log for a player, both derived at request t
 
 ```json
 { "error": { "code": "NOT_FOUND", "message": "Player not found" } }
+```
+
+---
+
+#### `GET /v1/players/compare`
+
+Compare 2–4 players side by side. Returns season averages, recent game log, and head-to-head stats for each player. **Public** — no authentication required.
+
+**Query parameters:**
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `ids` | string (comma-separated UUIDs) | Yes | Comma-separated list of 2–4 player IDs to compare |
+
+**Example request:**
+
+```
+GET /v1/players/compare?ids=a1b2c3d4-e5f6-7890-abcd-ef1234567890,f0e9d8c7-b6a5-4321-0987-654321fedcba
+```
+
+**Response `200`:**
+
+```json
+{
+  "players": [
+    {
+      "id": "uuid",
+      "name": "LeBron James",
+      "team": "LAL",
+      "position": "SF",
+      "seasonAverages": {
+        "points": 25.3,
+        "rebounds": 7.2,
+        "assists": 8.1,
+        "steals": 1.3,
+        "blocks": 0.6,
+        "fieldGoalPct": 0.512,
+        "threePointPct": 0.358
+      },
+      "recentGames": [
+        {
+          "gameId": "uuid",
+          "date": "2026-03-14",
+          "opponent": "GSW",
+          "points": 28,
+          "rebounds": 8,
+          "assists": 10
+        }
+      ]
+    }
+  ],
+  "headToHead": {
+    "gamesPlayed": 42,
+    "playerAWins": 24,
+    "playerBWins": 18
+  }
+}
+```
+
+**Response `400`:**
+
+```json
+{ "error": { "code": "VALIDATION_ERROR", "message": "ids parameter is required and must contain 2-4 valid player UUIDs." } }
+```
+
+**Response `404`:**
+
+```json
+{ "error": { "code": "NOT_FOUND", "message": "One or more players not found" } }
 ```
 
 ---
@@ -489,50 +559,6 @@ Returns the most recently generated fantasy lineup. The lineup is produced by `a
 
 ```json
 { "error": { "code": "NOT_FOUND", "message": "No lineup has been generated yet — run predict.py then optimize.py in apps/optimizer." } }
-```
-
----
-
-### Feedback
-
-#### `POST /v1/feedback`
-
-Submit a user feedback survey response. Open to both authenticated and anonymous users.
-
-**Request body:**
-
-```json
-{
-  "overallSatisfaction": 4,
-  "easeOfUse": 5,
-  "performanceRating": 3,
-  "mostUsefulFeatures": "Player stats, game predictions",
-  "missingFeatures": "Historical comparison charts",
-  "bugsOrIssues": "",
-  "comments": "Great tool for fantasy basketball!"
-}
-```
-
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `overallSatisfaction` | integer (1–5) | Yes | Overall satisfaction rating |
-| `easeOfUse` | integer (1–5) | Yes | Ease of use rating |
-| `performanceRating` | integer (1–5) | Yes | Performance rating |
-| `mostUsefulFeatures` | string | Yes | Comma-separated list of most useful features |
-| `missingFeatures` | string | No | Features you'd like to see |
-| `bugsOrIssues` | string | No | Any bugs or issues encountered |
-| `comments` | string | No | General feedback |
-
-**Response `201`:**
-
-```json
-{ "id": "uuid", "createdAt": "2025-09-07T12:00:00.000Z" }
-```
-
-**Response `400`:**
-
-```json
-{ "error": { "code": "VALIDATION_ERROR", "message": "overallSatisfaction, easeOfUse, and performanceRating are required (integers 1-5)." } }
 ```
 
 ---

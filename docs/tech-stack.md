@@ -65,7 +65,7 @@ Every component below is listed with why it was chosen, not just what it is — 
 | **React 19** | Team familiarity, large ecosystem, straightforward to keep the frontend fully decoupled from the backend (non-monolithic requirement) since it only talks to the API over HTTP. |
 | **Vite 8** | Fast dev server and build tool, minimal config compared to older bundlers. Uses `@vitejs/plugin-react` for Fast Refresh in development and optimised production builds. |
 | **TypeScript 6** | Type-safe JavaScript for the frontend — catches prop-type mismatches, missing route params, and API response shape errors at compile time rather than in the browser. |
-| **React Router 7** (`react-router-dom`) | Client-side routing with eight routes: `/`, `/players`, `/players/:playerId`, `/teams`, `/teams/:teamId`, `/predictions`, `/optimizer`, `/games/:gameId`. |
+| **React Router 7** (`react-router-dom`) | Client-side routing with ten routes: `/`, `/home`, `/players`, `/players/:playerId`, `/compare`, `/teams`, `/teams/:teamId`, `/predictions`, `/optimizer`, `/games/:gameId`. |
 
 ### Styling & UI
 
