@@ -17,7 +17,7 @@ One page mapping every rubric criterion (from the COMS3011A project brief) to wh
 | Git Methodology | 5% | [Git Methodology](git-methodology.md) |
 | Project Methodology | 10% | [Methodology](methodology.md) |
 | Tech Stack | 5% | [Tech Stack](tech-stack.md) — fully listed and motivated |
-| Stakeholder Interaction | 10% | [Client Meetings](meetings/client/index.md), [Scrum](meetings/scrum/index.md) |
+| Stakeholder Interaction | 10% | [Stakeholder Interactions](stakeholder-interactions.md) — full log of client meetings with feedback traceability. Also [Client Meetings](meetings/client/index.md), [Scrum](meetings/scrum/index.md) |
 | Initial Design & Dev Plan | 20% | [Architecture](design/architecture.md), [ERD](design/erd.md), [API Design](design/api-design.md), [UI Overview](design/wireframes.md), [Feature Tiers](design/feature-tiers.md), [Roadmap](design/roadmap.md) |
 | Implementation | 20% | Live webapp at [sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/), live API at [sportsanalytics-api.onrender.com](https://sportsanalytics-api.onrender.com/health), codebase on Gitea |
 
@@ -26,15 +26,15 @@ One page mapping every rubric criterion (from the COMS3011A project brief) to wh
 | Criterion | Weight | Evidence |
 |---|---|---|
 | Core Features | 25% | [Feature Tiers](design/feature-tiers.md) (basic tier built and deployed) + [Requirements Traceability](requirements.md) |
-| Automated Testing | 10% | Vitest + Supertest (API, against real Postgres) and Vitest + React Testing Library (web). CI `coverage` job runs both suites against a disposable Postgres service container — no `--passWithNoTests` tolerance. See [CI/CD Pipeline](ci-cd.md) |
-| Stakeholder Reviews | 10% | [Client Meetings](meetings/client/index.md), [Scrum](meetings/scrum/index.md) |
-| API | 15% | [API Design](design/api-design.md) — live at [sportsanalytics-api.onrender.com/health](https://sportsanalytics-api.onrender.com/health). External integration: `nba_api` via [ingestion service](design/architecture.md) |
+| Automated Testing | 10% | [Testing](testing.md) — full testing strategy, test inventory, and policy. Vitest + Supertest (API, against real Postgres) and Vitest + React Testing Library (web). CI `coverage` job runs both suites against a disposable Postgres service container — no `--passWithNoTests` tolerance. See also [CI/CD Pipeline](ci-cd.md) |
+| Stakeholder Reviews | 10% | [Stakeholder Interactions](stakeholder-interactions.md) — consolidated log of all client meetings with dates, attendees, feedback received, and actions taken. Also [Client Meetings](meetings/client/index.md), [Scrum](meetings/scrum/index.md) |
+| API | 15% | [API Reference (Swagger)](api-reference.md) — full OpenAPI endpoint reference with request/response shapes, auth requirements, and Swagger UI setup. [API Design](design/api-design.md) for architecture. Live at [sportsanalytics-api.onrender.com/health](https://sportsanalytics-api.onrender.com/health). External integration: `nba_api` via [ingestion service](design/architecture.md) |
 | User Feedback | 10% | ⚠️ No page exists. No formal user-testing/feedback-collection process is documented anywhere on this site |
 | Project Methodology | 10% | [Methodology](methodology.md) — this rubric line specifically wants evidence of *active* following, not just the document existing |
 | Bug Tracker | 5% | [Gitea Projects Board](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/projects/8) (requires Gitea authorisation) |
 | Database Documentation | 5% | [ERD](design/erd.md), [ADR-001: Database](decisions/adr-001-database.md) — Supabase managed Postgres, live and connected |
-| Third-Party Code Documentation | 5% | [Tech Stack](tech-stack.md) lists and motivates all libraries; [Architecture](design/architecture.md) documents how each third-party service (Cloudflare, Render, Supabase, BetterAuth, Prisma) is integrated |
-| Testing Documentation | 5% | [CI/CD Pipeline](ci-cd.md) documents the automated testing procedure (what runs, how, against which database). See also Automated Testing above |
+| Third-Party Code Documentation | 5% | [Tech Stack](tech-stack.md) — every dependency in `apps/api`, `apps/web`, and all three Python services listed with motivation. Covers framework, database, auth, security, UI, testing, and infrastructure packages |
+| Testing Documentation | 5% | [Testing](testing.md) — automated testing procedure (unit, integration, E2E, component), test policy, coverage reporting, and test conventions. See also [CI/CD Pipeline](ci-cd.md) for how tests run in CI |
 
 ## Milestone 3: Sprint 3 (due 2026-09-29)
 
@@ -43,9 +43,9 @@ The brief lists weights only, no descriptions, for this milestone — criteria n
 | Criterion | Weight | Evidence |
 |---|---|---|
 | User Feedback | 10% | ⚠️ Same gap as Sprint 2 — no formal feedback collection process documented yet |
-| Automated Testing | 10% | Vitest + Supertest (API) and Vitest + React Testing Library (web), both running in CI against real Postgres — [CI/CD Pipeline](ci-cd.md) |
+| Automated Testing | 10% | [Testing](testing.md) — full test inventory and policy. Vitest + Supertest (API) and Vitest + React Testing Library (web), both running in CI against real Postgres — [CI/CD Pipeline](ci-cd.md) |
 | Feature Implementation | 20% | [Feature Tiers](design/feature-tiers.md) (basic tier deployed; intermediate tier is the target per the [Roadmap](design/roadmap.md)) |
-| API Implementation | 20% | [API Design](design/api-design.md) — live at [sportsanalytics-api.onrender.com/health](https://sportsanalytics-api.onrender.com/health), with `nba_api` external integration via ingestion |
+| API Implementation | 20% | [API Reference (Swagger)](api-reference.md) — full endpoint documentation. [API Design](design/api-design.md) for architecture. Live at [sportsanalytics-api.onrender.com/health](https://sportsanalytics-api.onrender.com/health), with `nba_api` external integration via ingestion |
 | Performance | 5% | ⚠️ Property of the running system — [live webapp](https://sportsanalytics.pages.dev/) and [live API](https://sportsanalytics-api.onrender.com/health) can be evaluated directly |
 | Improvement | 5% | ⚠️ Would need a changelog or before/after comparison — doesn't exist yet |
 | Documentation | 15% | This site (deployed at [docs](https://sports-analytics-innovation-platform.github.io/Innovation-Documentation-Website/)), [API Design](design/api-design.md), [ERD](design/erd.md), [Architecture](design/architecture.md) |
@@ -62,7 +62,7 @@ The brief lists weights only, no descriptions, for this milestone — criteria n
 | Architecture | API | 5% | [Architecture](design/architecture.md) — non-monolithic, `apps/web` and `apps/api` independently deployed, HTTP-only communication |
 | Deployment | API | 2% | [ADR-003](decisions/adr-003-hosting-topology.md) — Render auto-deploy from GitHub mirror. Live at [sportsanalytics-api.onrender.com/health](https://sportsanalytics-api.onrender.com/health) |
 | Performance | API | 5% | ⚠️ Property of the running system — [live API](https://sportsanalytics-api.onrender.com/health) can be evaluated directly. A pinger keeps the Render instance warm so responses are immediate |
-| Design | API | 10% | [API Design](design/api-design.md) — versioned under `/v1/`, hand-written NestJS controllers/services |
+| Design | API | 10% | [API Reference (Swagger)](api-reference.md) — full OpenAPI spec with all endpoints documented. [API Design](design/api-design.md) for architecture — versioned under `/v1/`, hand-written NestJS controllers/services |
 | Accessibility | App | 5% | ⚠️ Skip-to-content link, `aria-label`, responsive breakpoints built — see [UI Overview](design/wireframes.md). `axe-core` audit planned for Sprint 2 |
 | Aesthetics | App | 3% | [UI Overview](design/wireframes.md) — dark theme with CSS custom properties, themed charts |
 | User Experience | App | 5% | [UI Overview](design/wireframes.md), live at [sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/) — 8 routes, navbar navigation, court view visualisation |
@@ -73,7 +73,7 @@ The brief lists weights only, no descriptions, for this milestone — criteria n
 | Structure | App | 5% | [Architecture](design/architecture.md) — non-monolithic, separately deployed frontend and backend |
 | Git Methodology | Misc | 5% | [Git Methodology](git-methodology.md) |
 | Integration | Misc | 7% | `nba_api` (Python client for stats.nba.com) integrated via [ingestion service](design/architecture.md) (`apps/ingestion`) — fetches teams, rosters, games, and box scores into Postgres. See also [Tech Stack](tech-stack.md) |
-| Testing | Misc | 8% | Vitest + Supertest (API, against real Postgres) and Vitest + React Testing Library (web). CI runs both suites in the `coverage` job — [CI/CD Pipeline](ci-cd.md) |
+| Testing | Misc | 8% | [Testing](testing.md) — full test strategy, inventory, and policy. Vitest + Supertest (API, against real Postgres) and Vitest + React Testing Library (web). CI runs both suites in the `coverage` job — [CI/CD Pipeline](ci-cd.md) |
 | Tools | Misc | 5% | [Tech Stack](tech-stack.md), [AI Usage Ledger](ai-usage.md), [CI/CD Pipeline](ci-cd.md) |
 
 ---
