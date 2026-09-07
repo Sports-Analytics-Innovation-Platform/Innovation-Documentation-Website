@@ -80,7 +80,10 @@ See the [Architecture Overview](architecture.md#sequence-diagram-get-v1gamesidpr
 
 - **Write endpoints** — nothing in the current code writes data (no POST/PUT/PATCH/DELETE calls exist). If the proposed analyst/admin roles in [Security](../security.md) are real, these don't exist yet.
 - **Versioning beyond `/v1/`** — no `/v2/` or deprecation policy exists yet, which is fine at this stage but worth deciding before it matters.
-- **OpenAPI/Swagger spec** — planned for Sprint 2 per client meeting (2026-08-21). Not yet adopted.
+
+## OpenAPI / Swagger documentation
+
+The full API reference is documented on the [API Reference (Swagger)](../api-reference.md) page, including the Swagger UI endpoint (`/api/docs`), all request/response shapes, authentication requirements, and the `@nestjs/swagger` setup instructions for the code repo.
 
 ---
 
