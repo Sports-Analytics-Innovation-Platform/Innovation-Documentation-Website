@@ -231,7 +231,7 @@ Beyond automated testing, the project collects **formal user feedback** to valid
 2. Responses are reviewed by the team and categorised (bug, feature request, UX improvement, data accuracy issue)
 3. Actionable items are converted into Gitea issues and prioritised in the sprint backlog
 4. Changes made in response to feedback are documented in the [Sprint Log](sprint-log.md) with a link back to the originating feedback
-5. The full feedback methodology, questions asked, distribution plan, findings, and integration actions are documented on the [Feedback Methodology](feedback-methodology.md) page
+5. The full feedback methodology, questions asked, distribution plan, findings, and integration actions will be documented on a dedicated Feedback Methodology page once the Google Forms survey has been distributed and responses collected
 
 !!! note "Feedback methodology page"
     The dedicated feedback methodology page is created once the Google Forms survey has been distributed and responses collected. It will include the survey instrument, sharing method, raw findings, and a traceability table showing which feedback items led to which changes.
