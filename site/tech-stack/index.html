@@ -1,12 +1,9 @@
-
-<!doctype html>
-<html lang="en" class="no-js">
-  <head>
+<!DOCTYPE html><html lang="en" class="no-js"><head>
     
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Documentation for the COMS3011A NBA Analytics & Optimisation Engine">
+        <meta name="description" content="Documentation for the COMS3011A NBA Analytics &amp; Optimisation Engine">
       
       
       
@@ -25,7 +22,7 @@
     
     
       
-        <title>Tech Stack - NBA Analytics & Optimisation Engine</title>
+        <title>Tech Stack - NBA Analytics &amp; Optimisation Engine</title>
       
     
     
@@ -45,8 +42,8 @@
       
         
         
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback">
         <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
       
     
@@ -57,7 +54,17 @@
 
     
     
-  </head>
+  <link href="../assets/stylesheets/glightbox.min.css" rel="stylesheet"><script src="../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+            html.glightbox-open { overflow: initial; height: 100%; }
+            .gslide-title { margin-top: 0px; user-select: text; }
+            .gslide-desc { color: #666; user-select: text; }
+            .gslide-image img { background: rgba(0, 0, 0, 0.85); }
+            .gscrollbar-fixer { padding-right: 15px; }
+            .gdesc-inner { font-size: 0.75rem; }
+            body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color); }
+            body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color); }
+            body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color); }
+        </style></head>
   
   
     
@@ -90,21 +97,21 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="NBA Analytics &amp; Optimisation Engine" class="md-header__button md-logo" aria-label="NBA Analytics & Optimisation Engine" data-md-component="logo">
+    <a href=".." title="NBA Analytics &amp; Optimisation Engine" class="md-header__button md-logo" aria-label="NBA Analytics &amp; Optimisation Engine" data-md-component="logo">
       
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
       
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
     </label>
     <div class="md-header__title" data-md-component="header-title">
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            NBA Analytics & Optimisation Engine
+            NBA Analytics &amp; Optimisation Engine
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -123,20 +130,20 @@
     
     
     
-    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal" aria-label="Switch to dark mode" type="radio" name="__palette" id="__palette_0">
     
-      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"></path></svg>
       </label>
     
   
     
     
     
-    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal" aria-label="Switch to light mode" type="radio" name="__palette" id="__palette_1">
     
-      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"></path></svg>
       </label>
     
   
@@ -152,24 +159,24 @@
       
         <label class="md-header__button md-icon" for="__search">
           
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
         </label>
         <div class="md-search" data-md-component="search" role="dialog">
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required="">
       <label class="md-search__icon md-icon" for="__search">
         
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
         
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
       </label>
       <nav class="md-search__options" aria-label="Search">
         
         <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
           
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
         </button>
       </nav>
       
@@ -177,7 +184,7 @@
       
     </form>
     <div class="md-search__output">
-      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix="">
         <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
             Initializing search
@@ -195,7 +202,7 @@
         <a href="https://github.com/Sports-Analytics-Innovation-Platform/Innovation-Documentation-Website.git" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"></path></svg>
   </div>
   <div class="md-source__repository">
     GitHub
@@ -387,7 +394,7 @@
           
             
               
-              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
@@ -398,20 +405,20 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="NBA Analytics &amp; Optimisation Engine" class="md-nav__button md-logo" aria-label="NBA Analytics & Optimisation Engine" data-md-component="logo">
+    <a href=".." title="NBA Analytics &amp; Optimisation Engine" class="md-nav__button md-logo" aria-label="NBA Analytics &amp; Optimisation Engine" data-md-component="logo">
       
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
 
     </a>
-    NBA Analytics & Optimisation Engine
+    NBA Analytics &amp; Optimisation Engine
   </label>
   
     <div class="md-nav__source">
       <a href="https://github.com/Sports-Analytics-Innovation-Platform/Innovation-Documentation-Website.git" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"></path></svg>
   </div>
   <div class="md-source__repository">
     GitHub
@@ -419,7 +426,7 @@
 </a>
     </div>
   
-  <ul class="md-nav__list" data-md-scrollfix>
+  <ul class="md-nav__list" data-md-scrollfix="">
     
       
       
@@ -441,7 +448,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1">
         
           
           <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
@@ -471,7 +478,7 @@
   
 
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -611,7 +618,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3">
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
@@ -641,7 +648,7 @@
   
 
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -714,6 +721,34 @@
     
   
     API Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference (Swagger)
   
 
     
@@ -838,7 +873,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4">
         
           
           <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
@@ -868,7 +903,7 @@
   
 
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -1045,6 +1080,90 @@
   
   
     <li class="md-nav__item">
+      <a href="../testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../feedback-survey/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Feedback Survey
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../stakeholder-interactions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stakeholder Interactions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../requirements/" class="md-nav__link">
         
   
@@ -1121,7 +1240,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5">
         
           
           <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
@@ -1151,7 +1270,7 @@
   
 
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -1336,49 +1455,221 @@
       <span class="md-nav__icon md-icon"></span>
       Table of contents
     </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#backend" class="md-nav__link">
+  <a href="#backend-appsapi" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Backend
+        Backend (apps/api)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Backend (apps/api)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Framework
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#data-source" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#database" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Data source
+        Database
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#jobs-queue-cache-validation-storage" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#authentication" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Jobs / queue, cache, validation, storage
+        Authentication
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#frontend" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#security-http" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Frontend
+        Security &amp; HTTP
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#development-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Development tools
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frontend-appsweb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend (apps/web)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Frontend (apps/web)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#framework_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Framework
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#styling-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Styling &amp; UI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-fetching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data fetching
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#python-services" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python services
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Python services">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#data-ingestion-appsingestion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data ingestion (apps/ingestion)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prediction-appspredictor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prediction (apps/predictor)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optimisation-appsoptimizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optimisation (apps/optimizer)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#python-services-shared-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python services: shared architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1387,6 +1678,17 @@
     <span class="md-ellipsis">
       
         Infrastructure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#planned-not-yet-adopted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Planned / not yet adopted
       
     </span>
   </a>
@@ -1459,7 +1761,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8">
         
           
           <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
@@ -1489,7 +1791,7 @@
   
 
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -1646,7 +1948,7 @@
             
             
               
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
@@ -1662,49 +1964,221 @@
       <span class="md-nav__icon md-icon"></span>
       Table of contents
     </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#backend" class="md-nav__link">
+  <a href="#backend-appsapi" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Backend
+        Backend (apps/api)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Backend (apps/api)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Framework
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#data-source" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#database" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Data source
+        Database
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#jobs-queue-cache-validation-storage" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#authentication" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Jobs / queue, cache, validation, storage
+        Authentication
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#frontend" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#security-http" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Frontend
+        Security &amp; HTTP
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#development-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Development tools
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frontend-appsweb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend (apps/web)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Frontend (apps/web)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#framework_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Framework
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#styling-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Styling &amp; UI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-fetching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data fetching
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#python-services" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python services
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Python services">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#data-ingestion-appsingestion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data ingestion (apps/ingestion)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prediction-appspredictor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prediction (apps/predictor)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optimisation-appsoptimizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optimisation (apps/optimizer)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#python-services-shared-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python services: shared architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1713,6 +2187,17 @@
     <span class="md-ellipsis">
       
         Infrastructure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#planned-not-yet-adopted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Planned / not yet adopted
       
     </span>
   </a>
@@ -1749,15 +2234,16 @@
   
     <a href="https://github.com/Sports-Analytics-Innovation-Platform/Innovation-Documentation-Website.git/edit/main/docs/tech-stack.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"></path></svg>
     </a>
   
   
 
 
-<h1 id="tech-stack">Tech Stack<a class="headerlink" href="#tech-stack" title="Permanent link">&para;</a></h1>
-<p>Every component below is listed with why it was chosen, not just what it is — this doc exists specifically to score the brief's "Tech Stack" criterion (motivated stack, not just named).</p>
-<h2 id="backend">Backend<a class="headerlink" href="#backend" title="Permanent link">&para;</a></h2>
+<h1 id="tech-stack">Tech Stack<a class="headerlink" href="#tech-stack" title="Permanent link">¶</a></h1>
+<p>Every component below is listed with why it was chosen, not just what it is — this doc exists specifically to score the brief's "Tech Stack" criterion (motivated stack, not just named). Every runtime dependency in <code>apps/api/package.json</code>, <code>apps/web/package.json</code>, and the three Python services' <code>requirements.txt</code> is accounted for here.</p>
+<h2 id="backend-appsapi">Backend (apps/api)<a class="headerlink" href="#backend-appsapi" title="Permanent link">¶</a></h2>
+<h3 id="framework">Framework<a class="headerlink" href="#framework" title="Permanent link">¶</a></h3>
 <table>
 <thead>
 <tr>
@@ -1767,24 +2253,62 @@
 </thead>
 <tbody>
 <tr>
-<td><strong>NestJS</strong> (TypeScript)</td>
+<td><strong>NestJS 10</strong> (TypeScript)</td>
 <td>Started as a plain Express + Prisma API, migrated to NestJS on 2026-08-06 for its structured module/controller/service pattern, built-in dependency injection, guards for auth, and a global exception filter — this gives a consistent shape to the hand-written API the brief requires, rather than routes accumulating ad hoc across an Express app as the team grows to six people working in parallel.</td>
 </tr>
 <tr>
-<td><strong>Prisma</strong> (ORM)</td>
-<td>Type-safe query builder and migration tool over Postgres. Keeps the schema in one place (<code>schema.prisma</code>), generates TypeScript types automatically, and makes migrations reviewable in PRs rather than hand-written SQL drifting from the actual DB state. Confirmed as the team's choice — a real <code>schema.prisma</code> with 12 models and multiple migrations exist in the repo.</td>
+<td><strong>Express 5</strong></td>
+<td>Underlying HTTP framework that NestJS runs on via <code>@nestjs/platform-express</code>. The API uses Express 5 directly (not Nest's bundled Express 4) for the <code>ExpressAdapter</code> in <code>main.ts</code> — this matters specifically because the <code>NotFoundController</code> catch-all route uses Express 5's <code>*splat</code> wildcard syntax, which silently fails under Express 4.</td>
 </tr>
 <tr>
-<td><strong>PostgreSQL</strong></td>
+<td><strong>TypeScript 5.9</strong></td>
+<td>Type-safe JavaScript — every backend source file is <code>.ts</code>, compiled to <code>.js</code> via <code>tsc</code>. Required for Prisma's generated client types and NestJS's decorator metadata.</td>
+</tr>
+<tr>
+<td><strong>reflect-metadata</strong></td>
+<td>Required by NestJS for decorator-based dependency injection and route metadata. Peer dependency of the NestJS decorator system.</td>
+</tr>
+<tr>
+<td><strong>RxJS 7</strong></td>
+<td>Required by NestJS for its reactive internals (interceptors, guards, pipes return <code>Observable</code>). Not used directly in application code beyond what Nest wraps.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="database">Database<a class="headerlink" href="#database" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Prisma 5.22</strong> (ORM)</td>
+<td>Type-safe query builder and migration tool over Postgres. Keeps the schema in one place (<code>schema.prisma</code>), generates TypeScript types automatically, and makes migrations reviewable in PRs rather than hand-written SQL drifting from the actual DB state. Confirmed as the team's choice — a real <code>schema.prisma</code> with 15 models and multiple migrations exist in the repo.</td>
+</tr>
+<tr>
+<td><strong>PostgreSQL</strong> (via Supabase)</td>
 <td>Relational DB, matches the naturally relational shape of NBA data (players, teams, games, events, predictions) and is well-supported by Prisma and Supabase's managed hosting.</td>
 </tr>
+</tbody>
+</table>
+<h3 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">¶</a></h3>
+<table>
+<thead>
 <tr>
-<td><strong>BetterAuth</strong> (Google OAuth)</td>
+<th>Choice</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>BetterAuth</strong></td>
 <td>Established authentication library, satisfying the brief's ban on hand-rolled auth (§2.1). Replaces the initial scaffold's Passport.js local-strategy. BetterAuth mounts its own route set at <code>/api/auth/*</code> and manages sessions via cookies. See <a href="../decisions/adr-002-auth/">ADR-002</a> for the full history.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="data-source">Data source<a class="headerlink" href="#data-source" title="Permanent link">&para;</a></h2>
+<h3 id="security-http">Security &amp; HTTP<a class="headerlink" href="#security-http" title="Permanent link">¶</a></h3>
 <table>
 <thead>
 <tr>
@@ -1794,47 +2318,31 @@
 </thead>
 <tbody>
 <tr>
-<td><strong><code>nba_api</code></strong> (Python client for stats.nba.com)</td>
-<td>Free, MIT-licensed, actively maintained, and covers historical seasons, the current season, and a live in-progress-game endpoint — broader and more current than the StatsBomb EPL data the team originally considered (limited to two dated seasons). See <a href="../decisions/">NBA vs EPL pitch</a> for the full comparison.</td>
+<td><strong>Helmet</strong></td>
+<td>Sets security-related HTTP response headers (<code>X-Content-Type-Options</code>, <code>X-Frame-Options</code>, <code>Strict-Transport-Security</code>, etc.) — one-line middleware import that hardens the API against common web vulnerabilities without manual header configuration.</td>
+</tr>
+<tr>
+<td><strong>CORS</strong> (<code>cors</code> package)</td>
+<td>Cross-origin resource sharing middleware — required because the frontend (Cloudflare Pages) and API (Render) are on different domains in production. Configured in <code>main.ts</code> with an explicit allowlist of origins from <code>auth.config.ts</code>.</td>
 </tr>
 </tbody>
 </table>
-<p><code>nba_api</code> is a Python package, and the backend is NestJS/TypeScript. This is resolved by running <code>nba_api</code> as a separate Python ingestion service (<code>apps/ingestion</code>) that writes directly to Postgres — NestJS then reads from the same database. The two languages coexist without needing an inter-process bridge because Postgres is the shared data layer. See <a href="../design/architecture/">Architecture</a> for the full diagram.</p>
-<p>Per the brief's requirement that statistics be derived from individual event records rather than stored totals, <code>nba_api</code>'s precomputed advanced stats (offensive rating, PIE, usage%) are used only for <strong>verification</strong> — the team calculates these itself from event-level data.</p>
-<h2 id="jobs-queue-cache-validation-storage">Jobs / queue, cache, validation, storage<a class="headerlink" href="#jobs-queue-cache-validation-storage" title="Permanent link">&para;</a></h2>
-<p>These four are confirmed decisions (team's stack list). Their implementation status:</p>
+<h3 id="validation">Validation<a class="headerlink" href="#validation" title="Permanent link">¶</a></h3>
 <table>
 <thead>
 <tr>
 <th>Choice</th>
 <th>Why</th>
-<th>Status</th>
 </tr>
 </thead>
 <tbody>
-<tr>
-<td><strong>Redis + BullMQ</strong></td>
-<td>Batch submission/ingestion processing and incremental recomputation jobs.</td>
-<td>Planned for Sprint 2 if ingestion pipeline needs batch/scheduled processing</td>
-</tr>
-<tr>
-<td><strong>Redis</strong> (cache / rate limiting)</td>
-<td>Doubles as the cache layer and a rate-limit store — relevant given <code>nba_api</code> itself is rate-limit-sensitive (see <a href="../security/">Security</a>).</td>
-<td>Planned for Sprint 2</td>
-</tr>
 <tr>
 <td><strong>Zod</strong></td>
-<td>Schema validation for incoming data (e.g. event/stat submissions), with descriptive rejection errors.</td>
-<td>Planned for Sprint 2</td>
-</tr>
-<tr>
-<td><strong>S3-compatible storage</strong> (MinIO for self-hosted/course use)</td>
-<td>For any exported/versioned data artifacts.</td>
-<td>Planned if needed</td>
+<td>Schema validation for incoming data (feedback submissions, query parameters). Provides runtime type-checking with descriptive rejection errors. Confirmed built — used in the feedback controller for request body validation.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="frontend">Frontend<a class="headerlink" href="#frontend" title="Permanent link">&para;</a></h2>
+<h3 id="environment">Environment<a class="headerlink" href="#environment" title="Permanent link">¶</a></h3>
 <table>
 <thead>
 <tr>
@@ -1844,36 +2352,241 @@
 </thead>
 <tbody>
 <tr>
-<td><strong>React</strong></td>
+<td><strong>dotenv</strong></td>
+<td>Loads environment variables from <code>.env</code> files into <code>process.env</code> at startup. Used in <code>main.ts</code> (<code>import "dotenv/config"</code>) so the API reads <code>DATABASE_URL</code>, <code>BETTER_AUTH_SECRET</code>, <code>PORT</code>, etc. from the environment rather than hardcoding configuration.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="development-tools">Development tools<a class="headerlink" href="#development-tools" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>nodemon</strong></td>
+<td>Hot-reload during development — watches <code>src/</code> for changes and auto-rebuilds/restarts the API. Used by the <code>dev</code> script: <code>nodemon --watch src --ext ts --exec "npm run build &amp;&amp; node dist/main.js"</code>.</td>
+</tr>
+<tr>
+<td><strong>tsx</strong></td>
+<td>TypeScript execution for scripts that don't go through the Nest build pipeline — specifically <code>prisma/seed.ts</code> for database seeding. Runs TS directly via <code>node --loader tsx</code> without a separate compile step.</td>
+</tr>
+<tr>
+<td><strong>Supertest</strong></td>
+<td>HTTP assertion library for E2E tests — makes real HTTP requests against the test NestJS application and asserts on status codes, response bodies, and headers. Used in every <code>test/**/*.e2e-spec.ts</code> file.</td>
+</tr>
+<tr>
+<td><strong>ESLint 10</strong> + <strong>typescript-eslint 8.66</strong></td>
+<td>Linting for the API. Flat config in ESM (<code>eslint.config.js</code>) composing <code>@eslint/js</code> + <code>typescript-eslint</code> recommended. Enforced in CI — a lint error fails the build. See <a href="../ci-cd/">CI/CD Pipeline</a>.</td>
+</tr>
+<tr>
+<td><strong>Vitest 4</strong> + <strong>@vitest/coverage-v8</strong></td>
+<td>Test runner and coverage. v8 provider instruments at the V8 level for accurate coverage without Babel overhead. See <a href="../testing/">Testing</a>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="frontend-appsweb">Frontend (apps/web)<a class="headerlink" href="#frontend-appsweb" title="Permanent link">¶</a></h2>
+<h3 id="framework_1">Framework<a class="headerlink" href="#framework_1" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>React 19</strong></td>
 <td>Team familiarity, large ecosystem, straightforward to keep the frontend fully decoupled from the backend (non-monolithic requirement) since it only talks to the API over HTTP.</td>
 </tr>
 <tr>
-<td><strong>Vite</strong></td>
-<td>Fast dev server and build tool, minimal config compared to older bundlers.</td>
+<td><strong>Vite 8</strong></td>
+<td>Fast dev server and build tool, minimal config compared to older bundlers. Uses <code>@vitejs/plugin-react</code> for Fast Refresh in development and optimised production builds.</td>
 </tr>
 <tr>
-<td><strong>Tailwind CSS</strong> (v4, <code>@theme</code> custom properties)</td>
-<td>Utility-first styling — quick to build consistent, responsive layouts without hand-writing a separate stylesheet per component, which matters given six people are touching the frontend.</td>
+<td><strong>TypeScript 6</strong></td>
+<td>Type-safe JavaScript for the frontend — catches prop-type mismatches, missing route params, and API response shape errors at compile time rather than in the browser.</td>
 </tr>
 <tr>
-<td><strong>React Router</strong></td>
-<td>Client-side routing with eight routes: <code>/</code>, <code>/players</code>, <code>/players/:playerId</code>, <code>/teams</code>, <code>/teams/:teamId</code>, <code>/predictions</code>, <code>/optimizer</code>, <code>/games/:gameId</code>.</td>
-</tr>
-<tr>
-<td><strong>Recharts</strong></td>
-<td>Charting library used for the player-profile radar and points-trend charts — themed against the same CSS custom properties as the rest of the UI rather than hardcoded colours.</td>
-</tr>
-<tr>
-<td><strong>TanStack Query</strong></td>
-<td>Data-fetching/caching against the API. Confirmed built — added as part of the frontend foundations work.</td>
-</tr>
-<tr>
-<td><strong>shadcn/ui</strong></td>
-<td>Component library, paired with Tailwind. Confirmed built — used for Teams pages, general UI components, and the court view.</td>
+<td><strong>React Router 7</strong> (<code>react-router-dom</code>)</td>
+<td>Client-side routing with ten routes: <code>/</code>, <code>/home</code>, <code>/players</code>, <code>/players/:playerId</code>, <code>/compare</code>, <code>/teams</code>, <code>/teams/:teamId</code>, <code>/predictions</code>, <code>/optimizer</code>, <code>/games/:gameId</code>.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="infrastructure">Infrastructure<a class="headerlink" href="#infrastructure" title="Permanent link">&para;</a></h2>
+<h3 id="styling-ui">Styling &amp; UI<a class="headerlink" href="#styling-ui" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Tailwind CSS 4</strong> (<code>@tailwindcss/vite</code>)</td>
+<td>Utility-first styling — quick to build consistent, responsive layouts without hand-writing a separate stylesheet per component, which matters given six people are touching the frontend. v4 uses the Vite plugin directly (no <code>tailwind.config.js</code> needed) with <code>@theme</code> custom properties.</td>
+</tr>
+<tr>
+<td><strong>shadcn/ui</strong></td>
+<td>Component library, paired with Tailwind. Confirmed built — used for Teams pages, general UI components, and the court view. Components are copied into the repo (not installed as a package), so they're fully customisable. Configured via <code>components.json</code> with the <code>base-nova</code> style and neutral base colour.</td>
+</tr>
+<tr>
+<td><strong>Radix UI</strong> (<code>@radix-ui/react-slot</code>)</td>
+<td>Headless UI primitives that shadcn/ui builds on. <code>react-slot</code> specifically lets components compose their props onto a single DOM element — used by shadcn's <code>Button</code>, <code>Card</code>, and other polymorphic components.</td>
+</tr>
+<tr>
+<td><strong>Lucide React</strong> (<code>lucide-react</code>)</td>
+<td>Icon library — consistent, tree-shakeable SVG icons used across the UI (navigation, stat cards, error states). Chosen over Heroicons/Feather for better coverage of sports-relevant icons and a cleaner visual weight at small sizes.</td>
+</tr>
+<tr>
+<td><strong>class-variance-authority</strong> (<code>cva</code>)</td>
+<td>Component variant system — defines typed variant props for shadcn components (e.g. <code>Button</code> with <code>variant="default" | "outline" | "ghost"</code> and <code>size="sm" | "md" | "lg"</code>). Keeps variant logic co-located with the component instead of scattered across className strings.</td>
+</tr>
+<tr>
+<td><strong>clsx</strong> + <strong>tailwind-merge</strong></td>
+<td>Conditional class name utilities. <code>clsx</code> conditionally joins class strings; <code>tailwind-merge</code> resolves Tailwind class conflicts (e.g. <code>px-4 px-6</code> → <code>px-6</code>). Used together in the <code>cn()</code> helper that every shadcn component calls.</td>
+</tr>
+<tr>
+<td><strong>Recharts 3</strong></td>
+<td>Charting library used for the player-profile radar and points-trend charts — themed against the same CSS custom properties as the rest of the UI rather than hardcoded colours.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="data-fetching">Data fetching<a class="headerlink" href="#data-fetching" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>TanStack Query 5</strong> (<code>@tanstack/react-query</code>)</td>
+<td>Data-fetching/caching against the API. Handles loading states, background refetching, cache invalidation, and optimistic updates. Confirmed built — added as part of the frontend foundations work.</td>
+</tr>
+<tr>
+<td><strong>BetterAuth</strong> (client SDK)</td>
+<td>Frontend auth client — manages session state, provides <code>signIn</code>, <code>signOut</code>, <code>getSession</code> helpers. The session cookie is sent automatically with <code>credentials: "include"</code> on every <code>fetch</code> call.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Vitest 4</strong> + <strong>@vitest/coverage-v8</strong></td>
+<td>Test runner and coverage for the frontend — same tooling as the API for consistency.</td>
+</tr>
+<tr>
+<td><strong>React Testing Library</strong> (<code>@testing-library/react</code>)</td>
+<td>Component testing — tests components the way users interact with them (by role, label, text) rather than implementation details. Used in every <code>src/**/*.spec.tsx</code> file.</td>
+</tr>
+<tr>
+<td><strong>@testing-library/user-event</strong></td>
+<td>Simulates real user interactions (click, type, tab) in component tests — more realistic than <code>fireEvent</code> because it fires the full sequence of browser events a real user would trigger.</td>
+</tr>
+<tr>
+<td><strong>@testing-library/jest-dom</strong></td>
+<td>Custom DOM matchers (<code>toBeInTheDocument()</code>, <code>toHaveTextContent()</code>, <code>toBeVisible()</code>) — makes test assertions readable and specific to DOM elements.</td>
+</tr>
+<tr>
+<td><strong>jsdom</strong></td>
+<td>In-browser DOM environment for Vitest — provides <code>document</code>, <code>window</code>, and DOM APIs without a real browser, so component tests can render and query React trees.</td>
+</tr>
+<tr>
+<td><strong>oxlint</strong></td>
+<td>Linting for the frontend — dramatically faster than ESLint on large React codebases (written in Rust). Configured via <code>.oxlintrc.json</code>. Enforced in CI.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="python-services">Python services<a class="headerlink" href="#python-services" title="Permanent link">¶</a></h2>
+<h3 id="data-ingestion-appsingestion">Data ingestion (apps/ingestion)<a class="headerlink" href="#data-ingestion-appsingestion" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong><code>nba_api</code> 1.11</strong></td>
+<td>Free, MIT-licensed Python client for stats.nba.com. Covers historical seasons, the current season, and a live in-progress-game endpoint — broader and more current than the StatsBomb EPL data the team originally considered (limited to two dated seasons). See <a href="../decisions/">NBA vs EPL pitch</a> for the full comparison.</td>
+</tr>
+<tr>
+<td><strong><code>psycopg2-binary</code></strong></td>
+<td>PostgreSQL adapter for Python — the ingestion service writes directly to the same Supabase database that the NestJS API reads from. Binary wheel avoids needing a C compiler on the deployment target.</td>
+</tr>
+<tr>
+<td><strong><code>python-dotenv</code></strong></td>
+<td>Loads <code>.env</code> files for the ingestion scripts — reads <code>DATABASE_URL</code> and other config from the environment, matching the API's <code>dotenv</code> convention.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="prediction-appspredictor">Prediction (apps/predictor)<a class="headerlink" href="#prediction-appspredictor" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>NumPy 2</strong></td>
+<td>Numerical computation for the Elo rating system and Four Factors analysis — vectorised array operations for calculating rolling averages, exponential decay weighting, and regression coefficients. Used in <code>elo.py</code> and <code>four_factors.py</code>.</td>
+</tr>
+<tr>
+<td><strong><code>psycopg2-binary</code></strong></td>
+<td>Same as ingestion — reads game data from Postgres to compute predictions, writes results back to the <code>GamePrediction</code> table.</td>
+</tr>
+<tr>
+<td><strong><code>python-dotenv</code></strong></td>
+<td>Environment variable loading, same convention as other services.</td>
+</tr>
+<tr>
+<td><strong>pytest</strong></td>
+<td>Unit tests for the prediction logic — <code>test_four_factors.py</code> validates the Four Factors weight calculations and edge cases.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="optimisation-appsoptimizer">Optimisation (apps/optimizer)<a class="headerlink" href="#optimisation-appsoptimizer" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>PuLP 2.9</strong></td>
+<td>Python linear programming library — solves the MILP (Mixed Integer Linear Program) for the fantasy lineup optimiser. Given player salary costs and predicted fantasy points, PuLP finds the lineup that maximises total predicted points under a salary cap. Chosen over OR-Tools for a simpler API and pure-Python installation.</td>
+</tr>
+<tr>
+<td><strong><code>psycopg2-binary</code></strong></td>
+<td>Reads player predictions from Postgres, writes the optimised lineup back to the <code>Lineup</code> and <code>LineupSlot</code> tables.</td>
+</tr>
+<tr>
+<td><strong><code>python-dotenv</code></strong></td>
+<td>Environment variable loading, same convention as other services.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="python-services-shared-architecture">Python services: shared architecture<a class="headerlink" href="#python-services-shared-architecture" title="Permanent link">¶</a></h3>
+<p><code>nba_api</code> is a Python package, and the backend is NestJS/TypeScript. This is resolved by running <code>nba_api</code> as a separate Python ingestion service (<code>apps/ingestion</code>) that writes directly to Postgres — NestJS then reads from the same database. The two languages coexist without needing an inter-process bridge because Postgres is the shared data layer. See <a href="../design/architecture/">Architecture</a> for the full diagram.</p>
+<p>Per the brief's requirement that statistics be derived from individual event records rather than stored totals, <code>nba_api</code>'s precomputed advanced stats (offensive rating, PIE, usage%) are used only for <strong>verification</strong> — the team calculates these itself from event-level data.</p>
+<h2 id="infrastructure">Infrastructure<a class="headerlink" href="#infrastructure" title="Permanent link">¶</a></h2>
 <table>
 <thead>
 <tr>
@@ -1895,14 +2608,6 @@
 <td>Pipeline defined in <code>.gitea/workflows/ci.yml</code>, running lint → typecheck → test as three parallel jobs (<code>api</code>, <code>web</code>, <code>coverage</code>) on every push and PR, pinned to Node 24. Confirmed built. Chosen simply because it's built into the Gitea instance already hosting the code — no second platform to register runners with. See <a href="../ci-cd/">CI/CD Pipeline</a>.</td>
 </tr>
 <tr>
-<td><strong>ESLint 10</strong> (API) / <strong>oxlint</strong> (web)</td>
-<td>Two linters rather than one, because the apps already shipped with different toolchains and unifying them would be churn without benefit — oxlint is dramatically faster on the frontend, and the API's flat config composes <code>@eslint/js</code> + <code>typescript-eslint</code>. Both are enforced in CI.</td>
-</tr>
-<tr>
-<td><strong>Vitest</strong></td>
-<td>Unit testing on both apps — Vitest + Supertest for backend integration tests (against a real disposable Postgres DB), Vitest + React Testing Library on the frontend. Test files exist in both <code>apps/api</code> and <code>apps/web</code> — the CI <code>coverage</code> job runs both suites against a real Postgres with no <code>--passWithNoTests</code> tolerance.</td>
-</tr>
-<tr>
 <td><strong>MkDocs Material + GitHub Pages</strong></td>
 <td>Documentation site. MkDocs Material was chosen over Docusaurus/mdBook for a lower setup cost with strong out-of-the-box search, admonitions, and theming; GitHub Pages is used specifically for the docs site's static hosting (separate from Gitea, which hosts the actual codebase).</td>
 </tr>
@@ -1920,13 +2625,46 @@
 </tr>
 </tbody>
 </table>
+<h2 id="planned-not-yet-adopted">Planned / not yet adopted<a class="headerlink" href="#planned-not-yet-adopted" title="Permanent link">¶</a></h2>
+<p>These were confirmed as team decisions but are not yet in the codebase:</p>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>Why</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Redis + BullMQ</strong></td>
+<td>Batch submission/ingestion processing and incremental recomputation jobs.</td>
+<td>Planned if ingestion pipeline needs batch/scheduled processing</td>
+</tr>
+<tr>
+<td><strong>Redis</strong> (cache / rate limiting)</td>
+<td>Doubles as the cache layer and a rate-limit store — relevant given <code>nba_api</code> itself is rate-limit-sensitive (see <a href="../security/">Security</a>).</td>
+<td>Planned if rate limiting is needed</td>
+</tr>
+<tr>
+<td><strong>S3-compatible storage</strong> (MinIO for self-hosted/course use)</td>
+<td>For any exported/versioned data artifacts.</td>
+<td>Planned if needed</td>
+</tr>
+<tr>
+<td><strong>@nestjs/swagger</strong></td>
+<td>Auto-generated OpenAPI 3.0 spec and Swagger UI from NestJS controller decorators.</td>
+<td>Setup documented — see <a href="../api-reference/">API Reference</a></td>
+</tr>
+</tbody>
+</table>
 <div class="admonition success">
 <p class="admonition-title">CI/CD host confirmed: Gitea + GitHub mirror</p>
 <p>CI runs on Gitea Actions, matching everywhere else the repo is described. CD is now live: the Gitea repo is mirrored to GitHub, which triggers auto-deploys to Cloudflare Pages (frontend) and Render (API). The docs site deploys separately via GitHub Pages from the docs repo.</p>
 </div>
-<h2 id="confirmed-local-dev-proxy">Confirmed: local dev proxy<a class="headerlink" href="#confirmed-local-dev-proxy" title="Permanent link">&para;</a></h2>
+<h2 id="confirmed-local-dev-proxy">Confirmed: local dev proxy<a class="headerlink" href="#confirmed-local-dev-proxy" title="Permanent link">¶</a></h2>
 <p><code>vite.config.ts</code> proxies <code>/api/*</code> to <code>http://localhost:4000</code> (with the <code>/api</code> prefix stripped before forwarding), so <code>apiClient.ts</code>'s relative <code>/api/v1/...</code> calls do reach the NestJS backend in dev. In production, <code>VITE_API_BASE_URL</code> points at the Render API URL directly.</p>
-<hr />
+<hr>
 <p><em>AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder[Qoder Lite]</em></p>
 
 
@@ -1948,9 +2686,9 @@
 <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
         </div>
         
-          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden="">
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
   Back to top
 </button>
         
@@ -1978,7 +2716,7 @@
     
     
     <a href="https://sportsanalytics.pages.dev/" target="_blank" rel="noopener" title="Live Webapp (Cloudflare Pages)" class="md-social__link">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2s.06-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.92 7.92 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8 8 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.7 15.7 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2s.06-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.92 7.92 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8 8 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.7 15.7 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2"></path></svg>
     </a>
   
     
@@ -1986,7 +2724,7 @@
     
     
     <a href="https://sportsanalytics-api.onrender.com/health" target="_blank" rel="noopener" title="Live API (Render)" class="md-social__link">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"></path></svg>
     </a>
   
     
@@ -1994,7 +2732,15 @@
     
     
     <a href="https://sdp.ms.wits.ac.za/innovation/sportsanalytics" target="_blank" rel="noopener" title="Source Code (Gitea)" class="md-social__link">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M216.3 158.4H137C97 147.9 6.5 150.6 6.5 233.2c0 30.1 15 51.2 35 61-25.1 23-37 33.8-37 49.2 0 11 4.5 21.1 17.9 26.8C8.1 383.6 0 393.3 0 411.6c0 32.1 28 50.8 101.6 50.8 70.8 0 111.8-26.4 111.8-73.2 0-58.7-45.2-56.5-151.6-63l13.4-21.6c27.3 7.6 118.7 10 118.7-67.9 0-18.7-7.7-31.7-15-41.1l37.4-2.8v-34.5zm-63.4 241.9c0 32.1-104.9 32.1-104.9 2.4 0-8.1 5.3-15 10.6-21.5 77.7 5.3 94.3 3.4 94.3 19.1m-50.8-134.6c-52.8 0-50.5-71.2 1.2-71.2 49.5 0 50.8 71.2-1.2 71.2m133.3 100.5v-32.1c26.7-3.7 27.2-2 27.2-11V203.6c0-8.5-2.1-7.4-27.2-16.3l4.5-32.9h84.2v168.7c0 6.5.4 7.3 6.5 8.1l20.7 2.8v32.1H235.4zm52.5-244.3c-23.2 0-36.6-13.4-36.6-36.6s13.4-35.8 36.6-35.8c23.6 0 37 12.6 37 35.8s-13.4 36.6-37 36.6M512 350.5c-17.5 8.5-43.1 16.3-66.3 16.3-48.4 0-66.7-19.5-66.7-65.5V194.8c0-5.4 1-4.1-31.7-4.1v-36.2c35.8-4.1 50-22 54.5-66.3h38.6c0 65.8-1.3 61.8 3.3 61.8H501v40.6h-60.6v97.1c0 6.9-4.9 51.4 60.6 26.8l11 35.8z"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M216.3 158.4H137C97 147.9 6.5 150.6 6.5 233.2c0 30.1 15 51.2 35 61-25.1 23-37 33.8-37 49.2 0 11 4.5 21.1 17.9 26.8C8.1 383.6 0 393.3 0 411.6c0 32.1 28 50.8 101.6 50.8 70.8 0 111.8-26.4 111.8-73.2 0-58.7-45.2-56.5-151.6-63l13.4-21.6c27.3 7.6 118.7 10 118.7-67.9 0-18.7-7.7-31.7-15-41.1l37.4-2.8v-34.5zm-63.4 241.9c0 32.1-104.9 32.1-104.9 2.4 0-8.1 5.3-15 10.6-21.5 77.7 5.3 94.3 3.4 94.3 19.1m-50.8-134.6c-52.8 0-50.5-71.2 1.2-71.2 49.5 0 50.8 71.2-1.2 71.2m133.3 100.5v-32.1c26.7-3.7 27.2-2 27.2-11V203.6c0-8.5-2.1-7.4-27.2-16.3l4.5-32.9h84.2v168.7c0 6.5.4 7.3 6.5 8.1l20.7 2.8v32.1H235.4zm52.5-244.3c-23.2 0-36.6-13.4-36.6-36.6s13.4-35.8 36.6-35.8c23.6 0 37 12.6 37 35.8s-13.4 36.6-37 36.6M512 350.5c-17.5 8.5-43.1 16.3-66.3 16.3-48.4 0-66.7-19.5-66.7-65.5V194.8c0-5.4 1-4.1-31.7-4.1v-36.2c35.8-4.1 50-22 54.5-66.3h38.6c0 65.8-1.3 61.8 3.3 61.8H501v40.6h-60.6v97.1c0 6.9-4.9 51.4 60.6 26.8l11 35.8z"></path></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://sdp.ms.wits.ac.za/innovation/sportsanalytics/projects/8" target="_blank" rel="noopener" title="Project Board (Gitea)" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 3v6h8V3m-8 18h8V11h-8M3 21h8v-6H3m0-2h8V3H3z"></path></svg>
     </a>
   
 </div>
@@ -2018,5 +2764,7 @@
       <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
-  </body>
-</html>
+  
+<script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "fade", "closeEffect": "fade", "slideEffect": "slide"});
+document$.subscribe(()=>{ lightbox.reload(); });
+</script></body></html>
