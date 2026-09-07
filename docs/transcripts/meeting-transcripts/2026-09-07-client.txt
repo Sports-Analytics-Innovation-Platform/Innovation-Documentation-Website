@@ -1,0 +1,187 @@
+=== Meeting Transcript ===
+Server: SDP group (1529773053893148712) / Meeting room (1529773055407034369)
+Date: 2026-09-07T12:47:07.255Z
+Speakers: drax9207, kovendanraman, pace_runner, sanele_h_62233, soody_03, steveisfrench3744
+Duration: [28:00]
+
+[00:00] kovendanraman: Yeah, okay. Okay. Okay. Yeah, so I don't know some months like the other day. Okay. Yeah. So
+[00:00] pace_runner: Okay, so what are we discussing?
+[00:01] soody_03: Oh, you go for it. Daniel. Yeah, honestly, I don't think I do. And then, yeah, then I'm
+[00:03] pace_runner: Well, it's done and he gave us the runners now.
+[00:06] steveisfrench3744: I guess just like what's happening in the next sprint, right?
+[00:10] sanele_h_62233: Thanks. Um, sorry.
+[00:16] steveisfrench3744: Okay, does anyone wanna go or do you want me to?
+[00:23] drax9207: Yeah, interesting. Yeah, some of the rubric though. So I do have a, I just want to make sure
+[00:25] steveisfrench3744: Okay, so I think we can, I can speak for everyone right now that we haven't really done all that much yet, but we are working on it. We've done like small things. I know Owen's implemented like a loading thing. Like, I know, I saw you guys had that, like the speedometer loading screen and I thought that was really cool. So we just made like a little bouncing basketball loading screen. Senele worked on the, so we made like a player comparison page. So you can like click on different players and basically see, compare them to each other, like compare their height, compare how many goals they get per game and stuff like that. I don't know if Senele wants to speak on that a little bit more, but those are like the two main features that I know of that we've implemented so far. And then, and then you're also working on the runner. We had to make like a test runner thing. I think Owen's working on that. Yeah.
+[01:27] pace_runner: So, I mean, like, we use those. We had our own and now we switch to the ones that he provided. Well, like, he only provided them, like, for Sprint 2. He didn't give it to us for Sprint 1. That's why we made our own. And then I think we're going to expand on the API usage of it as well, the Sprint.
+[01:47] steveisfrench3744: Yeah. But I mean also, honestly, we did a lot last sprint. So like we're kind of trying to figure out things that we need to get done. I think a lot of it is documentation, but like a lot of what we did last sprint was kind of, we needed for this sprint. So I like, yeah.
+[02:11] kovendanraman: you guys basically have your like finished product and say like almost done. Okay. Yeah. But for that, that's a requirement you're speaking about there. That one's just for like,
+[02:17] soody_03: going to be doing a full redesign of our UI and in front and wait with. I'm working on
+[02:17] steveisfrench3744: It's like you, I don't have anything to say.
+[02:22] pace_runner: Yeah, Ursula, I implemented a bit of the, you can change the, like, some of the stats or parameters in order to, like, see how it affects the outcome of stats and stuff like that. I did a little bit of that. It could be improved, but a base models or whatever is there. So it's something, I guess.
+[02:41] steveisfrench3744: Yeah, so it's, no, yeah.
+[02:42] pace_runner: Yeah.
+[02:51] kovendanraman: I think the rubric or whatever, like you saw it in your design brief, right? That's not like an actual core feature. It's just like to get ready with what he wants. Okay. Yeah. So that's fine.
+[02:57] pace_runner: Yeah. Yeah, like the play comparison.
+[03:00] steveisfrench3744: Yeah, it was like expecting a lot from us now. So it's like, I just want to try and add as much like random stuff as we can, I guess, like stuff that like, he wouldn't have thought about it.
+[03:11] kovendanraman: That's fine. That's fine. And other stuff like your, like your, how fast does it load?
+[03:12] pace_runner: That was quite a smart idea. I thought that was cool.
+[03:14] steveisfrench3744: Yeah, I would really like it.
+[03:16] pace_runner: Yeah, it's not horrible.
+[03:28] kovendanraman: The load time is okay. Like it's not like really. Okay. Yeah. So I walked on. I don't know how you guys
+[03:30] steveisfrench3744: All good.
+[03:31] pace_runner: It takes, like, six seconds, maybe, no, five seconds.
+[03:32] sanele_h_62233: A question about this requirement on education and security.
+[03:37] pace_runner: I don't know if we are using buckets, to be honest, because it's like, you know, the data requirement for storing locally or sorry, storing in our own database.
+[03:38] kovendanraman: are like doing it. But like, I did the load times for our stuff. So that stuff from database stuff where you get like your, I don't know what it was called, like your images or something with buckets and things. And then, then you just open up like right click on like your page, then go to like lighthouse. Then it's like on the inspect element bot. So you just click the arrows, you click lighthouse, you click analyze load page. Then it gives you just like rating thing. I tried to get them to like all 80. And like, even if it's 80, it will still be fast like compared to whatever it was before. So it's just get that whole thing, copy that whole thing, put it into cloud or whatever, not chat. And then it used to like optimize it. Yeah.
+[04:25] steveisfrench3744: And then it would just, yes.
+[04:35] kovendanraman: Yeah. Yeah. Your data is fine. Okay. No, that's cool. Yeah. Yeah. See what you mean. Yeah.
+[04:36] pace_runner: We're doing that for all the stats, but I don't think we're doing it for the profiles, images.
+[04:40] steveisfrench3744: The images we're pulling from an API, you know.
+[04:41] pace_runner: Yeah, so that we're just pulling from an API. And I think that's fine because it still meets the requirement as to restore all the, like, needed information for this, for, like, the stats and stuff. Yeah, in the database. It's just the images that we pull from an API, but it's like, you don't really need the images. It's just like a bit of a nice thing to have.
+[05:00] steveisfrench3744: Yeah.
+[05:02] pace_runner: Okay.
+[05:06] kovendanraman: Yeah. So you don't need to keep it in. You can also get like higher quality images, I guess, if it's through an API and not yours. And then your ML model, how's that coming along?
+[05:11] steveisfrench3744: Yeah. Exactly.
+[05:20] steveisfrench3744: I've been trying to work on it,
+[05:20] pace_runner: Yes. Yeah, and I don't think 60% is horrible.
+[05:21] steveisfrench3744: but it's still like, I just can't get it better than it originally was. And if I can't do that, then I'm just going to keep it. I think it's at like 60% accuracy with back tests and stuff.
+[05:31] kovendanraman: Okay. It gets worse. Okay. And is it deployed on the website or is it just on your local
+[05:33] steveisfrench3744: Still, I would like to get it better, but like every time I try to make it better, it literally just gets worse. Like I even put, yeah.
+[05:45] kovendanraman: target? Okay, that's good. As long as it works on the environment for your thing. I remember we
+[05:45] steveisfrench3744: No, it's deployed on the website. That was like the first thing we did. Well, one of the first things I did was the ML model. Yeah, it does.
+[05:56] kovendanraman: struggled with it. Yeah. Brendan's not going to care. Like if it's wrong. And then
+[05:58] pace_runner: It's like, obviously, you can do better, but like, when it comes to prediction stuff, 60% is not bad.
+[05:58] steveisfrench3744: Yeah, also I don't think so.
+[06:05] pace_runner: But I swear that max effort is a scam, dude.
+[06:05] steveisfrench3744: Yeah, it's just, I just put Claude on like max effort and I was like, do research on this thing. And I did research and it just made it worse. And I was like, oh, yeah.
+[06:17] pace_runner: Like, whenever I use that thing, it doesn't not help. Love this man.
+[06:20] steveisfrench3744: I know. It like literally made the whole thing worse. And I was like, okay, this is really wasting my time now. And it uses so many credits as well. And yeah, with the UI stuff, what are we, what's going on with that here? And I guess like maybe just a little update on the UI side of things.
+[06:45] soody_03: it. It's still in progress. It just takes a lot of time because I want it to be unique.
+[06:46] steveisfrench3744: Okay.
+[06:53] soody_03: So I actually am physically designing it in figma and everything. Yeah. Okay. And dude,
+[06:57] steveisfrench3744: Figma. Okay, cool. Okay. Well, no, no rush. I mean, we still have time.
+[07:03] pace_runner: We can see him playing games right now. Anyway, anyway, that's fine.
+[07:08] steveisfrench3744: Cool.
+[07:11] soody_03: I'm on holiday. Well, kind of holiday. Oh, so like we can mix and match with each other's
+[07:13] pace_runner: Yeah. Yeah. We have, like, we have a base thing, but I think we want to, like, add more to it.
+[07:18] kovendanraman: and then your guys API, like your own API, how's that come along? Would like this weather. Okay. Yeah. So if you have friends in other groups or like people who are doing similar
+[07:24] steveisfrench3744: We have one. Expand on it.
+[07:27] pace_runner: I don't think that was a compromise for us.
+[07:34] kovendanraman: sports stuff, speak to them, like it'll be nice if you guys could actually give them a proper functioning like something useful for their website instead of like something random.
+[07:42] steveisfrench3744: Yeah.
+[07:47] soody_03: projects. Maybe we do like kind of like a pushing of user base on someone else doing
+[07:48] kovendanraman: Yeah. So that's what the way it was for us in a year before. I don't know if you change it is here, but I think it's the same. So like you need to use one group's API even for like anything random. And another group needs to use yours. Yeah. But like maybe like
+[08:03] pace_runner: Like, for us, I think it just has to be there.
+[08:03] steveisfrench3744: I think that was a little bit of a question.
+[08:05] pace_runner: I don't think that we were required to use this. That would like, you know, it's like, that would kind of suck because it's like, now we have to import soccer data for NFL. Like, how does that make sense? I don't know. I see.
+[08:22] kovendanraman: it's somewhere like we used an email system where the API just sends an email to your inbox when you signed up. So it doesn't have to be like something in depth like tailored to your project
+[08:37] pace_runner: We have that they can delete again.
+[08:39] kovendanraman: because it's like going to be impossible. Yeah. But the thing with the API is,
+[08:41] steveisfrench3744: Yeah.
+[08:50] soody_03: something sports related. Like, hey, you're doing something you're interested in the sport. Why don't you try our thing? And we just our entire API is just pushing a notification to their web app. If that's okay, I don't know. Maybe that's too simple. Okay. Maybe we advertise
+[09:10] kovendanraman: you know, it's just Brandon once, so your swagger when you guys set it up, it will just be a bunch of like things you can, we lost Mark. So that's actually, but it's stuff you could like push, pull, I don't know what the words on API, but stuff like that for your API. So your fetch request and things. So it'll be a whole bunch of stuff you can export. So Brandon said if another group doesn't use your API, but your API does work, it's fine. I think. Yeah. And then, but you need
+[09:45] steveisfrench3744: Okay.
+[09:49] kovendanraman: to use another group's API. Yeah, even if it's something dumb. Yeah, because this is the whole
+[09:54] steveisfrench3744: We need to talk to some other groups.
+[09:59] soody_03: something on the comms group asking another group if they want to work with us. Nothing
+[10:10] kovendanraman: thing in like your documentation as well, like interaction with other groups. Let me open up mine and see if I can read you what we had for that.
+[10:28] kovendanraman: Uh, third party code, API documentation.
+[10:45] kovendanraman: Oh no, our documentation just took you to our swagger. Yeah. Yeah, our stuff won't help you there. There wasn't anything. Anything else that you guys have, like
+[11:10] steveisfrench3744: Okay.
+[11:17] kovendanraman: any questions, any features you want to implement, you're not sure of.
+[11:24] steveisfrench3744: Get on my side.
+[11:25] soody_03: from me. No, that load is so cool. I was actually going to do that because I wanted to. That was
+[11:32] sanele_h_62233: It says users must be able to sign up, sign in, reset their passwords and delete their accounts. Right now, users can only sign in using what Google offers and they can't like transfer passwords, reset their passwords. They can only sign up and delete their accounts. Should we, is that like, is that like a big requirement that we have to do?
+[12:03] kovendanraman: You might lose like, see, it's the way you get marked. It's like difference for each sub section. So your features, your APIs. So maybe for like user authentication, you'll probably get like 80% out of the hundred for that section. If you don't have those things. So, you know,
+[12:23] pace_runner: We just don't have that they can change your password because it's the Gmail. It's like, yeah, yeah, we could, I guess it's just like,
+[12:28] kovendanraman: you can't change at all. Oh, yeah, because it's like continue with Google. And you can't get it to set up like both ways on your auth. Like, because then it's like,
+[12:38] pace_runner: Yeah. Yeah. I don't know.
+[12:42] kovendanraman: because the way you normally do it is you get that whatever JSON web token thing from Google and it gives you that specific credential. But then if you have your own password email system, it creates one for you, then you can change. Yeah. Yeah. Maybe speak to Brandon about that in class.
+[13:02] pace_runner: We could implement it if, I guess, like, you know, where it sends your one time password instead type thing, and then you can create, like, it still verifies your email, but it's not like a continue with Gmail type thing. But then we have to set up a database to store the, the emails and passwords and we have to set up a one time password and send emails and it's like, it's so much work. It's so much work for just resetting a password. I don't know. I don't like our blog tracker.
+[13:45] steveisfrench3744: Yeah, for me, that's pretty much good on terms of clarification. I don't know if anyone else wants to say anything.
+[13:56] drax9207: that we're on the same page. So the survey has to be like, it can just be screenshots of the UI and then ask them, does this look good? Should we place these buttons in different areas? Do you know what's going on? Is that kind of what the survey has to be? Okay. And yeah,
+[14:16] kovendanraman: E. Yes. Let me try find mine from last year and I'll tell you what ours was like. But it's similar to that. Put a link obviously at like one of the top editing. Like you can view the website here. Okay, wait, I found our, it's a sprint three one.
+[14:36] drax9207: I guess that's it. No, yeah, we need to do the both sprint two and sprint three. Okay.
+[14:53] kovendanraman: Let me share my screen. Yeah. So this was ours. Like a link there and then email. Have you watched? But we sent this to like, we made the guys who didn't know how to code or do anything, right? To do this. So I don't trust them. But like, yeah, there's nothing about just like, this is fine. Just, yeah, there's not even like the M dash is here.
+[15:28] drax9207: There's not even a screenshot. I thought, okay, sure. Is there like a link to the web app as well
+[15:37] kovendanraman: Yeah. So you can put a screenshot if you want to make it like easier for them, like just a reference. Yeah, this is the one. Yeah. Yeah, but just like it pretty much,
+[15:44] drax9207: in the, yeah, there it is. Okay. Okay, cool. Oh, and then how rigorous was the bug testing for
+[16:06] kovendanraman: it's not that deep. You don't need to have the user testing docs to be like in depth, in depth, like the bug testing that they asked about. Okay. I don't know if Brandon changed it,
+[16:15] drax9207: because we set up a bug testing or was it a debugging like logging sort of thing, but it seems very rigorous and like it'll take a lot of time. So how did you do that for yourself? Yeah, the bug tracker. Yeah. I just want to know what's like how it looks so we can compare.
+[16:36] sanele_h_62233: Another question about there's a requirement that says
+[16:38] kovendanraman: but like it was, it was just like, let me see if I can find my group. Okay. Yeah. So we did
+[16:40] pace_runner: Why not?
+[16:52] kovendanraman: it on git. So let me share again. Yeah. So I don't know if you can see now, but
+[17:03] drax9207: Yeah. Okay. Yeah, it's fine. Cool. Thanks. Okay.
+[17:04] kovendanraman: just our bug tracker was legit justice. Like we only had 27 issues. And like whatever this was, just some chat she pretty thing. Yeah. I don't think he just looks at this. He doesn't like go in depth to it. Yeah. Because like you learn event level data is like,
+[17:44] sanele_h_62233: like all the stats have to be derived slash calculated from event level data. And we're basically not doing that. It's a bit unrealistic to have every single statistic calculated like from event level data. And when I asked you last time, you said that could be, it could be some AI hallucination. And I thought completely ignoring that requirement, I didn't feel comfortable with it. So I came up with an idea that on each player's profile, we had like their last five games and all the stats for those are actually calculated from event level data. Because I was able to calculate points, points scored and assists, but all the other stats, I didn't, I didn't like, I didn't manage to calculate them yet. Is that like a reasonable solution to,
+[19:00] kovendanraman: there's some saying he had like 300 touches or something or passes or something. It's like, you have a stat for each one, right? So like, you get one data, I guess. So like, it'll just be too much data. If you want to have it for the whole database. So if you have an event level data for like three games, whatever, it's fine, I think. But check with Brandon. I don't know. Because that's like a new requirement. We didn't have that.
+[19:27] sanele_h_62233: you know, how I'm talking from?
+[19:31] kovendanraman: I think it's just because like AI got better. Yeah. So okay. Cool. Yeah.
+[19:44] steveisfrench3744: I see you. Cool. Oh, and why do you have an OVO logo next to your name?
+[19:53] pace_runner: I thought it was cool.
+[19:55] steveisfrench3744: I'm just wondering. Yeah.
+[19:57] pace_runner: You get it from like, if you're part of a Discord group or channel or whatever, like certain ones give them and you can add them to your profile. I don't know.
+[20:13] drax9207: Well, I guess it's done. I do want to discuss one or two things with the team after you leave.
+[20:16] kovendanraman: Yeah. If we're done here, then I'm happy with you guys progress so far. Okay. Cool.
+[20:21] steveisfrench3744: Okay, cool.
+[20:28] drax9207: But yeah, thanks. Thanks for joining me. Bye. So looking at that survey, it was pretty easy
+[20:30] kovendanraman: All right. No stress. See you guys next week.
+[20:34] steveisfrench3744: See you. Cool. Bye.
+[20:48] drax9207: to make actually. And I just finished the documentation for everything else. So who's, who's kind of doing what now?
+[21:00] steveisfrench3744: I think I'm gonna focus on like the user personalization stuff. I think we haven't really, we don't really have a lot. All right.
+[21:11] soody_03: kind of what I wanted to do for the homepage after you log in. Yeah, but we don't need to
+[21:16] steveisfrench3744: Okay, cool.
+[21:19] pace_runner: I don't know, dude. I'll pick something from the backlog at some point.
+[21:23] drax9207: Yeah. Yeah, we need to make, yeah, the survey, I'm just, I was just a bit confused on like
+[21:25] steveisfrench3744: Yeah. Okay. I also don't know. What else do we have to do, I guess?
+[21:31] pace_runner: Nothing really. Documentation and meetings. That's actually it. And pretty much everything else. The surveys, but like, yeah. Did he never really mention that we had to do that though?
+[21:42] drax9207: what we even doing with that. Yeah. And we need to like collaborate with people.
+[21:45] steveisfrench3744: I think it's just to have, it's just to like see is our app user friendly.
+[21:53] drax9207: Who are we going to collaborate? Like what projects can we even use the APIs from?
+[22:00] pace_runner: Probably.
+[22:01] drax9207: Yeah, it's not in the rubric. It would be cool though.
+[22:03] steveisfrench3744: No, I think it was what they had to do last year. I think you might be confusing it. Okay. I don't really know what else we have to do. So it's like, we should just find things to do, I guess.
+[22:17] drax9207: So if I'm looking, I'm going to look at, so we have the basic tier done for our project,
+[22:17] steveisfrench3744: Like, if I'm gonna start working on the project, I'm kind of like, okay, now what?
+[22:25] drax9207: but we need to go to the advanced tier. Let me find those that tier lists. How can I find it? Feature tiers. Okay. So we have the basic tier, player level prediction, model accuracy shown, not just asserted. So, yeah, that's a good idea. It's a good idea for the,
+[22:49] steveisfrench3744: I guess I'll just do more testing. I think that's a good thing to do, I guess. Like just do like permit and test and just do more back tests and stuff and make a document with all of it.
+[23:02] drax9207: what do you call it, intermediate tier. But for the advanced tier, it's like a whole different app. We need to kind of make the ability to submit a game. And it'll give you like a score based on the game, basically, and with like, which, which players and whatever, it'll give you the,
+[23:26] soody_03: do that because of our API doesn't the API do that? It fetches current games. Maybe
+[23:27] drax9207: that's before the advanced tier. Because what? Yeah, it does. But we want to submit a game,
+[23:30] pace_runner: Yeah, I kind of did implement some something like that, but it's kind of bad.
+[23:38] drax9207: like a hypothetical game, and then have our app predict whether that, that game would win against, I don't know, some other team that you choose. So is that like on, is it in the app already?
+[23:52] pace_runner: It means it needs to do improvement. So someone wants to do that. They can try. Otherwise, I guess I'll work on that some more. Yeah.
+[24:05] steveisfrench3744: Yes.
+[24:05] pace_runner: Yeah.
+[24:07] drax9207: So we all kind of done then. Why not? Okay. Okay. That's true. So like, like, what exactly would
+[24:10] pace_runner: But like I said, I don't particularly think it's fantastic.
+[24:10] steveisfrench3744: Don't say.
+[24:14] pace_runner: I mean, someone can take a look at it and like see, but yeah, when I like was trying it, I was like, I wasn't very impressed. But I mean, maybe, maybe I'm wrong. I don't, it just, it was mainly due to the fact that like it seemed like the data that you could edit was quite limited. Because I, you know, obviously you want to only be able to edit the data that you can reliably make predictions based on. You know what I mean? Like changing play positions. For example, it's like, dude, that changes things so drop like drastically that you it's so hard to make an accurate protection based on that. You know what I mean? But if you just change like this, like the, I don't know, school ratio. I don't know how many points they get on average a game or something. You change that that's predictable. You see. So like what I'm saying is what you can edit was just seemed kind of limited. And maybe the usability of it as well could have been a little bit more simple, but it wasn't horrible. I mean, I just think it is room for improvement. No, I don't want to do that because that would, it would be hella inaccurate.
+[25:26] drax9207: you want to improve? You would want to make it so that, let's say, if I change the positions of the team members, then there's an accurate prediction. It's too complicated. Okay. The accurate. So what
+[25:38] pace_runner: I want, no, it's not that it's complicated.
+[25:38] steveisfrench3744: And why would you want to do that anyways?
+[25:40] pace_runner: It's that I wanted to be like I want our predictions to still be accurate. Because if you do that, you.
+[25:45] drax9207: would you suggest usability? Okay, sure. Hmm. Hmm. That's, that's a great idea. All right.
+[25:46] pace_runner: So I think it's just mainly the usability of it. That could be some improvement. That is a, that is a girl.
+[25:59] soody_03: we could add like a coach mode, like, in the same way Adrian was saying that the advanced features we needed to be able to submit a game. Maybe we could submit a player's stats like and somehow compare that to pro level players and give an estimate of like their draft number or their value as a player for like university students and like college level
+[26:19] steveisfrench3744: That's really cool. That's such a good idea. Why would you fuck with that?
+[26:25] soody_03: players. Nice. While in the middle of league as well. So that's it guys. Okay, cool. Okay. Bye
+[26:25] steveisfrench3744: You just put in your stats and then it'll, yeah, that's a good idea. I fuck with it.
+[26:30] pace_runner: I like that idea.
+[26:30] steveisfrench3744: Yeah, that's a stupid dog.
+[26:31] pace_runner: That's a cool idea. Reach the creativity.
+[26:34] steveisfrench3744: I fuck with that heavy.
+[26:39] drax9207: Don't know what we're going to add. I guess. Okay. I guess that's the idea. Bye. Yeah. I don't know,
+[26:53] steveisfrench3744: That's a good one anyway.
+[26:58] soody_03: bye. Yeah, bye bye.
+[26:59] steveisfrench3744: We done.
+[27:01] sanele_h_62233: It's already there, I think.
+[27:04] steveisfrench3744: Cool. Bye everybody.
+[27:11] drax9207: man. I think I don't know who's doing the survey now, if it's me or someone else, but I guess we'll just see. I'll add it to this, to this friend backlog. Oh, it's already there. Okay. Cool. But we'll have to add the other stuff as well. What was it? Whatever Kieran said.
+[27:37] sanele_h_62233: I forgot.
+[27:39] drax9207: Yeah, me too. Damn. I'm not very focused. Yeah. I guess that's it. See you, bro. Peace. Hey, bye, Craig.
+[27:48] sanele_h_62233: Peace.
+
+--- 179 entries | 6 speakers | transcribed in 1047.4s ---

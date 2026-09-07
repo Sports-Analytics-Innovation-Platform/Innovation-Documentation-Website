@@ -1,0 +1,85 @@
+=== Meeting Transcript ===
+Server: SDP group (1529773053893148712) / Meeting room (1529773055407034369)
+Date: 2026-09-07T10:03:05.944Z
+Speakers: _danieldenial, drax9207, pace_runner, sanele_h_62233, steveisfrench3744
+Duration: [13:14]
+
+[00:00] drax9207: My gosh, is AI generated?
+[00:01] steveisfrench3744: Yeah, I saw that. That was pretty cool. Okay. Day before? Yeah. I can't see the screen, by
+[00:01] pace_runner: Okay, cool. So, so far I've done these three, they're just, the last one needs to be merged
+[00:03] drax9207: Where are you at?
+[00:10] pace_runner: because like we haven't been passing tests for a while, so this just fixes that and uses the right runners and stuff like that. Cool. And then I've done all of these, they should be implemented as far as I'm aware, like I added that basketball bouncing animation thing and yeah, anyway, these ones. And then yeah, we still have these to go. And what I want to say is, let's not add it to the done until like the day before basically, let's like leave everything in review and testing until, until like the day before, just so that we, we know like, you know, which ones we didn't sprint one and which ones that we still need to like do the sprint, you know what I mean? Well, I could that we did the sprint and stuff like that. Anyway, cool. And then I guess we can go through the requirements for the sprint. Let's go. They used to be want to clear water, but then it closed down
+[01:11] steveisfrench3744: the way, guys. This thing is on my ear. I'm just not home right now. I'm at Fourways Mall, bro. I'm at this comic shop over here right now. Yeah, it's pretty chill. It's
+[01:19] drax9207: Damn, son. You're at something, son.
+[01:28] steveisfrench3744: pretty chill. I wanted to come check it out. It's huge, bro. This one used to be right
+[01:34] pace_runner: like a month later. Okay, so sprint two core features, right, implemented with at most
+[01:52] steveisfrench3744: next to my house. Then it closed down. This place is absolutely massive, my goodness. Yeah,
+[01:52] pace_runner: one dawn severe bugs. So I would say like, you know, most of our core features are there. So that shouldn't be a problem. Automated testing, yeah. Like we just updating the tests, but they're there. Stakeholder reviews. Yeah, we need to set up a meeting with
+[02:11] steveisfrench3744: without a guy. Yeah. Yeah, I saw the pay. I'm pretty sure Senele did that. Manhunter. The
+[02:11] drax9207: Yeah.
+[02:12] pace_runner: our client. Yeah, client meeting API. So yeah, I API is there. But again, just need to like, improve it a bit. Use a feedback. So so far so far. Good. So far so far. Good. Anyway, use a feedback. Okay. Yeah. So we haven't really done anything to do with
+[02:23] drax9207: Yeah, use the feedback we need. We need, like, surveys and some things to be made.
+[02:34] pace_runner: that. Okay, project mythology, cool bug tracker. I don't really know. Really? What is
+[02:37] drax9207: I can talk about it.
+[02:44] sanele_h_62233: Oh, yeah, I did that. I did that, too. I just need to show you guys how it works.
+[02:49] pace_runner: what is this? Okay. Cool. I mean, you can show us now if you want or when we're done. Okay,
+[03:02] drax9207: OK. No, that's that we need to add as well.
+[03:09] pace_runner: we can do when done. Okay, bug tracker database documentation. I'm sure that's up to date, but we'll update all the documentation towards the end when we've done everything. And then a third party code documentation. Again, we'll update all the documentation at the end. Like all of it's there. It just needs to update it as we go. Cool. Testing documentation. Okay, so honestly, like we're in a pretty good position right now. Okay, I don't think we have any testing documentation in place, if I'm not mistaken. But again, that's not a huge issue to just ask chat to like look at our program and make testing documentation accordingly. It's really not that bad. It's a lot less than we had to do last month. Yeah, that's true. Okay, yeah.
+[03:53] drax9207: Yeah. But we are starting late this sprint as well. We have one week left. We don't have to.
+[04:00] pace_runner: So in terms of like, what we have to do, we're in a pretty solid position. There's a whole bunch of these ones, though. So let's see. Player biofields and player profiles. Oh, by the way, I also did the edits, the variable things temporarily like it's, it's not like amazing, but it's there. And you guys can look at it for yourself. Anyway, so player biofields on player profiles. I'm not sure if we've done that, but that doesn't sound too bad. Player comparison page. I'm pretty sure
+[04:30] sanele_h_62233: Yeah, that's fine. This is an example of how it works, but how you set it up is basically
+[04:33] pace_runner: this is done. I'm in a mistake. We might need the endpoint, though, that maybe that's why like, like an API endpoint, I mean, okay. Yeah, so I mean, just, yeah, preferably just move stuff that you've done, but we're gonna have to check all of it anyway at the end. Okay, basically, okay, I'm not gonna read all of these, but yeah, we apparently have to do all of these. So yeah. Okay, cool. And
+[05:05] drax9207: This is the product backlog, right? So this is just all the ideas and stuff that we have. It would be nice to give it to you.
+[05:16] pace_runner: then I guess, can you show us the bug tracker? Yeah, I see. No, I see. Like, I
+[05:39] steveisfrench3744: heck is that? That says 10 for 300. Hello? No, not really, hey. Sorry, guys. Yeah, I'm half
+[05:59] sanele_h_62233: a custom form for submitting issues where you can't see it. Yeah, I guess. It's a custom form
+[06:13] pace_runner: switch me now. So it's basically like the Google Docs review thing, except for bugs. Is this supposed to be for us or for users? Nice. Okay. How do you get that?
+[06:26] sanele_h_62233: where you submit all the information of the bug, where you saw it on what branch, how did you get to that bug, what was expected, what actually happened, and, no, for us. Yeah. And this is how it
+[06:46] drax9207: Since we, I was planning on doing this,
+[06:46] sanele_h_62233: actually looks when you, this is how it looks when you actually use it. Okay. You go to issues, new issue. Yeah, it's fine. It's fine. I saw it. I saw it on the, yeah, I saw it working. So it's fine.
+[07:04] pace_runner: Okay. Okay, cool. Who wants to do the Google Docs for the user feedback? Any takers? Okay. Yeah, I was thinking like we use the Google Docs thing, or
+[07:18] drax9207: we have two options. We can either, like, make the survey built into our website so it goes straight to the database, or we can use a, like, third-body survey.
+[07:36] pace_runner: like the Google feedback, because it's just easier because then we don't have
+[07:36] drax9207: Yeah.
+[07:39] pace_runner: to manage the database. Hi. Who? I don't know. I think a Google survey is not that
+[07:41] drax9207: Yeah, I agree. So that's the plan. We also need to, like, look into Swagger, and open API documentation. So that's, like, 15% of what?
+[08:09] _danieldenial: Don't you want to look at the chat thingy that I'm saying the most is in the general chat?
+[08:14] drax9207: What? What's going on?
+[08:18] _danieldenial: I was saying I can give the survey to people at my work if you guys want, then we have at least
+[08:21] drax9207: Oh, sorry.
+[08:24] _danieldenial: people doing it. Exactly. I don't know. Don't we have to give people to fill it in?
+[08:28] drax9207: Oh my gosh. They can do the work for us. Are they, like, the people that you work with may make surveys?
+[08:45] _danieldenial: Like actually do the survey? Yeah I can give it then we at least have a lot of people giving
+[08:46] drax9207: Oh, yeah, yeah, yeah. Yeah, they can.
+[08:49] pace_runner: hard to set up. I feel like, oh, I see. Okay. Yeah. Yeah, if we just give it to
+[08:50] drax9207: No, I think he means he's going to give it to them four feedback. Yeah.
+[08:55] _danieldenial: feedback.
+[08:56] drax9207: Yeah. Yeah, that'd be great, but it'd be great.
+[09:10] pace_runner: like two people each, that should be more than enough. Okay, I mean, does anyone else have anything to add? Because I feel like that is one of everything. I wouldn't lie. It's like, like, this is like, it's a what we're like, this is
+[09:37] steveisfrench3744: in half out, but there's not much to do, to be honest. I think I'm, yeah. Okay. If no one does
+[09:45] pace_runner: way easier than this one. We really have like everything in place, basically. So the only thing I would like to say is get someone just merge the thing I did quick. And then other than that. Yeah, just by the way, like, it's an LSE. Yeah,
+[09:56] steveisfrench3744: it before I get home, I'll do it, but I'm probably going to be home in like a few hours. Yeah, I've
+[10:05] pace_runner: like yours is closed, but I did merge it. It's just because chat merged it that it doesn't show the merged icon. Okay, cool. Then, I mean, I'm happy, I guess. Yeah. Oh, what I would also like to do is so right now it shows
+[10:27] drax9207: There are some things I'd like to clarify. We are using the real MBA data, right? It's not, like, yeah, good.
+[10:34] steveisfrench3744: already set it up. I set it up last print. Yeah, I'll do it. I just did it before I did the
+[10:40] pace_runner: like the basketball court. And I would just like to put the profile pictures there as well. Because the thing is, we already have the profile pictures showing up for the people. It's really not that hard just to add it there as well. And then maybe like, we can see if like, I did do it so that you can
+[10:53] steveisfrench3744: profile pictures, so I was just a bit lazy to change it, but I can change it. Yeah. Okay,
+[11:04] pace_runner: alter the data, but maybe like see if there's anywhere else where we could alter the data without like having big issues, you know what I mean? An unreliable predictions and stuff like that. But at the start, it sounds like a
+[11:15] steveisfrench3744: lot of work, but if you want to do it, and you can do it right, then go for it.
+[11:24] sanele_h_62233: Yeah, another thing is I'd like to add like postseason data. You see how the NBA season is broken up into two parts, the regular season, which is what we have right now, and the postseason. I don't know if you guys would be cool with me adding that and have like separate views for regular season and postseason.
+[11:51] drax9207: It is perfect.
+[11:52] pace_runner: lot of work, but if you want to do it, and you can do it right, then go for it.
+[11:59] drax9207: Good. Sure.
+[12:03] pace_runner: Okay, cool. I guess I'll see you guys. Yeah, but I feel like
+[12:06] drax9207: Another question. Should we make this app accessible to people with disabilities? Would that be something we can talk about in, like, our last?
+[12:19] pace_runner: it's a last sprint type thing, but yeah, probably would be a good idea. And
+[12:21] drax9207: OK.
+[12:23] pace_runner: then, yeah, Adrian, can you just message our guy and ask when we can set up a meeting? Preferably soon as possible, because we need to at least
+[12:29] drax9207: Sure. I mean, he is in the Discord group. Let me message him.
+[12:38] pace_runner: get like two meetings in maybe three. Okay, well, if that's all, then I'm
+[12:53] drax9207: OK, let me just message him.
+[12:59] pace_runner: going to be out of here. Bye bye.
+[13:04] steveisfrench3744: everybody.
+[13:06] drax9207: Bye, Qt and pies. Hi. Let me turn off Craig.
+
+--- 77 entries | 5 speakers | transcribed in 356.5s ---

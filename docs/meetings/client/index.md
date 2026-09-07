@@ -5,6 +5,59 @@ hide:
 
 # Client Meetings
 
+??? note "2026-09-07 — Client meeting"
+
+    **Attendees:** Adrian, Owen, Josh, Kiran, Daniel, Sanele, Kovendan Raman (client)
+
+    ## Agenda
+
+
+    - Sprint 2 progress update and feature demo
+    - Rubric clarification (cross-group API, password reset, user testing survey, event-level data)
+    - ML model accuracy and deployment status
+    - Performance/load time measurement
+
+
+    ## Decisions
+
+
+    - Client is **happy with progress so far** — team is essentially done with the core product, remaining work is documentation and surveys.
+    - ML model at **60% accuracy** is acceptable — client confirmed "Brendan's not going to care if it's wrong" as long as it's deployed and functional on the live site.
+    - Pulling **images from the NBA API** (not stored in buckets) is fine — still meets the data storage requirement since all stats are stored locally; images are supplementary.
+    - Client recommended using **Chrome Lighthouse** for performance measurement — right-click page → Inspect → Lighthouse → Analyse page load. Target: all scores 80+.
+    - **Cross-group API usage**: team must use another group's API (or have another group use theirs). Doesn't have to be sports-related — can be something simple like an email notification system. Should be documented.
+    - **Password reset** not implemented (Google OAuth only) — client estimated ~80% for the auth subsection without it. Suggested speaking to Brendan about whether a separate email/password system is needed alongside Google OAuth.
+    - **User testing survey** should include a link to the live webapp. UI screenshots optional but helpful as reference. Doesn't need to be in-depth — client shared his own group's Sprint 3 survey as an example (simple, non-technical questions).
+    - **Event-level data requirement** (stats derived from event data): Sanele's approach of calculating last-five-games stats from event-level data on player profiles is acceptable. Client said "check with Brandon" since this is a newer requirement the team didn't have last year.
+    - **Bug tracker** doesn't need to be elaborate — client's own group just used GitHub Issues (27 issues total). Simple is fine.
+
+
+    ## Actions
+
+
+    | Action | Owner | Due |
+    |---|---|---|
+    | Create and distribute user testing survey (include link to webapp) | Adrian / Team | Sprint 2 |
+    | Contact other groups about cross-group API collaboration | Team | Sprint 2 |
+    | Consider Lighthouse performance audit (target: 80+ scores) | Team | Sprint 2 |
+    | Speak to Brendan about password reset approach (Google OAuth vs email/password) | Team | Next class |
+
+
+    ## Notes
+
+
+    - The team demonstrated progress: basketball loading animation (Owen), player comparison page (Sanele), editable prediction parameters (Owen).
+    - Kiran mentioned he is doing a full UI redesign in Figma — still in progress, no rush.
+    - Client shared his own group's Sprint 3 user testing survey from last year as a reference — simple format with a link to the webapp and non-technical questions for non-coders.
+    - Sanele raised the event-level data requirement: all stats should be derived from event-level data. His solution calculates last-five-games stats (points, assists) from event data on player profiles. Client said this is acceptable for a few games but to check with Brendan.
+    - Josh asked about bug tracker rigour — client showed his group's tracker was just GitHub Issues (27 issues), nothing elaborate.
+    - After the client left, the team discussed remaining work: mostly documentation and surveys. Josh plans to focus on ML backtesting documentation. Adrian reviewed feature tiers for basic → intermediate → advanced progression. Kiran proposed a "coach mode" feature (submit your own stats, compare to pros, get estimated draft number) — team responded very positively.
+
+
+    ??? note "Raw transcript (Craig)"
+    [2026-09-07-client.txt](../../transcripts/meeting-transcripts/2026-09-07-client.txt)
+
+
 ??? note "2026-08-21 — Client meeting"
 
     **Attendees:** Adrian, Josh, Daniel, Sanele, Kovendan Raman (client)

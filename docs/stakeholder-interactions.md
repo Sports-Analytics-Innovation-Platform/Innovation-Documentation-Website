@@ -197,6 +197,40 @@ The purpose of this log is to evidence the **Stakeholder Interaction** rubric cr
 
 ---
 
+### 2026-09-07 — Client meeting (Sprint 2 progress and rubric clarification)
+
+| | |
+|---|---|
+| **Type** | Client meeting |
+| **Attendees** | Adrian, Owen, Josh, Kiran, Daniel, Sanele, Kovendan Raman (client) |
+
+**Agenda:** Sprint 2 progress update and feature demo; rubric clarification on cross-group API, password reset, user testing survey, and event-level data requirements; ML model accuracy and deployment status; performance measurement.
+
+**Client feedback received:**
+
+| # | Feedback / guidance | How the team responded |
+|---|---|---|
+| 1 | **Happy with progress** — team essentially done with core product | Team focused remaining effort on documentation and user feedback survey |
+| 2 | ML model at **60% accuracy is acceptable** as long as it's deployed | Model already live at [predictions page](https://sportsanalytics.pages.dev/predictions) |
+| 3 | **Images from NBA API** (not buckets) is fine — stats stored locally meets the requirement | No change needed; images remain API-sourced |
+| 4 | Use **Chrome Lighthouse** for performance measurement, target 80+ | Team to run Lighthouse audit |
+| 5 | **Cross-group API**: must use another group's API or have them use yours; can be simple | Team to contact other groups about API collaboration |
+| 6 | **Password reset** missing — ~80% for auth subsection without it; speak to Brendan | Team to discuss with Brendan at next class |
+| 7 | **User testing survey** should link to webapp; simple format is fine; screenshots optional | Team creating Google Forms survey |
+| 8 | **Event-level data**: calculating last-five-games stats from event data is acceptable; check with Brendan | Sanele's player profile approach confirmed as reasonable |
+| 9 | **Bug tracker** doesn't need to be elaborate — simple issue list is fine | Custom Gitea issue form already built and confirmed adequate |
+
+**Actions from this meeting:**
+
+| Action | Owner | Completed? |
+|---|---|---|
+| Create and distribute user testing survey | Team (Adrian) | ⏳ In progress |
+| Contact other groups about cross-group API collaboration | Team | ⏳ Pending |
+| Run Lighthouse performance audit (target: 80+) | Team | ⏳ Pending |
+| Speak to Brendan about password reset approach | Team | ⏳ Pending |
+
+---
+
 ## Summary of client feedback and team responses
 
 This table traces every piece of significant client feedback to the concrete action the team took, demonstrating that stakeholder input directly shaped the project.
@@ -214,9 +248,18 @@ This table traces every piece of significant client feedback to the concrete act
 | 18 Aug | Project board needed | Gitea Projects board set up | [Project board](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/projects/8) |
 | 21 Aug | Hosting topology pinger needed | Pinger service implemented | [Architecture](design/architecture.md) |
 | 21 Aug | Signup must integrate with DB | BetterAuth + Prisma sign-up/reset/delete | Sprint 2 deliverables |
-| 21 Aug | Swagger for API docs | `@nestjs/swagger` setup planned | Pending |
+| 21 Aug | Swagger for API docs | `@nestjs/swagger` setup planned | [API Reference](api-reference.md) |
 | 21 Aug | ML target: 75–80% accuracy | Four Factors + Elo model in development | [Predictions](https://sportsanalytics.pages.dev/predictions) |
 | 21 Aug | Review RaceIQ reference project | Team reviewed for UX inspiration | — |
+| 07 Sep | **Happy with progress** — core product essentially done | Team focused on documentation and user feedback survey | — |
+| 07 Sep | ML at 60% accuracy acceptable if deployed | Model already live on predictions page | [Predictions](https://sportsanalytics.pages.dev/predictions) |
+| 07 Sep | Images from NBA API fine; buckets not required | No change needed | — |
+| 07 Sep | Use Chrome Lighthouse for performance, target 80+ | Team to run audit | — |
+| 07 Sep | Cross-group API required — can be simple | Team to contact other groups | — |
+| 07 Sep | Password reset missing — ~80% for auth without it | Team to speak to Brendan | — |
+| 07 Sep | User testing survey: link to webapp, simple format | Google Forms survey being created | — |
+| 07 Sep | Event-level data: last-five-games approach acceptable | Sanele's player profile implementation confirmed | — |
+| 07 Sep | Bug tracker doesn't need to be elaborate | Custom Gitea issue form confirmed adequate | [Gitea Issues](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/issues) |
 
 ## Meeting cadence
 

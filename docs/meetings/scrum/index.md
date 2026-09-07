@@ -4,6 +4,62 @@ hide:
 ---
 # Scrum Meetings
 
+??? note "2026-09-07 — Scrum"
+
+    **Attendees:** Owen, Adrian, Josh, Daniel, Sanele
+
+    ## Agenda
+
+
+    - Sprint 2 progress review and rubric status walkthrough
+    - CI test fixes and new loading animation
+    - User feedback survey approach (Google Forms vs in-app)
+    - Bug tracker demo (custom Gitea issue form)
+    - Scheduling client meetings with Kovendan
+    - Remaining Sprint 2 tasks and documentation status
+
+
+    ## Decisions
+
+
+    - Cards on the board stay in review/testing until the day before the deadline — don't move to Done early, so the team can track what's actually sprint-complete vs carry-over.
+    - User feedback will use **Google Forms** distributed via WhatsApp rather than an in-app survey — simpler, no database management needed.
+    - Daniel offered to distribute the survey to coworkers for responses. Each team member should get ~2 people to fill it in.
+    - **axe-core accessibility** scanning deferred to Sprint 3, not Sprint 2.
+    - Owen fixed CI tests (weren't passing previously) and switched to the correct Gitea-provided runners.
+    - Sanele demoed the custom Gitea issue form for bug tracking — team satisfied.
+    - Adrian to message Kovendan to schedule 2–3 client meetings before the Sprint 2 deadline.
+    - Team confirmed the app uses **real NBA data** (not mock).
+    - Sanele wants to add **postseason data** with separate regular/postseason views — Owen said go for it if he can do it right.
+
+
+    ## Actions
+
+
+    | Action | Owner | Due |
+    |---|---|---|
+    | Create and distribute Google Forms user feedback survey | Adrian / Team | Sprint 2 |
+    | Message Kovendan to schedule 2–3 client meetings | Adrian | ASAP |
+    | Add postseason data with separate views | Sanele | Sprint 2–3 |
+    | Merge Owen's CI test fix PR | Owen / Team | ASAP |
+
+
+    ## Notes
+
+
+    - The team walked through the Sprint 2 rubric checklist. Most items are in a solid position: core features done, tests fixed, API exists (needs expansion), bug tracker built, database documentation current. The main gaps are the user feedback survey and scheduling more client meetings.
+    - Owen added a basketball bouncing loading animation and fixed CI tests that hadn't been passing.
+    - Josh mentioned wanting to focus on user personalization features and more ML model testing with backtesting documentation.
+    - Adrian was reviewing the feature tiers document, thinking about what's needed to move from basic to intermediate/advanced tier.
+    - Kiran is working on a Figma-based UI redesign (mentioned post-client-meeting).
+    - The team discussed a "coach mode" idea (from Kiran, post-client-meeting) where users could submit their own stats and get compared to pro players with an estimated draft number — team responded positively.
+    - Testing documentation, third-party docs, and Swagger/OpenAPI docs were noted as needing updates but not considered difficult.
+
+
+    ??? note "Raw transcript (Craig)"
+    [2026-09-07-scrum.txt](../../transcripts/meeting-transcripts/2026-09-07-scrum.txt)
+
+
 ??? note "2026-08-23 — Scrum"
 
     **Attendees:** Owen, Adrian, Josh, Kiran, Sanele
