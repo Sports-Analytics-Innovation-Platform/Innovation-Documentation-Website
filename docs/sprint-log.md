@@ -78,7 +78,56 @@
 | Pull player bio fields from the CommonPlayerInfo endpoint; fix seed.ts player IDs and frontend mocks | `feat` | Sanele H. |
 | Migrate ADR docs from project repo to doc site; resolve MkDocs strict-mode build failures | `fix` | Adrian Draxl |
 | Add AI/Codex usage transcripts to docs site (PR #1, PR #2) | `docs` | Daniel Passos |
+| Diagnose Google OAuth `statemismatch` failures on slow sign-ins; add self-service account deletion | `fix` | Sanele H. |
+| Unify the redesigned landing-page header across all app routes (PR #50) | `feat` | Daniel Passos |
+| Publish deployment, ERD, class, and sequence diagrams (PlantUML → SVG) to the docs site with click-to-zoom | `docs` | Josh Sawyer |
+| Standardise AI declaration format across all docs pages; add live links, demo guide, and Sprint 1 rubric update | `docs` | Adrian Draxl |
+| Link documentation site from README; fix stale scaffold status | `docs` | Owen Pace |
+| Correct stale "not yet built" claims in getting-started.md | `docs` | Adrian Draxl |
+| Set up a cron-job.org pinger to keep the free-tier Render API instance warm | `chore` | Sanele H. |
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite]*
+## Sprint 2 — Feature Expansion & Documentation
+
+### Week of 25 Aug
+
+| Task | Type | Owner |
+|---|---|---|
+| Update methodology.md to reflect current process | `docs` | Owen Pace |
+| Add outstanding AI transcripts and ledger entries | `docs` | Sanele H., Josh Sawyer |
+| Re-land player bio fields after an earlier revert; run Prisma migrations automatically on API start (PR #52) | `fix` | Sanele H. |
+| Add per-game season averages and a player-compare endpoint; build the player comparison page (PR #53) | `feat` | Sanele H. |
+| Show minutes and free-throw attempts on player profiles, with a link into the comparison page | `feat` | Sanele H. |
+| Document the player comparisons feature and its data audit | `docs` | Sanele H. |
+
+### Week of 1 Sep
+
+| Task | Type | Owner |
+|---|---|---|
+| Add bouncing basketball loading animation (PR #80) | `feat` | Owen Pace |
+| Let users temporarily edit a stat and see the effect on related numbers, then reset (PR #81, #85) | `feat` | Owen Pace |
+| Set up bug tracking with a custom Gitea issue template and label scheme (PR #82) | `chore` | Sanele H. |
+| Fix player age not appearing on all player comparisons | `fix` | Sanele H. |
+| Switch CI to the course-provided `sdp-runner-1`; target the `ubuntu-latest` label the Wits runners actually register; move the disposable CI Postgres off the default port/hostname | `fix` | Owen Pace |
+| Add season type and playoff round to games; ingest play-in, playoff, and finals games; keep postseason games out of prediction/optimizer models | `feat` | Sanele H. |
+| Filter player and game endpoints by season type; add season-segment views to the web app; seed a mock postseason for local dev and tests (→ PR #89) | `feat` | Sanele H. |
+| Store plus-minus, usage, and player ratings per game; derive true shooting%, eFG%, and assist-to-turnover; surface advanced stats on profile, splits, and comparison pages (→ PR #90) | `feat` | Sanele H. |
+| Add Swagger/OpenAPI documentation to the API (→ PR #86) | `feat` | Adrian Draxl |
+| Add testing, stakeholder interactions, and API reference pages; audit tech stack; update rubric quick links; draft the user feedback survey; sync docs site with actual codebase state | `docs` | Adrian Draxl |
+
+### Week of 8 Sep
+
+| Task | Type | Owner |
+|---|---|---|
+| Add home page components with placeholder data, then wire the homepage to real backend data (PR #87) | `feat` | Kiran Soodyall |
+| Fix CI Postgres container startup, reachability, and concurrency handling | `fix` | Kiran Soodyall |
+| Protect the personalised home login flow (PR #91) | `fix` | Daniel Passos |
+| Add axe-core automated accessibility checks (PR #92) | `test` | Daniel Passos |
+| Hold team meeting 5: agreed on a profile page (account settings, password reset, data deletion), a "coach mode" self-upload stats feature, deferring Row Level Security to sprint-end, and scheduled final Sprint 2 review for 2026-09-14 | `docs` | Adrian Draxl |
+| Merge postseason-view (#89) and advanced-player-stats (#90) into main, resolving the stacked-branch history between them | `chore` | Sanele H. |
+| Resolve a real merge conflict in `players.controller.ts` between the Swagger decorators and the season-type work, then merge swagger-openapi (#86) into main | `fix` | Owen Pace (Claude Code, Claude Sonnet 5) |
+
+---
+
+*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude Code[Claude Sonnet 5]*
