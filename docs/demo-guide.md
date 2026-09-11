@@ -15,14 +15,15 @@ A step-by-step walkthrough of the [live webapp](https://sportsanalytics.pages.de
 
 ## Part 1: Public features (no login required)
 
-### 1. Home page
+### 1. Landing page
 
 Navigate to [sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/).
 
 **What to look for:**
-- Dark-themed, responsive landing page with hero section stating the product's purpose
+- Marketing page with alternating light/dark sections (hero, developer credits, tech-stack marquee) — distinct from the dark app shell every other page uses
 - Recent-result widget in the navbar (hidden on mobile)
-- Top navbar with five navigation links: Home, Players, Teams, Optimizer, Predictions
+- Top navbar with four links here: Home, Players, Compare, Teams (Optimizer/Predictions appear once you navigate into the app shell)
+- "Get Started" button — signs in with Google and lands on `/home`, a separate personalised dashboard (still on placeholder data, not a real feed yet — not worth demoing as evidence of live data)
 - Skip-to-content link (try tabbing to see the focus indicator)
 
 ### 2. Players list
@@ -44,7 +45,18 @@ Click any player name.
 - **Points trend chart**: Line chart showing recent game scoring trends (Recharts, themed against CSS variables)
 - **Player traits radar**: Five-axis radar chart (Scoring, Rebounding, Playmaking, Defense, Efficiency) normalised onto a 0–100 scale
 - **Shooting splits**: FG%, 3P%, FT% as stat tiles
+- **Season segment control**: switch between Regular, Play-In, Playoffs, and Finals — stats, splits, and the compare link all follow the selected segment
+- **Advanced stats**: true shooting%, effective FG%, assist-to-turnover, plus-minus, usage%, offensive/defensive rating
+- **Local stat editing**: click into any counting stat to try a "what-if" value and see it ripple into the derived figures — resets on refresh, segment change, or leaving the page (never saved)
 - All charts are themed against the same CSS custom properties as the rest of the UI
+
+### 3b. Player comparison
+
+Click **Compare** in the navbar, or the compare link from a player profile.
+
+**What to look for:**
+- Side-by-side comparison of 2–4 players' derived season lines for the same segment picked on the profile page
+- Same season-segment control as the profile page — comparing from inside a postseason view compares postseason lines, not regular-season ones
 
 ### 4. Teams
 
@@ -125,13 +137,16 @@ This proves the NestJS backend is live and reachable. The API is hand-written (n
 | `GET /health` | No | Health check |
 | `GET /v1/players` | No | Paginated player list |
 | `GET /v1/players/:id` | No | Player detail |
-| `GET /v1/players/:id/stats` | No | Player season stats |
+| `GET /v1/players/:id/stats` | No | Player season stats for one segment (`?seasonType=`) |
+| `GET /v1/players/:id/stats/splits` | No | The same stats for every segment at once |
+| `GET /v1/players/compare` | No | Side-by-side stats for 2–4 players |
 | `GET /v1/teams` | No | Paginated team list |
 | `GET /v1/teams/:id` | No | Team detail with roster |
-| `GET /v1/games` | Yes | Game list with predictions joined in |
+| `GET /v1/games` | Yes | Game list with predictions joined in (`?seasonType=` to filter) |
 | `GET /v1/games/:id` | Yes | Single game detail |
 | `GET /v1/games/:id/prediction` | Yes | Win probability + predicted margin |
 | `GET /v1/optimizer/lineup` | Yes | Latest MILP-solved fantasy lineup |
+| `GET /v1/optimizer/predictions/:playerId` | Yes | Predicted fantasy points for one player |
 
 Full API documentation: [API Design](design/api-design.md)
 

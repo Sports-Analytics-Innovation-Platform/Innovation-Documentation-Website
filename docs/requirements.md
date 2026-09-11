@@ -5,7 +5,7 @@ This table maps every key requirement from the COMS3011A brief (§2.1) to the co
 | Brief requirement | How we satisfy it | Component | Owner | Issue |
 |---|---|---|---|---|
 | **Version control** | Git-compliant VCS, hosted on Gitea per the university requirement. Repo mirrored to GitHub for CI/CD auto-deploy | Whole repo | Josh Sawyer | Gitea org |
-| **Responsiveness & accessibility** | Responsive layouts (mobile/tablet/desktop breakpoints), keyboard navigation with skip-to-content link, `axe-core` checks planned for Sprint 2 | `apps/web` | Owen Pace | — |
+| **Responsiveness & accessibility** | Responsive layouts (mobile/tablet/desktop breakpoints), keyboard navigation with skip-to-content link, `axe-core` automated accessibility checks running in CI (PR #92) | `apps/web` | Owen Pace | — |
 | **CI/CD** | Gitea Actions workflow (`.gitea/workflows/ci.yml`) — lint, typecheck, test as parallel `api`/`web`/`coverage` jobs on every push and PR. CD is live: frontend auto-deploys to Cloudflare Pages, API auto-deploys to Render via GitHub mirror. Full detail: [CI/CD Pipeline](ci-cd.md) | Whole repo | Kiran Soodyall | — |
 | **Non-monolithic front-end and back-end** | Separate `apps/api` (NestJS) and `apps/web` (React + Vite) apps, communicating only over HTTP, independently deployed (Cloudflare Pages + Render) | `apps/api`, `apps/web` | Owen Pace | — |
 | **Hand-written API** | All endpoints implemented directly in NestJS controllers/services — no auto-generated CRUD layer (e.g. no Supabase/Firebase-style generation) | `apps/api` | Owen Pace | — |
