@@ -23,7 +23,7 @@ Navigate to [sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/).
 - Marketing page with alternating light/dark sections (hero, developer credits, tech-stack marquee) — distinct from the dark app shell every other page uses
 - Recent-result widget in the navbar (hidden on mobile)
 - Top navbar with four links here: Home, Players, Compare, Teams (Optimizer/Predictions appear once you navigate into the app shell)
-- "Get Started" button — signs in with Google and lands on `/home`, a separate personalised dashboard (still on placeholder data, not a real feed yet — not worth demoing as evidence of live data)
+- "Get Started" button — signs in with Google and lands on `/home`, a separate personalised dashboard backed by real endpoints since PR #94. Its data is per-user, so it needs a working Google sign-in — see [UI Overview](design/wireframes.md) for what the page shows and for the current sign-in caveat
 - Skip-to-content link (try tabbing to see the focus indicator)
 
 ### 2. Players list
@@ -167,4 +167,4 @@ Full API documentation: [API Design](design/api-design.md)
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude-Code[Claude Opus 5]*

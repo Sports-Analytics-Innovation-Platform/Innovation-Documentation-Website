@@ -38,7 +38,7 @@ Every component below is listed with why it was chosen, not just what it is — 
 
 | Choice | Why |
 |---|---|
-| **Zod** | Schema validation for incoming data (feedback submissions, query parameters). Provides runtime type-checking with descriptive rejection errors. Confirmed built — used in the feedback controller for request body validation. |
+| **Zod** | Schema validation for incoming request bodies. Provides runtime type-checking with descriptive rejection errors. Confirmed built — a shared `parseBody` helper runs a Zod schema over every request body on the write routes added in PR #94. |
 
 ### Environment
 
@@ -162,4 +162,4 @@ These were confirmed as team decisions but are not yet in the codebase:
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder[Qoder Lite]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder[Qoder Lite], Claude-Code[Claude Opus 5]*

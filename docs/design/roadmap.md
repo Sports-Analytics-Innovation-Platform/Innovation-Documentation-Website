@@ -50,13 +50,13 @@ See the [Sprint Log](../sprint-log.md) for the complete task-by-task record.
 - ✅ Postseason views (play-in/playoffs/finals) and advanced player stats (true shooting%, eFG%, plus-minus, usage%, ratings) — not in the original Sprint 2 plan, pulled in as intermediate-tier work once the basic tier was stable (PR #89, #90, merged 2026-09-11)
 - ✅ Player comparison page and endpoint (PR #53, merged 2026-09-02)
 - 🔶 Database integration with signup functionality — Google OAuth sign-up/sign-in exists; credential-based password reset still open (client accepted ~80% for auth without it, per 2026-09-07 client meeting; Daniel building a simple on-page reset)
-- ⚠️ Signed-in home dashboard (PR #87) — UI shell built, but still reads from placeholder data, not a real endpoint
-- Redis/BullMQ, Zod — not needed; the ingestion pipeline hasn't required batch/scheduled processing
+- ✅ Signed-in home dashboard wired to real endpoints (PR #94, merged 2026-09-11) — the shell from PR #87 now reads live data through a new user-owned personalisation layer: Beat the Model, a watchlist with per-player scouting notes, followed-team results, and saved comparisons and lineups, plus a public model-accuracy ledger and accuracy leaderboard
+- Redis/BullMQ — not needed; the ingestion pipeline hasn't required batch/scheduled processing. Zod is in use after all, validating request bodies on the write routes added in PR #94
 - Frontend polish and responsiveness pass — ongoing per the 2026-09-10 team meeting (Figma-based UI redesign in progress, profile page planned)
 
 ## Sprint 3 — model maturity (due 2026-09-29)
 
-- **Intermediate-tier** prediction: player-level predictions, predicted-vs-actual accuracy view
+- **Intermediate-tier** prediction: player-level predictions, predicted-vs-actual accuracy view — ✅ the predicted-vs-actual accuracy view landed early, in Sprint 2 (PR #94), published against an always-pick-home baseline; player-level predictions are still to come
 - This is the sprint the client flagged as the realistic target for "a working ML model" — treat this as the sprint where prediction quality actually needs to be defensible in a review, not just present
 - Target accuracy: 75–80% (per client meeting), with 64% as an achievable baseline
 - Refine prediction model beyond Elo + Four Factors as real data accumulates
@@ -74,4 +74,4 @@ See the [Sprint Log](../sprint-log.md) for the complete task-by-task record.
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5]*

@@ -120,7 +120,7 @@
 
 | Task | Type | Owner |
 |---|---|---|
-| Build the signed-in home dashboard shell ("The Locker") with placeholder data — watchlist, followed teams, jump-back-in rail (PR #87); still not wired to a real endpoint | `feat` | Kiran Soodyall |
+| Build the signed-in home dashboard shell ("The Locker") with placeholder data — watchlist, followed teams, jump-back-in rail (PR #87); wired to real endpoints later in the sprint by PR #94 | `feat` | Kiran Soodyall |
 | Fix CI Postgres container startup, reachability, and concurrency handling | `fix` | Kiran Soodyall |
 | Protect the personalised home login flow (PR #91) | `fix` | Daniel Passos |
 | Add axe-core automated accessibility checks (PR #92) | `test` | Daniel Passos |
@@ -130,7 +130,10 @@
 | Update landing-page hero photos and add a real home-page screenshot to the hero cascade (PR #88) | `feat` | Kiran Soodyall |
 | Found and removed a live Gitea runner registration token (`ci-runner/data/.runner`, accidentally committed on PR #88) before merging; token rotation on the server is still pending | `fix` | Owen Pace (Claude Code, Claude Sonnet 5) |
 | Pre-warm the API with a `/health` ping on mount to reduce Render cold-start failures during Google sign-in — the OAuth state row's 10-minute expiry is hardcoded in `better-auth` with no config option (confirmed up to the latest 1.7.4) | `fix` | Owen Pace (Claude Code, Claude Sonnet 5) |
+| Build the user-owned personalisation layer behind the signed-in home page: one migration (`20260910134345_home_personalization`) adding seven tables and a `PickOutcome` enum with zero ALTERs on any NBA-data table, 15 new `/v1/analytics/*` and `/v1/me/*` routes, and the Beat the Model, watchlist, followed-team results, model-accuracy ledger, leaderboard and saved-shelf features (PR #94) | `feat` | Kiran Soodyall |
+| Add `OriginCheckGuard` as a global `APP_GUARD` and shared Zod body validation (`parseBody`) alongside the API's first write routes; scope every `/v1/me/*` query to the session user id so one user can never read or delete another's rows (PR #94) | `feat` | Kiran Soodyall |
+| Remove the "Add to Locker" and "Jump Back In" home sections — both were layout with nothing behind them — and add an "Add to watchlist" control to the player profile page as the new entry point into the watchlist (PR #94) | `refactor` | Kiran Soodyall |
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude Code[Claude Sonnet 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude Code[Claude Sonnet 5], Claude-Code[Claude Opus 5]*

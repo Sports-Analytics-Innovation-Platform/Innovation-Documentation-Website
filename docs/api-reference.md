@@ -626,6 +626,172 @@ Predicted fantasy points for a single player by NBA player ID, as computed by `a
 
 ---
 
+### Analytics
+
+Added in PR #94 (merged 2026-09-11). Both analytics endpoints are **public** — no authentication required. They describe the model and the leaderboard, not the caller, so every visitor gets the same response and gating them would add nothing.
+
+!!! note "Exact key names"
+    The endpoints below were documented from their behaviour and their design notes. The quantities each returns are accurate; for the literal JSON key names and types, read the generated spec at [`/api-json`](https://sportsanalytics-api.onrender.com/api-json), which is produced from the controllers themselves and cannot drift from them.
+
+#### `GET /v1/analytics/model-accuracy`
+
+The prediction model's measured accuracy, deliberately published *against a baseline* rather than on its own — an accuracy figure with nothing to compare it to is not a meaningful number.
+
+**Response `200`** — returns:
+
+- **Model accuracy** over completed games that had a prediction
+- **Always-pick-home baseline** accuracy over the same games — the number the model has to beat to be worth anything
+- **Brier score** — scores the probability itself, not just the called side, so a confident wrong call costs more than a hedged one
+- **Games evaluated** — the denominator, so the accuracy figure can be weighed
+- **Forward-prediction count** — how many predictions exist for games that had *not* yet been played when the prediction was made
+- **Calibration bands** — predicted probability bucketed against observed hit rate
+
+As of 2026-09-11, over **231** completed games: **64.1%** accuracy against a **58.9%** always-pick-home baseline, Brier score **0.2163**, with **0** forward predictions.
+
+Two honesty mechanisms are part of the endpoint's contract, not just its presentation:
+
+- The **forward-prediction count is reported even when it is zero**, so a backtest is never quietly presented as a live track record. At present, every prediction was made against a game that had already been played.
+- A calibration band with too few games reports **"n too small"** rather than a percentage. A hit rate over four games is not a fact, and printing `75%` next to the real bands would read as though it were one.
+
+---
+
+#### `GET /v1/analytics/leaderboard`
+
+Ranks callers by hit rate, **with the Elo model on the board as a benchmark row** rather than as a rival.
+
+**Response `200`** — a ranking of qualifying users (each with `id`, `name`, and their record) plus one row for the model.
+
+Three fairness mechanisms are worth knowing before reading the board:
+
+- **A minimum of 5 calls to qualify.** One lucky call cannot top the board. The model is exempt from the threshold — it is the benchmark, not a competitor for the top spot.
+- **Users and the model are scored through the same code path.** Both figures come from one shared summariser rather than two parallel implementations, so they cannot drift apart as either side changes.
+- **The comparison is not like-for-like, and the card says so in words.** A user's figure covers only the games they chose to call; the model's covers every game it predicted. The strictly comparable number is the same-subset head-to-head record from `GET /v1/me/picks/record`, which scores both sides over exactly the games that user called.
+
+Only `id` and `name` are read for any user on this board. Email addresses are never selected.
+
+---
+
+### Me
+
+Added in PR #94. Every route in this section **requires authentication** via a BetterAuth session cookie, and every query is **scoped to the session user's id in the same `where` clause as the resource id** — so a valid session plus a guessed resource id still cannot reach another user's rows.
+
+Where a resource exists but belongs to a different user, the response is **`404`, not `403`**. A `403` would confirm that the row exists, which is itself a disclosure.
+
+These are the API's first state-changing routes, so they also sit behind `OriginCheckGuard`, registered globally as an `APP_GUARD` — see [Security](security.md) for why CORS alone does not cover this.
+
+#### `GET /v1/me/challenge/next`
+
+Serves one **completed** game for the user to call, **with the final score withheld**, excluding every game they have already picked.
+
+Three correctness details:
+
+- The score is removed by an explicit **allow-list serializer** — the response is built up from named fields, rather than taking a full game row and deleting the score from it. A deny-list breaks silently the first time a new scoring field is added to the model; an allow-list fails closed.
+- **Games that ended in a tie are excluded.** There is no correct call to make on one, and including them deadlocked the "next game" query.
+- **Only games that actually have a prediction are served**, since a pick with nothing to grade against the model is not a Beat the Model round.
+
+**Response `200`:** the game, both teams, and the date — without `homeScore` or `awayScore`.
+
+**Response `401`:** no valid session cookie.
+
+---
+
+#### `POST /v1/me/picks`
+
+Submits the user's call on a game. The server grades it against both the real result and the model's prediction, and **only then reveals the score**.
+
+This is the clearest illustration of why the platform requires an account at all: the server can hide a completed game's result from you and still score you on it only if it knows who you are.
+
+The model's numbers are **frozen into the pick row** at this moment (`modelHomeWinProbabilityAtPick`, `modelPredictedMarginAtPick`, `homeTeamEloAtPick`, `awayTeamEloAtPick`) rather than joined at read time — see [ERD](design/erd.md#personalisation-entities) for why.
+
+**Response `200`:** the graded outcome (`CORRECT` / `MISSED`), what the model called, and the now-revealed final score.
+
+**Response `400`:** the body failed Zod validation via `parseBody`.
+
+---
+
+#### `GET /v1/me/picks/record`
+
+The caller's head-to-head record against the model **on the same games** — the strictly like-for-like comparison that the leaderboard's ranking deliberately is not.
+
+---
+
+#### `GET /v1/me/watchlist`
+
+The caller's followed players, each with points, rebounds and assists per game, a five-game scoring trend, and the caller's own scouting note.
+
+Every figure is **derived at request time** from existing `PlayerGameStat` rows. Nothing is stored, so a newly ingested game is reflected on the next load.
+
+**Query parameters:** `page`, `pageSize` — the standard [pagination](#pagination) envelope.
+
+!!! success "Three queries regardless of how many players are followed"
+    The whole board costs **three queries**: one page of follows, one grouped aggregate for the averages, and one ordered scan for recent points. It is deliberately *not* a loop through the per-player stats service, which would be an N+1 on a page that loads on every visit to the signed-in home page. Following twenty players costs the same three queries as following two.
+
+---
+
+#### `GET /v1/me/watchlist/ids`
+
+Just the followed player ids, nothing else. This exists so a follow button on a player profile can render its own state in **one** request, instead of fetching the full derived watchlist to answer a yes/no question.
+
+---
+
+#### `POST /v1/me/follows/players/:playerId`
+
+Follow a player. **Idempotent** — following an already-followed player succeeds rather than erroring or creating a duplicate.
+
+---
+
+#### `PATCH /v1/me/follows/players/:playerId`
+
+Replace the scouting note on an existing follow (free text, 500 characters). Clearing the note goes through the same route.
+
+**Response `404`:** the caller does not follow this player. This route deliberately **does not create the follow** — a note written about a player you are not following is more likely a stale client than an intent to follow.
+
+---
+
+#### `DELETE /v1/me/follows/players/:playerId`
+
+Unfollow a player.
+
+**Response `200`:**
+
+```json
+{ "playerId": "uuid", "removed": true }
+```
+
+---
+
+#### `PUT /v1/me/follows/teams/:teamId`
+
+Follow a team, optionally as the caller's **primary** team. At most one followed team can be primary; setting a new one clears the previous.
+
+`PUT` rather than `POST` because the call is idempotent and fully describes the desired end state of that one follow.
+
+---
+
+#### `DELETE /v1/me/follows/teams/:teamId`
+
+Unfollow a team.
+
+---
+
+#### `GET /v1/me/teams/results`
+
+Recent results for the teams the caller follows, **oriented to the caller's side**: each result names `yourTeam` and the `opponent` and says whether you `won`, rather than reporting home and away and leaving the frontend to work out which side the user cares about.
+
+---
+
+#### `GET` `POST` `DELETE` `/v1/me/saved/comparisons`
+
+Saved player comparisons — a named set of players saved from the Compare tab, so a comparison worth returning to does not have to be rebuilt by hand.
+
+---
+
+#### `GET` `POST` `DELETE` `/v1/me/saved/lineups`
+
+Saved optimizer lineups. Each slot's `salaryAtSave` and `predictedPointsAtSave` are **frozen at save time**, which is what makes the **drift since you saved this** figure computable: the optimizer's predictions are append-and-take-latest, so without a stored baseline there is nothing to have drifted from. See [ERD](design/erd.md#personalisation-entities).
+
+---
+
 ## Error format
 
 Every error response uses a structured envelope, applied globally by `AllExceptionsFilter`:
@@ -686,4 +852,4 @@ Derived statistics (offensive rating, PIE, usage%) are calculated by the team fr
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude-Code[Claude Opus 5]*

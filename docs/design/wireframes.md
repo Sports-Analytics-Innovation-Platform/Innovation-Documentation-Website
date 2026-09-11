@@ -17,10 +17,25 @@ The public marketing page: hero section with a screenshot cascade, a developer-c
 
 ### Home (`/home`)
 
-The signed-in dashboard shell ("The Locker") — a challenge-of-the-day card, a watchlist board, a followed-teams list, a "jump back in" rail, and a saved-comparisons/lineups shelf. Built on the landing page's light palette rather than the dark app shell, deliberately, so signing in reads as walking further into the same building.
+The signed-in dashboard ("The Locker"). Built on the landing page's light palette rather than the dark app shell, deliberately, so signing in reads as walking further into the same building.
 
-!!! warning "Not wired to the API yet"
-    Every figure on this page currently comes from `components/home/placeholderData.ts`, not a live query — the component itself documents this as the single seam to replace with a `GET /v1/me/dashboard` endpoint once it exists. Don't cite this page as evidence of live personalisation; it's a built shell awaiting a backend.
+Every figure on the page is now live (PR #94, merged 2026-09-11), replacing the `components/home/placeholderData.ts` shell that PR #87 shipped. The premise the page is built on is that **an account has to be necessary, not decorative**: the NBA data is identical for every visitor, but which players you follow, what you wrote about them, and how well you call games are yours alone. Nothing derived is stored, so a newly ingested game shows up here immediately.
+
+| Section | What it shows | Backed by |
+|---|---|---|
+| **Beat the Model** | A completed game with its final score withheld, for you to call. Submitting grades your call against both the real result and what the Elo model predicted, and only then reveals the score | `GET /v1/me/challenge/next`, `POST /v1/me/picks`, `GET /v1/me/picks/record` |
+| **Your Watchlist** | Followed players with points, rebounds and assists per game and a five-game scoring trend, plus your own scouting note per player (editable, 500 characters) | `GET /v1/me/watchlist` |
+| **Your Teams** | Recent results for the teams you follow, oriented to your side — your team, the opponent, whether you won — rather than home/away | `GET /v1/me/teams/results` |
+| **Model accuracy ledger** | The model's real accuracy against an always-pick-home baseline, its Brier score, and per-band calibration | `GET /v1/analytics/model-accuracy` |
+| **Accuracy leaderboard** | Callers ranked by hit rate, with the Elo model on the board as a benchmark row rather than a rival | `GET /v1/analytics/leaderboard` |
+| **Saved shelf** | Saved player comparisons, and saved optimizer lineups showing how far each slot's salary and predicted points have drifted since you saved it | `GET /v1/me/saved/comparisons`, `GET /v1/me/saved/lineups` |
+
+Beat the Model is the page's focal action, and the clearest illustration of why the account is required at all: the server can only hide a completed game's score from you *and still score you on it* if it knows who you are.
+
+Two sections from the original shell — **"Add to Locker"** and **"Jump Back In"** — were removed. Both were layout with nothing behind them: one searched nothing, the other listed views nobody had recorded. Removing "Add to Locker" left no way to *start* a follow, so an "Add to watchlist" control was added to the [player profile](#player-profile-playersplayerid) instead — that is now the entry point into the watchlist.
+
+!!! warning "Known gap: these flows are not yet clickable in a browser"
+    Google OAuth credentials are not configured on the deployed environment, so every `/v1/me/*` route returns `401` to a signed-out browser — which is currently every browser. The routes themselves are proven end to end by the API's e2e suite against a real Postgres database, including cross-user isolation (see [Testing](../testing.md)); what has *not* happened is a human clicking through the flow in production. Cite the e2e suite as the evidence here, not a live demo, until the OAuth client is configured.
 
 ### Players list (`/players`)
 
@@ -36,7 +51,9 @@ The most developed screen. Three-column grid layout (`xl:grid-cols-3`):
 - **Season segment control** — a control to switch the whole page between `REGULAR`, `PLAY_IN`, `PLAYOFFS`, and `FINALS`, backed by `GET /v1/players/:id/stats/splits` so every segment is available without a re-fetch per click. Carries through to the profile's compare link so a comparison started from a postseason view compares postseason lines, not regular-season ones.
 - **Advanced stats table** — true shooting%, effective FG%, assist-to-turnover, plus-minus, usage%, and offensive/defensive rating, alongside the basic per-game stats. Local stat editing lets a visitor temporarily edit a displayed stat to see how it ripples into the derived figures, then reset back to the real value — a "what-if" exploration, not a persisted change.
 
-Data comes from `GET /v1/players/:id`, `GET /v1/players/:id/stats`, and `GET /v1/players/:id/stats/splits` together.
+- **Add to watchlist** — a follow/unfollow control (PR #94), added here because removing the home page's "Add to Locker" section left no other way to start a follow. It renders its own state from `GET /v1/me/watchlist/ids`, which returns just the followed player ids so the button costs one request rather than a full watchlist fetch.
+
+Data comes from `GET /v1/players/:id`, `GET /v1/players/:id/stats`, and `GET /v1/players/:id/stats/splits` together, plus `GET /v1/me/watchlist/ids` when signed in.
 
 ### Player comparison (`/compare`)
 
@@ -87,4 +104,4 @@ Charts (Recharts — `RadarChart`, `LineChart`) are themed against these same CS
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5]*

@@ -1,7 +1,7 @@
 # ERD
 
 !!! success "Confirmed from `schema.prisma`"
-    This page is built directly from the real `apps/api/prisma/schema.prisma` (337 lines, 13 models). Last verified against the current schema, including the two Sprint 2 migrations that added season segments (`add_game_season_type`) and advanced per-game stats (`add_advanced_player_game_stats`).
+    The core, prediction, and auth entities below are built directly from the real `apps/api/prisma/schema.prisma`, verified field by field against the current schema — including the two Sprint 2 migrations that added season segments (`add_game_season_type`) and advanced per-game stats (`add_advanced_player_game_stats`). The **Personalisation entities** section carries a weaker claim and says so in its own note; read that before citing it.
 
 ## Diagram
 
@@ -63,6 +63,41 @@ Added for the BetterAuth migration — see [ADR-002](../decisions/adr-002-auth.m
 
 **Verification** — short-lived tokens (e.g. email verification); present because it's part of BetterAuth's core schema, currently unused while Google OAuth is the only provider — see the password-reset risk flagged in [ADR-002](../decisions/adr-002-auth.md)
 
+## Personalisation entities
+
+Added by a single migration, `20260910134345_home_personalization` (PR #94, merged 2026-09-11), to back the signed-in home page. Two properties of this layer are worth stating before the field lists:
+
+- **Zero ALTERs on any NBA-data table.** The personalisation layer sits entirely alongside the existing schema. Nothing about how `Game`, `Player`, or `PlayerGameStat` behave changed to accommodate it, so none of the ingestion or prediction code had to be touched.
+- **The only genuinely new rows are records of a user's own choices.** No NBA statistic is copied into this layer, and nothing derived is stored — the watchlist averages and scoring trends are computed at request time from existing `PlayerGameStat` rows, so a newly ingested game shows up immediately rather than waiting for a recompute.
+
+!!! note "Verified from the migration's design notes, not line by line from `schema.prisma`"
+    Unlike the sections above, this one was written from the migration description rather than read field by field out of the schema. The table purposes, the frozen columns, and the constraints called out below are accurate; the surrounding field lists are the documented subset, not a guaranteed-complete column listing. A verification pass against `schema.prisma` is still owed here, and this note should be replaced with the standard "Confirmed" admonition once someone has done it.
+
+**FollowedPlayer** — a player on a user's watchlist, plus that user's own free-text scouting note
+`userId` → User, `playerId` → Player, `note?` (free text, 500 characters)
+One row per user per player. The note belongs to the follow, not to the player — two users following the same player each keep their own.
+
+**FollowedTeam** — a team a user tracks
+`userId` → User, `teamId` → Team, `isPrimary`
+At most one of a user's followed teams may have `isPrimary` set.
+
+**GamePick** — a user's call on a game, with the model's prediction frozen at pick time
+`userId` → User, `gameId` → Game, the picked side, `outcome` (`PickOutcome`), and four frozen columns: `modelHomeWinProbabilityAtPick`, `modelPredictedMarginAtPick`, `homeTeamEloAtPick`, `awayTeamEloAtPick`
+
+!!! info "Why the model's numbers are copied here instead of joined"
+    `GamePrediction` is append-and-take-latest — a later predictor run can change what the "current" prediction for a game is. If the head-to-head record re-derived the model's numbers at read time, a rerun would silently change what the user was graded against, and a record they had already seen would quietly rewrite itself. Freezing the four values at pick time is what makes "you beat the model on this game" a durable statement rather than one that depends on when you ask.
+
+**SavedComparison** / **SavedComparisonPlayer** — a named set of players saved from the Compare tab
+`SavedComparison`: `userId` → User, a user-supplied name. `SavedComparisonPlayer`: `savedComparisonId` → SavedComparison, `playerId` → Player.
+
+**SavedLineup** / **SavedLineupSlot** — a saved optimizer lineup
+`SavedLineup`: `userId` → User. `SavedLineupSlot`: `savedLineupId` → SavedLineup, `playerId` → Player, plus two frozen columns — `salaryAtSave` and `predictedPointsAtSave`.
+
+The same reasoning as `GamePick` applies: `PlayerPrediction` is also append-and-take-latest, so a slot's salary and predicted points are captured at save time. That frozen pair is precisely what makes the "drift since you saved this" line on the home page computable, and honest — without it there is no baseline to have drifted from.
+
+**PickOutcome** (enum) — `CORRECT` / `MISSED`
+Games that ended in a tie are excluded from the challenge entirely rather than given a third outcome value: there is no correct call to make on one.
+
 ## Relationship diagram
 
 ```
@@ -80,6 +115,15 @@ Lineup (1) ────< (many) LineupSlot
 
 User (1) ──────< (many) Session
 User (1) ──────< (many) Account
+
+User (1) ──────< (many) FollowedPlayer >───── (1) Player
+User (1) ──────< (many) FollowedTeam   >───── (1) Team
+User (1) ──────< (many) GamePick       >───── (1) Game
+User (1) ──────< (many) SavedComparison
+User (1) ──────< (many) SavedLineup
+
+SavedComparison (1) ─< (many) SavedComparisonPlayer >─ (1) Player
+SavedLineup (1) ─────< (many) SavedLineupSlot      >─ (1) Player
 ```
 
 ## Still open
@@ -88,4 +132,4 @@ User (1) ──────< (many) Account
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5]*

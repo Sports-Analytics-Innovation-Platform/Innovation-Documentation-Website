@@ -42,12 +42,13 @@ Implemented:
 
 - **HTTPS/TLS** — Cloudflare Pages provides managed TLS for the frontend. Render provides managed TLS for the API. Supabase connections use TLS via the pooled connection string.
 - **CORS** — configured in `apps/api/src/main.ts` with `credentials: true` and `origin: process.env.WEB_ORIGIN`, restricting cross-origin requests to the known frontend domain(s).
+- **Request body validation** — a shared `parseBody` helper runs a Zod schema over every request body on the write routes added in PR #94, rejecting anything that doesn't match the schema before it reaches a handler.
 
 Not yet implemented — tracked here so it isn't forgotten before Milestone 4:
 
 - **Rate limiting** on public API endpoints, both to protect our own DB and because `nba_api` itself depends on stats.nba.com not banning our IP for excessive scraping — see the ingestion risk section below.
 - **Security headers** (e.g. `helmet` middleware in NestJS) — CSP, HSTS, X-Frame-Options, etc. Note: `helmet` is already imported in `main.ts` but the full header suite should be verified in production.
-- **Input validation** on every endpoint (NestJS `ValidationPipe`/DTOs), especially any endpoint that accepts analyst/admin-submitted stat corrections.
+- **A project-wide `ValidationPipe`/DTO layer.** Request bodies are validated (see `parseBody` above), but query and path parameters are still parsed per-controller rather than through one uniform pipe — worth closing before any endpoint accepts analyst/admin-submitted stat corrections.
 
 ## Data ingestion risk
 
@@ -58,4 +59,4 @@ Not yet implemented — tracked here so it isn't forgotten before Milestone 4:
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5]*
