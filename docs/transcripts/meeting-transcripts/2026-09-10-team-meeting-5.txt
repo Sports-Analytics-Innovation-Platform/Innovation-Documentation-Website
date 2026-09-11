@@ -1,0 +1,158 @@
+=== Meeting Transcript ===
+Server: SDP group (1529773053893148712) / Meeting room (1529773055407034369)
+Date: 2026-09-10T14:17:28.142Z
+Speakers: _danieldenial, drax9207, sanele_h_62233, soody_03, steveisfrench3744
+Duration: [18:29]
+
+[00:02] drax9207: All right. Yay. It does look a bit weird on mobile though, but it looks really good on laptop
+[00:05] soody_03: So what I have done is I created those designs for each of the pages on our project, and I sent it to Adrian, and he said he liked it, but they are very, very, like, changeable. So you'll see that they're also numbered into modules, and essentially what I was doing was, like, moving the modules around, or just deleting some of them, depending on what I liked, what did it like, what I thought was a bit unnecessary. So, like, you know how when AI tends to create front-end, it always has, like, really unnecessary stat bars and, like, stat blocks? Yeah, I basically made all of those things.
+[00:48] steveisfrench3744: Yeah, cool Karen. I really love what you've done with the front-end band. It looks awesome, but that's fine
+[00:51] soody_03: Then, yeah, then this afternoon I hooked up the back-end to the home page, so that it's fetching actual data, and then that's creating the personalization and use for our login. Oh, thank you. Yeah.
+[01:24] steveisfrench3744: It'll the only thing that I would change on here is we need like a profile page
+[01:24] soody_03: Well, I'll probably, it's not actually on any branches, those are just the artifacts, but yeah.
+[01:25] drax9207: It looks so good on laptop
+[01:33] soody_03: Yeah, I would, yeah.
+[01:34] drax9207: Okay, no, it looks great man. Okay. Yeah the 15th, right?
+[01:41] steveisfrench3744: You know what I mean?
+[01:42] _danieldenial: Yeah, yeah. Yeah, I can also help. Okay. Once the once the UI thing is done
+[01:42] steveisfrench3744: So like yeah, they'll say like your email and sign out like I think that should just be a button You know what I mean, and I just just takes you to another page of like you just a profile page
+[01:49] soody_03: Oh, and then that's where we, that's where we can have, like, the reset plus with all those things, your request to delete data.
+[01:52] steveisfrench3744: And it's like we'll have very
+[02:01] soody_03: Okay.
+[02:02] steveisfrench3744: Yes, so that's
+[02:03] soody_03: Yeah, we can do that. Yeah.
+[02:05] steveisfrench3744: Okay, cool. I can I can do that if you guys need I
+[02:10] soody_03: We could try, like, doing an email to a reset.
+[02:10] steveisfrench3744: Would like to help a little bit with the UI because I think I find it really fun And I think we have like a visual language now, you know, I have no idea
+[02:19] _danieldenial: I can do the actual like mechanics behind it if you guys want Getting it to work, babe. Are we gonna do a reset thing like sending an email to reset? Was that too hard too complex? We just let them change it on the page. Okay. Let's okay
+[02:34] steveisfrench3744: You haven't even thought that far. Okay, cool. I think that makes sense
+[02:41] _danieldenial: Maybe let's first maybe just finish the UI of it then we can decide afterwards what we're gonna do with the page
+[02:42] soody_03: I'm glad.
+[02:46] _danieldenial: What do we want to be done on it if we do we should save that from the screen though because that's
+[02:54] steveisfrench3744: Okay, cool. No, but it's really really really cool Karen. I really fuck with it. It's like it looks awesome. Yeah
+[03:02] soody_03: I'm also thinking of, for a profile, we can either say, like, whether you're a player or not, and then you can upload your own stats as, like, instead of having, like, a coach in quotes uploading stats, you just be comparing your own stats and give you, like, your own evaluation. I don't know. Something like that might be an interesting idea to give us, like, a feature.
+[03:30] steveisfrench3744: Yeah, I agree
+[03:31] soody_03: Because I feel like we're done, right?
+[03:33] _danieldenial: thinking
+[03:33] soody_03: I feel like that might be a nice extra feature to have.
+[03:34] _danieldenial: Yeah
+[03:37] soody_03: I guess I can print something instead as well.
+[03:39] _danieldenial: Okay, I'm gonna see I'm gonna test it now I just want to make sure that the log in button thing doesn't break again at the end like it did the first friends
+[03:52] steveisfrench3744: Yeah, it was breaking today when I was testing it out. Okay, cool. Well, okay. Yeah, that makes sense
+[03:55] _danieldenial: So I'm gonna I'm gonna spend time fixing that and then I'm just gonna look through that list of tasks that I own put in That other page and see what I can do now Because I don't want to do a new whole big thing a couple days for the sprint and I'd rather save it for the next friends I'll look around do I'll hopefully I think I'll finish the log I think today and maybe one more thing five times
+[04:11] steveisfrench3744: I'm busy now as well. I'll probably finish what I'm doing today and then just Yeah, okay, when is our next print review on Tuesday? Okay, make sense. Make sense. Okay, that makes sense
+[04:22] _danieldenial: I'll see and then tomorrow. I think so
+[04:28] drax9207: Okay, so that's what makes the next week. It's just next week. Yeah, yo
+[04:30] _danieldenial: Yeah, yeah
+[04:44] steveisfrench3744: Okay
+[04:45] _danieldenial: Okay
+[04:46] steveisfrench3744: What I've been doing recent well did today and yesterday was I basically seeded the database with like two more seasons of data Because our prediction model was getting a little bit fucked up because there was only at one season ingested I think I want to try and just another two or three seasons even Just to make sure our models accurate and I've literally just been updating the model as I've been going like it's getting better and better and better I think I'm at like 65 accuracy now
+[05:13] drax9207: Well, then oh
+[05:13] steveisfrench3744: so Yeah, so I've just been like the only problem is just seeding the database takes so long dude It literally took like 12 hours to do all of this stuff It's it's because it's like freaking like 12,000 games if you think about it, you know what I mean
+[05:26] drax9207: My goodness. Yeah
+[05:28] steveisfrench3744: So it like and it's like you have to get the games and you have to get the players you have to get the teams So it just took so long to do and this thing only limits you to one request a second So I'm gonna try I'll just do it like gradually as I go I might I think like another season or two and then we should be fine
+[05:45] drax9207: Yeah doing the loads of work there
+[05:45] steveisfrench3744: In terms of just how much data we have and it should be accurate enough
+[05:54] steveisfrench3744: Not really I'm just trying to find something to do
+[05:55] drax9207: Don't even know. I don't even know how hard that would be. I don't even know what you're doing
+[06:02] steveisfrench3744: Dude, it's weird. I'm just trying to figure out like what um Like what people use to for their prediction algorithms and stuff And like as I'm going I'm just making chat make like a document
+[06:15] drax9207: Okay, that's good. We can use those documents on my side. I made the testing document
+[06:16] steveisfrench3744: Like so it's like everything is documented, which is nice
+[06:25] steveisfrench3744: Yeah, I've put them in the In the docs thing and I think but we can just put them on what's it called on the website as well
+[06:42] drax9207: For how we test stuff. I think I made like a bug tracker document and Oh, I set up swagger within our application Yeah, so we can now see how our APIs interact and stuff and also made a survey brief and with these screenshots I'm going to make the survey Maybe today and we can start sending it to people
+[07:10] _danieldenial: When do we need the survey for this sprint? Okay, so for this for this
+[07:13] drax9207: Yeah, and next print. I need two surveys. Yeah
+[07:20] _danieldenial: For the next so if an expert I'll take it to work because they were I will be able to I mean, it's my work by by Tuesday But for the next sprint, I'll take it to them and I'll give it to the people and they can do it at least we have good responses
+[07:33] drax9207: Yeah, that'll that'll help. Thank you. Hmm. Oh
+[07:34] _danieldenial: Yeah, okay, so this and I put on his Instagram Was okay, so I think then at least
+[07:46] steveisfrench3744: Okay
+[07:46] drax9207: Yeah, cool. I'm gonna put on my status and stuff. Yeah
+[07:53] _danieldenial: Once we finish, I'm gonna just make sure the login thing doesn't break again Then I think we're basically done then at least next week you just focus on like the profile page and then Maybe the player page whatever because then at least we have basically the whole thing done We can just work on adding new features
+[08:09] drax9207: Sounds great. Yeah
+[08:10] steveisfrench3744: Yeah, I think once we get all the UI in and like looking nice whatever we should be
+[08:13] _danieldenial: Yeah, yeah
+[08:15] drax9207: Can you basically?
+[08:17] steveisfrench3744: Looking good. I mean
+[08:22] _danieldenial: Yeah, I'll look at it just now and I'll do some of the background toss
+[08:23] steveisfrench3744: I've been struggling to find things to do even now. Okay, I guess I just found something that I should do This thing is giving a report on 211 games. I think it should be like the most recent 10 games
+[08:36] drax9207: Yeah, how much is left in the in the product backlog of tasks?
+[08:42] steveisfrench3744: Do that. I don't even know Yeah, honestly right now. I'm just focusing on the prediction page
+[08:48] _danieldenial: Just because it's difficult to see that what to do. So I'll just do whatever's in the toss in there
+[08:52] drax9207: Yeah, I'm also thinking of doing something like that
+[08:52] _danieldenial: Okay, so I'll just say on the group which ones I'm doing so we don't accidentally do the same thing twice Yeah. Oh, yeah, I can get in that email as well. Oh, yes, I do
+[09:03] steveisfrench3744: I think I'd like to just get that looking good and I think it's an important one to So that's why I'm just going to dedicate the rest of my time Yeah
+[09:15] sanele_h_62233: you say you edit how many seasons? Okay I just finished editing you know how the season has
+[09:18] steveisfrench3744: So now we have three total seasons. Yeah, I added two more
+[09:29] sanele_h_62233: broken up into two parts yeah I edit the what post season for what the last season so only one
+[09:32] steveisfrench3744: Yeah
+[09:39] sanele_h_62233: post season exists am I gonna have to add the post season for those other seasons or what do you think yeah same so yeah um I see four pull requests open one by Kieran one by
+[09:51] steveisfrench3744: I know Where did you get that data from is it still from the same api? Um, I think I think it should be fine for now. I think it should be fine I'll I'll do some more tests on this thing and then ask Claude if it will make a difference, but I don't think so man Like at the end of the day, I don't think we're like Doesn't have to be like super crazy, you know I think it's just good to have like a whole bunch of data in I mean if we can then yeah Or why not but if it's a mission then I just I don't think it's that big of a deal I doubt these guys will even look into like Our model and whatever like I don't think they'll they'll really like Look at the data, you know what I mean Like as long as there's like something saying that this is kind of reliable Like as long as it's back-tested and as long as there's some level of like, okay, this is a machine learning model I think we'll be fine
+[10:48] drax9207: They do not have time to mock everything
+[10:53] steveisfrench3744: Yeah, I don't like I don't have time to go through like, okay Let's let's step through all 40 pages of this of these fucking tables and then this guy's database. It's not gonna happen There's actually 85 pages 8,000 records in this in the game event one, bro. It's like ridiculous Oh guys our database is also I'm gonna fix it later But basically all of our tables don't have rls And so basically like anyone can access them um, but I'm gonna I think to what Towards the end of the sprint I'm gonna fix that because I just remember last semester We were we added all of these rls things and it just fucked up everything dude like It was like hard to connect to things. I don't know if you remember Daniel But remember with Connor when he was managing the database He was he was doing and you had to like I think it was like all these tokens that it would give us and like
+[11:40] _danieldenial: Yeah, we had to add it all it was so very annoying
+[11:43] steveisfrench3744: Like it wouldn't let Claude access it and it was like it was a huge huge mission So I think just towards the end of the project will just make sure this thing is like properly secure If that's okay with everyone else, I don't know. I just think for now like let's just make the development as easy as possible
+[11:55] drax9207: Yeah, I agree
+[11:59] _danieldenial: Yeah, that's fine. Okay, is anyone else have anything else so we all fine. Okay, I'll look at them. I'll look at them as well
+[12:08] drax9207: Okay. Yeah
+[12:17] sanele_h_62233: Adrian do you guys need me need someone to merge those what Adrian yeah I also have two pull requests
+[12:22] drax9207: Yeah, please please merge brand. It's just basically setting up the swagger documentation
+[12:22] soody_03: Conflict with, I've got to take an error with one of mine, I'm still fixing that. So just leave it.
+[12:37] drax9207: Stuff it like pulls from our code directly to make the documentation. So, okay
+[12:47] sanele_h_62233: one of them is failing one of them is failing but the other one is that's fine so you can
+[12:56] _danieldenial: I'll do them. Okay, so we done. Oh, yeah, everything we need for this career. I think we did last friend as well
+[13:08] steveisfrench3744: Yeah, I don't know. I think so. It should be fine Um, what is like do we know what like is required of us this sprint? Like is there anything that we like we haven't done that like Needs to get done
+[13:19] soody_03: What we did last sprint, but we've already done it in the previous sprint, what we needed for this sprint.
+[13:27] drax9207: basically Most of the stuff. Yeah, but it would be like the basic sphere
+[13:29] steveisfrench3744: Okay, cool. Did he actually say that?
+[13:32] _danieldenial: So I think yeah me too. I was looking guys all day
+[13:33] soody_03: Didn't you say we could literally submit it as this being our final project?
+[13:42] drax9207: But we we would pause by just submitting this because
+[13:50] steveisfrench3744: Exactly
+[13:51] drax9207: Sir
+[13:52] steveisfrench3744: um But we're not going to just submit this because we are Who do you see young gentlemen? Okay, cool. I mean that that's fine for me Um, Karen, when do you think like you'll get all of the UI implemented on Sunday? Like everything just all the pages
+[14:13] soody_03: I think I'll be able to do maybe one to two pages a day. So maybe by Sunday, I think, by the end of Sunday.
+[14:27] steveisfrench3744: Okay, cool. That's that's that's chilled I'm probably going to get this predictions page done today And if you you can just look at what I've done and then if it's shit, then you can just change it
+[14:37] soody_03: Okay. No, it's only taking a lot of time because I want to make sure that it's connected to what you guys have done and I'm not just, like, overriding a little bit.
+[14:47] steveisfrench3744: No, no, that that makes sense. It makes sense. I'm just saying like more from the visual language side of things I'll just have everything that needs to be there And if if you think it's it's all right, then we can just leave it
+[14:57] soody_03: I mean, if you want to just make it in. Are you making it in Figma? Yeah.
+[15:01] steveisfrench3744: Um, yeah, I'll probably use Figma. I'll use something else. I don't know But I like what you've done already. I mean, I can already see your page. It looks good
+[15:06] soody_03: Yeah.
+[15:09] steveisfrench3744: So I might honestly just just use this and then just maybe add a few things
+[15:10] soody_03: What I'll do is, I'll, I'll finish. I'll send you the color codes that I'm going to use, that I used for the homepage. And then you use those. So at least they are, they may be different pages and slightly style different, but the colors, the colors still match. It's cold.
+[15:31] steveisfrench3744: Okay, cool. Um for these artifacts
+[15:34] soody_03: Yeah.
+[15:35] steveisfrench3744: I can just use this artifact surely
+[15:38] soody_03: But I plan on changing the color, like the brownish color. I think literally just play black better.
+[15:48] steveisfrench3744: I kind of like the brownie rng thing. It's it's like different. I don't know. It looks quite cool and I think it looks
+[15:51] soody_03: It was supposed to be, it was supposed to be matching like, it was supposed to be matching a basketball color.
+[16:00] steveisfrench3744: Hmm, I quite like it though
+[16:01] soody_03: Yeah. Okay. Brown section though, I do plan on getting rid of all of that just because they don't really.
+[16:05] steveisfrench3744: I well at least from my I don't know how everyone else feels about it I mean if you guys haven't seen the artifact, let me just share my screen and then you can see them
+[16:15] drax9207: Okay, bye. Yeah, why not that sounds like a good idea. Sure. Bye
+[16:26] steveisfrench3744: Can you guys see? Okay, so this is the player page So I think he's talking about this brown over here I quite like it this page D so yeah
+[16:52] soody_03: I think like the current homepage, that is very close to what the rest are going to look like.
+[16:53] steveisfrench3744: Okay, well, just let me know. I mean, it's it's fine. I mean you can just look at what I've done and then if it's
+[17:06] soody_03: Like the deployment.
+[17:06] steveisfrench3744: Okay, cool
+[17:08] soody_03: Yeah.
+[17:10] steveisfrench3744: Okay, I know I really like the home page also just because it's like it feels very like customized to the person
+[17:16] soody_03: Yes. Thank you.
+[17:17] steveisfrench3744: You know what? I mean, it's like all these things here. It's like add to your locker jump back in. It's like
+[17:18] soody_03: Like.
+[17:22] steveisfrench3744: That's what I like the most about it. It's like very like This is your thing
+[17:28] soody_03: Yeah. Okay. I need to go guys. All right.
+[17:35] steveisfrench3744: Okay, cool. Bye
+[17:35] _danieldenial: Yeah
+[17:37] soody_03: Cheers. Bye.
+[17:39] _danieldenial: but Okay
+[17:46] steveisfrench3744: But yeah
+[17:51] _danieldenial: I'm gonna go work on the the login thing. I make sure don't break and then I'll start past that long things
+[17:56] steveisfrench3744: Okay, cool
+[17:58] _danieldenial: Okay, oh, we're gonna have another meeting this been we do one maybe Monday night just before
+[18:09] steveisfrench3744: Yeah Yeah, or even even the weekend or something. Well, I guess it's currency will be done on
+[18:11] _danieldenial: Yeah, just so we can check your whole submission
+[18:16] _danieldenial: Sunday awesome. We will do Monday. Just so we can check everything before with the sprint submission
+[18:21] steveisfrench3744: Okay, cool. Cool guys
+[18:27] _danieldenial: Bye guys
+
+--- 150 entries | 5 speakers | transcribed in 1097.6s ---
