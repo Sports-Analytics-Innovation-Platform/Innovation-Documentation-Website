@@ -34,7 +34,7 @@ The `coverage` job is the exception: it needs *both* apps installed in one works
 
 The `coverage` job runs, in order: install API deps → install web deps → `npm run prisma:generate --prefix apps/api` → `npm run test:cov --prefix apps/api` → `npm run test:cov --prefix apps/web` → `npm run coverage:report` (root script, merging both) → upload the `coverage-report` directory as a build artifact.
 
-Runner: all three jobs use `runs-on: default` — the label the Wits `act_runner` actually registers, not GitHub's `ubuntu-latest`. `actions/checkout@v4` and `actions/setup-node@v4` pinned to **Node 24** (matching the team's local Node v24.14.0 / npm 11.9.0).
+Runner: all three jobs use `runs-on: ubuntu-latest` — the label the course-provided `sdp-runner-1` actually registers (changed 2026-09-07; an earlier revision assumed a self-registered `default` label that turned out not to match). `actions/checkout@v4` and `actions/setup-node@v4` pinned to **Node 24** (matching the team's local Node v24.14.0 / npm 11.9.0).
 
 Abridged shape of the workflow — the real file is the authority:
 
@@ -51,7 +51,7 @@ concurrency:
 
 jobs:
   api:
-    runs-on: default
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
       run:
@@ -61,50 +61,59 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: npm ci
+      - run: npm ci --fetch-timeout=60000 --fetch-retries=5 --fetch-retry-mintimeout=15000 --fetch-retry-maxtimeout=60000
       - run: npm run prisma:generate   # prerequisite of the typecheck, made explicit
       - run: |                         # lint, guarded — see "the two pre-existing gaps"
           if ls eslint.config.* 2>/dev/null; then npm run lint; else echo "::warning::..."; fi
       - run: npx tsc --noEmit -p tsconfig.json
 
   web:
-    runs-on: default
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
       run:
         working-directory: apps/web
-    steps: [checkout, setup-node@24, npm ci, npm run lint, npx tsc -b --noEmit]
+    steps: [checkout, setup-node@24, npm ci (with the same fetch tuning), npm run lint, npx tsc -b --noEmit]
 
   coverage:
-    runs-on: default
+    runs-on: ubuntu-latest
     timeout-minutes: 20
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env: { POSTGRES_USER: postgres, POSTGRES_PASSWORD: postgres, POSTGRES_DB: nba_analytics_test }
-        options: >-
-          --health-cmd pg_isready --health-interval 10s
-          --health-timeout 5s --health-retries 5
+    # No `services:` block — see "The test database" below for why. Postgres
+    # is started and torn down as ordinary steps instead.
     env:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/nba_analytics_test?schema=public
       BETTER_AUTH_SECRET: ci-secret-not-for-production-use
       BETTER_AUTH_URL: http://localhost:4000
       WEB_ORIGIN: http://localhost:5173
+      # DATABASE_URL is deliberately absent here — the "Start disposable
+      # Postgres" step computes it and exports it via $GITHUB_ENV instead.
     steps:
       - uses: actions/checkout@v4
+      - name: Start disposable Postgres    # tries 3 strategies in order; see below
+        run: |
+          NAME="ci-postgres-${{ github.run_id }}"
+          docker run -d --name "$NAME" --label ci-postgres-for=nba-analytics \
+            -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres \
+            -e POSTGRES_DB=nba_analytics_test --tmpfs /var/lib/postgresql/data \
+            postgres:16-alpine
+          # ... discover a reachable TARGET (container name, container IP, or
+          # a published 127.0.0.1 port), then:
+          echo "DATABASE_URL=postgresql://postgres:postgres@${TARGET}/nba_analytics_test?schema=public" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v4
         with: { node-version: 24 }
-      - run: npm ci --prefix apps/api
-      - run: npm ci --prefix apps/web
+      - run: npm ci --prefix apps/api --fetch-timeout=60000 --fetch-retries=5 --fetch-retry-mintimeout=15000 --fetch-retry-maxtimeout=60000
+      - run: npm ci --prefix apps/web --fetch-timeout=60000 --fetch-retries=5 --fetch-retry-mintimeout=15000 --fetch-retry-maxtimeout=60000
       - run: npm run prisma:generate --prefix apps/api
       - run: npm run test:cov --prefix apps/api
       - run: npm run test:cov --prefix apps/web
       - run: npm run coverage:report
-      - uses: actions/upload-artifact@v3.2.2   # not v4 — see "Gitea version constraints"
+      - uses: actions/upload-artifact@v3.2.2-node20   # not v4 — see "Gitea version constraints"
         with:
           name: coverage-report
           path: coverage-report
           if-no-files-found: error
+      - if: always()   # hands the container back to the shared runner even if the suite failed
+        name: Stop disposable Postgres
+        run: docker rm -f "ci-postgres-${{ github.run_id }}" || true
 ```
 
 ## Why it's built this way
@@ -121,16 +130,23 @@ Each of these is a decision that changes behaviour, not a style preference.
 
 ## The test database
 
-The API e2e suite needs a real, disposable Postgres, so the `coverage` job declares a `postgres:16-alpine` **service container** with `POSTGRES_DB: nba_analytics_test` and a `pg_isready` healthcheck (10s interval, 5s timeout, 5 retries) so steps don't start against a database that isn't listening yet.
+The API e2e suite needs a real, disposable Postgres. It is **not** a `services:` container — that was tried three times (commits `497b2c4`, `03d38ba`, `566c8d1`) and never went green, for reasons specific to this shared runner:
 
-!!! warning "The connection string uses `postgres:5432`, not `localhost`"
-    Jobs on this runner execute **inside containers**, not directly on the host. That puts the job and the service on the same container network, so the service is reached by its **hostname** (`postgres`) on its **normal container port** (5432) — there is no host port mapping to go through. Copying `localhost:5432` in from a GitHub-hosted example is the classic way to break this job.
+!!! warning "Why `services:` doesn't work on this runner"
+    The runner executes jobs with `network: host`, shared across every group on the machine. Two consequences follow: there's no bridge network, so a `postgres` hostname alias is silently dropped and never resolves; and every `services:` port is really a **host** port, so a fixed number (5432, then 55432) is a bet that no other job on the shared machine picked it first — a bet this runner kept losing. When Postgres loses that bet it fails to bind, exits in about two seconds, and Docker reports the job's healthcheck as "unhealthy" with no probe output at all — which is why this took three attempts to actually diagnose.
 
-Four environment variables are set at job level, so every step in the job sees them:
+Instead, a **"Start disposable Postgres" step** runs Postgres as an ordinary sibling container (`postgres:16-alpine`, named `ci-postgres-${{ github.run_id }}`, `--tmpfs` data dir so nothing outlives the job) and tries three connection strategies **in order**, stopping at the first that works:
+
+1. **The job's own Docker network, by container name** — found by inspecting the job's own container through the mounted Docker socket. Works when the runner gives the job a user-defined network (which has embedded DNS).
+2. **The same network, by container IP** — the fallback when the name doesn't resolve (the default bridge has no embedded DNS).
+3. **A port published on `127.0.0.1`, picked by Docker at random** — the fallback for a `network: host` runner, where nothing above applies and a host port is the only option (this is the one that actually fires on this runner today, but the other two keep the workflow portable to a different runner).
+
+Each strategy is verified with both a TCP probe from the job's side and `pg_isready` from inside the container before it's trusted — a socket-only server still running `initdb` can answer `pg_isready` while the TCP port is still closed, so either check alone is insufficient. Whichever strategy succeeds gets exported as `DATABASE_URL` via `$GITHUB_ENV`, which is why the workflow has no static `DATABASE_URL` at job level — a second definition there would create a precedence question on a runner the team doesn't administer. A final `Stop disposable Postgres` step (`if: always()`) removes the container even when the suite fails, so it doesn't sit on the shared machine's memory.
+
+Three more environment variables are set at job level:
 
 | Variable | Value | Why |
 |---|---|---|
-| `DATABASE_URL` | `postgresql://postgres:postgres@postgres:5432/nba_analytics_test?schema=public` | Points Prisma at the service container |
 | `BETTER_AUTH_SECRET` | `ci-secret-not-for-production-use` | BetterAuth refuses to boot without one. The value is deliberately a self-documenting dummy — it is **not** a secret, is not read from Gitea Actions secrets, and must never be reused outside CI (see [Security](security.md)) |
 | `BETTER_AUTH_URL` | `http://localhost:4000` | The API's own origin, as the test process sees it |
 | `WEB_ORIGIN` | `http://localhost:5173` | CORS origin the API expects from the Vite dev server |
@@ -141,8 +157,8 @@ Note that the workflow itself runs **no migration step** — no `prisma migrate 
 
 Two places where the workflow is shaped by the server, not by preference:
 
-- **`actions/upload-artifact` is pinned to `v3.2.2`, not `v4`.** The Gitea instance is **1.24.7**, which implements the *legacy* artifact protocol. `upload-artifact@v4` talks to a v4 backend and needs a patched action to work against Gitea at all. Staying on v3 keeps the step working with the stock action; revisit when the server is upgraded.
-- **`runs-on: default`.** Self-hosted `act_runner` instances register whatever labels their config gives them, and this one registers `default`. `ubuntu-latest` would simply never be picked up.
+- **`actions/upload-artifact` is pinned to `v3.2.2-node20`, not `v4`.** The Gitea instance is **1.24.7**, which implements the *legacy* artifact protocol — `upload-artifact@v4` talks to a v4 backend and needs a patched action to work against Gitea at all. The `-node20` variant matters specifically: plain `v3.2.2` declares `runs.using: node24`, which this runner rejects outright with "unknown runner using:" — every other action in the workflow is node20, so this is the one step that would have hit that.
+- **`runs-on: ubuntu-latest`.** Switched 2026-09-07 to the label the course-provided `sdp-runner-1` actually registers, after an earlier revision's assumption that the runner self-registered as `default` turned out to be wrong.
 
 `if-no-files-found: error` on the upload is a deliberate choice: if `coverage:report` silently produces nothing, the job fails instead of uploading an empty artifact and reporting green.
 
@@ -181,7 +197,7 @@ Across the whole API source that left exactly **one** genuine error: an unused `
 | API typecheck | ✅ | `tsc --noEmit`, after Prisma codegen |
 | Web lint | ✅ | oxlint |
 | Web typecheck | ✅ | `tsc -b` — solution-style config, build mode required |
-| API tests | ✅ | Against a real Postgres service container |
+| API tests | ✅ | Against a real, disposable Postgres — self-managed, not a `services:` container (see [The test database](#the-test-database)) |
 | Web tests | ✅ | |
 | Combined coverage report | ⚠️ produced, **not gated** | The report is built and uploaded; nothing fails on a low coverage number |
 
@@ -210,7 +226,6 @@ Other pages on this site describe CI steps that are planned but **not in `ci.yml
 - **No build step.** Lint, typecheck, and test only — nothing verifies that `apps/api` or `apps/web` actually builds in the CI pipeline (the build is verified by the CD deploy step instead).
 - **No coverage threshold.** See above: reported, not gated.
 - **No secret scanning.** [Git Methodology](git-methodology.md) and [Security](security.md) describe `gitleaks`/`trufflehog` as a PR backstop — that's the intent, not yet the implementation. The manual pre-commit check is currently the only line of defence.
-- **No `axe-core` accessibility checks.** [Requirements Traceability](requirements.md) lists these for `apps/web`; they aren't wired up yet.
 
 ## Local parity
 
@@ -252,7 +267,7 @@ npm run coverage:report        # writes ./coverage-report
 
 Tracked here rather than lost in a chat log:
 
-1. **Enable npm caching** via the commented-out block once the runner's cache server is confirmed reachable. This is now the only remaining runner-environment unknown — the `runs-on` label question is settled (`default`).
+1. **Enable npm caching** via the commented-out block once the runner's cache server is confirmed reachable. This is now the only remaining runner-environment unknown — the `runs-on` label question is settled (`ubuntu-latest`, since 2026-09-07) and so is the Postgres connection strategy (see [The test database](#the-test-database)).
 2. **Move to `actions/upload-artifact@v4`** once the Gitea server is upgraded past 1.24.7 and exposes the v4 artifact backend.
 3. **Gate on coverage.** Add a threshold so the `coverage` job fails below an agreed floor, instead of only proving the suites pass. Agree the number first — a threshold set above current coverage lands as an immediately-red pipeline.
 4. **Confirm where the test schema comes from.** The workflow runs no migration against the service container; if that is handled by the test harness it should be stated in the testing docs, and if it isn't, the job needs a `prisma migrate deploy` step.

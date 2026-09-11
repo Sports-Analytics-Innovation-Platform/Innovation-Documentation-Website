@@ -32,7 +32,7 @@ to `main`.
 
 ## Status
 
-Sprint 1 is complete. The platform ships a working increment: NestJS API with BetterAuth (Google OAuth), React frontend with player/team browsing and search, game listings, predictions with Elo win-probability and Four Factors scoring, a fantasy-lineup optimizer, `nba_api` ingestion service, CI/CD pipeline (Gitea Actions), and production deployment on Cloudflare Pages (frontend), Render (API), and Supabase (Postgres). See the [Sprint Log](sprint-log.md) for the full record of what was delivered and the [Roadmap](design/roadmap.md) for what's next.
+Sprint 1 is complete, and Sprint 2 (due 2026-09-15) is in its final days. Beyond the Sprint 1 base — NestJS API with BetterAuth (Google OAuth), React frontend with player/team browsing and search, game listings, predictions with Elo win-probability and Four Factors scoring, a fantasy-lineup optimizer, `nba_api` ingestion service, CI/CD pipeline (Gitea Actions), and production deployment on Cloudflare Pages (frontend), Render (API), and Supabase (Postgres) — Sprint 2 has added: player comparisons, postseason views (play-in/playoffs/finals) with advanced per-game stats (true shooting%, plus-minus, usage%, ratings), a bug tracker, `axe-core` accessibility checks in CI, and a live Swagger/OpenAPI UI at `/api/docs`. The user feedback survey is drafted but not yet distributed. See the [Sprint Log](sprint-log.md) for the full record and the [Roadmap](design/roadmap.md) for what's next.
 
 ---
 
