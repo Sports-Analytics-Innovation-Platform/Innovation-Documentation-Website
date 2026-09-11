@@ -18,10 +18,12 @@ Core analytics platform — built and deployed:
 
 ## Intermediate tier (functional and useful)
 
-- **Player comparison endpoint** added alongside team-level prediction: `GET /v1/players/compare` returns side-by-side season averages, recent game logs, and head-to-head stats for 2–4 players. Per-player game-outcome prediction (e.g. predicted points/rebounds/assists for an upcoming matchup) is planned for a later sprint.
+- **Player comparison endpoint**: `GET /v1/players/compare` returns side-by-side derived season averages for 2–4 players, for a chosen season segment. Per-player game-outcome prediction (e.g. predicted points/rebounds/assists for an upcoming matchup) is planned for a later sprint.
+- **Postseason views**: games and player stats are tagged with a `seasonType` (`REGULAR`, `PLAY_IN`, `PLAYOFFS`, `FINALS`) and `playoffRound`. Player profiles, the comparison page, and the players list can all switch to a postseason-only view via a `SeasonSegmentControl`, backed by `GET /v1/players/:id/stats/splits` (every segment in one request) so the UI never shows a regular-season figure mislabelled as a playoff one. Postseason games are deliberately excluded from the prediction and optimizer models — a playoff matchup isn't statistically like a regular-season one.
+- **Advanced player stats**: true shooting%, effective FG%, and assist-to-turnover ratio are derived on read from existing boxscore fields (verified against `BoxScoreAdvancedV3` to three decimal places). Plus-minus, usage%, offensive rating, and defensive rating are ingested per game from the same advanced boxscore and stored on `PlayerGameStat`, fetched leaguewide rather than per game to stay within the ingestion API's rate limit. All four are nullable — `null` for games ingested before these columns existed, since a real 0% usage rate is a different fact than a missing one.
 - **Model accuracy shown, not just asserted** — a view comparing predicted vs. actual outcomes for games that have already happened, so the prediction isn't just a number nobody can verify. This also gives something concrete to show in Sprint 3 reviews.
 - Richer feature set feeding the model where the data supports it (recent form, home/away split, head-to-head history) — exact feature list still open.
-- **Target accuracy**: 75–80% (per client meeting 2026-08-21), with 64% as an achievable baseline.
+- **Target accuracy**: 75–80% (per client meeting 2026-08-21), with 64% as an achievable baseline; the team reported ~65% after seeding two additional seasons (team meeting, 2026-09-10).
 
 ## Advanced tier (market-ready)
 

@@ -7,15 +7,18 @@ Confirmed directly from the backend controllers in `apps/api/src/`:
 | Method | Path | Auth | Query params | Returns |
 |---|---|---|---|---|
 | `GET` | `/health` | None | — | `{ status: "ok" }` |
-| `GET` | `/v1/players` | None (public) | `teamId`, `position`, `search`, `page`, `pageSize` | `PagedResult<Player>` |
+| `GET` | `/v1/players` | None (public) | `teamId`, `position`, `search`, `seasonType`, `participated`, `page`, `pageSize` | `PagedResult<Player>` |
 | `GET` | `/v1/players/:id` | None (public) | — | `Player`, or `404 NOT_FOUND` |
-| `GET` | `/v1/players/:id/stats` | None (public) | — | `{ playerId, seasonAverages, gameLog }`, both derived at request time from `PlayerGameStat` rows |
+| `GET` | `/v1/players/:id/stats` | None (public) | `seasonType` | `{ playerId, seasonType, seasonAverages, gameLog }` — `seasonAverages` derived at request time from that segment's `PlayerGameStat` rows |
+| `GET` | `/v1/players/:id/stats/splits` | None (public) | — | `{ playerId, splits }` — the same derived line as `:id/stats`, for every `seasonType` at once |
+| `GET` | `/v1/players/compare` | None (public) | `ids`, `seasonType` | `{ seasonType, players: [{ player, seasonAverages }] }` for 2–4 players |
 | `GET` | `/v1/teams` | None (public) | `search`, `page`, `pageSize` | `PagedResult<Team>` |
 | `GET` | `/v1/teams/:id` | None (public) | — | `Team`, or `404 NOT_FOUND` |
-| `GET` | `/v1/games` | `SessionAuthGuard` | varies | Game list with predictions joined in |
+| `GET` | `/v1/games` | `SessionAuthGuard` | `seasonType`, `page`, `pageSize` | Game list with predictions joined in |
 | `GET` | `/v1/games/:id` | `SessionAuthGuard` | — | Game detail with win probability, predicted margin, and predicted top scorers |
 | `GET` | `/v1/games/:id/prediction` | `SessionAuthGuard` | — | `GamePrediction` (Elo win probability, Four Factors margin), or `404` if no prediction generated yet |
 | `GET` | `/v1/optimizer/lineup` | `SessionAuthGuard` | — | Latest `Lineup` with `LineupSlot` entries, or `404` if no lineup generated yet |
+| `GET` | `/v1/optimizer/predictions/:playerId` | `SessionAuthGuard` | — | Predicted fantasy points for one player by NBA player ID, or `404` |
 
 BetterAuth mounts its own route set at `/api/auth/*` (sign in, sign out, session management, Google OAuth redirect). These are not hand-written NestJS controllers — they are managed by the BetterAuth library.
 
@@ -49,10 +52,10 @@ In dev, `vite.config.ts` proxies `/api/*` to `http://localhost:4000`. In product
 **`PlayerStatsResponse`**:
 
 ```ts
-{ playerId, seasonAverages: SeasonAverages, gameLog: GameLogEntry[] }
+{ playerId, seasonType, seasonAverages: DerivedSeasonAverages, gameLog: GameLogEntry[] }
 ```
 
-(See [ERD](erd.md) for the full field lists of `SeasonAverages` and `GameLogEntry`.)
+`seasonType` echoes back the resolved segment (defaults to `REGULAR`) so a caller can't mislabel a chart it already rendered against a different segment. See [ERD](erd.md) for the full field lists of `DerivedSeasonAverages` and `GameLogEntry`.
 
 ## Error handling
 

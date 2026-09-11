@@ -1,7 +1,7 @@
 # ERD
 
 !!! success "Confirmed from `schema.prisma`"
-    This page is built directly from the real `apps/api/prisma/schema.prisma` (257 lines, 12 models). Last verified against the current schema.
+    This page is built directly from the real `apps/api/prisma/schema.prisma` (337 lines, 13 models). Last verified against the current schema, including the two Sprint 2 migrations that added season segments (`add_game_season_type`) and advanced per-game stats (`add_advanced_player_game_stats`).
 
 ## Diagram
 
@@ -16,18 +16,19 @@ See the [Architecture Overview](architecture.md#database-erd) for the full visua
 `id`, `nbaPlayerId` (unique), `firstName`, `lastName`, `position`, `heightInches?`, `weightLbs?`, `jerseyNumber?`, `headshotUrl?`, `teamId?` → Team
 
 **Game**
-`id`, `nbaGameId` (unique), `gameDate`, `season`, `homeTeamId` → Team, `awayTeamId` → Team, `homeScore?`, `awayScore?`
+`id`, `nbaGameId` (unique), `gameDate`, `season`, `homeTeamId` → Team, `awayTeamId` → Team, `homeScore?`, `awayScore?`, `seasonType` (`SeasonType` enum: `REGULAR`/`PLAY_IN`/`PLAYOFFS`/`FINALS`, default `REGULAR`), `playoffRound?`
+Indexed on `seasonType`. Every pre-existing row backfilled to `REGULAR` on migration — `nba_api`'s `LeagueGameFinder` was always called with `season_type_nullable="Regular Season"` before this migration, so the default is correct for old data, not a guess.
 
 **GameEvent** — raw play-by-play; the source of truth every derived stat traces back to, per the brief's requirement that statistics come from event records, not typed totals
 `id`, `gameId` → Game, `sequence`, `period`, `clock`, `eventType`, `playerId?`, `description`, `createdAt`
 Indexed on `[gameId, sequence]`.
 
 **PlayerGameStat** — per-game boxscore, derived from `GameEvent` rows, never entered by hand
-`id`, `playerId` → Player, `gameId` → Game, `minutes`, `points`, `rebounds`, `assists`, `steals`, `blocks`, `turnovers`, `fieldGoalsMade/Attempted`, `threesMade/Attempted`, `freeThrowsMade/Attempted`
-Unique on `[playerId, gameId]`.
+`id`, `playerId` → Player, `gameId` → Game, `minutes`, `points`, `rebounds`, `assists`, `steals`, `blocks`, `turnovers`, `fieldGoalsMade/Attempted`, `threesMade/Attempted`, `freeThrowsMade/Attempted`, `plusMinus?`, `usagePercentage?`, `offensiveRating?`, `defensiveRating?`, `offensiveRebounds?`, `defensiveRebounds?`
+Unique on `[playerId, gameId]`. The six advanced columns are all nullable by design, fetched leaguewide from the advanced boxscore rather than per game to stay within `nba_api`'s rate limit — `null` means the row predates these columns or the advanced boxscore was unavailable, which is a different fact than a real 0% usage rate or an even plus-minus.
 
-!!! success "Confirmed: season averages are computed on read, not stored"
-    `/v1/players/:id/stats` (in `players.controller.ts`) computes `seasonAverages` and `gameLog` at request time from `PlayerGameStat` rows via `statsService`. There is no `SeasonAverages` table in the schema — it was never a stored model, only an API response shape. This confirms the brief's "derived from events, not stored totals" requirement is actually being followed, not just documented as an intent.
+!!! success "Confirmed: season averages, true shooting%, eFG%, and assist-to-turnover are computed on read, not stored"
+    `/v1/players/:id/stats` (in `players.controller.ts`) computes `seasonAverages` and `gameLog` at request time from `PlayerGameStat` rows via `statsService`. There is no `SeasonAverages` table in the schema — it was never a stored model, only an API response shape. True shooting%, effective FG%, and assist-to-turnover ratio are derived the same way from existing boxscore fields (verified against `BoxScoreAdvancedV3` to three decimal places) rather than given their own columns. This confirms the brief's "derived from events, not stored totals" requirement is actually being followed, not just documented as an intent.
 
 ## Prediction entities
 

@@ -120,7 +120,7 @@
 
 | Task | Type | Owner |
 |---|---|---|
-| Add home page components with placeholder data, then wire the homepage to real backend data (PR #87) | `feat` | Kiran Soodyall |
+| Build the signed-in home dashboard shell ("The Locker") with placeholder data — watchlist, followed teams, jump-back-in rail (PR #87); still not wired to a real endpoint | `feat` | Kiran Soodyall |
 | Fix CI Postgres container startup, reachability, and concurrency handling | `fix` | Kiran Soodyall |
 | Protect the personalised home login flow (PR #91) | `fix` | Daniel Passos |
 | Add axe-core automated accessibility checks (PR #92) | `test` | Daniel Passos |

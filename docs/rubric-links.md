@@ -25,7 +25,7 @@ One page mapping every rubric criterion (from the COMS3011A project brief) to wh
 
 | Criterion | Weight | Evidence |
 |---|---|---|
-| Core Features | 25% | [Feature Tiers](design/feature-tiers.md) (basic tier built and deployed) + [Requirements Traceability](requirements.md) |
+| Core Features | 25% | [Feature Tiers](design/feature-tiers.md) — basic tier fully built and deployed, plus several intermediate-tier features already live (player comparisons, postseason views, advanced stats) + [Requirements Traceability](requirements.md) |
 | Automated Testing | 10% | [Testing](testing.md) — full testing strategy, test inventory, and policy. Vitest + Supertest (API, against real Postgres) and Vitest + React Testing Library (web). CI `coverage` job runs both suites against a disposable Postgres service container — no `--passWithNoTests` tolerance. See also [CI/CD Pipeline](ci-cd.md) |
 | Stakeholder Reviews | 10% | [Stakeholder Interactions](stakeholder-interactions.md) — consolidated log of all client meetings with dates, attendees, feedback received, and actions taken. Also [Client Meetings](meetings/client/index.md), [Scrum](meetings/scrum/index.md) |
 | API | 15% | [API Reference (Swagger)](api-reference.md) — full OpenAPI endpoint reference with request/response shapes, auth requirements, and live Swagger UI at `/api/docs`. [API Design](design/api-design.md) for architecture. Live at [sportsanalytics-api.onrender.com/health](https://sportsanalytics-api.onrender.com/health). External integration: `nba_api` via [ingestion service](design/architecture.md) |

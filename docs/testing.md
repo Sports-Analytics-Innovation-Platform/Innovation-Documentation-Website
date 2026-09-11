@@ -210,12 +210,15 @@ This is what the team agrees to, enforced via the [Definition of Done](definitio
 
 - **Coverage threshold** — CI produces coverage numbers but does not gate on them. An agreed floor (e.g. 70% line coverage) should be set before Sprint 2 ends, once current coverage is measured.
 - **Visual regression tests** — not planned for Sprint 2
-- **axe-core accessibility scans in CI** — agreed for a later sprint; accessibility is checked manually per the Definition of Done
 - **Performance / load tests** — not in scope for the current milestone
+
+### axe-core accessibility scans
+
+✅ **Done as of 2026-09-11** (PR #92) — no longer a gap. `src/test/accessibility.ts` wraps `jest-axe`/`axe-core` assertions used as component-test cases ("has no automated accessibility violations") across the players list, home, optimizer, and predictions pages, running in the same CI `coverage` job as the rest of the Vitest suite. Manual accessibility checks per the Definition of Done continue alongside this, not instead of it.
 
 ## User feedback process
 
-Beyond automated testing, the project collects **formal user feedback** to validate that the product meets stakeholder needs. This satisfies the rubric's "extensive user testing with formal feedback collection" criterion.
+Beyond automated testing, the project has a **formal user feedback process designed**, though it hasn't been run yet. The rubric's "extensive user testing" bar needs evidence of both collection *and* integration — this page documents the process and its integration plan; [rubric-links.md](rubric-links.md) is the honest record of where collection currently stands (drafted, not yet distributed).
 
 ### Feedback collection methods
 

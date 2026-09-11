@@ -43,13 +43,16 @@ See the [Sprint Log](../sprint-log.md) for the complete task-by-task record.
 
 ## Sprint 2 — real data + expanded features (due 2026-09-15)
 
-- Get `nba_api` ingestion flowing with real full-league data into Supabase (not just mock seed data)
-- Swagger/OpenAPI setup for API documentation alongside this docs site
-- Hosting topology pinger (per client meeting 2026-08-21)
-- Database integration with signup functionality
-- `axe-core` accessibility checks in CI
-- Redis/BullMQ, Zod if the ingestion pipeline needs batch/scheduled processing
-- Frontend polish and responsiveness pass
+- ✅ `nba_api` ingestion flowing with real full-league data into Supabase — three full seasons seeded as of the 2026-09-10 team meeting
+- ✅ Swagger/OpenAPI setup for API documentation, live at `/api/docs` (PR #86, merged 2026-09-11)
+- ✅ Hosting topology pinger (per client meeting 2026-08-21) — cron-job.org, `/health` every 10 minutes
+- ✅ `axe-core` accessibility checks in CI (PR #92, merged 2026-09-11)
+- ✅ Postseason views (play-in/playoffs/finals) and advanced player stats (true shooting%, eFG%, plus-minus, usage%, ratings) — not in the original Sprint 2 plan, pulled in as intermediate-tier work once the basic tier was stable (PR #89, #90, merged 2026-09-11)
+- ✅ Player comparison page and endpoint (PR #53, merged 2026-09-02)
+- 🔶 Database integration with signup functionality — Google OAuth sign-up/sign-in exists; credential-based password reset still open (client accepted ~80% for auth without it, per 2026-09-07 client meeting; Daniel building a simple on-page reset)
+- ⚠️ Signed-in home dashboard (PR #87) — UI shell built, but still reads from placeholder data, not a real endpoint
+- Redis/BullMQ, Zod — not needed; the ingestion pipeline hasn't required batch/scheduled processing
+- Frontend polish and responsiveness pass — ongoing per the 2026-09-10 team meeting (Figma-based UI redesign in progress, profile page planned)
 
 ## Sprint 3 — model maturity (due 2026-09-29)
 

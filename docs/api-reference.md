@@ -156,6 +156,8 @@ Paginated list of players, optionally filtered by team, position, or name search
 | `teamId` | string | No | — | Filter by team UUID |
 | `position` | string | No | — | Filter by position (`PG`, `SG`, `SF`, `PF`, `C`) |
 | `search` | string | No | — | Search by first or last name (case-insensitive, space-separated terms) |
+| `seasonType` | string | No | `REGULAR` | Season segment (`REGULAR`, `PLAY_IN`, `PLAYOFFS`, `FINALS`). Only takes effect when combined with `participated=true` |
+| `participated` | boolean | No | `false` | When `true`, restrict the list to players who appeared in at least one game of `seasonType`. Lets the players list swap to a postseason-only roster |
 | `page` | integer | No | `1` | Page number (minimum 1) |
 | `pageSize` | integer | No | `25` | Items per page (1–100) |
 
@@ -208,7 +210,75 @@ Single player by UUID, with team relationship included.
 
 #### `GET /v1/players/:id/stats`
 
-Season averages and per-game scoring log for a player, both derived at request time from `PlayerGameStat` rows.
+Season averages and per-game scoring log for a player, both derived at request time from `PlayerGameStat` rows for one season segment.
+
+**Path parameters:**
+
+| Parameter | Type | Description |
+|---|---|---|
+| `id` | string (UUID) | Player ID |
+
+**Query parameters:**
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `seasonType` | string | No | `REGULAR` | Season segment (`REGULAR`, `PLAY_IN`, `PLAYOFFS`, `FINALS`) |
+
+**Response `200`:** the response echoes back the resolved `seasonType` so a caller can't mislabel a chart it already rendered.
+
+```json
+{
+  "playerId": "uuid",
+  "seasonType": "REGULAR",
+  "seasonAverages": {
+    "gamesPlayed": 71,
+    "minutesPerGame": 35.2,
+    "pointsPerGame": 25.7,
+    "reboundsPerGame": 7.3,
+    "assistsPerGame": 8.0,
+    "stealsPerGame": 1.2,
+    "blocksPerGame": 0.6,
+    "turnoversPerGame": 3.4,
+    "fieldGoalsMadePerGame": 9.8,
+    "fieldGoalsAttemptedPerGame": 19.4,
+    "fieldGoalPercentage": 0.505,
+    "threesMadePerGame": 2.1,
+    "threesAttemptedPerGame": 6.2,
+    "threePointPercentage": 0.341,
+    "freeThrowsMadePerGame": 4.0,
+    "freeThrowsAttemptedPerGame": 5.3,
+    "freeThrowPercentage": 0.756,
+    "trueShootingPercentage": 0.598,
+    "effectiveFieldGoalPercentage": 0.559,
+    "assistToTurnoverRatio": 2.35,
+    "plusMinusPerGame": 4.1,
+    "usagePercentage": 31.2,
+    "offensiveRating": 118.4,
+    "defensiveRating": 109.7
+  },
+  "gameLog": [
+    {
+      "gameId": "uuid",
+      "gameDate": "2025-03-15T00:00:00.000Z",
+      "points": 30
+    }
+  ]
+}
+```
+
+`assistToTurnoverRatio` is `null` rather than `0` when a player recorded no turnovers (a zero-denominator ratio is undefined, and `0.0` would read as the worst possible ratio, not the best). `plusMinusPerGame`, `usagePercentage`, `offensiveRating`, and `defensiveRating` are `null` for games predating the advanced-boxscore columns, not `0` — a real measurement of an even plus-minus or a 0% usage rate is different from a missing one, and the frontend renders `null` as "—".
+
+**Response `404`:**
+
+```json
+{ "error": { "code": "NOT_FOUND", "message": "Player not found" } }
+```
+
+---
+
+#### `GET /v1/players/:id/stats/splits`
+
+The same derived season line as `/:id/stats` above, but for every season segment at once (`REGULAR`, `PLAY_IN`, `PLAYOFFS`, `FINALS`) in a single request — used by the postseason comparison view so it doesn't have to make four separate calls.
 
 **Path parameters:**
 
@@ -221,28 +291,16 @@ Season averages and per-game scoring log for a player, both derived at request t
 ```json
 {
   "playerId": "uuid",
-  "seasonAverages": {
-    "pointsPerGame": 25.7,
-    "reboundsPerGame": 7.3,
-    "assistsPerGame": 8.0,
-    "fieldGoalPct": 0.505,
-    "threePointPct": 0.341,
-    "freeThrowPct": 0.756,
-    "gamesPlayed": 71
-  },
-  "gameLog": [
-    {
-      "gameId": "uuid",
-      "gameDate": "2025-03-15T00:00:00.000Z",
-      "opponent": "BOS",
-      "points": 30,
-      "rebounds": 8,
-      "assists": 11,
-      "minutes": 36
-    }
-  ]
+  "splits": {
+    "REGULAR": { "gamesPlayed": 71, "pointsPerGame": 25.7, "...": "..." },
+    "PLAY_IN": { "gamesPlayed": 1, "pointsPerGame": 30.0, "...": "..." },
+    "PLAYOFFS": { "gamesPlayed": 12, "pointsPerGame": 28.4, "...": "..." },
+    "FINALS": { "gamesPlayed": 0, "pointsPerGame": 0, "...": "..." }
+  }
 }
 ```
+
+Each value under `splits` has the same `DerivedSeasonAverages` shape as `seasonAverages` above. A segment the player never played in still gets an entry — with zeroed/null stats — rather than being omitted, so the frontend can render every segment tab without a presence check.
 
 **Response `404`:**
 
@@ -254,69 +312,51 @@ Season averages and per-game scoring log for a player, both derived at request t
 
 #### `GET /v1/players/compare`
 
-Compare 2–4 players side by side. Returns season averages, recent game log, and head-to-head stats for each player. **Public** — no authentication required.
+Compare 2–4 players side by side for one season segment. Returns each player's identity plus their derived season line for that segment. **Public** — no authentication required.
 
 **Query parameters:**
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| `ids` | string (comma-separated UUIDs) | Yes | Comma-separated list of 2–4 player IDs to compare |
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `ids` | string (comma-separated UUIDs) | Yes | — | Comma-separated list of 2–4 player IDs to compare |
+| `seasonType` | string | No | `REGULAR` | Season segment to compare (`REGULAR`, `PLAY_IN`, `PLAYOFFS`, `FINALS`) |
 
 **Example request:**
 
 ```
-GET /v1/players/compare?ids=a1b2c3d4-e5f6-7890-abcd-ef1234567890,f0e9d8c7-b6a5-4321-0987-654321fedcba
+GET /v1/players/compare?ids=a1b2c3d4-e5f6-7890-abcd-ef1234567890,f0e9d8c7-b6a5-4321-0987-654321fedcba&seasonType=PLAYOFFS
 ```
 
-**Response `200`:**
+**Response `200`:** the response echoes back the resolved `seasonType`, same reasoning as `/:id/stats` — comparing two players from inside a postseason view has to compare their postseason lines, or the comparison silently answers a different question than the one on screen.
 
 ```json
 {
+  "seasonType": "REGULAR",
   "players": [
     {
-      "id": "uuid",
-      "name": "LeBron James",
-      "team": "LAL",
-      "position": "SF",
-      "seasonAverages": {
-        "points": 25.3,
-        "rebounds": 7.2,
-        "assists": 8.1,
-        "steals": 1.3,
-        "blocks": 0.6,
-        "fieldGoalPct": 0.512,
-        "threePointPct": 0.358
+      "player": {
+        "id": "uuid",
+        "firstName": "LeBron",
+        "lastName": "James",
+        "position": "SF",
+        "team": { "id": "uuid", "name": "Los Angeles Lakers", "abbreviation": "LAL" }
       },
-      "recentGames": [
-        {
-          "gameId": "uuid",
-          "date": "2026-03-14",
-          "opponent": "GSW",
-          "points": 28,
-          "rebounds": 8,
-          "assists": 10
-        }
-      ]
+      "seasonAverages": { "gamesPlayed": 71, "pointsPerGame": 25.7, "...": "..." }
     }
-  ],
-  "headToHead": {
-    "gamesPlayed": 42,
-    "playerAWins": 24,
-    "playerBWins": 18
-  }
+  ]
 }
 ```
 
 **Response `400`:**
 
 ```json
-{ "error": { "code": "VALIDATION_ERROR", "message": "ids parameter is required and must contain 2-4 valid player UUIDs." } }
+{ "error": { "code": "BAD_REQUEST", "message": "A comparison needs between 2 and 4 player ids" } }
 ```
 
 **Response `404`:**
 
 ```json
-{ "error": { "code": "NOT_FOUND", "message": "One or more players not found" } }
+{ "error": { "code": "NOT_FOUND", "message": "Player {id} not found" } }
 ```
 
 ---
@@ -393,8 +433,11 @@ Paginated list of games, most recent first. Each game includes both teams and it
 
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|
+| `seasonType` | string | No | — | Filter to one season segment (`REGULAR`, `PLAY_IN`, `PLAYOFFS`, `FINALS`). Omitted means no filter — all segments returned |
 | `page` | integer | No | `1` | Page number |
 | `pageSize` | integer | No | `25` | Items per page (1–100) |
+
+Postseason games are excluded from the prediction and optimizer models regardless of this filter — a playoff matchup doesn't behave like a regular-season one statistically, so it's never used as training or projection input.
 
 **Response `200`** — `PagedResult<GameWithTeamsAndPrediction>`:
 
@@ -559,6 +602,26 @@ Returns the most recently generated fantasy lineup. The lineup is produced by `a
 
 ```json
 { "error": { "code": "NOT_FOUND", "message": "No lineup has been generated yet — run predict.py then optimize.py in apps/optimizer." } }
+```
+
+---
+
+#### `GET /v1/optimizer/predictions/:playerId`
+
+Predicted fantasy points for a single player by NBA player ID, as computed by `apps/optimizer/predict.py`.
+
+**Path parameters:**
+
+| Parameter | Type | Description |
+|---|---|---|
+| `playerId` | string | NBA player ID (`nbaPlayerId`, not the internal UUID) |
+
+**Response `200`:** player prediction data (predicted fantasy points and the inputs behind it).
+
+**Response `404`:**
+
+```json
+{ "error": { "code": "NOT_FOUND", "message": "Prediction not found" } }
 ```
 
 ---
