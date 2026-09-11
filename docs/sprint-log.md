@@ -127,6 +127,9 @@
 | Hold team meeting 5: agreed on a profile page (account settings, password reset, data deletion), a "coach mode" self-upload stats feature, deferring Row Level Security to sprint-end, and scheduled final Sprint 2 review for 2026-09-14 | `docs` | Adrian Draxl |
 | Merge postseason-view (#89) and advanced-player-stats (#90) into main, resolving the stacked-branch history between them | `chore` | Sanele H. |
 | Resolve a real merge conflict in `players.controller.ts` between the Swagger decorators and the season-type work, then merge swagger-openapi (#86) into main | `fix` | Owen Pace (Claude Code, Claude Sonnet 5) |
+| Update landing-page hero photos and add a real home-page screenshot to the hero cascade (PR #88) | `feat` | Kiran Soodyall |
+| Found and removed a live Gitea runner registration token (`ci-runner/data/.runner`, accidentally committed on PR #88) before merging; token rotation on the server is still pending | `fix` | Owen Pace (Claude Code, Claude Sonnet 5) |
+| Pre-warm the API with a `/health` ping on mount to reduce Render cold-start failures during Google sign-in — the OAuth state row's 10-minute expiry is hardcoded in `better-auth` with no config option (confirmed up to the latest 1.7.4) | `fix` | Owen Pace (Claude Code, Claude Sonnet 5) |
 
 ---
 

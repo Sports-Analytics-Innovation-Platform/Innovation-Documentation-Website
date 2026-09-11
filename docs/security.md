@@ -10,6 +10,9 @@ Sign in is implemented via **BetterAuth** with **Google OAuth** (see [Tech Stack
 - Account deletion cascades through `Session` and `Account` rows tied to a `User`, satisfying the brief's requirement that users can delete their account, not just deactivate it.
 - Session tokens, IP address, and user agent are tracked per `Session` row (BetterAuth's default schema) — useful for a "sign out of all devices" feature if the team wants one.
 
+!!! warning "Known issue: intermittent 'sign-in link expired' — mitigated, not eliminated"
+    BetterAuth's OAuth state row hard-expires 10 minutes after sign-in starts, hardcoded in the library with no config option (checked against the latest release, `better-auth@1.7.4`). A normal Google sign-in finishes in seconds, so hitting that ceiling often points at Render's free-tier cold start eating into the window between the pinger's hits, not the 10-minute cap itself being too short. Mitigated 2026-09-11 by pinging `/health` on every page's header mount to give the API a head start waking up before a visitor reaches the sign-in button — this reduces exposure but can't guarantee the API is warm, since a ping doesn't block the click that follows it.
+
 ## Authorization
 
 Role-based access control is implemented via NestJS guards. The schema defines four roles (`PUBLIC`, `USER`, `ANALYST`, `ADMIN`) with `role` defaulting to `USER` and marked non-writable in the BetterAuth config so a Google profile can't grant itself elevated access.
@@ -26,9 +29,12 @@ Unlike a project that imports a user's own account from a third-party service (e
 
 ## Secrets management
 
-- No secret (API keys, database credentials, tokens) is ever committed — enforced by a pre-commit check per [Git Methodology](git-methodology.md). A CI secret scanner (`gitleaks`/`trufflehog`) on every PR is the intended backstop but is **not yet in the pipeline** ([CI/CD Pipeline](ci-cd.md)), so the manual check is currently the only control.
+- No secret (API keys, database credentials, tokens) should be committed — enforced by a pre-commit check per [Git Methodology](git-methodology.md). A CI secret scanner (`gitleaks`/`trufflehog`) on every PR is the intended backstop but is **not yet in the pipeline** ([CI/CD Pipeline](ci-cd.md)), so the manual check is currently the only control — see the incident below for exactly the kind of thing that control is supposed to catch.
 - All secrets live in Gitea Actions secrets, Render environment variables, or Cloudflare Pages environment variables — never in `.env` files that are tracked in git (`.env` is gitignored; `.env.example` documents required variables without values).
 - If a secret is ever committed by mistake, the fix is **rotate the credential**, not just remove it from the latest commit — it remains in git history otherwise.
+
+!!! danger "Incident: a live runner token reached a PR branch (2026-09-11)"
+    `ci-runner/data/.runner` — an `act_runner` registration file (name `kiran-backup`, self-hosted, a working registration token for `sdp.ms.wits.ac.za`) — was committed on the `LandingPageUpdates` branch, almost certainly local runner state committed by accident rather than application code. It was caught during review before merging and excluded from the merge into `main`, so it never reached `main`'s history. **The token itself is still live and still needs rotating** — removing the file from the merge doesn't invalidate it, per the policy above; it remains valid on the branch's own history on the Gitea server regardless. Whoever administers the runner registrations needs to reset or delete the `kiran-backup` runner entry. Filed here rather than only in the AI usage ledger since this is exactly the class of incident the secrets-management policy above exists to prevent, and the manual pre-commit check is what should have caught it on that branch.
 
 ## Transport and API hardening
 

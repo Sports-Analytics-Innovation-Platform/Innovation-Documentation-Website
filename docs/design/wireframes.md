@@ -13,7 +13,7 @@ The sidebar from the initial scaffold was replaced with the top navbar during Sp
 
 ### Landing (`/`)
 
-The public marketing page: hero section with a screenshot cascade (players list, player profile, optimizer), a developer-credits and tech-stack marquee, and a "Get Started" call to action that signs in with Google and lands on `/home`.
+The public marketing page: hero section with a screenshot cascade, a developer-credits and tech-stack marquee, and a "Get Started" call to action that signs in with Google and lands on `/home`. The first cascade panel shows a real screenshot of the signed-in home page (PR #88); the other two (player profile, optimizer) are still placeholder blocks awaiting their own screenshots.
 
 ### Home (`/home`)
 
