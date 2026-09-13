@@ -104,5 +104,6 @@ nav:
       - Overview: meetings/index.md
       - Client Meetings: meetings/client/index.md
       - Scrum Meetings: meetings/scrum/index.md
+      - "2026-09-10 Scrum": meetings/scrum/2026-09-10-team-meeting-5.md
       - Meeting Template: meetings/_template.md
       - How to Summarise: meetings/how-to-summarize.md

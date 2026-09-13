@@ -22,11 +22,34 @@ Unit specs live next to the source files they exercise (`src/**/*.spec.ts`) and 
 
 | Spec file | What it tests |
 |---|---|
+| `src/admin/admin-players.controller.spec.ts` | Admin player management endpoints |
+| `src/admin/admin-players.service.spec.ts` | Admin player service logic |
+| `src/admin/admin-teams.controller.spec.ts` | Admin team management endpoints |
+| `src/admin/admin-teams.service.spec.ts` | Admin team service logic |
+| `src/admin/admin-users.controller.spec.ts` | Admin user management endpoints |
+| `src/admin/admin-users.service.spec.ts` | Admin user service logic |
+| `src/analytics/evaluated-games.service.spec.ts` | Games evaluated for model accuracy |
+| `src/analytics/leaderboard-ranking.spec.ts` | Leaderboard ranking computation |
+| `src/analytics/leaderboard.service.spec.ts` | Leaderboard service logic |
+| `src/analytics/model-accuracy.service.spec.ts` | Model accuracy computation (Brier score, calibration bands) |
+| `src/cache/response-cache.service.spec.ts` | Response cache service |
 | `src/common/all-exceptions.filter.spec.ts` | The global exception filter maps errors to correct HTTP status codes |
+| `src/common/origin-check.guard.spec.ts` | Origin check guard for CSRF protection |
 | `src/common/pagination.spec.ts` | Pagination helper produces correct offsets and page counts |
+| `src/common/parse-body.spec.ts` | Zod-based request body parser |
 | `src/common/roles.guard.spec.ts` | Role-based guard allows/denies access correctly |
+| `src/games/games.service.spec.ts` | Games service logic |
+| `src/me/follows/game-orientation.spec.ts` | Team results oriented to the caller's side |
+| `src/me/follows/recent-points.spec.ts` | Recent points computation for watchlist |
+| `src/me/follows/watchlist-averages.spec.ts` | Watchlist season averages derivation |
+| `src/me/me.controller.spec.ts` | User profile controller |
+| `src/me/me.service.spec.ts` | User profile service logic |
+| `src/me/picks/pick-grading.spec.ts` | Pick grading (CORRECT/MISSED against model and real result) |
+| `src/me/picks/pick-serializers.spec.ts` | Allow-list serializers for pick responses (score withholding) |
+| `src/me/saved-lineups.controller.spec.ts` | Saved lineups controller |
+| `src/me/saved-lineups.service.spec.ts` | Saved lineups service with drift computation |
 | `src/players/stats.service.spec.ts` | Player stats service computes derived statistics |
-| `src/predictions/predictions.service.spec.ts` | Predictions service logic |
+| `src/teams/teams.service.spec.ts` | Teams service logic |
 
 ### End-to-end tests
 
@@ -35,10 +58,13 @@ E2E specs live in `apps/api/test/` and exercise the **full NestJS application** 
 | Spec file | What it tests |
 |---|---|
 | `test/health.e2e-spec.ts` | `GET /health` returns 200 with `{ status: "ok" }` |
-| `test/players.e2e-spec.ts` | Player CRUD endpoints — list, detail, filtering, pagination |
+| `test/players.e2e-spec.ts` | Player endpoints — list, detail, filtering, pagination, stats, splits, compare |
 | `test/teams.e2e-spec.ts` | Team endpoints — list, detail, roster lookup |
-| `test/games.e2e-spec.ts` | Game endpoints — list, detail, events, box scores |
-| `test/optimizer.e2e-spec.ts` | Optimizer endpoint — lineup generation, validation |
+| `test/games.e2e-spec.ts` | Game endpoints — list, detail, predictions, postseason filtering |
+| `test/optimizer.e2e-spec.ts` | Optimizer endpoint — lineup generation, validation, predictions |
+| `test/analytics.e2e-spec.ts` | Analytics endpoints — model accuracy, leaderboard |
+| `test/picks.e2e-spec.ts` | Beat the Model — challenge next game, submit pick, grade outcome, record |
+| `test/saved-lineups.e2e-spec.ts` | Saved lineups — create, list, delete, drift computation |
 | `test/not-found.e2e-spec.ts` | Unknown routes return 404 via the `NotFoundController` catch-all |
 
 ### Test infrastructure
@@ -73,30 +99,85 @@ The test database is **disposable** — it is created fresh in CI (a `postgres:1
 
 Frontend specs live next to the components and pages they test (`src/**/*.spec.{ts,tsx}`) and use **React Testing Library** with the **jsdom** environment. The philosophy is to test components the way a user would interact with them — by role, label, and text content — rather than by implementation details like state or instance methods.
 
+**Pages (16 specs):**
+
 | Spec file | What it tests |
 |---|---|
-| `src/App.spec.tsx` | Root app renders, routing mounts correctly |
+| `src/pages/AdminPage.spec.tsx` | Admin panel — user/player/team management |
+| `src/pages/ComparePage.spec.tsx` | Player comparison with radar charts and trait tables |
+| `src/pages/GameDetailPage.spec.tsx` | Game detail with prediction, scorers, events |
+| `src/pages/HomePage.spec.tsx` | Signed-in home dashboard — Beat the Model, watchlist, teams |
+| `src/pages/LandingPage.spec.tsx` | Landing page — hero, What We Do, Model Explainer, Stand Out |
+| `src/pages/OnboardingPage.spec.tsx` | New user onboarding — username setup |
+| `src/pages/OptimizerPage.spec.tsx` | Optimizer — lineup generation, saved lineups, salary cap |
+| `src/pages/PlayerProfilePage.spec.tsx` | Player profile — stats, season splits, follow button |
+| `src/pages/PlayersListPage.spec.tsx` | Players list — search, filters, postseason toggle, pagination |
+| `src/pages/PredictionsPage.spec.tsx` | Predictions — model accuracy, calibration, leaderboard |
+| `src/pages/ProfilePage.spec.tsx` | User profile — account settings, password change |
+| `src/pages/TeamProfilePage.spec.tsx` | Team profile with roster |
+| `src/pages/TeamsListPage.spec.tsx` | Teams list with search and cards |
+
+**Components (22 specs):**
+
+| Spec file | What it tests |
+|---|---|
+| `src/components/AdminGate.spec.tsx` | Admin gate restricts access to admin users |
 | `src/components/AuthStatus.spec.tsx` | Auth status displays login/logout state |
+| `src/components/ComparisonTraitsRadar.spec.tsx` | Radar chart comparing player traits |
 | `src/components/CourtView.spec.tsx` | Court visualization renders player positions |
-| `src/components/ErrorState.spec.tsx` | Error state component displays message and retry |
+| `src/components/ErrorState.spec.tsx` | Error state displays message and retry |
+| `src/components/FollowPlayerButton.spec.tsx` | Follow/unfollow player toggle |
+| `src/components/FollowTeamButton.spec.tsx` | Follow/unfollow team toggle |
 | `src/components/Pagination.spec.tsx` | Pagination controls emit correct page changes |
+| `src/components/PlayerCards.spec.tsx` | Player card rendering with headshot and team |
 | `src/components/PlayerHeadshot.spec.tsx` | Player headshot image loads with fallback |
+| `src/components/PlayerSearchCombobox.spec.tsx` | Search combobox for player selection |
 | `src/components/PlayersFilterBar.spec.tsx` | Filter bar captures search and filter input |
+| `src/components/PlayerTraitsRadar.spec.tsx` | Individual player traits radar chart |
+| `src/components/ProfileGate.spec.tsx` | Profile gate redirects users without a username |
 | `src/components/ProtectedRoute.spec.tsx` | Protected route redirects unauthenticated users |
 | `src/components/RecentResultWidget.spec.tsx` | Recent result widget displays latest game outcome |
+| `src/components/SeasonSplitsTable.spec.tsx` | Season splits table with regular/postseason |
+| `src/components/Sparkline.spec.tsx` | Sparkline mini-chart component |
 | `src/components/StatTile.spec.tsx` | Stat tile renders value and label |
 | `src/components/TeamBadge.spec.tsx` | Team badge renders team abbreviation/logo |
-| `src/components/landing/LandingMatchWidget.spec.tsx` | Landing page match widget renders |
-| `src/components/landing/Marquee.spec.tsx` | Marquee scrolling component |
-| `src/lib/nbaApi.spec.ts` | API client functions construct correct URLs |
+| `src/components/TeamPicker.spec.tsx` | Team picker selection component |
+
+**Home dashboard (5 specs):**
+
+| Spec file | What it tests |
+|---|---|
+| `src/components/home/BeatTheModelCard.spec.tsx` | Beat the Model — challenge, pick submission, grading |
+| `src/components/home/LeaderboardCard.spec.tsx` | Accuracy leaderboard with model benchmark row |
+| `src/components/home/SavedShelfCard.spec.tsx` | Saved comparisons and lineups shelf |
+| `src/components/home/WatchlistBoard.spec.tsx` | Player watchlist with stats and trends |
+| `src/components/home/YourTeamsList.spec.tsx` | Followed teams with recent results |
+
+**Landing (5 specs):**
+
+| Spec file | What it tests |
+|---|---|
+| `src/components/landing/HeroCourtLines.spec.tsx` | Animated court geometry overlay |
+| `src/components/landing/LandingMatchWidget.spec.tsx` | Live match widget in landing header |
+| `src/components/landing/Marquee.spec.tsx` | Marquee scrolling component with logos |
+| `src/components/landing/ModelExplainer.spec.tsx` | How We Predict section with animated charts |
+| `src/components/landing/Reveal.spec.tsx` | Scroll-reveal animation wrapper |
+
+**Lib / utilities (11 specs):**
+
+| Spec file | What it tests |
+|---|---|
+| `src/lib/adminApi.spec.ts` | Admin API client functions |
+| `src/lib/apiClient.spec.ts` | Shared API client (fetch wrapper, error handling) |
+| `src/lib/authClient.spec.ts` | BetterAuth client configuration |
+| `src/lib/meApi.spec.ts` | User (me) API client functions |
+| `src/lib/nbaApi.spec.ts` | NBA API client functions construct correct URLs |
+| `src/lib/playerBio.spec.ts` | Player bio helpers (height, weight formatting) |
+| `src/lib/seasonType.spec.ts` | Season type enum helpers |
+| `src/lib/useCountUp.spec.ts` | Animated count-up hook |
+| `src/lib/useInView.spec.tsx` | Intersection observer hook for scroll triggers |
 | `src/lib/utils.spec.ts` | Utility functions (cn class merger, etc.) |
-| `src/pages/GameDetailPage.spec.tsx` | Game detail page loads and displays game data |
-| `src/pages/LandingPage.spec.tsx` | Landing page renders hero, recent games, features |
-| `src/pages/OptimizerPage.spec.tsx` | Optimizer page form submission and result display |
-| `src/pages/PlayersListPage.spec.tsx` | Players list renders, filters, and paginates |
-| `src/pages/PredictionsPage.spec.tsx` | Predictions page displays forecast data |
-| `src/pages/TeamsListPage.spec.tsx` | Teams list renders team cards |
-| `src/pages/ComparePage.spec.tsx` | Player comparison page renders and compares multiple players |
+| `src/App.spec.tsx` | Root app renders, routing mounts correctly |
 
 ### Test setup
 

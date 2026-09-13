@@ -52,6 +52,8 @@ const swaggerConfig = new DocumentBuilder()
   .addTag("teams", "Team data (public)")
   .addTag("games", "Game data and predictions (auth required)")
   .addTag("optimizer", "Fantasy lineup optimiser (auth required)")
+  .addTag("analytics", "Model accuracy and leaderboard (public)")
+  .addTag("me", "Personalised user data: watchlist, follows, picks, saved comparisons (auth required)")
   .build();
 
 const document = SwaggerModule.createDocument(app, swaggerConfig);

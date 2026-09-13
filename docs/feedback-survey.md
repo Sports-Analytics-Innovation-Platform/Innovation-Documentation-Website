@@ -44,9 +44,9 @@
 
 ## Section 2: First Impressions
 
-*[SCREENSHOT: Landing page / homepage showing hero section, recent games, feature highlights]*
+*[SCREENSHOT: Landing page — full-screen basketball hero, "NBA Fantasy League Optimizer" heading, "Court Vision" tagline, Get Started button]*
 
-### Q4. Looking at the homepage, what do you think this tool does?
+### Q4. Looking at the landing page, what do you think this tool does?
 - [Open text]
 
 ### Q5. How visually appealing is the homepage?
@@ -67,7 +67,27 @@
 
 ---
 
-## Section 3: Player Browsing
+## Section 3: Your Home Dashboard
+
+*[SCREENSHOT: Signed-in home page ("The Locker") — Beat the Model card, Watchlist board, Your Teams, Leaderboard, Saved shelf, Model Accuracy Ledger]*
+
+### Q6b. How useful is having a personalised dashboard with your followed players and teams?
+- [ ] 1 — Not useful at all
+- [ ] 2
+- [ ] 3
+- [ ] 4
+- [ ] 5 — Extremely useful
+
+### Q6c. The "Beat the Model" game (predict game outcomes and compare your accuracy against the algorithm) — how engaging is it?
+- [ ] 1 — Not engaging at all
+- [ ] 2
+- [ ] 3
+- [ ] 4
+- [ ] 5 — Very engaging
+
+---
+
+## Section 4: Player Browsing
 
 *[SCREENSHOT: Players list page with search bar, filters, and player cards]*
 
@@ -92,7 +112,7 @@
 
 ---
 
-## Section 4: Team Browsing
+## Section 5: Team Browsing
 
 *[SCREENSHOT: Teams list page showing team cards with logos]*
 
@@ -115,7 +135,7 @@
 
 ---
 
-## Section 5: Game Predictions
+## Section 6: Game Predictions
 
 *[SCREENSHOT: Games list page showing upcoming/past games with win probabilities]*
 
@@ -144,7 +164,7 @@
 
 ---
 
-## Section 6: Fantasy Optimiser
+## Section 7: Fantasy Optimiser
 
 *[SCREENSHOT: Optimizer page showing salary cap, player selection, and generated lineup]*
 
@@ -171,7 +191,7 @@
 
 ---
 
-## Section 7: Overall Experience
+## Section 8: Overall Experience
 
 ### Q18. Overall, how satisfied are you with the NBA Analytics Tool?
 - [ ] 1 — Very dissatisfied
@@ -189,9 +209,13 @@
 
 ### Q20. What's the **most useful** feature?
 - [ ] Player browsing and stats
+- [ ] Player comparison
 - [ ] Team browsing
-- [ ] Game predictions
+- [ ] Game predictions and model accuracy
+- [ ] Beat the Model challenge
+- [ ] Player watchlist
 - [ ] Fantasy lineup optimiser
+- [ ] Saved comparisons and lineups
 - [ ] Other: [Open text]
 
 ### Q21. What's **missing** or could be improved?
@@ -206,7 +230,7 @@
 
 ---
 
-## Section 8: Final Thoughts
+## Section 9: Final Thoughts
 
 ### Q23. If you could add one feature to this tool, what would it be?
 - [Open text]
@@ -224,10 +248,10 @@
 
 > **Thank you for your feedback!**
 > 
-> Your responses will directly influence the next version of the NBA Analytics Tool. We're building features like:
-> - Player comparison tools
-> - Historical prediction accuracy tracking
-> - More detailed team analytics
+> Your responses will directly influence the next version of the NBA Analytics Tool. We're working on:
+> - Expanded prediction coverage (more games, deeper backtesting)
+> - Coach mode (upload your own stats and get evaluated against pro players)
+> - More detailed team analytics and standings
 > - Mobile-optimized layouts
 > 
 > If you'd like to see the final product or have more ideas, feel free to reach out!
@@ -240,16 +264,18 @@
 
 | Screenshot | Description | Status |
 |---|---|---|
-| Homepage | Landing page with hero, recent games, feature highlights | ⚠️ Placeholder needed |
-| Players list | Player cards with search and filters | ⚠️ Placeholder needed |
-| Player profile | Individual player page with stats | ⚠️ Placeholder needed |
+| Landing page | Full-screen basketball hero, "NBA Fantasy League Optimizer" heading, Court Vision tagline | ⚠️ Placeholder needed |
+| Home dashboard | "The Locker" — Beat the Model card, Watchlist, Your Teams, Leaderboard, Saved shelf, Accuracy Ledger | ⚠️ Placeholder needed |
+| Players list | Player cards with search, filters, and postseason filter | ⚠️ Placeholder needed |
+| Player profile | Player page with stats, season splits, headshot, team info | ⚠️ Placeholder needed |
+| Compare | Side-by-side player comparison with radar charts | ⚠️ Placeholder needed |
 | Teams list | Team cards with logos | ⚠️ Placeholder needed |
-| Team profile | Individual team page | ⚠️ Placeholder needed |
-| Games list | Games with win probabilities | ⚠️ Placeholder needed |
-| Game detail | Game prediction page with scorers | ⚠️ Placeholder needed |
-| Optimizer | Fantasy lineup generator | ⚠️ Placeholder needed |
+| Team profile | Individual team page with roster | ⚠️ Placeholder needed |
+| Predictions | Game predictions with model accuracy and calibration bands | ⚠️ Placeholder needed |
+| Game detail | Game detail page with prediction, Elo ratings, predicted top scorers | ⚠️ Placeholder needed |
+| Optimizer | Fantasy lineup generator with salary cap and saved lineups | ⚠️ Placeholder needed |
 
-**Note for Kiran:** Take screenshots at 1920×1080 resolution. Crop to show the key UI element in each shot. If the UI isn't final, use the current deployed version at [sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/) — we can update screenshots later if needed.
+**Note for Kiran:** Take screenshots at 1920×1080 resolution. Crop to show the key UI element in each shot. The live deployed version is at [sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/) — some features (Beat the Model, watchlist, saved comparisons) require signing in with Google.
 
 ---
 
