@@ -21,8 +21,8 @@ Use **BetterAuth** with **Google OAuth** as the sole sign-in method, within the 
 
 - **⚠️ Compliance risk worth flagging to the team directly:** the brief requires, verbatim, that *"Users must be able to sign up, sign in, reset their passwords, and delete their accounts"* (§2.1). With Google OAuth as the only sign-in method, there is no password on our side to reset — BetterAuth's `Verification` table exists in the schema but is explicitly unused while Google OAuth is the only provider. This needs an answer before Milestone 4 marking: either the brief's "reset your password" requirement is being interpreted as not applicable to OAuth-only auth (worth confirming with the client/tutor explicitly, not assuming), or a second credential-based sign-in path needs adding alongside Google OAuth. I'd surface this to the team now rather than let it surface in a demo.
 - Account deletion is unaffected — cascading deletes on `Session`/`Account` rows tied to a `User` are already modelled via `onDelete: Cascade`.
-- Role-based access (`PUBLIC`/`USER`/`ANALYST`/`ADMIN`) is re-expressed as NestJS guards under BetterAuth, same enforcement approach as the original Passport-based `RolesGuard` — see [Security](../security.md). Whether analyst/admin write-access roles are actually *used* anywhere yet (e.g. a submissions or review feature) is still unconfirmed — no such feature exists in the codebase as of the last snapshot I have.
+- Role-based access (`PUBLIC`/`USER`/`ANALYST`/`ADMIN`) is re-expressed as NestJS guards under BetterAuth, same enforcement approach as the original Passport-based `RolesGuard` — see [Security](../security.md). The `ADMIN` role now has a real feature behind it (a `/v1/admin/*` teams/players/users management surface, PR #120, open) — `ANALYST` is still unused by any endpoint.
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Sonnet 5]*

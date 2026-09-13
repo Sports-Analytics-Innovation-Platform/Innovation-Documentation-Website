@@ -21,7 +21,8 @@ Role-based access control is implemented via NestJS guards. The schema defines f
 |---|---|---|
 | `public` | Read-only access to player/team/stat endpoints, no account needed | Implemented — player and team endpoints have no auth guard |
 | `user` | Access to predictions, games, and optimizer endpoints (auth-gated) | Implemented — `SessionAuthGuard` on games, predictions, optimizer |
-| `analyst` / `admin` | Submit or correct statistics, manage data quality flags | Schema exists, not yet used by any endpoint |
+| `admin` | Edit `Team`/`Player` rows, manage user accounts and roles | `/v1/admin/teams`, `/v1/admin/players`, `/v1/admin/users`, all behind `SessionAuthGuard` + `@Roles(ADMIN)` (PR #120, open — not yet merged to `main`) |
+| `analyst` | Submit or correct statistics, manage data quality flags | Schema exists, not yet used by any endpoint |
 
 ## Third-party data and credentials
 
@@ -59,4 +60,4 @@ Not yet implemented — tracked here so it isn't forgotten before Milestone 4:
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5]*

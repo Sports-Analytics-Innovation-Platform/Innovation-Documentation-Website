@@ -102,7 +102,8 @@ See the [Architecture Overview](architecture.md#sequence-diagram-get-v1gamesidpr
 
 ## Not yet built
 
-- **Analyst/admin write access** — the `/v1/me/*` routes added in PR #94 are the API's first write endpoints, but they only ever write a user's *own* choices: follows, notes, picks, and saved comparisons and lineups. Nothing writes or corrects NBA data, so the proposed analyst/admin roles in [Security](../security.md) still have no endpoint behind them.
+- **Analyst write access** — the `/v1/me/*` routes only ever write a user's *own* choices: follows, notes, picks, and saved comparisons and lineups. The `analyst` role in [Security](../security.md) still has no endpoint behind it (submitting/correcting statistics, data quality flags).
+- **Admin write access** — no longer a gap for `Team`/`Player` data: `/v1/admin/teams`, `/v1/admin/players`, `/v1/admin/users` (behind `SessionAuthGuard` + `@Roles(ADMIN)`) are the API's first endpoints that write NBA data rather than a user's own choices — see [Security](../security.md). PR #120, open, not yet merged to `main`.
 - **Versioning beyond `/v1/`** — no `/v2/` or deprecation policy exists yet, which is fine at this stage but worth deciding before it matters.
 
 ## OpenAPI / Swagger documentation
@@ -111,4 +112,4 @@ The full API reference is documented on the [API Reference (Swagger)](../api-ref
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5]*

@@ -81,18 +81,30 @@ Fantasy-lineup optimizer page showing the latest MILP-solved lineup: five player
 
 ## Visual design
 
-Dark theme, defined as Tailwind CSS custom properties in `index.css`:
+Two palettes, both defined as Tailwind `@theme` custom properties in `index.css`. The dark "hardwood court" app shell was the only theme through Sprint 1; the lighter "locker" language was introduced for the landing page and has since spread to every other page, most recently Compare and Teams in Sprint 2 (the last two holdouts on the dark shell).
+
+**Dark app shell** — a warm near-black hardwood-court palette with an NBA-ball orange accent (this replaced an earlier cool blue accent; if you see `#3b82f6`/`#0b0e14` referenced anywhere else in the docs, that's the value this table superseded):
 
 | Token | Value | Use |
 |---|---|---|
-| `--color-surface-base` | `#0b0e14` | Page background |
-| `--color-surface-raised` | `#12161f` | Navbar background |
-| `--color-surface-card` | `#171c27` | Card backgrounds |
-| `--color-border-subtle` | `#232939` | Borders/divider |
-| `--color-brand-accent` | `#3b82f6` | Active nav, links, chart accents |
-| `--color-text-primary` / `-secondary` / `-muted` | `#f3f5f8` / `#9aa4b8` / `#616d82` | Text hierarchy |
+| `--color-surface-base` | `#120d09` | Page background |
+| `--color-surface-raised` | `#1c140d` | Card backgrounds |
+| `--color-surface-nav` | `#2b2015` | Navbar background |
+| `--color-border-subtle` | `#3a2a19` | Borders/divider |
+| `--color-brand-accent` | `#f97316` | Active nav, links, primary buttons, chart accents |
+| `--color-text-primary` / `-secondary` / `-muted` | `#f7f1e8` / `#baa88f` / `#8a7862` | Text hierarchy |
 
-Charts (Recharts — `RadarChart`, `LineChart`) are themed against these same CSS variables rather than hardcoded colours, so a future light-theme toggle wouldn't require touching chart code.
+**Locker (light)** — built on the landing page's palette rather than the dark shell, deliberately, so signing in reads as walking further into the same building instead of into a different product:
+
+| Token | Value | Use |
+|---|---|---|
+| `--color-locker-surface` | `#e3e0dc` | Page/card background |
+| `--color-locker-leather` | `#a4441c` | Accent/active state — 4.66:1 on `locker-surface`, used for small text and controls (`--color-landing-accent` measures only 2.45:1, hero-scale type only) |
+| `--color-locker-ink-muted` | `#4a423b` | Secondary text |
+| `--color-locker-you` / `--color-locker-model` | `#c2410c` / `#1f6f9c` | Warm = the human's pick, cool = the Elo model's — validated as a colorblind-safe categorical pair (CVD ΔE 19.0 protan, ΔE 27.5 normal vision) |
+| `--color-locker-good` / `--color-locker-bad` | `#15733f` / `#a8202c` | Outcome colors — always paired with a glyph and a word, never the only channel, since red/green is the one CVD case re-stepping the hues can't fix |
+
+Charts (Recharts — `RadarChart`, `LineChart`) are themed against these CSS variables rather than hardcoded colours on both palettes.
 
 ## Accessibility
 
@@ -104,4 +116,4 @@ Charts (Recharts — `RadarChart`, `LineChart`) are themed against these same CS
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5]*

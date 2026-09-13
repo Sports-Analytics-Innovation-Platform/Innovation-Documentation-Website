@@ -63,8 +63,8 @@ The brief lists weights only, no descriptions, for this milestone — criteria n
 | Deployment | API | 2% | [ADR-003](decisions/adr-003-hosting-topology.md) — Render auto-deploy from GitHub mirror. Live at [sportsanalytics-api.onrender.com/health](https://sportsanalytics-api.onrender.com/health) |
 | Performance | API | 5% | ⚠️ Property of the running system — [live API](https://sportsanalytics-api.onrender.com/health) can be evaluated directly. A pinger keeps the Render instance warm so responses are immediate |
 | Design | API | 10% | [API Reference (Swagger)](api-reference.md) — full OpenAPI spec with all endpoints documented and live Swagger UI. [API Design](design/api-design.md) for architecture — versioned under `/v1/`, hand-written NestJS controllers/services |
-| Accessibility | App | 5% | ⚠️ Skip-to-content link, `aria-label`, responsive breakpoints built — see [UI Overview](design/wireframes.md). `axe-core` audit planned for Sprint 2 |
-| Aesthetics | App | 3% | [UI Overview](design/wireframes.md) — dark theme with CSS custom properties, themed charts |
+| Accessibility | App | 5% | Skip-to-content link, `aria-label`, responsive breakpoints — see [UI Overview](design/wireframes.md). Automated `axe-core` checks now run on Home, Players, Predictions, and Optimizer (added Sprint 2) |
+| Aesthetics | App | 3% | [UI Overview](design/wireframes.md) — every page now shares the lighter "locker" design language (CSS custom properties, themed charts); Compare and Teams were the last two on the original dark app-shell theme and moved over in Sprint 2 |
 | User Experience | App | 5% | [UI Overview](design/wireframes.md), live at [sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/) — 10 routes, navbar navigation, court view visualisation |
 | Deployment | App | 2% | [ADR-003](decisions/adr-003-hosting-topology.md) — Cloudflare Pages auto-deploy from GitHub mirror. Live at [sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/) |
 | Performance | App | 5% | ⚠️ Property of the running system — [live webapp](https://sportsanalytics.pages.dev/) can be evaluated directly. Vite-built static SPA on Cloudflare's global edge network |
@@ -78,4 +78,4 @@ The brief lists weights only, no descriptions, for this milestone — criteria n
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder[Qoder Lite]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder[Qoder Lite], Claude-Code[Claude Sonnet 5]*
