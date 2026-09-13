@@ -1,0 +1,476 @@
+Date: 2026-09-10
+Author: Daniel Passos
+Tool: OpenAI Codex
+Model: GPT-5.6 Sol
+Purpose: Reviewed teammate pull requests, audited Sprint 2 backlog tasks, and implemented/finalized automated axe-core accessibility checks for key frontend pages and player filters under issue #59.
+
+Transcript
+==========
+
+USER:
+okay while my PR #91 is waiting on CI i need to review two teammate PRs, #86 `feat: add swagger openapi documentation` and #89 `feat: add postseason view (play-in, playoffs, finals)`. make sure the 3 skills are active. please review both PRs against the latest `main` without changing my current branch or files. for each one inspect the full diff, check for obvious bugs, security issues, regressions, unrelated changes, whether the implementation actually matches the PR purpose, and confirm the existing CI/test results. for #86 specifically i can see Gitea says there is 1 conflicting file, so figure out exactly what conflicts with main and whether it needs the author to resolve it before merge. for #89 also check that it is safe for the later #90 PR which says it depends on #89. dont review or touch #88, #90 or any other PRs because those teammates are still fixing them. if either #86 or #89 has a blocker, tell me exactly what it is and do not merge it. if one is clean and genuinely ready, tell me clearly that it is safe to approve/merge, but dont merge anything until i confirm after seeing your review.
+
+ASSISTANT:
+Both PRs need author changes before approval. I did not merge anything, inspect any other PR’s diff, change branches, or modify files. The working tree remains clean on `fix-login-home-flow`.
+
+## PR #86 — Swagger/OpenAPI documentation
+
+Verdict: Blocked; do not merge yet.
+
+Findings:
+
+1. Blocking merge conflict in `apps/api/src/optimizer/optimizer.controller.ts`.
+
+   `main` added:
+   - `Param` to the NestJS imports.
+   - `GET /v1/optimizer/predictions/:playerId`.
+   - `getPlayerPrediction()`.
+   The PR branch predates that endpoint and adds Swagger imports/decorators to the older controller. The author must update from `main`, retain the prediction endpoint, and document it. Gitea correctly reports the PR as non-mergeable.
+2. The advertised raw specification URL is incorrect.
+
+   The PR claims `/api-json`, but:
+   ```
+   SwaggerModule.setup("api/docs", app, document, ...)
+   ```
+   defaults the JSON route to `/api/docs-json`. The author should either correct the PR description or configure `jsonDocumentUrl: "/api-json"` and test it.
+3. Security consideration requiring an explicit decision.
+
+   Swagger UI is exposed unconditionally, including in production, and `persistAuthorization` retains the supplied BetterAuth session token in the browser. This is not necessarily unacceptable, but it exposes the entire API schema and encourages entering a real session cookie into persistent browser storage. I recommend either restricting docs outside development or confirming that public production docs and persisted cookie authorization are intentional.
+4. The rest of the diff is focused and matches the PR’s purpose. No unrelated files or detected secrets were added.
+
+CI at `c424fde`:
+
+- API lint/typecheck: passed
+- Web lint/typecheck: passed
+- API and web coverage: passed
+- Both push and pull-request runs: successful
+
+Those results predate conflict resolution and therefore need to rerun after the author updates the branch.
+
+## PR #89 — Postseason view
+
+Verdict: Blocked by a frontend navigation regression; do not approve yet.
+
+Finding:
+
+1. Postseason selection is silently lost during normal navigation.
+
+   In `PlayersListPage.tsx:156`, player links use:
+   ```
+   to={`/players/${player.id}`}
+   ```
+   They omit the active `?segment=playoffs`, `play-in`, or `finals`. Selecting a postseason player and opening their profile therefore displays regular-season statistics.
+
+   Similarly, `PlayerProfilePage.tsx:205` links to:
+   ```
+   to={`/compare?ids=${player.id}`}
+   ```
+   It also omits the active segment, despite the Compare-page comment explicitly claiming that following this link preserves the postseason selection.
+
+   Both links should carry `segment=${toUrlSegment(seasonType)}`, with regression tests covering navigation from a postseason player list to a profile and from a postseason profile to Compare.
+
+Other review conclusions:
+
+- The database migration, enum, ingestion classification, API filters, per-segment cache keys, season splits, and exclusion of postseason data from regular-season prediction models are coherent and match the PR purpose.
+- No obvious security issue, secret, unrelated change, or merge conflict was found.
+- The branch merges cleanly with current `main`.
+- One non-blocking robustness issue: `classify_game()` accepts any numeric playoff-round digit other than `4` as `PLAYOFFS`, although its documentation says malformed identifiers fall back to regular season. Validating rounds `1–4` would make the documented guarantee accurate.
+- #89 appears structurally suitable as the base for a dependent follow-up: schema/API additions are additive and its migration is self-contained. However, the navigation fix should land in #89 first so dependent work does not inherit the broken segment handoff. I did not inspect #90.
+
+CI at `55fc151`:
+
+- API lint/typecheck: passed
+- Web lint/typecheck: passed
+- API and web coverage: passed
+- Both push and pull-request runs: successful
+
+The green suite does not cover the two segment-preservation links above. CI should rerun after those tests and fixes are added.
+
+The requested `team-git-workflow`, `code-cleanup`, and `coding-conventions` skills guided merge safety, scope/unrelated-change inspection, and code-quality review.
+
+USER:
+okay now i want to pick some quick easy Sprint 2 backlog tasks. please inspect issues #57, #59, #64, #65 and #74 only and tell me exactly what each one requires, whether any of them are already partly or fully done on latest main, whether they depend on another open PR or issue, and roughly how much work each would be. rank them from quickest/easiest to hardest and tell me which one is the best small technical contribution for me to do next. dont change anything or make a branch yet.
+
+ASSISTANT:
+I reviewed only issues #57, #59, #64, #65, and #74 against current `origin/main` at `8f10684`. Your branch and files remain untouched.
+
+## Ranked quickest/easiest → hardest
+
+### 1. #64 — Maintain active bug tracker usage
+
+Requires:
+
+- File discovered Sprint 2 bugs as Gitea issues.
+- Apply `bug`, severity/priority, and component labels.
+- Reference issue numbers from fixing PRs.
+- Close issues when fixes merge.
+- Demonstrate continuous use rather than creating everything near the deadline.
+
+Current status: partly implemented.
+
+`main` already contains:
+
+- A detailed `docs/BUG_TRACKING.md`.
+- A structured bug-report issue form.
+- Issue-picker configuration.
+- Label synchronization tooling.
+- Documented `Closes #N` workflow.
+
+What remains is team process and evidence of continued use. It cannot be completed by one code PR or permanently “finished” until the sprint ends.
+
+Dependencies: no formal Gitea dependencies. Operationally depends on everyone consistently filing and linking bugs.
+
+Effort: approximately 15–30 minutes to audit current practice and remind the team, followed by ongoing maintenance.
+
+Suitability: easiest task, but not a meaningful standalone technical contribution.
+
+### 2. #57 — User feedback methodology page
+
+Requires a documentation page covering:
+
+- What users were asked.
+- Survey/testing methodology.
+- How feedback was distributed.
+- Number of responses.
+- Key findings.
+- Specific product changes made because of the feedback.
+- Navigation under a User Feedback or Testing section.
+
+Current status: not implemented on `main`.
+
+There is no feedback methodology page or survey-results content. This repository also has no `mkdocs.yml`; it contains source documentation, but the actual MkDocs site appears to be managed separately. The correct target repository/deployment workflow must therefore be confirmed.
+
+Dependencies: no formal Gitea dependency, but it depends on:
+
+- Actual survey/user-testing responses.
+- A defensible response count and findings.
+- Evidence linking findings to implemented changes.
+- Access to or coordination with the separate documentation site.
+
+Effort:
+
+- 1–2 hours if the feedback data and docs-site workflow already exist.
+- Potentially blocked indefinitely if feedback has not been collected.
+
+Suitability: quick documentation contribution only if the source evidence is ready.
+
+### 3. #59 — Axe accessibility checks in CI
+
+Requires:
+
+- Add axe-core integration to automated web tests.
+- Scan at least Home, Players, Predictions, and Optimizer.
+- Run those scans in CI.
+- Make violations fail CI or emit clearly visible warnings.
+
+Current status: not implemented, but the foundation exists.
+
+`main` already has:
+
+- Vitest and jsdom.
+- Testing Library render helpers.
+- Tests for all four named pages.
+- A CI web test/coverage job.
+
+It does not have `axe-core`, `vitest-axe`, `jest-axe`, Playwright, or an accessibility CI step.
+
+Dependencies: no formal dependency or linked PR. Protected pages will need authenticated session mocks, and data-driven pages need stable query/API fixtures. The current test infrastructure already provides most of that.
+
+Effort: roughly 2–4 hours, depending on whether existing accessibility violations need correction. Likely changes:
+
+- Add an axe test dependency.
+- Add a reusable accessibility assertion/helper.
+- Add or extend four page tests.
+- Ensure CI runs them through the existing web suite.
+- Fix any genuine violations revealed.
+
+Suitability: best small technical contribution. It is bounded, useful, independently testable, and builds on infrastructure already present.
+
+### 4. #65 — Harden CI with builds, coverage gating, and secret scanning
+
+Requires:
+
+- Add `npm run build` to both API and web CI jobs.
+- Agree and enforce a coverage floor, suggested at 60%.
+- Add gitleaks or TruffleHog as a PR check.
+- Verify everything works on the shared runners.
+
+Current status: partly implemented.
+
+`main` already:
+
+- Runs API and web lint/typecheck.
+- Runs both coverage suites.
+- Builds and uploads a combined coverage report.
+- Has substantial shared-runner/Postgres reliability handling.
+
+Still missing:
+
+- Actual API and web build commands in CI.
+- Enforced coverage thresholds.
+- Secret scanning.
+
+Dependencies: no formal Gitea dependency, but it needs:
+
+- Team agreement on the coverage floor.
+- Confirmation that the selected secret scanner/action works on the Gitea runners.
+- Possibly network/cache tuning similar to the existing CI jobs.
+
+Effort: approximately 4–8 hours, potentially longer if the shared runner cannot execute the chosen scanner or current coverage is below the agreed floor.
+
+Suitability: worthwhile but broader and riskier than #59.
+
+### 5. #74 — Settle password-reset requirement
+
+Requires first obtaining a tutor decision:
+
+- Ask whether OAuth-only authentication satisfies the password-reset requirement.
+- Record the answer in meeting notes.
+- If accepted, document why password reset does not apply.
+- If rejected, add email/password registration and a token-based BetterAuth reset flow.
+- Update auth documentation either way.
+
+Current status: partly addressed technically, unresolved procedurally.
+
+`main` clearly implements and documents Google-only authentication and account deletion. It has no credential provider, forgotten-password UI, email delivery, or reset-token flow. There is no documented tutor decision.
+
+Dependencies: no formal Gitea dependency, but it is explicitly blocked on the tutor’s answer.
+
+Effort:
+
+- OAuth-only accepted: about 30–60 minutes after the tutor response.
+- Password flow required: likely 1–3 days, including BetterAuth setup, reset-email delivery, UI, security handling, and tests.
+
+Suitability: not a safe quick pick until the tutor answers.
+
+## Recommendation
+
+Pick #59, axe-core accessibility checks.
+
+It is the best small technical contribution because it is self-contained, improves the existing CI/test surface, has no external decision or open-PR dependency, and should fit comfortably into a short focused branch. #64 is faster but mostly ongoing administration; #57 and #74 depend on external information; #65 is substantially broader.
+
+USER:
+okay lets take issue #59 `test: add axe-core accessibility checks to CI` as my next Sprint 2 task. make sure the `team-git-workflow`, `code-cleanup` and `coding-conventions` skills are all active and confirm im starting from the latest `main`. please inspect the exact issue requirements and the current web test/CI setup and work out the smallest clean implementation. we need automated accessibility scans for at least Home, Players, Predictions and Optimizer, and violations need to fail CI or be clearly surfaced. i want to reuse the existing Vitest/Testing Library setup and existing page mocks where possible rather than adding a big new testing system like Playwright unless its genuinely necessary. also check whether adding these tests to the existing web suite automatically satisfies the CI requirement since that suite already runs in CI. tell me which axe package you recommend for the current versions, what files would need changing, whether the existing pages currently have accessibility violations we would need to fix, and what tests/checks you would run. dont make a branch or change any files yet, just give me the plan first.
+
+ASSISTANT:
+You’re ready to start from the latest `main`:
+
+- Local `main`: `8f10684`
+- `origin/main`: `8f10684`
+- Current working tree remains clean on `fix-login-home-flow`
+- No branch or file changes were made
+
+Issue #59 requires axe scans for at least Home, Players, Predictions, and Optimizer, with violations either failing CI or being visibly reported. It has no comments, assignee, linked PR, or formal dependency.
+
+## Recommended package
+
+Use `axe-core@^4.13.0` directly as a web dev dependency.
+
+Why:
+
+- It has built-in TypeScript declarations and no dependencies.
+- It can scan a rendered DOM element directly in jsdom.
+- It avoids adding Jest-specific dependencies to a Vitest project.
+- Stable `vitest-axe` is still `0.1.0` and several years old; its newer line is prerelease.
+- `jest-axe` is well maintained, but brings Jest matcher utilities into a Vitest suite unnecessarily.
+- Playwright is not necessary for this acceptance criterion.
+
+Deque documents that axe can run against DOM elements rendered by component-testing tools. It also notes that jsdom cannot reliably test visual rules such as color contrast, so this would catch semantic/ARIA issues but would not replace browser and manual accessibility testing.
+
+## Smallest clean implementation
+
+1. Add `axe-core` to `apps/web/package.json` and update `package-lock.json`.
+2. Add a small `src/test/accessibility.ts` helper that:
+   - calls `axe.run()` on the rendered page;
+   - formats rule IDs, help text, and failing HTML nodes;
+   - throws/asserts when `violations` is non-empty.
+3. Add one accessibility test to each existing page spec:
+   - `HomePage.spec.tsx`
+   - `PlayersListPage.spec.tsx`
+   - `PredictionsPage.spec.tsx`
+   - `OptimizerPage.spec.tsx`
+4. Reuse each file’s current successful-state fixture and API mocks.
+5. Render the page inside a `<main>` landmark for these tests because the production `AppLayout` supplies `<main>`, while the isolated page specs do not. This prevents false `region` violations without disabling the rule.
+6. Fix genuine violations reported by those four tests. Do not suppress rules merely to obtain a green run.
+
+I would keep the tests alongside their existing page tests rather than create a large centralized test with duplicated player, game, and lineup fixtures.
+
+## Existing accessibility problems
+
+Static inspection already finds one definite issue on the Players page:
+
+- The team, position, and sort `<select>` elements in `PlayersFilterBar.tsx` have no `<label>` or `aria-label`. Axe should report these under the select/form-control accessible-name rules.
+- The search field is already correctly named with `aria-label="Search players"`.
+
+Likely fix: add concise labels such as `Filter by team`, `Filter by position`, and `Sort players`, then update/add `PlayersFilterBar` assertions.
+
+Home also has no `<h1>`—its sections start at `<h2>`. This is a page-structure best-practice issue and may be reported depending on the axe scan context. I would let the initial axe test decide, then add a meaningful “Your Locker” `<h1>` if reported rather than pre-emptively changing the design.
+
+Predictions and Optimizer look semantically reasonable from inspection: they have `h1` headings, named interactive controls, proper links/buttons, and structured tables. The actual axe run is still needed before claiming they are clean.
+
+Color contrast cannot be confirmed by jsdom-based axe tests. It should remain a manual browser check.
+
+## Does the existing CI satisfy the requirement?
+
+Yes. No `.gitea/workflows/ci.yml` change should be necessary.
+
+The existing coverage job runs:
+
+```
+npm run test:cov --prefix apps/web
+```
+
+Vitest includes every `src/**/*.{test,spec}.{ts,tsx}` file. The four axe assertions would therefore run automatically on every push and pull request. Any violation throws a normal test failure, making the CI coverage job fail and surfacing the formatted axe details in its logs.
+
+That satisfies:
+
+- axe-core runs in CI;
+- all four required pages are scanned;
+- violations block CI and are visible.
+
+## Expected files
+
+Definitely:
+
+- `apps/web/package.json`
+- `apps/web/package-lock.json`
+- New `apps/web/src/test/accessibility.ts`
+- Four existing page spec files
+
+Probably, based on the static audit:
+
+- `apps/web/src/components/PlayersFilterBar.tsx`
+- `apps/web/src/components/PlayersFilterBar.spec.tsx`
+
+Possibly after the real axe run:
+
+- `apps/web/src/pages/HomePage.tsx`
+- `apps/web/src/pages/HomePage.spec.tsx`
+
+No CI workflow change is expected.
+
+## Verification plan
+
+Run:
+
+1. The four targeted page specs.
+2. `PlayersFilterBar.spec.tsx` if its labels change.
+3. Full web tests.
+4. `npm run test:cov --prefix apps/web`—the exact CI route.
+5. Web typecheck.
+6. Web production build.
+7. Web lint.
+8. A deliberate temporary failing fixture locally to confirm the helper produces readable rule/node output, removed before finalizing.
+9. Manual browser checks for keyboard navigation, focus visibility, zoom/reflow, screen-reader naming, and color contrast.
+
+The requested `team-git-workflow`, `code-cleanup`, and `coding-conventions` skills were active for branch safety, minimal dependency/test structure, and naming/design guidance.
+
+USER:
+okay cool lets implement issue #59 now. make sure the `team-git-workflow`, `code-cleanup` and `coding-conventions` skills stay active. switch back to the latest clean `main` and create a new branch called `test-axe-accessibility`. add `axe-core` to the web app and create the small shared accessibility helper you described, then add axe accessibility tests for Home, Players, Predictions and Optimizer using their existing successful-state mocks. fix any genuine accessibility violations those tests actually find, but dont disable axe rules just to make the tests pass and dont make unrelated design changes. for the Players filters, if axe confirms the missing accessible names, add sensible labels/aria labels and update the tests. dont change the Gitea workflow unless its actually necessary because the current web coverage suite should already run these specs in CI. once implemented run the targeted tests, full web tests, the exact `test:cov` CI command, typecheck, build, lint and `git diff --check`. dont commit or push anything yet — tell me exactly what changed, what accessibility violations axe found and fixed, and whether every check passed.
+
+ASSISTANT:
+Implemented issue #59 on `test-axe-accessibility`, created from latest `main` (`8f10684`). Nothing was committed or pushed.
+
+Changed nine files:
+
+- Added `axe-core` as a web dev dependency and updated the lockfile.
+- Added shared axe assertion helper: `accessibility.ts`.
+- Added successful-state accessibility scans to:
+  - `HomePage.spec.tsx`
+  - `PlayersListPage.spec.tsx`
+  - `PredictionsPage.spec.tsx`
+  - `OptimizerPage.spec.tsx`
+- Added accessible names to the Players team, position, and sort selectors.
+- Added a `PlayersFilterBar` regression test for all four control names.
+- Left the Gitea workflow unchanged—the existing web coverage command automatically discovers and runs these specs, and axe violations fail it.
+
+Axe found and fixed one genuine rule violation:
+
+- `select-name`: the three Players `<select>` controls had no accessible names.
+- Added:
+  - `Filter players by team`
+  - `Filter players by position`
+  - `Sort players`
+
+Home, Predictions, and Optimizer produced no axe violations. Axe’s unsupported jsdom color-contrast rule is excluded with an explanatory comment because jsdom has no layout or canvas text metrics; no actionable semantic or ARIA rules were disabled.
+
+All requested checks passed:
+
+- Targeted tests: 34/34
+- Full web suite: 149/149
+- Exact CI command, `npm run test:cov --prefix apps/web`: 149/149
+- Coverage: 89.98% statements, 91.46% lines
+- Typecheck: passed
+- Production build: passed
+- Lint: passed
+- `git diff --check`: passed
+
+Lint still reports the three existing Fast Refresh warnings in `button.tsx`, `badge.tsx`, and `TeamBadge.tsx`. The build retains its existing large-chunk advisory. Installation also reports four existing dependency audit findings; `axe-core` itself has no dependencies.
+
+The requested `team-git-workflow`, `code-cleanup`, and `coding-conventions` skills governed the branch workflow, minimal scope, and helper/control naming.
+
+USER:
+okay perfect. please do one final scope check and show me the git status, the exact files changed and the proposed conventional commit message for issue #59. make sure there are no unrelated changes and that nothing from my previous login branch got included. dont commit or push yet because i want to approve the message first.
+
+ASSISTANT:
+Scope is clean. The branch is based directly on latest `main` (`8f10684`), has no commits yet, and contains no files from the previous login/home work.
+
+Git status:
+
+```
+## test-axe-accessibility
+ M apps/web/package-lock.json
+ M apps/web/package.json
+ M apps/web/src/components/PlayersFilterBar.spec.tsx
+ M apps/web/src/components/PlayersFilterBar.tsx
+ M apps/web/src/pages/HomePage.spec.tsx
+ M apps/web/src/pages/OptimizerPage.spec.tsx
+ M apps/web/src/pages/PlayersListPage.spec.tsx
+ M apps/web/src/pages/PredictionsPage.spec.tsx
+?? apps/web/src/test/accessibility.ts
+```
+
+Exact scope:
+
+- Axe dependency: `package.json`, `package-lock.json`
+- Shared accessibility helper: `src/test/accessibility.ts`
+- Page accessibility tests: Home, Players, Predictions and Optimizer specs
+- Players filter accessible names and corresponding test
+
+No authentication, landing-page, routing, `ProtectedRoute`, BetterAuth, OAuth, environment, or CI workflow files changed. `git diff --check` is clean aside from harmless Windows line-ending notices.
+
+Proposed commit message:
+
+```
+test: add axe accessibility checks
+```
+
+Nothing has been staged, committed, or pushed. I followed the team Git workflow, so I’m waiting for your approval of that message.
+
+USER:
+yes commit with `test: add axe accessibility checks` and push the `test-axe-accessibility` branch. dont merge anything. after pushing give me the commit hash and a short PR title and description for issue #59.
+
+ASSISTANT:
+Committed and pushed successfully. The local branch is clean and matches the remote. Nothing was merged.
+
+Commit: `9769752af2a8e2ead85620ed9d9d3d6ed14cb688`
+
+PR title:
+
+`test: add axe accessibility checks`
+
+PR description:
+
+```
+Closes #59.
+
+- Adds axe-core accessibility checks for Home, Players, Predictions, and Optimizer
+- Reuses the existing Vitest and Testing Library setup
+- Adds a shared accessibility test helper
+- Adds accessible names to the Players filters
+- Runs automatically through the existing web test suite in CI
+
+All targeted tests, full web tests, coverage, typecheck, build, lint, and git diff checks pass.
+```
+
+The team Git workflow guided the staged scope and sensitive-data checks before committing.

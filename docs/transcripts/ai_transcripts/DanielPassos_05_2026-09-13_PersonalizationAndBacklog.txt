@@ -1,0 +1,398 @@
+Date: 2026-09-13
+Author: Daniel Passos
+Tool: OpenAI Codex
+Model: GPT-6 Astra
+Purpose: Reviewed the current Sprint 2 backlog against the latest main branch, assessed CI hardening requirements, and implemented/finalized user personalization preference persistence, cache invalidation, error handling, regression tests, and documentation for issue #67.
+
+Transcript
+==========
+
+USER:
+now look only at the currently open backlog issues #62, #64, #65, #66, #67, #70, #71, #72, #74, #75, #76, #121 and #122. compare them against latest main because some work may already have been done indirectly. tell me exactly what each still requires, whether any are partly done or blocked by another issue, and rank them from quickest/easiest to biggest. i want to pick about 2 or 3 small useful issues today, preferably ones that can each be done on their own branch without clashing with teammates. dont change anything yet.
+
+ASSISTANT:
+Latest `main` is still clean at `fa983a2`. All 13 issues are open, with no comments. Several descriptions no longer match the code.
+
+The main complication for today is teammate overlap: Pace’s open PR #120 substantially overlaps #70/#71, and Kiran’s unmerged `DBCallRate` branch touches #121, analytics and session caching.
+
+My recommendation: pick #65 as the coding task, plus #67 reconciliation and a bounded #64 backlog pass. There aren’t three clearly small, independent coding issues in this selection.
+
+The ranking below is by remaining work, including verification and documentation. For underspecified issues, I distinguish what their current wording requires from possible extensions.
+
+| Rank | Issue | Status against main | Remaining size | Independence |
+| --- | --- | --- | --- | --- |
+| 1 | #122 — Favorite-team match history | Basic feature implemented | Verification/closure | Assigned to Kiran |
+| 2 | #121 — Beat the Model + leaderboard | Basic feature implemented | Verification/scope confirmation | Assigned to Kiran; active branch |
+| 3 | #64 — Active bug tracking | Tooling exists; ongoing process obligation | Small pass, ongoing thereafter | Very low code conflict |
+| 4 | #67 — Customization/preferences | Core behavior implemented differently | Small reconciliation; larger if scope retained literally | Low for documentation |
+| 5 | #74 — Password-reset requirement | Decision unresolved | Small if OAuth accepted | Blocked on tutor decision |
+| 6 | #71 — Frontend session role | Server foundation present | Small–medium | Strong overlap with #120 |
+| 7 | #70 — Assign user roles | Missing on main; mostly implemented in #120 | Small–medium after #120 | Strong overlap with #120 |
+| 8 | #65 — Harden CI | Coverage gate already done | Small–medium | Best coding candidate; localized CI overlap |
+| 9 | #72 — Second external API | Required integration absent | Medium | Provider decision; profile/cache overlap |
+| 10 | #76 — Dataset exports | Absent | Medium–large | Needs access/rate-limit decision |
+| 11 | #66 — Stat-management CRUD | Actual boxscore CRUD absent | Large | Depends on role integration; admin overlap |
+| 12 | #62 — Redis/BullMQ ingestion | Queue infrastructure absent | Large | Cross-runtime/deployment work |
+| 13 | #75 — API keys + rate limiting | Absent | Large | Auth, database, profile and infrastructure |
+
+#74 would move near the bottom if email/password authentication is required.
+
+What each still requires:
+
+1. #122 — Favorite-team match history
+
+Already implemented through `GET /v1/me/teams/results` and the home-page `YourTeamsList`: the latest 10 completed games, oriented to the favorite team, with results and links to game detail. Loading, errors and empty states exist; component tests exist.
+
+The issue has no description or acceptance criteria, so there is no evidence that pagination, a full archive or season filters are required. Remaining work is to verify the intended feature and record completion with Kiran. A full-history page would be additional scope, not something we should assume.
+
+2. #121 — Beat the Model + leaderboard
+
+Main already has game selection, winner submission, immediate grading, saved picks, duplicate-pick prevention, personal records and a leaderboard. API integration and component tests cover substantial behavior.
+
+The current implementation uses completed games with results initially hidden. The issue’s one-line description does not specify future-game picks, deadlines or delayed grading. If those are intended, it becomes a larger feature.
+
+Do not rebuild it: Kiran owns the issue and has fresh work on `DBCallRate` explicitly fixing this feature and the leaderboard. Remaining work is integration/verification and clarifying whether retrospective play satisfies the issue.
+
+3. #64 — Maintain active bug tracking
+
+Main already contains a bug-report template, label-sync tooling and bug-tracking documentation. This is not a missing implementation.
+
+What remains is actual practice: ensure known bugs have appropriate records, severity/priority is represented consistently, fixing PRs reference them, and completed issues are closed. The existing scheme uses `priority/` labels, while the issue says severity labels; reconcile that terminology.
+
+A bounded cleanup today is useful, but one pass cannot satisfy “continuous use throughout the sprint.” It needs no feature branch unless documentation changes.
+
+4. #67 — User customization/preferences
+
+Already delivered: persistent favorite team, followed players, onboarding/profile management, and prominent locker modules.
+
+The implementation uses `User.favoriteTeamId`, `UserFollowedPlayer`, `GET/PATCH /v1/me` and follow endpoints. It does not use the proposed `UserPreference` model or `GET/PUT /v1/user/preferences`.
+
+Remaining decisions:
+- Accept the existing equivalent architecture rather than duplicate it.
+- Resolve one favorite team versus multiple favorite teams.
+- Decide whether dashboard/display settings mentioned in the description remain required; they are not implemented.
+- Verify the existing flows, including the onboarding bugs identified earlier.
+
+This is a good scope/documentation reconciliation task. It is not honestly complete against every literal bullet without that reconciliation.
+
+5. #74 — Password reset
+
+Google-only login remains; there is no local password or reset flow. I found no explicit tutor decision accepting this in the checked-in meeting notes.
+
+First obtain and record that decision. If accepted, document why account recovery belongs to Google and update the auth documentation. If rejected, implement BetterAuth email/password signup and token-based reset, including email delivery, UI and tests.
+
+Externally blocked, not blocked by another backlog issue. Documentation alone cannot invent the required tutor approval.
+
+6. #71 — Expose role to the frontend
+
+Main already declares `role` as a server-side BetterAuth additional field, and `SessionAuthGuard` obtains the authenticated user before `RolesGuard` checks authorization. The issue’s claim that there is no server role foundation is stale.
+
+Missing on main:
+- Explicitly typed client access to the role and verification of the returned payload.
+- A shared role helper.
+- A role-aware route/component gate.
+- USER-versus-ANALYST UI tests.
+
+#120 overlaps: it adds role to `/v1/me`, an `AdminGate` and conditional admin navigation. That does not exactly satisfy the requested session-client typing or general ANALYST support.
+
+Finish this as a small follow-up after reconciling #120’s approach. Also account for `DBCallRate` adding session-cookie caching: role changes must not leave stale authorization unintentionally.
+
+7. #70 — Assign roles
+
+Main has the enum and guards but no role-management endpoint.
+
+#120 already provides an admin-only `/v1/admin/users/:id/role`, enum validation and self-demotion protection. The issue asks for `/v1/users/:id/role`; reconcile the route rather than create two implementations.
+
+After that PR, the clear remaining acceptance work is:
+- Repeatable documentation for bootstrapping the first admin.
+- Actual endpoint e2e tests covering ADMIN success, USER/ANALYST denial, invalid roles and self-demotion. The PR currently supplies mocked controller/service tests.
+- Verification of role changes against session behavior.
+
+No database migration is needed for the existing role field. This is a useful future follow-up, not an independent branch to implement now.
+
+8. #65 — Harden CI
+
+Already done: API and web coverage fail below 80% across all four metrics. Keep that; do not implement the issue’s example 60% floor.
+
+Still required:
+- `npm run build` in both API and web jobs; current jobs only lint/typecheck.
+- A secret-scanning PR check.
+- Successful execution on the shared runners.
+- Update stale documentation claiming coverage is unenforced.
+
+The tracked runner credential makes scanner handling material: distinguish actual remediation from merely suppressing a finding. Builds may also uncover existing compiler/bundler failures.
+
+There is an unmerged `fix-ci-coverage-db-race` branch touching this workflow, so preserve/coordinate its coverage-job changes. Still, this stays largely inside CI configuration and documentation and avoids active product features.
+
+9. #72 — Second external API
+
+New NBA schedule endpoints remain the same provider. Supabase avatar storage is a genuine external service, but it does not establish completion of this issue’s player-facing feed requirements.
+
+Still needs the provider/terms/rate-limit decision, live player data, backend integration and caching, profile UI with graceful failure, environment configuration and provider/cost documentation.
+
+No hard dependency on Redis/BullMQ: caching can be implemented independently. Coordinate with the new `DBCallRate` cache infrastructure instead of creating a competing cache layer.
+
+10. #76 — Dataset exports
+
+No bulk export routes exist. Existing paginated JSON and stats endpoints supply building blocks, not the deliverable.
+
+Still needs streamed CSV and JSON for player season lines, boxscores and games; correct headers/filenames; bounded database reads; access/rate controls; column/derivation documentation; and spreadsheet verification.
+
+Resolve season year versus segment before exporting “season lines,” since current player aggregation spans years.
+
+The issue references “issue 9” for access controls, which is ambiguous. #75 is the obvious related backlog item, but the criterion permits rate-limited OR key-gated, so #75 is not an absolute prerequisite if standalone limiting is agreed.
+
+11. #66 — Stat CRUD
+
+Saved lineups, local optimizer edits and profile writes do not satisfy this. #120 edits player/team metadata, not `PlayerGameStat` boxscores.
+
+Still needs POST/PUT/DELETE boxscore endpoints, validation, authorization, a submission/editing form and e2e coverage. Define handling of derived stats, predictions and ingestion overwriting manual corrections.
+
+#70 supplies role administration; #71 supplies frontend role gating. They are practical integration dependencies, although development/tests can use seeded roles.
+
+There is also a scope inconsistency: #66 explicitly says ADMIN-only, while #70/#71 discuss approved ANALYST users. Resolve that before implementation.
+
+12. #62 — Redis/BullMQ ingestion
+
+Python batch scripts, upstream retry/throttling and schedule-data ingestion exist. Fetching an NBA schedule is not scheduling ingestion jobs.
+
+All queue-specific criteria remain: Redis in Compose, BullMQ producer/worker processing, scheduled triggers, retries/error reporting and deployment configuration.
+
+The architectural work is connecting a Node BullMQ worker to Python ingestion, with job status, safe retries and overlap prevention. The issue itself starts with “if … needed”; confirm that infrastructure choice before building it. It is not necessary just to finish unrelated small issues.
+
+13. #75 — API keys and rate limiting
+
+No key issuance/revocation model, key authentication or per-key limiter exists on main. Swagger’s `apiKey` declaration describes a session cookie, not issued consumer keys.
+
+The description is partly stale: public player/team/game reads already work without login. Nevertheless, all explicit key-management criteria remain.
+
+Required work spans hashed key storage/migration, one-time display and revocation UI, alternative read authentication, per-key limits and headers, standard 429 errors, e2e tests and external-consumer documentation.
+
+Decide which public endpoints remain anonymous and what limits apply to them; otherwise clients could bypass per-key quotas by omitting a key. #62 is not a required dependency, although shared infrastructure might eventually be useful.
+
+For today, I would choose:
+- #65 — `ci-harden-pipeline`: the best concrete coding contribution. Preserve existing coverage gates and focus on builds, scanning and runner verification.
+- #67 — reconciliation/documentation: map the implemented behavior to the issue, identify the genuinely missing preferences, and avoid another personalization backend.
+- #64 — a bounded tracker pass: reconcile completed work and outstanding bugs with the existing process. This is useful work, but not a coding branch.
+
+If you specifically want two or three coding branches, I would not force that selection today. #70 and #71 become good small follow-ups once #120 is settled; starting them now is the clearest way to duplicate Pace’s work.
+
+No files, issues or PRs were changed. These findings come from live issue/PR metadata and source inspection; I did not run tests or verify deployed behavior.
+
+USER:
+okay lets do issue #65 first as the actual coding task. make sure the `team-git-workflow`, `code-cleanup` and `coding-conventions` skills are active. dont change anything yet. inspect the current CI workflow and issue #65 again and give me the smallest safe implementation plan for what is still missing: API and web build verification, secret scanning, and any stale docs. please account for the unmerged `fix-ci-coverage-db-race` branch so we dont overwrite or duplicate those changes, and also account for the tracked runner credential you found because i dont want to add a scanner that just breaks CI without fixing the real problem. tell me exactly what files would change, which secret scanner is safest for our Gitea runner, whether the credential needs to be rotated/removed before this issue can be completed, and what checks we would run. dont create a branch or edit files yet.
+
+ASSISTANT:
+The three skills are active. I reread issue #65, the workflow and the race-fix diff. No branch or files were changed.
+
+The smallest safe implementation is two build steps, one independent Gitleaks job, narrowly scoped scanner configuration, removal of tracked runner state, and CI documentation corrections. Keep the existing 80% coverage thresholds unchanged.
+
+The coverage-race branch needs special handling.
+
+`fix-ci-coverage-db-race` contains one change: job-level concurrency for `coverage`. However, the server reports Gitea 1.24.7, and its documentation says `concurrency` is ignored. Therefore, that branch’s proposed serialization cannot be assumed to prevent one run’s cleanup from deleting another run’s database.
+
+For #65:
+- Do not cherry-pick or recreate that change.
+- Add builds inside `api`/`web`, and scanning as a separate job.
+- Leave coverage setup, cleanup and concurrency changes to the race-fix branch.
+- Coordinate a working race fix separately, then incorporate its merged result before final CI validation. The underlying fix should prevent cleanup from deleting another live run’s container.
+- Do not describe that branch as “fixed” until overlapping runs demonstrate it.
+
+Use the standalone Gitleaks CLI.
+
+That is the lowest-integration-risk choice here: run a version-pinned Linux binary with a pinned SHA-256 checksum directly in the existing runner environment. It avoids adding a scanner container, Docker mount assumptions or a GitHub-specific action wrapper.
+
+Gitleaks supports Git-history scanning, full redaction, custom rules extending defaults and precise finding exclusions. Those fit this repository’s needs.
+
+The job would:
+- Use a full-history checkout, with persisted checkout credentials disabled.
+- Download and verify the pinned binary, using bounded download/execution timeouts.
+- Scan checked-out branch history, including intermediate commits—not merely the final diff.
+- Redact findings and fail on findings or scanner errors.
+- Require no production secrets and publish no unredacted report.
+- Extend default rules with a rule detecting credentials in generated `.runner` files; do not assume generic detection catches this format.
+
+The credential must be remediated before calling #65 complete.
+
+The nonempty token is in generated `ci-runner/data/.runner` state. Removal from Git does not revoke it, and resetting a runner-registration token should not be assumed to invalidate an already registered runner’s credential.
+
+The runner owner/admin must identify the corresponding runner and either confirm its credential is already invalid or invalidate it, then re-register if that runner is still needed. Coordinate this so an active runner is not unexpectedly taken offline.
+
+Afterward:
+1. Remove `.runner` from version control and ignore generated runner state.
+2. Scan history with redacted output and triage every finding.
+3. For confirmed revoked historical credentials, use exact finding fingerprints with a documented reason.
+4. Do not blanket-ignore `ci-runner`, transcripts, historical commits or all generic-token findings.
+
+This lets historical evidence remain without permanently breaking CI, while a newly committed credential still fails. No history rewrite is needed for this implementation. Rotation/invalidation remains essential regardless of whether history is rewritten.
+
+These are the planned file changes:
+
+| File | Exact purpose |
+| --- | --- |
+| `.gitea/workflows/ci.yml` | Add `npm run build` after existing checks in both app jobs; update job names; add an independent pinned, checksum-verified Gitleaks job. |
+| `.gitleaks.toml` — new | Extend default rules with runner-state credential detection. Add narrowly justified test-fixture exceptions only if scanning demonstrates they are necessary. |
+| `.gitleaksignore` — conditional new | Exact historical finding fingerprints only after remediation; no credential values. Exact entries cannot be determined before the first scan. |
+| `.gitignore` | Ignore `/ci-runner/data/` and generated `.runner` files. This does not exempt tracked files from scanning. |
+| `ci-runner/data/.runner` | Remove from version control after establishing the runner’s operational status. |
+| `README.md` | Replace the false “coverage thresholds are not enforced” statement; describe builds, scanning and the local check command. |
+| `docs/PROJECT_OVERVIEW.md` | Update CI jobs, 80% thresholds and scanner/remediation policy; remove the stale claim that lint/typecheck are manual only. |
+
+No package changes, schema changes or coverage-config edits are planned. Any build failures requiring application changes would be identified explicitly rather than hidden by exclusions or relaxed checks.
+
+The checks we would run:
+1. Baseline before implementation: current API/web lint, typechecks and builds, so existing failures are distinguishable from our changes.
+2. Scanner validation: redacted history scan; confirm the custom rule catches a synthetic `.runner` credential in an isolated fixture. Confirm a credential introduced and then deleted in an intermediate commit still fails.
+3. Exception validation: only reviewed historical fingerprints are excluded; a fresh occurrence still fails. Known disposable test values remain usable.
+4. Build verification: Prisma generation, API build and web production build using CI’s Node version. Confirm expected `dist` outputs exist.
+5. Existing coverage: both suites against a disposable database, preserving all 80% gates and combined report generation.
+6. Workflow review: YAML/shell validation and a focused diff against the race-fix branch to ensure its changes were neither copied nor overwritten.
+7. Actual Gitea runs: push and PR checks on the shared runners, recording which runner executed them. Validation of both named runners requires runs on both; one green run cannot prove that.
+8. Final repository check: no generated runner state tracked, no secret values in logs/reports, and only the agreed files changed.
+
+Completion depends on confirmed credential invalidation and passing real runner checks. We can prepare the implementation independently, but should not close #65 while either remains unresolved.
+
+USER:
+okay #65 is more infrastructure-heavy than i want right now so lets leave it until the runner credential and CI race stuff are coordinated. lets look at issue #67 next. make sure the three team skills stay active and dont change anything yet. inspect the exact issue description against latest main and work out the smallest honest way to complete it using the personalization system that already exists. i dont want to create a duplicate `UserPreference` model or duplicate endpoints if `favoriteTeamId`, `UserFollowedPlayer`, `/v1/me` and the current profile/onboarding flow already satisfy the same requirement. tell me which acceptance criteria are already met, which genuinely arent, whether any missing pieces are small enough to finish quickly, and whether this can be closed with code/docs/issue updates or still needs a real feature change. also check for overlap with any open teammate branches before we touch anything.
+
+ASSISTANT:
+#67 can be completed using the existing personalization system. No duplicate model or endpoints are needed. I recommend a small correctness pass plus documentation and explicit issue-scope reconciliation—not a new preferences feature.
+
+The three team skills remain active. Nothing was edited.
+
+One update: latest remote `main` is now `95172cb`, including Kiran’s caching PR #124. Your local checkout remains clean at `fa983a2`, two commits behind; I inspected the newer code through `origin/main`.
+
+The exact acceptance criteria map as follows:
+
+| Issue criterion | Current implementation | Assessment |
+| --- | --- | --- |
+| User can set favorite teams and players | One favorite team; multiple followed players. Managed through onboarding, profile and follow buttons. | Met for one team plus multiple players. Multiple simultaneous favorite teams are not supported. |
+| Preferences stored in DB (`UserPreference` model or JSON field) | `User.favoriteTeamId` and `UserFollowedPlayer` persist those choices. | Behavior met. The proposed storage design is unnecessary. |
+| `GET/PUT /v1/user/preferences` | `GET/PATCH /v1/me`, plus `PUT/DELETE /v1/me/followed-players/:playerId`. | Equivalent behavior exists; literal route criterion differs. Update the criterion to name the existing API. |
+| Frontend UI for managing preferences | Profile editors, onboarding and inline follow controls. | Implemented, with correctness gaps below. |
+| Favorites prominently shown on home or navbar | Locker watchlist and favorite-team results. | Implemented, but updates can leave cached locker content stale. |
+
+The description also mentions dashboard preferences and display settings. Neither exists as a configurable, persisted feature. The issue supplies no specific controls or acceptance tests for them.
+
+That distinction matters: we can accept the existing storage/API as equivalent implementation, but we cannot silently count absent display settings as done.
+
+The smallest genuine code work is fixing how existing choices are saved and displayed.
+
+1. Fix onboarding player selection.
+Selecting a player sends a follow request; deselecting only changes the local checkbox state. Failed requests can also leave the UI claiming a player is followed, and Finish does not await outstanding saves.
+
+Small fix: make follow/unfollow reflect successful writes, show failures, and prevent finishing while saves are pending. No backend changes needed.
+
+2. Refresh dependent locker data after preference changes.
+Team/player mutations mostly invalidate `["me"]`, while the locker separately caches `["teamResults"]` and `["watchlist"]`.
+
+With #124’s five-minute freshness window, this sequence can now show stale content:
+- Visit the locker.
+- Change your favorite team on your profile.
+- Return to the locker.
+- See the new team heading alongside cached results for the previous team.
+
+Small fix: consistently invalidate the affected profile and locker queries after successful mutations. Preserve Kiran’s caching defaults.
+
+3. Show errors when preference writes fail.
+The favorite-team editor and inline follow controls lack useful failure feedback. Add concise retryable errors so users know their choice was not saved.
+
+These are small frontend fixes, realistically a focused half-day including meaningful tests, rather than a five-minute documentation task.
+
+A separate onboarding weakness remains: saving a username is treated as completion, so reloading after step one skips the remaining onboarding steps. That does not prevent managing favorites through the profile. I would explicitly track it separately rather than expand #67 into onboarding-state redesign.
+
+My proposed completion scope is:
+
+Users can persist one favorite team and multiple followed players, manage them through the existing profile/onboarding/inline controls, and see their saved choices reflected on the locker. Storage and API use the existing `/v1/me` personalization system.
+
+Then explicitly record:
+- `UserPreference` and `/v1/user/preferences` were proposed implementation details, superseded by existing equivalents.
+- Multiple favorite teams, configurable dashboard layout and display settings are deferred scope—not implemented functionality.
+- Link the merged personalization/home work and the small corrective PR as evidence.
+
+If the team wants dashboard/display settings retained in #67, it still needs a real feature change. We would first need to define an actual setting and its behavior; adding an unused JSON field would not satisfy it.
+
+Teammate overlap is manageable if the work stays narrow.
+
+- Pace’s open PR #120: adds admin functionality and role data to `/v1/me`. It touches shared types and onboarding/profile test fixtures. Avoid changing its backend service, role fields, routes or navigation. Our test additions may need a small fixture reconciliation.
+- Kiran’s `DBCallRate`: now merged into main. Build on its caching behavior; do not undo it or introduce another cache system.
+- `fix-compare-and-profile-test-fixtures`: touches Compare and PlayerProfilePage tests, not the account ProfilePage editor. Avoid unnecessary changes there.
+- The remaining unmerged CI branches do not materially overlap this frontend scope. An older `lineup-optimizer` branch touches README, so keep any documentation edits localized.
+
+There is no open PR introducing a competing general preferences system. This assessment covers published branches; unpublished teammate work is not visible.
+
+Likely files for the small completion pass:
+- `OnboardingPage.tsx` and its tests.
+- `ProfilePage.tsx` and its tests.
+- `FollowPlayerButton.tsx`, `FollowTeamButton.tsx` and focused tests.
+- A small shared query-invalidation helper, if needed to keep mutation behavior consistent.
+- Personalization documentation in `docs/PROJECT_OVERVIEW.md`.
+- Issue #67’s wording and completion evidence, once the scope is agreed.
+
+Tests should cover deselection persisting, failed writes, Finish during pending saves, and changing favorites after locker data has already been cached. A browser check should confirm persistence after reload and immediate locker updates.
+
+My verdict: don’t close it as-is with a documentation-only claim. Agree the existing one-team/multiple-player scope, fix the small persistence/cache-feedback gaps, document the actual API, and then close #67 with evidence. No database migration or new feature architecture is necessary for that scope.
+
+USER:
+okay lets do issue #67 with the narrow completion scope you recommended. first make sure `team-git-workflow`, `code-cleanup` and `coding-conventions` are active, update to the latest clean `main`, and create a new branch called `fix-personalization-preferences`. keep the existing personalization architecture with `User.favoriteTeamId`, `UserFollowedPlayer`, `/v1/me` and the current follow endpoints — do not add a `UserPreference` model or duplicate preference API. fix the real correctness gaps only: onboarding follow and unfollow should both persist properly, failed writes should not leave the UI pretending they succeeded, Finish should not proceed while preference writes are still pending, favorite-team and followed-player mutations should invalidate the dependent locker queries so cached Home data updates immediately, and failed preference saves should show concise useful errors. add focused tests for those behaviours and update the relevant personalization documentation to reflect the actual API/architecture. do not redesign onboarding completion, roles, admin functionality, caching strategy or any unrelated UI. once implemented run the relevant tests, full web tests, typecheck, build, lint and `git diff --check`. dont commit or push yet — tell me exactly what changed, what bugs were fixed and whether every check passed.
+
+ASSISTANT:
+Implemented on `fix-personalization-preferences`, based on clean latest `main` at `95172cb`. The three requested skills were applied.
+
+- Onboarding: follow and unfollow both persist. Selection changes only after successful writes; failures show an error. Player controls and Finish/Skip are disabled while saving.
+- Profile and inline follow controls: successful changes invalidate profile, watchlist and favorite-team results queries, preventing stale Home data. Failed saves show useful errors and preserve the saved state.
+- Tests: added regression coverage for persistence, pending saves, failures and fresh-cache invalidation.
+- Documentation: updated `PROJECT_OVERVIEW.md` with the existing models, endpoints and narrow #67 scope.
+
+Existing architecture, onboarding completion rules and caching settings were preserved.
+
+| Check | Result |
+| --- | --- |
+| Focused tests | Passed |
+| Full web tests | 410 passed across 52 files |
+| Typecheck | Passed |
+| Production build | Passed |
+| Lint | Passed |
+| `git diff --check` | Passed |
+
+Build and lint retain warnings about bundle size and unrelated existing code; tests also emit existing mock/React warnings.
+
+10 files changed. Nothing committed or pushed; issue #67 remains untouched.
+
+USER:
+okay perfect, lets get this ready for a PR. please do one final scope check and show me the git status, exact files changed and a short summary of the diff. make sure everything is only related to issue #67 and that nothing from any other branch or teammate work was accidentally included. also give me the proposed conventional commit message. dont commit or push yet because i want to approve the message first.
+
+ASSISTANT:
+Scope check passed: all 10 files relate to the agreed #67 fixes, regression tests or documentation.
+
+`HEAD` and the locally recorded `origin/main` both remain at `95172cb`. There are no branch-only commits, so no unmerged teammate commits were included. Nothing is staged.
+
+Exact `git status --short --branch`:
+
+```
+## fix-personalization-preferences
+ M apps/web/src/components/FollowPlayerButton.tsx
+ M apps/web/src/components/FollowTeamButton.spec.tsx
+ M apps/web/src/components/FollowTeamButton.tsx
+ M apps/web/src/pages/OnboardingPage.spec.tsx
+ M apps/web/src/pages/OnboardingPage.tsx
+ M apps/web/src/pages/ProfilePage.spec.tsx
+ M apps/web/src/pages/ProfilePage.tsx
+ M docs/PROJECT_OVERVIEW.md
+?? apps/web/src/components/FollowPlayerButton.spec.tsx
+?? apps/web/src/lib/preferenceQueries.ts
+```
+
+The diff contains:
+- Persisted onboarding follow/unfollow, accurate selection state, error feedback and pending-save protection.
+- Shared invalidation of profile and dependent locker queries.
+- Error feedback in profile and inline preference controls.
+- Focused regression tests and documentation of the existing personalization architecture.
+
+No CI, credentials, backend, schema, dependencies, admin/role functionality or global cache settings changed. `git diff --check` passes. Previous validation remains 410 passing web tests, plus passing typecheck, build and lint with the noted warnings.
+
+Proposed conventional commit message:
+
+`fix: persist personalization preferences and refresh locker data`
+
+Nothing committed or pushed; awaiting your approval of the message.
