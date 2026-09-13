@@ -240,14 +240,24 @@ Beyond automated testing, the project has a **formal user feedback process desig
 
 ## Bug tracking
 
-Bugs discovered through testing (automated or manual) are tracked in the **Gitea issue tracker** at [sdp.ms.wits.ac.za/innovation/sportsanalytics/issues](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/issues). Each bug is:
+Bugs discovered through testing (automated or manual) are tracked in the **Gitea issue tracker** at [sdp.ms.wits.ac.za/innovation/sportsanalytics/issues](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/issues) (Gitea authorisation required to browse it directly — see the screenshot below for what it looks like from inside). Full process writeup: `docs/BUG_TRACKING.md` in the main app repo.
 
-- Labelled with its severity (critical / major / minor / cosmetic)
-- Linked to the PR that fixes it (via commit message or PR description)
-- Moved through the project board columns (Open → In Progress → Review → Done)
+Filing a bug goes through a dedicated **"Bug report"** issue form (`.gitea/ISSUE_TEMPLATE/bug_report.yaml`), not a blank issue:
 
-The bug tracker is also used to track feature requests and user feedback items that result in code changes, ensuring full traceability from feedback to fix.
+![Gitea's "New Issue" template picker, showing the Bug report template alongside the process/docs templates](assets/screenshots/gitea-new-issue-templates.png)
+
+The form asks for exactly the fields that make a report actionable without back-and-forth: environment (deployed vs. local — the two run against completely separate databases, so "works locally, broken on the deployed site" almost always means a data/deploy problem rather than a code one), the exact commit or branch, numbered repro steps, expected vs. actual behaviour, and logs (as pasted, searchable text rather than a screenshot). It also has an explicit escape hatch: a real security problem (leaked credential, auth bypass, exposed data) is asked to be raised with the team directly, not filed as a public issue.
+
+Labelling is deliberately *not* a form field — it's picked from the sidebar, which is what makes it filterable/sortable instead of just text in the issue body:
+
+- **Priority (pick exactly one):** `priority/critical` (production down / team blocked), `priority/high` (needed for this sprint's demo), `priority/medium` (this sprint if there's room), `priority/low` (later sprint)
+- **Component (pick as many as apply):** `ui`, `backend`, `api-service`, `database`, `auth`, `models`, `ingestion`, `ci/cd`, `deployment`, `testing`
+- Every `bug`-labelled issue also gets `bug` applied automatically by the template
+
+A real example, filed and resolved through this process: [issue #83](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/issues/83) ("age not appearing on all player comparisons," `bug` + `priority/high` + `ui`) was filed 2026-09-05 against the deployed site, reproduced, and closed 2026-09-08 — see the matching [Sprint Log](sprint-log.md) entry ("Fix player age not appearing on all player comparisons").
+
+The bug tracker is also used for feature/process tracking beyond bugs (e.g. [#73](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/issues/73) "Land the bug tracker" and [#64](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/issues/64) "maintain active bug tracker usage" track the tracker's own rollout), giving full traceability from a reported problem or request to the fix.
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude-Code[Claude Sonnet 5]*
