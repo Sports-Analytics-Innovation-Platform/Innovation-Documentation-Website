@@ -1684,6 +1684,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../meetings/scrum/2026-09-10-team-meeting-5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-09-10 Scrum
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../meetings/_template/" class="md-nav__link">
         
   
@@ -1852,10 +1880,10 @@
 <ul>
 <li><strong>⚠️ Compliance risk worth flagging to the team directly:</strong> the brief requires, verbatim, that <em>"Users must be able to sign up, sign in, reset their passwords, and delete their accounts"</em> (§2.1). With Google OAuth as the only sign-in method, there is no password on our side to reset — BetterAuth's <code>Verification</code> table exists in the schema but is explicitly unused while Google OAuth is the only provider. This needs an answer before Milestone 4 marking: either the brief's "reset your password" requirement is being interpreted as not applicable to OAuth-only auth (worth confirming with the client/tutor explicitly, not assuming), or a second credential-based sign-in path needs adding alongside Google OAuth. I'd surface this to the team now rather than let it surface in a demo.</li>
 <li>Account deletion is unaffected — cascading deletes on <code>Session</code>/<code>Account</code> rows tied to a <code>User</code> are already modelled via <code>onDelete: Cascade</code>.</li>
-<li>Role-based access (<code>PUBLIC</code>/<code>USER</code>/<code>ANALYST</code>/<code>ADMIN</code>) is re-expressed as NestJS guards under BetterAuth, same enforcement approach as the original Passport-based <code>RolesGuard</code> — see <a href="../../security/">Security</a>. Whether analyst/admin write-access roles are actually <em>used</em> anywhere yet (e.g. a submissions or review feature) is still unconfirmed — no such feature exists in the codebase as of the last snapshot I have.</li>
+<li>Role-based access (<code>PUBLIC</code>/<code>USER</code>/<code>ANALYST</code>/<code>ADMIN</code>) is re-expressed as NestJS guards under BetterAuth, same enforcement approach as the original Passport-based <code>RolesGuard</code> — see <a href="../../security/">Security</a>. The <code>ADMIN</code> role now has a real feature behind it (a <code>/v1/admin/*</code> teams/players/users management surface, PR #120, open) — <code>ANALYST</code> is still unused by any endpoint.</li>
 </ul>
 <hr>
-<p><em>AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5]</em></p>
+<p><em>AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Sonnet 5]</em></p>
 
 
 

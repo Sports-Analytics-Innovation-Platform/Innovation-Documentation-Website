@@ -1884,6 +1884,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../meetings/scrum/2026-09-10-team-meeting-5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-09-10 Scrum
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../meetings/_template/" class="md-nav__link">
         
   
@@ -2338,7 +2366,7 @@
 <tbody>
 <tr>
 <td><strong>Zod</strong></td>
-<td>Schema validation for incoming data (feedback submissions, query parameters). Provides runtime type-checking with descriptive rejection errors. Confirmed built — used in the feedback controller for request body validation.</td>
+<td>Schema validation for incoming request bodies. Provides runtime type-checking with descriptive rejection errors. Confirmed built — a shared <code>parseBody</code> helper runs a Zod schema over every request body on the write routes added in PR #94.</td>
 </tr>
 </tbody>
 </table>
@@ -2412,7 +2440,7 @@
 </tr>
 <tr>
 <td><strong>React Router 7</strong> (<code>react-router-dom</code>)</td>
-<td>Client-side routing with ten routes: <code>/</code>, <code>/home</code>, <code>/players</code>, <code>/players/:playerId</code>, <code>/compare</code>, <code>/teams</code>, <code>/teams/:teamId</code>, <code>/predictions</code>, <code>/optimizer</code>, <code>/games/:gameId</code>.</td>
+<td>Client-side routing with thirteen routes: <code>/</code>, <code>/home</code>, <code>/onboarding</code>, <code>/profile</code>, <code>/players</code>, <code>/players/:playerId</code>, <code>/compare</code>, <code>/teams</code>, <code>/teams/:teamId</code>, <code>/predictions</code>, <code>/optimizer</code>, <code>/games/:gameId</code>, <code>/admin</code>.</td>
 </tr>
 </tbody>
 </table>
@@ -2665,7 +2693,7 @@
 <h2 id="confirmed-local-dev-proxy">Confirmed: local dev proxy<a class="headerlink" href="#confirmed-local-dev-proxy" title="Permanent link">¶</a></h2>
 <p><code>vite.config.ts</code> proxies <code>/api/*</code> to <code>http://localhost:4000</code> (with the <code>/api</code> prefix stripped before forwarding), so <code>apiClient.ts</code>'s relative <code>/api/v1/...</code> calls do reach the NestJS backend in dev. In production, <code>VITE_API_BASE_URL</code> points at the Render API URL directly.</p>
 <hr>
-<p><em>AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder[Qoder Lite]</em></p>
+<p><em>AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder[Qoder Lite], Claude-Code[Claude Opus 5]</em></p>
 
 
 

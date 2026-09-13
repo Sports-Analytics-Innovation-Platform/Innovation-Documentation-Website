@@ -794,6 +794,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#personalisation-entities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Personalisation entities
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#relationship-diagram" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1706,6 +1717,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../meetings/scrum/2026-09-10-team-meeting-5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-09-10 Scrum
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../meetings/_template/" class="md-nav__link">
         
   
@@ -1833,6 +1872,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#personalisation-entities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Personalisation entities
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#relationship-diagram" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1882,7 +1932,7 @@
 <h1 id="erd">ERD<a class="headerlink" href="#erd" title="Permanent link">¶</a></h1>
 <div class="admonition success">
 <p class="admonition-title">Confirmed from <code>schema.prisma</code></p>
-<p>This page is built directly from the real <code>apps/api/prisma/schema.prisma</code> (257 lines, 12 models). Last verified against the current schema.</p>
+<p>The core, prediction, and auth entities below are built directly from the real <code>apps/api/prisma/schema.prisma</code>, verified field by field against the current schema — including the two Sprint 2 migrations that added season segments (<code>add_game_season_type</code>) and advanced per-game stats (<code>add_advanced_player_game_stats</code>). The <strong>Personalisation entities</strong> section carries a weaker claim and says so in its own note; read that before citing it.</p>
 </div>
 <h2 id="diagram">Diagram<a class="headerlink" href="#diagram" title="Permanent link">¶</a></h2>
 <p>See the <a href="../architecture/#database-erd">Architecture Overview</a> for the full visual ERD, grouped by concern (auth, domain, optimizer, predictor). PlantUML source lives alongside the main app repo's diagrams (<code>docs/diagrams/database-erd.puml</code>).</p>
@@ -1892,16 +1942,17 @@
 <p><strong>Player</strong>
 <code>id</code>, <code>nbaPlayerId</code> (unique), <code>firstName</code>, <code>lastName</code>, <code>position</code>, <code>heightInches?</code>, <code>weightLbs?</code>, <code>jerseyNumber?</code>, <code>headshotUrl?</code>, <code>teamId?</code> → Team</p>
 <p><strong>Game</strong>
-<code>id</code>, <code>nbaGameId</code> (unique), <code>gameDate</code>, <code>season</code>, <code>homeTeamId</code> → Team, <code>awayTeamId</code> → Team, <code>homeScore?</code>, <code>awayScore?</code></p>
+<code>id</code>, <code>nbaGameId</code> (unique), <code>gameDate</code>, <code>season</code>, <code>homeTeamId</code> → Team, <code>awayTeamId</code> → Team, <code>homeScore?</code>, <code>awayScore?</code>, <code>seasonType</code> (<code>SeasonType</code> enum: <code>REGULAR</code>/<code>PLAY_IN</code>/<code>PLAYOFFS</code>/<code>FINALS</code>, default <code>REGULAR</code>), <code>playoffRound?</code>
+Indexed on <code>seasonType</code>. Every pre-existing row backfilled to <code>REGULAR</code> on migration — <code>nba_api</code>'s <code>LeagueGameFinder</code> was always called with <code>season_type_nullable="Regular Season"</code> before this migration, so the default is correct for old data, not a guess.</p>
 <p><strong>GameEvent</strong> — raw play-by-play; the source of truth every derived stat traces back to, per the brief's requirement that statistics come from event records, not typed totals
 <code>id</code>, <code>gameId</code> → Game, <code>sequence</code>, <code>period</code>, <code>clock</code>, <code>eventType</code>, <code>playerId?</code>, <code>description</code>, <code>createdAt</code>
 Indexed on <code>[gameId, sequence]</code>.</p>
 <p><strong>PlayerGameStat</strong> — per-game boxscore, derived from <code>GameEvent</code> rows, never entered by hand
-<code>id</code>, <code>playerId</code> → Player, <code>gameId</code> → Game, <code>minutes</code>, <code>points</code>, <code>rebounds</code>, <code>assists</code>, <code>steals</code>, <code>blocks</code>, <code>turnovers</code>, <code>fieldGoalsMade/Attempted</code>, <code>threesMade/Attempted</code>, <code>freeThrowsMade/Attempted</code>
-Unique on <code>[playerId, gameId]</code>.</p>
+<code>id</code>, <code>playerId</code> → Player, <code>gameId</code> → Game, <code>minutes</code>, <code>points</code>, <code>rebounds</code>, <code>assists</code>, <code>steals</code>, <code>blocks</code>, <code>turnovers</code>, <code>fieldGoalsMade/Attempted</code>, <code>threesMade/Attempted</code>, <code>freeThrowsMade/Attempted</code>, <code>plusMinus?</code>, <code>usagePercentage?</code>, <code>offensiveRating?</code>, <code>defensiveRating?</code>, <code>offensiveRebounds?</code>, <code>defensiveRebounds?</code>
+Unique on <code>[playerId, gameId]</code>. The six advanced columns are all nullable by design, fetched leaguewide from the advanced boxscore rather than per game to stay within <code>nba_api</code>'s rate limit — <code>null</code> means the row predates these columns or the advanced boxscore was unavailable, which is a different fact than a real 0% usage rate or an even plus-minus.</p>
 <div class="admonition success">
-<p class="admonition-title">Confirmed: season averages are computed on read, not stored</p>
-<p><code>/v1/players/:id/stats</code> (in <code>players.controller.ts</code>) computes <code>seasonAverages</code> and <code>gameLog</code> at request time from <code>PlayerGameStat</code> rows via <code>statsService</code>. There is no <code>SeasonAverages</code> table in the schema — it was never a stored model, only an API response shape. This confirms the brief's "derived from events, not stored totals" requirement is actually being followed, not just documented as an intent.</p>
+<p class="admonition-title">Confirmed: season averages, true shooting%, eFG%, and assist-to-turnover are computed on read, not stored</p>
+<p><code>/v1/players/:id/stats</code> (in <code>players.controller.ts</code>) computes <code>seasonAverages</code> and <code>gameLog</code> at request time from <code>PlayerGameStat</code> rows via <code>statsService</code>. There is no <code>SeasonAverages</code> table in the schema — it was never a stored model, only an API response shape. True shooting%, effective FG%, and assist-to-turnover ratio are derived the same way from existing boxscore fields (verified against <code>BoxScoreAdvancedV3</code> to three decimal places) rather than given their own columns. This confirms the brief's "derived from events, not stored totals" requirement is actually being followed, not just documented as an intent.</p>
 </div>
 <h2 id="prediction-entities">Prediction entities<a class="headerlink" href="#prediction-entities" title="Permanent link">¶</a></h2>
 <p>Added to support game-outcome prediction (<code>apps/predictor</code>) and the fantasy-lineup optimizer (<code>apps/optimizer</code>). NestJS only reads these tables — the Python services write to them directly.</p>
@@ -1924,6 +1975,35 @@ Unique on <code>[lineupId, playerId]</code>.</p>
 <p><strong>Account</strong> — one row per linked sign-in method (currently just Google)
 <code>id</code>, <code>userId</code> → User (cascade delete), <code>accountId</code>, <code>providerId</code>, <code>accessToken?</code>, <code>refreshToken?</code>, token expiries, <code>scope?</code>, <code>idToken?</code>, <code>password?</code>, <code>createdAt</code>, <code>updatedAt</code></p>
 <p><strong>Verification</strong> — short-lived tokens (e.g. email verification); present because it's part of BetterAuth's core schema, currently unused while Google OAuth is the only provider — see the password-reset risk flagged in <a href="../../decisions/adr-002-auth/">ADR-002</a></p>
+<h2 id="personalisation-entities">Personalisation entities<a class="headerlink" href="#personalisation-entities" title="Permanent link">¶</a></h2>
+<p>Added by a single migration, <code>20260910134345_home_personalization</code> (PR #94, merged 2026-09-11), to back the signed-in home page. Two properties of this layer are worth stating before the field lists:</p>
+<ul>
+<li><strong>Zero ALTERs on any NBA-data table.</strong> The personalisation layer sits entirely alongside the existing schema. Nothing about how <code>Game</code>, <code>Player</code>, or <code>PlayerGameStat</code> behave changed to accommodate it, so none of the ingestion or prediction code had to be touched.</li>
+<li><strong>The only genuinely new rows are records of a user's own choices.</strong> No NBA statistic is copied into this layer, and nothing derived is stored — the watchlist averages and scoring trends are computed at request time from existing <code>PlayerGameStat</code> rows, so a newly ingested game shows up immediately rather than waiting for a recompute.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Verified from the migration's design notes, not line by line from <code>schema.prisma</code></p>
+<p>Unlike the sections above, this one was written from the migration description rather than read field by field out of the schema. The table purposes, the frozen columns, and the constraints called out below are accurate; the surrounding field lists are the documented subset, not a guaranteed-complete column listing. A verification pass against <code>schema.prisma</code> is still owed here, and this note should be replaced with the standard "Confirmed" admonition once someone has done it.</p>
+</div>
+<p><strong>FollowedPlayer</strong> — a player on a user's watchlist, plus that user's own free-text scouting note
+<code>userId</code> → User, <code>playerId</code> → Player, <code>note?</code> (free text, 500 characters)
+One row per user per player. The note belongs to the follow, not to the player — two users following the same player each keep their own.</p>
+<p><strong>FollowedTeam</strong> — a team a user tracks
+<code>userId</code> → User, <code>teamId</code> → Team, <code>isPrimary</code>
+At most one of a user's followed teams may have <code>isPrimary</code> set.</p>
+<p><strong>GamePick</strong> — a user's call on a game, with the model's prediction frozen at pick time
+<code>userId</code> → User, <code>gameId</code> → Game, the picked side, <code>outcome</code> (<code>PickOutcome</code>), and four frozen columns: <code>modelHomeWinProbabilityAtPick</code>, <code>modelPredictedMarginAtPick</code>, <code>homeTeamEloAtPick</code>, <code>awayTeamEloAtPick</code></p>
+<div class="admonition info">
+<p class="admonition-title">Why the model's numbers are copied here instead of joined</p>
+<p><code>GamePrediction</code> is append-and-take-latest — a later predictor run can change what the "current" prediction for a game is. If the head-to-head record re-derived the model's numbers at read time, a rerun would silently change what the user was graded against, and a record they had already seen would quietly rewrite itself. Freezing the four values at pick time is what makes "you beat the model on this game" a durable statement rather than one that depends on when you ask.</p>
+</div>
+<p><strong>SavedComparison</strong> / <strong>SavedComparisonPlayer</strong> — a named set of players saved from the Compare tab
+<code>SavedComparison</code>: <code>userId</code> → User, a user-supplied name. <code>SavedComparisonPlayer</code>: <code>savedComparisonId</code> → SavedComparison, <code>playerId</code> → Player.</p>
+<p><strong>SavedLineup</strong> / <strong>SavedLineupSlot</strong> — a saved optimizer lineup
+<code>SavedLineup</code>: <code>userId</code> → User. <code>SavedLineupSlot</code>: <code>savedLineupId</code> → SavedLineup, <code>playerId</code> → Player, plus two frozen columns — <code>salaryAtSave</code> and <code>predictedPointsAtSave</code>.</p>
+<p>The same reasoning as <code>GamePick</code> applies: <code>PlayerPrediction</code> is also append-and-take-latest, so a slot's salary and predicted points are captured at save time. That frozen pair is precisely what makes the "drift since you saved this" line on the home page computable, and honest — without it there is no baseline to have drifted from.</p>
+<p><strong>PickOutcome</strong> (enum) — <code>CORRECT</code> / <code>MISSED</code>
+Games that ended in a tie are excluded from the challenge entirely rather than given a third outcome value: there is no correct call to make on one.</p>
 <h2 id="relationship-diagram">Relationship diagram<a class="headerlink" href="#relationship-diagram" title="Permanent link">¶</a></h2>
 <div class="highlight"><pre><span></span><code>Team (1) ──────&lt; (many) Player
 Team (1) ──────&lt; (many) Game [as home team]
@@ -1939,13 +2019,22 @@ Lineup (1) ────&lt; (many) LineupSlot
 
 User (1) ──────&lt; (many) Session
 User (1) ──────&lt; (many) Account
+
+User (1) ──────&lt; (many) FollowedPlayer &gt;───── (1) Player
+User (1) ──────&lt; (many) FollowedTeam   &gt;───── (1) Team
+User (1) ──────&lt; (many) GamePick       &gt;───── (1) Game
+User (1) ──────&lt; (many) SavedComparison
+User (1) ──────&lt; (many) SavedLineup
+
+SavedComparison (1) ─&lt; (many) SavedComparisonPlayer &gt;─ (1) Player
+SavedLineup (1) ─────&lt; (many) SavedLineupSlot      &gt;─ (1) Player
 </code></pre></div>
 <h2 id="still-open">Still open<a class="headerlink" href="#still-open" title="Permanent link">¶</a></h2>
 <ul>
 <li><strong>Submissions / review workflow</strong> — an early feature-breakdown draft mentioned approved-submitter roles and a review flow, but nothing matching that exists in the schema or codebase. Don't assume it's coming unless the team confirms it's still planned.</li>
 </ul>
 <hr>
-<p><em>AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5]</em></p>
+<p><em>AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5]</em></p>
 
 
 

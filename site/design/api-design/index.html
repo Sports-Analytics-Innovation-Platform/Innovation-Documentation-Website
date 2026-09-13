@@ -1734,6 +1734,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../meetings/scrum/2026-09-10-team-meeting-5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-09-10 Scrum
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../meetings/_template/" class="md-nav__link">
         
   
@@ -1960,7 +1988,7 @@
 <td><code>GET</code></td>
 <td><code>/v1/players</code></td>
 <td>None (public)</td>
-<td><code>teamId</code>, <code>position</code>, <code>search</code>, <code>page</code>, <code>pageSize</code></td>
+<td><code>teamId</code>, <code>position</code>, <code>search</code>, <code>seasonType</code>, <code>participated</code>, <code>page</code>, <code>pageSize</code></td>
 <td><code>PagedResult&lt;Player&gt;</code></td>
 </tr>
 <tr>
@@ -1974,8 +2002,22 @@
 <td><code>GET</code></td>
 <td><code>/v1/players/:id/stats</code></td>
 <td>None (public)</td>
+<td><code>seasonType</code></td>
+<td><code>{ playerId, seasonType, seasonAverages, gameLog }</code> — <code>seasonAverages</code> derived at request time from that segment's <code>PlayerGameStat</code> rows</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/v1/players/:id/stats/splits</code></td>
+<td>None (public)</td>
 <td>—</td>
-<td><code>{ playerId, seasonAverages, gameLog }</code>, both derived at request time from <code>PlayerGameStat</code> rows</td>
+<td><code>{ playerId, splits }</code> — the same derived line as <code>:id/stats</code>, for every <code>seasonType</code> at once</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/v1/players/compare</code></td>
+<td>None (public)</td>
+<td><code>ids</code>, <code>seasonType</code></td>
+<td><code>{ seasonType, players: [{ player, seasonAverages }] }</code> for 2–4 players</td>
 </tr>
 <tr>
 <td><code>GET</code></td>
@@ -1995,7 +2037,7 @@
 <td><code>GET</code></td>
 <td><code>/v1/games</code></td>
 <td><code>SessionAuthGuard</code></td>
-<td>varies</td>
+<td><code>seasonType</code>, <code>page</code>, <code>pageSize</code></td>
 <td>Game list with predictions joined in</td>
 </tr>
 <tr>
@@ -2019,8 +2061,121 @@
 <td>—</td>
 <td>Latest <code>Lineup</code> with <code>LineupSlot</code> entries, or <code>404</code> if no lineup generated yet</td>
 </tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/v1/optimizer/predictions/:playerId</code></td>
+<td><code>SessionAuthGuard</code></td>
+<td>—</td>
+<td>Predicted fantasy points for one player by NBA player ID, or <code>404</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/v1/analytics/model-accuracy</code></td>
+<td>None (public)</td>
+<td>—</td>
+<td>Model accuracy, Brier score, always-pick-home baseline, games evaluated, forward-prediction count, and calibration bands</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/v1/analytics/leaderboard</code></td>
+<td>None (public)</td>
+<td>—</td>
+<td>Accuracy ranking of users, with the Elo model included as a benchmark row</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/v1/me/challenge/next</code></td>
+<td><code>SessionAuthGuard</code></td>
+<td>—</td>
+<td>A completed game with its final score withheld, excluding every game the caller has already picked</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/v1/me/picks</code></td>
+<td><code>SessionAuthGuard</code></td>
+<td>—</td>
+<td>Submits a pick, grades it against the result and the model, and returns the score</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/v1/me/picks/record</code></td>
+<td><code>SessionAuthGuard</code></td>
+<td>—</td>
+<td>The caller's head-to-head record against the model, on the same games</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/v1/me/watchlist</code></td>
+<td><code>SessionAuthGuard</code></td>
+<td><code>page</code>, <code>pageSize</code></td>
+<td>Followed players with derived averages, recent scoring, and the caller's notes</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/v1/me/watchlist/ids</code></td>
+<td><code>SessionAuthGuard</code></td>
+<td>—</td>
+<td>Followed player ids only, so a follow button can render its own state in one request</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/v1/me/follows/players/:playerId</code></td>
+<td><code>SessionAuthGuard</code></td>
+<td>—</td>
+<td>Follow a player (idempotent)</td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td><code>/v1/me/follows/players/:playerId</code></td>
+<td><code>SessionAuthGuard</code></td>
+<td>—</td>
+<td>Replace the scouting note; <code>404</code> rather than creating the follow</td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/v1/me/follows/players/:playerId</code></td>
+<td><code>SessionAuthGuard</code></td>
+<td>—</td>
+<td>Unfollow; returns <code>{ playerId, removed }</code></td>
+</tr>
+<tr>
+<td><code>PUT</code></td>
+<td><code>/v1/me/follows/teams/:teamId</code></td>
+<td><code>SessionAuthGuard</code></td>
+<td>—</td>
+<td>Follow a team, optionally as the caller's one primary team</td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/v1/me/follows/teams/:teamId</code></td>
+<td><code>SessionAuthGuard</code></td>
+<td>—</td>
+<td>Unfollow a team</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/v1/me/teams/results</code></td>
+<td><code>SessionAuthGuard</code></td>
+<td>—</td>
+<td>Recent results for the caller's teams, oriented to their side (<code>yourTeam</code>/<code>opponent</code>, <code>won</code>)</td>
+</tr>
+<tr>
+<td><code>GET</code> <code>POST</code> <code>DELETE</code></td>
+<td><code>/v1/me/saved/comparisons</code></td>
+<td><code>SessionAuthGuard</code></td>
+<td>—</td>
+<td>Saved player comparisons</td>
+</tr>
+<tr>
+<td><code>GET</code> <code>POST</code> <code>DELETE</code></td>
+<td><code>/v1/me/saved/lineups</code></td>
+<td><code>SessionAuthGuard</code></td>
+<td>—</td>
+<td>Saved lineups, with drift since save</td>
+</tr>
 </tbody>
 </table>
+<p>The <code>/v1/analytics/*</code> and <code>/v1/me/*</code> routes were added in PR #94 (merged 2026-09-11) to back the signed-in home page. They are the API's first write endpoints — see <a href="#auth-model">Auth model</a> below for how they are scoped, and <a href="../../api-reference/">API Reference</a> for full request/response shapes.</p>
 <p>BetterAuth mounts its own route set at <code>/api/auth/*</code> (sign in, sign out, session management, Google OAuth redirect). These are not hand-written NestJS controllers — they are managed by the BetterAuth library.</p>
 <p>All requests go through a single wrapper (<code>apiClient.ts</code>):</p>
 <div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">API_BASE_URL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">import</span><span class="p">.</span><span class="nx">meta</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">VITE_API_BASE_URL</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s2">"/api"</span><span class="p">;</span>
@@ -2039,9 +2194,9 @@
 <span class="p">}</span>
 </code></pre></div>
 <p><strong><code>PlayerStatsResponse</code></strong>:</p>
-<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"> </span><span class="nx">playerId</span><span class="p">,</span><span class="w"> </span><span class="nx">seasonAverages</span><span class="o">:</span><span class="w"> </span><span class="kt">SeasonAverages</span><span class="p">,</span><span class="w"> </span><span class="nx">gameLog</span><span class="o">:</span><span class="w"> </span><span class="kt">GameLogEntry</span><span class="p">[]</span><span class="w"> </span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"> </span><span class="nx">playerId</span><span class="p">,</span><span class="w"> </span><span class="nx">seasonType</span><span class="p">,</span><span class="w"> </span><span class="nx">seasonAverages</span><span class="o">:</span><span class="w"> </span><span class="kt">DerivedSeasonAverages</span><span class="p">,</span><span class="w"> </span><span class="nx">gameLog</span><span class="o">:</span><span class="w"> </span><span class="kt">GameLogEntry</span><span class="p">[]</span><span class="w"> </span><span class="p">}</span>
 </code></pre></div>
-<p>(See <a href="../erd/">ERD</a> for the full field lists of <code>SeasonAverages</code> and <code>GameLogEntry</code>.)</p>
+<p><code>seasonType</code> echoes back the resolved segment (defaults to <code>REGULAR</code>) so a caller can't mislabel a chart it already rendered against a different segment. See <a href="../erd/">ERD</a> for the full field lists of <code>DerivedSeasonAverages</code> and <code>GameLogEntry</code>.</p>
 <h2 id="error-handling">Error handling<a class="headerlink" href="#error-handling" title="Permanent link">¶</a></h2>
 <p><strong>Confirmed from source</strong> (<code>common/api-exception.ts</code>, <code>common/all-exceptions.filter.ts</code>): every error response uses a structured envelope, applied globally:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"> </span><span class="nx">error</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">code</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">message</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
@@ -2051,17 +2206,20 @@
 <p><strong>Confirmed from source</strong> (<code>common/pagination.ts</code>): <code>?page=</code> and <code>?pageSize=</code>, both optional. Defaults: <code>page=1</code>, <code>pageSize=25</code>, capped at <code>pageSize=100</code>. Applies to <code>/v1/players</code> and <code>/v1/teams</code>.</p>
 <h2 id="auth-model">Auth model<a class="headerlink" href="#auth-model" title="Permanent link">¶</a></h2>
 <p>Player and team endpoints are <strong>public</strong> — no authentication required. Games, predictions, and optimizer endpoints are <strong>auth-gated</strong> via <code>SessionAuthGuard</code> — a valid BetterAuth session cookie is required. This matches the frontend routing: <code>/players</code> and <code>/teams</code> are accessible to anyone, while <code>/predictions</code>, <code>/optimizer</code>, and <code>/games/:gameId</code> are wrapped in <code>&lt;ProtectedRoute&gt;</code>.</p>
+<p>Two of the routes added in PR #94 sit on the public side deliberately. <code>GET /v1/analytics/model-accuracy</code> and <code>GET /v1/analytics/leaderboard</code> return the same response to everyone — they describe the model and the board, not the caller — so gating them would add nothing. The leaderboard reads only each user's <code>id</code> and <code>name</code>; email addresses are never selected.</p>
+<p>Everything under <code>/v1/me/*</code> is <strong>scoped to the session user id in the same <code>where</code> clause as the resource id</strong>, so a request can never reach another user's rows even with a valid session and a guessed id. Where a resource exists but belongs to someone else, the response is <code>404</code>, not <code>403</code> — a <code>403</code> would confirm that the row exists, which is itself a disclosure. Because these are the API's first state-changing routes, they sit behind an <code>OriginCheckGuard</code> registered globally as an <code>APP_GUARD</code>; see <a href="../../security/">Security</a> for why CORS alone does not cover this.</p>
 <h3 id="request-flow-get-v1gamesidprediction">Request flow: <code>GET /v1/games/:id/prediction</code><a class="headerlink" href="#request-flow-get-v1gamesidprediction" title="Permanent link">¶</a></h3>
 <p>See the <a href="../architecture/#sequence-diagram-get-v1gamesidprediction">Architecture Overview</a> for the full sequence diagram, which walks this auth-gated request end to end — including why it works cross-origin in production (Cloudflare Pages calling Render) and the two-step 404 (game not found vs. game found but not yet predicted). PlantUML source: <code>docs/diagrams/sequence-game-prediction.puml</code> in the main app repo.</p>
 <h2 id="not-yet-built">Not yet built<a class="headerlink" href="#not-yet-built" title="Permanent link">¶</a></h2>
 <ul>
-<li><strong>Write endpoints</strong> — nothing in the current code writes data (no POST/PUT/PATCH/DELETE calls exist). If the proposed analyst/admin roles in <a href="../../security/">Security</a> are real, these don't exist yet.</li>
+<li><strong>Analyst write access</strong> — the <code>/v1/me/*</code> routes only ever write a user's <em>own</em> choices: follows, notes, picks, and saved comparisons and lineups. The <code>analyst</code> role in <a href="../../security/">Security</a> still has no endpoint behind it (submitting/correcting statistics, data quality flags).</li>
+<li><strong>Admin write access</strong> — no longer a gap for <code>Team</code>/<code>Player</code> data: <code>/v1/admin/teams</code>, <code>/v1/admin/players</code>, <code>/v1/admin/users</code> (behind <code>SessionAuthGuard</code> + <code>@Roles(ADMIN)</code>) are the API's first endpoints that write NBA data rather than a user's own choices — see <a href="../../security/">Security</a>. PR #120, open, not yet merged to <code>main</code>.</li>
 <li><strong>Versioning beyond <code>/v1/</code></strong> — no <code>/v2/</code> or deprecation policy exists yet, which is fine at this stage but worth deciding before it matters.</li>
 </ul>
 <h2 id="openapi-swagger-documentation">OpenAPI / Swagger documentation<a class="headerlink" href="#openapi-swagger-documentation" title="Permanent link">¶</a></h2>
 <p>The full API reference is documented on the <a href="../../api-reference/">API Reference (Swagger)</a> page, including the Swagger UI endpoint (<code>/api/docs</code>), all request/response shapes, authentication requirements, and the <code>@nestjs/swagger</code> setup instructions for the code repo.</p>
 <hr>
-<p><em>AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5]</em></p>
+<p><em>AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5]</em></p>
 
 
 

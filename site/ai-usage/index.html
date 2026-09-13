@@ -1603,6 +1603,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../meetings/scrum/2026-09-10-team-meeting-5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-09-10 Scrum
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../meetings/_template/" class="md-nav__link">
         
   
@@ -2076,6 +2104,96 @@
 <td><code>prisma/schema.prisma</code>, <code>prisma/migrations/20260819120000_player_bio_fields/</code>, <code>apps/ingestion/player_bios.py</code>, <code>apps/ingestion/ingest.py</code>, <code>apps/ingestion/backfill_player_bios.py</code>, <code>apps/ingestion/generate_seed_bios.py</code>, <code>types/nba.ts</code>, <code>PlayerProfilePage.tsx</code>, <code>docs/player-bio-feature.md</code>, <code>docs/seed-nbaplayerid-bug.md</code>, <code>apps/ingestion/README.md</code></td>
 <td></td>
 <td><a href="../transcripts/ai_transcripts/ai-usage-transcript-player-bios.txt">ai-usage-transcript-player-bios.txt</a></td>
+</tr>
+<tr>
+<td>2026-09-11</td>
+<td>Owen</td>
+<td>Claude Code</td>
+<td>Claude Sonnet 5</td>
+<td>Reviewed PRs #86 (swagger-openapi), #89 (postseason-view), #90 (advanced-player-stats) against main via test-merges in a throwaway worktree (typecheck + full web test suite, 188/188 passing); found and resolved a real merge conflict in <code>players.controller.ts</code> between the Swagger decorators (#86) and the <code>seasonType</code> query-param work already merged from #89/#90, then merged #86 into main directly (Gitea had no merge button since main had advanced past it); audited the docs site against the current Sprint 2 rubric and found <code>docs/api-reference.md</code> and <code>docs/rubric-links.md</code> claiming Swagger was already live when it wasn't yet merged; backfilled three weeks of <code>sprint-log.md</code> (25 Aug – 11 Sep) from git history and the scrum meeting notes</td>
+<td><code>apps/api/src/players/players.controller.ts</code> (merge conflict resolution), <code>docs/sprint-log.md</code>, <code>docs/ai-usage.md</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>2026-09-11</td>
+<td>Owen</td>
+<td>Claude Code</td>
+<td>Claude Sonnet 5</td>
+<td>Full accuracy sweep of every remaining docs-site page against source (controllers, migrations, the real <code>.gitea/workflows/ci.yml</code>, components): rewrote the CI/CD Postgres section after finding it still described a <code>services:</code> container on <code>runs-on: default</code>, when commits from earlier that day had already switched to <code>runs-on: ubuntu-latest</code> and a hand-rolled disposable-Postgres step (three <code>services:</code> attempts never worked on this runner's <code>network: host</code> setup); fixed the same stale "axe-core planned" claim in three more pages; corrected <code>demo-guide.md</code>'s description of the landing/home split and rewrote its walkthrough to include Compare and the season-segment control; caught a discrepancy between the team's own meeting notes (claiming the home page was "wired to real data") and the component's own code comment ("NOT WIRED TO THE API YET") and went with the code. Then reviewed PR #88 (LandingPageUpdates): found <code>ci-runner/data/.runner</code>, a live Gitea Actions runner registration token (<code>kiran-backup</code>, self-hosted, label <code>default</code>) committed to the repo by accident; test-merged and confirmed no real code bug (189/189 tests, clean typecheck/lint — the CI failures shown were shared-runner flakiness), resolved a real conflict in <code>LandingPage.spec.tsx</code> against #91's changes, stripped the runner secret, and merged #88 into main without it. Diagnosed a recurring "sign-in link expired" report: BetterAuth's OAuth state row hard-expires 10 minutes after sign-in starts with no config option in the library (confirmed by downloading and reading <code>better-auth@1.7.4</code>'s source, the latest release) — added a fire-and-forget <code>/health</code> ping on <code>AuthStatus</code> mount to pre-warm Render's free-tier instance before the user reaches the sign-in button, guarded out of test mode since the component renders in nearly every page's test suite</td>
+<td><code>apps/web/src/pages/LandingPage.spec.tsx</code> (merge conflict resolution), <code>apps/web/src/components/AuthStatus.tsx</code>, <code>apps/web/src/lib/apiClient.ts</code>, <code>docs/ci-cd.md</code>, <code>docs/index.md</code>, <code>docs/demo-guide.md</code>, <code>docs/requirements.md</code>, <code>docs/sprint-log.md</code>, <code>docs/ai-usage.md</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>2026-09-10</td>
+<td>Daniel Passos</td>
+<td>OpenAI Codex</td>
+<td>GPT-5.6 Sol</td>
+<td>Reviewed teammate PRs #86 and #89, audited quick Sprint 2 backlog options, and implemented automated axe-core accessibility checks for Home, Players, Predictions and Optimizer, including accessible names for the Players filters</td>
+<td>apps/web/package.json, apps/web/package-lock.json, apps/web/src/test/accessibility.ts, apps/web/src/pages/HomePage.spec.tsx, apps/web/src/pages/PlayersListPage.spec.tsx, apps/web/src/pages/PredictionsPage.spec.tsx, apps/web/src/pages/OptimizerPage.spec.tsx, apps/web/src/components/PlayersFilterBar.tsx, apps/web/src/components/PlayersFilterBar.spec.tsx</td>
+<td></td>
+<td><a href="../transcripts/ai_transcripts/DanielPassos_04_2026-09-10_AccessibilityAndPRReviews.txt">PR reviews and accessibility work</a></td>
+</tr>
+<tr>
+<td>2026-09-13</td>
+<td>Daniel Passos</td>
+<td>OpenAI Codex</td>
+<td>GPT-6 Astra</td>
+<td>Reviewed the current Sprint 2 backlog, assessed CI hardening and secret-scanning requirements, and implemented personalization fixes for follow/unfollow persistence, failed writes, pending saves and locker cache invalidation using the existing /v1/me architecture</td>
+<td>apps/web/src/components/FollowPlayerButton.tsx, apps/web/src/components/FollowPlayerButton.spec.tsx, apps/web/src/components/FollowTeamButton.tsx, apps/web/src/components/FollowTeamButton.spec.tsx, apps/web/src/pages/OnboardingPage.tsx, apps/web/src/pages/OnboardingPage.spec.tsx, apps/web/src/pages/ProfilePage.tsx, apps/web/src/pages/ProfilePage.spec.tsx, apps/web/src/lib/preferenceQueries.ts, docs/PROJECT_OVERVIEW.md</td>
+<td></td>
+<td><a href="../transcripts/ai_transcripts/DanielPassos_05_2026-09-13_PersonalizationAndBacklog.txt">Personalization and backlog work</a></td>
+</tr>
+<tr>
+<td>2026-09-12</td>
+<td>Owen</td>
+<td>Claude Code</td>
+<td>Claude Sonnet 5</td>
+<td>Diagnosed a live production sign-in bug affecting only Safari/Firefox/Brave users: the OAuth CSRF state cookie was set via a cross-origin <code>fetch()</code>, which those browsers' stricter third-party cookie policies silently dropped before Google's callback could read it back, producing an inconsistent <code>state_mismatch</code>. Removed the secondary state-cookie check (PR #100), then found sign-in still failed afterward because the session cookie itself was genuinely cross-site (API on Render, SPA on Cloudflare Pages) — fixed by proxying <code>/api</code> and <code>/auth</code> through same-origin Cloudflare Pages Functions so every cookie is first-party (PR #108), relocating those Functions to the repo root after confirming Cloudflare's configured root directory never found them under <code>apps/web/functions/</code> (PR #112), and clearing a stale <code>VITE_API_BASE_URL</code> Cloudflare env var that was silently bypassing the whole proxy by baking a direct cross-origin API URL into the build (PR #117, confirmed via the deployed bundle and a browser console CORS error). Verified end-to-end against the live production site at every step, not just locally. Also fixed the OAuth production-origin fallback (PR #104), switched CI to the course-provided <code>sdp-runner-1</code> runner (PR #107), added a migrate-deploy retry for intermittent CI failures (PR #116), and added a coverage test to clear the enforced 80% threshold (PR #113)</td>
+<td><code>apps/api/src/auth/auth.config.ts</code>, <code>functions/api/[[path]].ts</code>, <code>functions/auth/[[path]].ts</code>, <code>apps/web/src/lib/apiBase.ts</code>, <code>apps/web/src/lib/apiClient.ts</code>, <code>apps/web/src/lib/authClient.ts</code>, <code>apps/web/vite.config.ts</code>, <code>apps/api/test/global-setup.ts</code>, <code>.gitea/workflows/ci.yml</code>, <code>apps/web/src/lib/meApi.spec.ts</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>2026-09-13</td>
+<td>Owen</td>
+<td>Claude Code</td>
+<td>Claude Sonnet 5</td>
+<td>Restyled the Compare and Teams pages — the last two pages still on the original dark app-shell theme after every other page had already moved to the lighter "locker" design language (PlayerSearchCombobox/Pagination's own code comments called out these two by name as the holdouts). Swapped <code>SeasonSegmentControl</code> for <code>LockerSegmentControl</code>, recoloured every card/tile/button/stat cell to the locker palette, no behavioural changes (PR #118)</td>
+<td><code>apps/web/src/pages/ComparePage.tsx</code>, <code>apps/web/src/pages/TeamsListPage.tsx</code>, <code>apps/web/src/components/PlayerSearchCombobox.tsx</code>, <code>apps/web/src/components/Pagination.tsx</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>2026-09-13</td>
+<td>Owen</td>
+<td>Claude Code</td>
+<td>Claude Sonnet 5</td>
+<td>Built an admin page wiring up the RBAC infrastructure that already existed in the schema (<code>Role</code> enum, <code>RolesGuard</code>, <code>@Roles()</code>) but had no endpoint using it: new <code>/v1/admin/teams</code>, <code>/v1/admin/players</code>, <code>/v1/admin/users</code> routes gated by <code>SessionAuthGuard</code> + <code>@Roles(ADMIN)</code> — the API's first write access to <code>Team</code>/<code>Player</code> rows — with a Teams/Players/Users tabbed admin UI, self-protection against deleting/demoting your own account, and one manual DB promotion for the first admin account. Verified with service-level unit tests (no local Postgres available) and safe, credential-free Playwright screenshots using network-level route mocking rather than a real or fabricated session. Pushed to its own branch, not yet merged, for a teammate to continue (PR #120, open)</td>
+<td><code>apps/api/src/admin/**</code>, <code>apps/api/src/app.module.ts</code>, <code>apps/api/src/me/me.service.ts</code>, <code>apps/web/src/pages/AdminPage.tsx</code>, <code>apps/web/src/components/AdminGate.tsx</code>, <code>apps/web/src/lib/adminApi.ts</code>, <code>apps/web/src/App.tsx</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>2026-09-13</td>
+<td>Owen</td>
+<td>Claude Code</td>
+<td>Claude Sonnet 5</td>
+<td>Read through a pasted rubric critique of the predictions feature (5 gaps: no model versioning, predictions not derived from raw event data, no real API-level correctness test, validation methodology not checked into the repo, no async job pattern for regenerating predictions) against the actual <code>apps/predictor</code> and <code>GamePrediction</code> code before changing anything — found the bundled marking-rubric assets in this session's <code>sdp</code> skill actually describe a different, generic project, so treated the pasted critique as authoritative instead. Scoped the "derive from GameEvent" gap honestly: <code>apps/ingestion</code> only ever writes two placeholder bookend rows per game into <code>GameEvent</code>, so genuinely deriving predictions from raw play-by-play would mean a new ingestion feature (pulling <code>PlayByPlayV3</code>), not a predictor fix — deferred rather than faked, given the Sprint 2 deadline. Shipped step 1: added a <code>modelVersion</code> column to <code>GamePrediction</code> plus a new append-only <code>GamePredictionRun</code> history table (upserted per game+version, never overwritten across a version change), a <code>MODEL_VERSION</code> constant in <code>predict_games.py</code>, and <code>GET /v1/games/:id/prediction/history</code> — with zero changes to any of the 7+ existing places that read the <code>game.prediction</code> relation (PR #126, open, first of a multi-step series)</td>
+<td><code>apps/api/prisma/schema.prisma</code>, <code>apps/api/prisma/migrations/20260913140000_game_prediction_versioning/</code>, <code>apps/predictor/predict_games.py</code>, <code>apps/predictor/test_predict_games.py</code>, <code>apps/api/src/games/games.service.ts</code>, <code>apps/api/src/games/games.controller.ts</code>, <code>apps/api/test/games.e2e-spec.ts</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>2026-09-13</td>
+<td>Owen</td>
+<td>Claude Code</td>
+<td>Claude Sonnet 5</td>
+<td>Updated the docs site's Bug Tracker evidence: rewrote <code>testing.md</code>'s "Bug tracking" section, which had described a severity scheme (critical/major/minor/cosmetic) that was never real — the actual system is <code>.gitea/ISSUE_TEMPLATE/bug_report.yaml</code>'s structured form plus <code>priority/</code>+component labels, documented in the main repo's <code>docs/BUG_TRACKING.md</code>. Embedded a real screenshot of Gitea's "New Issue" template picker (supplied by Owen) and cited a real filed-and-closed example (issue #83) fetched via the Gitea API. Updated <code>rubric-links.md</code>'s Bug Tracker row to point at this instead of only the Gitea Projects Board, which requires authorisation a marker won't have. Left the User Feedback evidence untouched — no live survey or Gitea issue content exists yet to screenshot honestly</td>
+<td><code>docs/testing.md</code>, <code>docs/rubric-links.md</code>, <code>docs/assets/screenshots/gitea-new-issue-templates.png</code></td>
+<td></td>
+<td></td>
 </tr>
 </tbody>
 </table>

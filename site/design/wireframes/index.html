@@ -857,10 +857,21 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#home" class="md-nav__link">
+  <a href="#landing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Home (/)
+        Landing (/)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#home-home" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Home (/home)
       
     </span>
   </a>
@@ -883,6 +894,17 @@
     <span class="md-ellipsis">
       
         Player profile (/players/:playerId)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#player-comparison-compare" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Player comparison (/compare)
       
     </span>
   </a>
@@ -1778,6 +1800,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../meetings/scrum/2026-09-10-team-meeting-5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-09-10 Scrum
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../meetings/_template/" class="md-nav__link">
         
   
@@ -1884,10 +1934,21 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#home" class="md-nav__link">
+  <a href="#landing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Home (/)
+        Landing (/)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#home-home" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Home (/home)
       
     </span>
   </a>
@@ -1910,6 +1971,17 @@
     <span class="md-ellipsis">
       
         Player profile (/players/:playerId)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#player-comparison-compare" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Player comparison (/compare)
       
     </span>
   </a>
@@ -2029,11 +2101,61 @@
 <p>This project didn't go through a formal low-fidelity wireframing stage — the team found reference dashboards for inspiration and used AI to help generate the initial React implementation directly. This page documents the current build, not a planning artifact.</p>
 </div>
 <h2 id="navigation">Navigation<a class="headerlink" href="#navigation" title="Permanent link">¶</a></h2>
-<p>Top navbar with five links: <strong>Home</strong>, <strong>Players</strong>, <strong>Teams</strong>, <strong>Optimizer</strong> (auth-gated), <strong>Predictions</strong> (auth-gated). The navbar also includes a recent-result widget (hidden on small screens) and an auth status button (sign in/sign out). A skip-to-content link is available for keyboard navigation.</p>
+<p>Header component (<code>LandingHeader</code>, renamed from the original <code>Navbar</code> when it was unified across routes — PR #50) with two link sets: the landing page shows just <strong>Home</strong>, <strong>Players</strong>, <strong>Compare</strong>, <strong>Teams</strong> (<code>overlaysContent</code> mode, since it sits over a full-bleed hero); every other route adds <strong>Optimizer</strong> and <strong>Predictions</strong>. The navbar also includes a recent-result widget (hidden on small screens) and an auth status button (sign in/sign out). A skip-to-content link is available for keyboard navigation.</p>
 <p>The sidebar from the initial scaffold was replaced with the top navbar during Sprint 1 (week of 11 Aug) to accommodate the growing number of pages.</p>
 <h2 id="screens">Screens<a class="headerlink" href="#screens" title="Permanent link">¶</a></h2>
-<h3 id="home">Home (<code>/</code>)<a class="headerlink" href="#home" title="Permanent link">¶</a></h3>
-<p>Landing page with a hero section stating the product's purpose and linking to the players list. Includes a recent-result widget. Entry point, not a full dashboard.</p>
+<h3 id="landing">Landing (<code>/</code>)<a class="headerlink" href="#landing" title="Permanent link">¶</a></h3>
+<p>The public marketing page: hero section with a screenshot cascade, a developer-credits and tech-stack marquee, and a "Get Started" call to action that signs in with Google and lands on <code>/home</code>. The first cascade panel shows a real screenshot of the signed-in home page (PR #88); the other two (player profile, optimizer) are still placeholder blocks awaiting their own screenshots.</p>
+<h3 id="home-home">Home (<code>/home</code>)<a class="headerlink" href="#home-home" title="Permanent link">¶</a></h3>
+<p>The signed-in dashboard ("The Locker"). Built on the landing page's light palette rather than the dark app shell, deliberately, so signing in reads as walking further into the same building.</p>
+<p>Every figure on the page is now live (PR #94, merged 2026-09-11), replacing the <code>components/home/placeholderData.ts</code> shell that PR #87 shipped. The premise the page is built on is that <strong>an account has to be necessary, not decorative</strong>: the NBA data is identical for every visitor, but which players you follow, what you wrote about them, and how well you call games are yours alone. Nothing derived is stored, so a newly ingested game shows up here immediately.</p>
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>What it shows</th>
+<th>Backed by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Beat the Model</strong></td>
+<td>A completed game with its final score withheld, for you to call. Submitting grades your call against both the real result and what the Elo model predicted, and only then reveals the score</td>
+<td><code>GET /v1/me/challenge/next</code>, <code>POST /v1/me/picks</code>, <code>GET /v1/me/picks/record</code></td>
+</tr>
+<tr>
+<td><strong>Your Watchlist</strong></td>
+<td>Followed players with points, rebounds and assists per game and a five-game scoring trend, plus your own scouting note per player (editable, 500 characters)</td>
+<td><code>GET /v1/me/watchlist</code></td>
+</tr>
+<tr>
+<td><strong>Your Teams</strong></td>
+<td>Recent results for the teams you follow, oriented to your side — your team, the opponent, whether you won — rather than home/away</td>
+<td><code>GET /v1/me/teams/results</code></td>
+</tr>
+<tr>
+<td><strong>Model accuracy ledger</strong></td>
+<td>The model's real accuracy against an always-pick-home baseline, its Brier score, and per-band calibration</td>
+<td><code>GET /v1/analytics/model-accuracy</code></td>
+</tr>
+<tr>
+<td><strong>Accuracy leaderboard</strong></td>
+<td>Callers ranked by hit rate, with the Elo model on the board as a benchmark row rather than a rival</td>
+<td><code>GET /v1/analytics/leaderboard</code></td>
+</tr>
+<tr>
+<td><strong>Saved shelf</strong></td>
+<td>Saved player comparisons, and saved optimizer lineups showing how far each slot's salary and predicted points have drifted since you saved it</td>
+<td><code>GET /v1/me/saved/comparisons</code>, <code>GET /v1/me/saved/lineups</code></td>
+</tr>
+</tbody>
+</table>
+<p>Beat the Model is the page's focal action, and the clearest illustration of why the account is required at all: the server can only hide a completed game's score from you <em>and still score you on it</em> if it knows who you are.</p>
+<p>Two sections from the original shell — <strong>"Add to Locker"</strong> and <strong>"Jump Back In"</strong> — were removed. Both were layout with nothing behind them: one searched nothing, the other listed views nobody had recorded. Removing "Add to Locker" left no way to <em>start</em> a follow, so an "Add to watchlist" control was added to the <a href="#player-profile-playersplayerid">player profile</a> instead — that is now the entry point into the watchlist.</p>
+<div class="admonition warning">
+<p class="admonition-title">Known gap: these flows are not yet clickable in a browser</p>
+<p>Google OAuth credentials are not configured on the deployed environment, so every <code>/v1/me/*</code> route returns <code>401</code> to a signed-out browser — which is currently every browser. The routes themselves are proven end to end by the API's e2e suite against a real Postgres database, including cross-user isolation (see <a href="../../testing/">Testing</a>); what has <em>not</em> happened is a human clicking through the flow in production. Cite the e2e suite as the evidence here, not a live demo, until the OAuth client is configured.</p>
+</div>
 <h3 id="players-list-players">Players list (<code>/players</code>)<a class="headerlink" href="#players-list-players" title="Permanent link">¶</a></h3>
 <p>Table view: Name, Team, Position, Jersey number. Player name links through to their profile. Data comes from <code>GET /v1/players</code>, paginated. Includes a filter bar for team and position filtering, plus a search field for server-side search across the full player dataset.</p>
 <h3 id="player-profile-playersplayerid">Player profile (<code>/players/:playerId</code>)<a class="headerlink" href="#player-profile-playersplayerid" title="Permanent link">¶</a></h3>
@@ -2042,8 +2164,17 @@
 <li><strong>Header + season stat tiles</strong> (2/3 width) — player identity (headshot from nba.com CDN, name, team, position, jersey, height), then a row of stat tiles (PPG, RPG, APG, Games), followed by a points-trend line chart across recent games.</li>
 <li><strong>Player traits radar</strong> (1/3 width) — a five-axis radar chart (Scoring, Rebounding, Playmaking, Defense, Efficiency) normalising raw per-game stats onto a shared 0–100 scale so different units can share one chart.</li>
 <li><strong>Shooting splits</strong> (full width) — FG%, 3P%, FT% as stat tiles.</li>
+<li><strong>Season segment control</strong> — a control to switch the whole page between <code>REGULAR</code>, <code>PLAY_IN</code>, <code>PLAYOFFS</code>, and <code>FINALS</code>, backed by <code>GET /v1/players/:id/stats/splits</code> so every segment is available without a re-fetch per click. Carries through to the profile's compare link so a comparison started from a postseason view compares postseason lines, not regular-season ones.</li>
+<li>
+<p><strong>Advanced stats table</strong> — true shooting%, effective FG%, assist-to-turnover, plus-minus, usage%, and offensive/defensive rating, alongside the basic per-game stats. Local stat editing lets a visitor temporarily edit a displayed stat to see how it ripples into the derived figures, then reset back to the real value — a "what-if" exploration, not a persisted change.</p>
+</li>
+<li>
+<p><strong>Add to watchlist</strong> — a follow/unfollow control (PR #94), added here because removing the home page's "Add to Locker" section left no other way to start a follow. It renders its own state from <code>GET /v1/me/watchlist/ids</code>, which returns just the followed player ids so the button costs one request rather than a full watchlist fetch.</p>
+</li>
 </ul>
-<p>Data comes from <code>GET /v1/players/:id</code> and <code>GET /v1/players/:id/stats</code> together.</p>
+<p>Data comes from <code>GET /v1/players/:id</code>, <code>GET /v1/players/:id/stats</code>, and <code>GET /v1/players/:id/stats/splits</code> together, plus <code>GET /v1/me/watchlist/ids</code> when signed in.</p>
+<h3 id="player-comparison-compare">Player comparison (<code>/compare</code>)<a class="headerlink" href="#player-comparison-compare" title="Permanent link">¶</a></h3>
+<p>Side-by-side comparison of 2–4 players' derived season lines for a chosen season segment, reachable from a player profile's compare link or by picking players directly on the page. Data comes from <code>GET /v1/players/compare</code>.</p>
 <h3 id="teams-list-teams">Teams list (<code>/teams</code>)<a class="headerlink" href="#teams-list-teams" title="Permanent link">¶</a></h3>
 <p>Table view of all NBA teams with real team logos. Data comes from <code>GET /v1/teams</code>, paginated with server-side search. Built with TanStack Query and shadcn/ui components.</p>
 <h3 id="team-profile-teamsteamid">Team profile (<code>/teams/:teamId</code>)<a class="headerlink" href="#team-profile-teamsteamid" title="Permanent link">¶</a></h3>
@@ -2055,7 +2186,8 @@
 <h3 id="optimizer-optimizer-auth-gated">Optimizer (<code>/optimizer</code>) — auth-gated<a class="headerlink" href="#optimizer-optimizer-auth-gated" title="Permanent link">¶</a></h3>
 <p>Fantasy-lineup optimizer page showing the latest MILP-solved lineup: five players selected under a salary cap with their predicted fantasy points. Data comes from <code>GET /v1/optimizer/lineup</code>.</p>
 <h2 id="visual-design">Visual design<a class="headerlink" href="#visual-design" title="Permanent link">¶</a></h2>
-<p>Dark theme, defined as Tailwind CSS custom properties in <code>index.css</code>:</p>
+<p>Two palettes, both defined as Tailwind <code>@theme</code> custom properties in <code>index.css</code>. The dark "hardwood court" app shell was the only theme through Sprint 1; the lighter "locker" language was introduced for the landing page and has since spread to every other page, most recently Compare and Teams in Sprint 2 (the last two holdouts on the dark shell).</p>
+<p><strong>Dark app shell</strong> — a warm near-black hardwood-court palette with an NBA-ball orange accent (this replaced an earlier cool blue accent; if you see <code>#3b82f6</code>/<code>#0b0e14</code> referenced anywhere else in the docs, that's the value this table superseded):</p>
 <table>
 <thead>
 <tr>
@@ -2067,47 +2199,84 @@
 <tbody>
 <tr>
 <td><code>--color-surface-base</code></td>
-<td><code>#0b0e14</code></td>
+<td><code>#120d09</code></td>
 <td>Page background</td>
 </tr>
 <tr>
 <td><code>--color-surface-raised</code></td>
-<td><code>#12161f</code></td>
-<td>Navbar background</td>
-</tr>
-<tr>
-<td><code>--color-surface-card</code></td>
-<td><code>#171c27</code></td>
+<td><code>#1c140d</code></td>
 <td>Card backgrounds</td>
 </tr>
 <tr>
+<td><code>--color-surface-nav</code></td>
+<td><code>#2b2015</code></td>
+<td>Navbar background</td>
+</tr>
+<tr>
 <td><code>--color-border-subtle</code></td>
-<td><code>#232939</code></td>
+<td><code>#3a2a19</code></td>
 <td>Borders/divider</td>
 </tr>
 <tr>
 <td><code>--color-brand-accent</code></td>
-<td><code>#3b82f6</code></td>
-<td>Active nav, links, chart accents</td>
+<td><code>#f97316</code></td>
+<td>Active nav, links, primary buttons, chart accents</td>
 </tr>
 <tr>
 <td><code>--color-text-primary</code> / <code>-secondary</code> / <code>-muted</code></td>
-<td><code>#f3f5f8</code> / <code>#9aa4b8</code> / <code>#616d82</code></td>
+<td><code>#f7f1e8</code> / <code>#baa88f</code> / <code>#8a7862</code></td>
 <td>Text hierarchy</td>
 </tr>
 </tbody>
 </table>
-<p>Charts (Recharts — <code>RadarChart</code>, <code>LineChart</code>) are themed against these same CSS variables rather than hardcoded colours, so a future light-theme toggle wouldn't require touching chart code.</p>
+<p><strong>Locker (light)</strong> — built on the landing page's palette rather than the dark shell, deliberately, so signing in reads as walking further into the same building instead of into a different product:</p>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Value</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--color-locker-surface</code></td>
+<td><code>#e3e0dc</code></td>
+<td>Page/card background</td>
+</tr>
+<tr>
+<td><code>--color-locker-leather</code></td>
+<td><code>#a4441c</code></td>
+<td>Accent/active state — 4.66:1 on <code>locker-surface</code>, used for small text and controls (<code>--color-landing-accent</code> measures only 2.45:1, hero-scale type only)</td>
+</tr>
+<tr>
+<td><code>--color-locker-ink-muted</code></td>
+<td><code>#4a423b</code></td>
+<td>Secondary text</td>
+</tr>
+<tr>
+<td><code>--color-locker-you</code> / <code>--color-locker-model</code></td>
+<td><code>#c2410c</code> / <code>#1f6f9c</code></td>
+<td>Warm = the human's pick, cool = the Elo model's — validated as a colorblind-safe categorical pair (CVD ΔE 19.0 protan, ΔE 27.5 normal vision)</td>
+</tr>
+<tr>
+<td><code>--color-locker-good</code> / <code>--color-locker-bad</code></td>
+<td><code>#15733f</code> / <code>#a8202c</code></td>
+<td>Outcome colors — always paired with a glyph and a word, never the only channel, since red/green is the one CVD case re-stepping the hues can't fix</td>
+</tr>
+</tbody>
+</table>
+<p>Charts (Recharts — <code>RadarChart</code>, <code>LineChart</code>) are themed against these CSS variables rather than hardcoded colours on both palettes.</p>
 <h2 id="accessibility">Accessibility<a class="headerlink" href="#accessibility" title="Permanent link">¶</a></h2>
 <ul>
 <li>Skip-to-content link for keyboard navigation</li>
 <li><code>tabIndex={-1}</code> on <code>&lt;main&gt;</code> for focus management</li>
 <li><code>aria-label</code> on primary navigation</li>
 <li>Responsive layouts with mobile/tablet/desktop breakpoints</li>
-<li><code>axe-core</code> checks planned for Sprint 2</li>
+<li><code>axe-core</code> automated accessibility checks run in component tests (<code>src/test/accessibility.ts</code>) across the players list, home page, optimizer, and predictions pages — merged into <code>main</code> 2026-09-11 (PR #92)</li>
 </ul>
 <hr>
-<p><em>AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5]</em></p>
+<p><em>AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5]</em></p>
 
 
 

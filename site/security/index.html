@@ -1701,6 +1701,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../meetings/scrum/2026-09-10-team-meeting-5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-09-10 Scrum
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../meetings/_template/" class="md-nav__link">
         
   
@@ -1885,6 +1913,10 @@
 <li>Account deletion cascades through <code>Session</code> and <code>Account</code> rows tied to a <code>User</code>, satisfying the brief's requirement that users can delete their account, not just deactivate it.</li>
 <li>Session tokens, IP address, and user agent are tracked per <code>Session</code> row (BetterAuth's default schema) — useful for a "sign out of all devices" feature if the team wants one.</li>
 </ul>
+<div class="admonition warning">
+<p class="admonition-title">Known issue: intermittent 'sign-in link expired' — mitigated, not eliminated</p>
+<p>BetterAuth's OAuth state row hard-expires 10 minutes after sign-in starts, hardcoded in the library with no config option (checked against the latest release, <code>better-auth@1.7.4</code>). A normal Google sign-in finishes in seconds, so hitting that ceiling often points at Render's free-tier cold start eating into the window between the pinger's hits, not the 10-minute cap itself being too short. Mitigated 2026-09-11 by pinging <code>/health</code> on every page's header mount to give the API a head start waking up before a visitor reaches the sign-in button — this reduces exposure but can't guarantee the API is warm, since a ping doesn't block the click that follows it.</p>
+</div>
 <h2 id="authorization">Authorization<a class="headerlink" href="#authorization" title="Permanent link">¶</a></h2>
 <p>Role-based access control is implemented via NestJS guards. The schema defines four roles (<code>PUBLIC</code>, <code>USER</code>, <code>ANALYST</code>, <code>ADMIN</code>) with <code>role</code> defaulting to <code>USER</code> and marked non-writable in the BetterAuth config so a Google profile can't grant itself elevated access.</p>
 <table>
@@ -1907,7 +1939,12 @@
 <td>Implemented — <code>SessionAuthGuard</code> on games, predictions, optimizer</td>
 </tr>
 <tr>
-<td><code>analyst</code> / <code>admin</code></td>
+<td><code>admin</code></td>
+<td>Edit <code>Team</code>/<code>Player</code> rows, manage user accounts and roles</td>
+<td><code>/v1/admin/teams</code>, <code>/v1/admin/players</code>, <code>/v1/admin/users</code>, all behind <code>SessionAuthGuard</code> + <code>@Roles(ADMIN)</code> (PR #120, open — not yet merged to <code>main</code>)</td>
+</tr>
+<tr>
+<td><code>analyst</code></td>
 <td>Submit or correct statistics, manage data quality flags</td>
 <td>Schema exists, not yet used by any endpoint</td>
 </tr>
@@ -1917,21 +1954,26 @@
 <p>Unlike a project that imports a user's own account from a third-party service (e.g. an FPL-style "enter your team" flow, which would mean storing that service's session cookie), our data source (<code>nba_api</code>) pulls <strong>public league data</strong> — there's no user credential from a third party to store, and no equivalent liability. Worth stating explicitly in the group report as a deliberate design point, not an oversight: we don't hold third-party credentials because the data source doesn't require them.</p>
 <h2 id="secrets-management">Secrets management<a class="headerlink" href="#secrets-management" title="Permanent link">¶</a></h2>
 <ul>
-<li>No secret (API keys, database credentials, tokens) is ever committed — enforced by a pre-commit check per <a href="../git-methodology/">Git Methodology</a>. A CI secret scanner (<code>gitleaks</code>/<code>trufflehog</code>) on every PR is the intended backstop but is <strong>not yet in the pipeline</strong> (<a href="../ci-cd/">CI/CD Pipeline</a>), so the manual check is currently the only control.</li>
+<li>No secret (API keys, database credentials, tokens) should be committed — enforced by a pre-commit check per <a href="../git-methodology/">Git Methodology</a>. A CI secret scanner (<code>gitleaks</code>/<code>trufflehog</code>) on every PR is the intended backstop but is <strong>not yet in the pipeline</strong> (<a href="../ci-cd/">CI/CD Pipeline</a>), so the manual check is currently the only control — see the incident below for exactly the kind of thing that control is supposed to catch.</li>
 <li>All secrets live in Gitea Actions secrets, Render environment variables, or Cloudflare Pages environment variables — never in <code>.env</code> files that are tracked in git (<code>.env</code> is gitignored; <code>.env.example</code> documents required variables without values).</li>
 <li>If a secret is ever committed by mistake, the fix is <strong>rotate the credential</strong>, not just remove it from the latest commit — it remains in git history otherwise.</li>
 </ul>
+<div class="admonition danger">
+<p class="admonition-title">Incident: a live runner token reached a PR branch (2026-09-11)</p>
+<p><code>ci-runner/data/.runner</code> — an <code>act_runner</code> registration file (name <code>kiran-backup</code>, self-hosted, a working registration token for <code>sdp.ms.wits.ac.za</code>) — was committed on the <code>LandingPageUpdates</code> branch, almost certainly local runner state committed by accident rather than application code. It was caught during review before merging and excluded from the merge into <code>main</code>, so it never reached <code>main</code>'s history. <strong>The token itself is still live and still needs rotating</strong> — removing the file from the merge doesn't invalidate it, per the policy above; it remains valid on the branch's own history on the Gitea server regardless. Whoever administers the runner registrations needs to reset or delete the <code>kiran-backup</code> runner entry. Filed here rather than only in the AI usage ledger since this is exactly the class of incident the secrets-management policy above exists to prevent, and the manual pre-commit check is what should have caught it on that branch.</p>
+</div>
 <h2 id="transport-and-api-hardening">Transport and API hardening<a class="headerlink" href="#transport-and-api-hardening" title="Permanent link">¶</a></h2>
 <p>Implemented:</p>
 <ul>
 <li><strong>HTTPS/TLS</strong> — Cloudflare Pages provides managed TLS for the frontend. Render provides managed TLS for the API. Supabase connections use TLS via the pooled connection string.</li>
 <li><strong>CORS</strong> — configured in <code>apps/api/src/main.ts</code> with <code>credentials: true</code> and <code>origin: process.env.WEB_ORIGIN</code>, restricting cross-origin requests to the known frontend domain(s).</li>
+<li><strong>Request body validation</strong> — a shared <code>parseBody</code> helper runs a Zod schema over every request body on the write routes added in PR #94, rejecting anything that doesn't match the schema before it reaches a handler.</li>
 </ul>
 <p>Not yet implemented — tracked here so it isn't forgotten before Milestone 4:</p>
 <ul>
 <li><strong>Rate limiting</strong> on public API endpoints, both to protect our own DB and because <code>nba_api</code> itself depends on stats.nba.com not banning our IP for excessive scraping — see the ingestion risk section below.</li>
 <li><strong>Security headers</strong> (e.g. <code>helmet</code> middleware in NestJS) — CSP, HSTS, X-Frame-Options, etc. Note: <code>helmet</code> is already imported in <code>main.ts</code> but the full header suite should be verified in production.</li>
-<li><strong>Input validation</strong> on every endpoint (NestJS <code>ValidationPipe</code>/DTOs), especially any endpoint that accepts analyst/admin-submitted stat corrections.</li>
+<li><strong>A project-wide <code>ValidationPipe</code>/DTO layer.</strong> Request bodies are validated (see <code>parseBody</code> above), but query and path parameters are still parsed per-controller rather than through one uniform pipe — worth closing before any endpoint accepts analyst/admin-submitted stat corrections.</li>
 </ul>
 <h2 id="data-ingestion-risk">Data ingestion risk<a class="headerlink" href="#data-ingestion-risk" title="Permanent link">¶</a></h2>
 <p><code>nba_api</code> is an <strong>unofficial</strong> client for <code>stats.nba.com</code> — it can break or get rate-limited without warning. This isn't a security hole in our own system, but it is an availability risk worth documenting here since a scraping ban would look identical to an attack from the outside if it isn't understood:</p>
@@ -1940,7 +1982,7 @@
 <li>Any scheduled ingestion job should throttle its own request rate rather than assuming the upstream API will do it for us. The ingestion service includes a <code>throttle.py</code> module for this purpose.</li>
 </ul>
 <hr>
-<p><em>AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5]</em></p>
+<p><em>AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5]</em></p>
 
 
 

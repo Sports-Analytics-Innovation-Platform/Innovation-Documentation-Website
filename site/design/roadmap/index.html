@@ -1695,6 +1695,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../meetings/scrum/2026-09-10-team-meeting-5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-09-10 Scrum
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../meetings/_template/" class="md-nav__link">
         
   
@@ -1895,17 +1923,20 @@
 <p>See the <a href="../../sprint-log/">Sprint Log</a> for the complete task-by-task record.</p>
 <h2 id="sprint-2-real-data-expanded-features-due-2026-09-15">Sprint 2 — real data + expanded features (due 2026-09-15)<a class="headerlink" href="#sprint-2-real-data-expanded-features-due-2026-09-15" title="Permanent link">¶</a></h2>
 <ul>
-<li>Get <code>nba_api</code> ingestion flowing with real full-league data into Supabase (not just mock seed data)</li>
-<li>Swagger/OpenAPI setup for API documentation alongside this docs site</li>
-<li>Hosting topology pinger (per client meeting 2026-08-21)</li>
-<li>Database integration with signup functionality</li>
-<li><code>axe-core</code> accessibility checks in CI</li>
-<li>Redis/BullMQ, Zod if the ingestion pipeline needs batch/scheduled processing</li>
-<li>Frontend polish and responsiveness pass</li>
+<li>✅ <code>nba_api</code> ingestion flowing with real full-league data into Supabase — three full seasons seeded as of the 2026-09-10 team meeting</li>
+<li>✅ Swagger/OpenAPI setup for API documentation, live at <code>/api/docs</code> (PR #86, merged 2026-09-11)</li>
+<li>✅ Hosting topology pinger (per client meeting 2026-08-21) — cron-job.org, <code>/health</code> every 10 minutes</li>
+<li>✅ <code>axe-core</code> accessibility checks in CI (PR #92, merged 2026-09-11)</li>
+<li>✅ Postseason views (play-in/playoffs/finals) and advanced player stats (true shooting%, eFG%, plus-minus, usage%, ratings) — not in the original Sprint 2 plan, pulled in as intermediate-tier work once the basic tier was stable (PR #89, #90, merged 2026-09-11)</li>
+<li>✅ Player comparison page and endpoint (PR #53, merged 2026-09-02)</li>
+<li>🔶 Database integration with signup functionality — Google OAuth sign-up/sign-in exists; credential-based password reset still open (client accepted ~80% for auth without it, per 2026-09-07 client meeting; Daniel building a simple on-page reset)</li>
+<li>✅ Signed-in home dashboard wired to real endpoints (PR #94, merged 2026-09-11) — the shell from PR #87 now reads live data through a new user-owned personalisation layer: Beat the Model, a watchlist with per-player scouting notes, followed-team results, and saved comparisons and lineups, plus a public model-accuracy ledger and accuracy leaderboard</li>
+<li>Redis/BullMQ — not needed; the ingestion pipeline hasn't required batch/scheduled processing. Zod is in use after all, validating request bodies on the write routes added in PR #94</li>
+<li>Frontend polish and responsiveness pass — ongoing per the 2026-09-10 team meeting (Figma-based UI redesign in progress, profile page planned)</li>
 </ul>
 <h2 id="sprint-3-model-maturity-due-2026-09-29">Sprint 3 — model maturity (due 2026-09-29)<a class="headerlink" href="#sprint-3-model-maturity-due-2026-09-29" title="Permanent link">¶</a></h2>
 <ul>
-<li><strong>Intermediate-tier</strong> prediction: player-level predictions, predicted-vs-actual accuracy view</li>
+<li><strong>Intermediate-tier</strong> prediction: player-level predictions, predicted-vs-actual accuracy view — ✅ the predicted-vs-actual accuracy view landed early, in Sprint 2 (PR #94), published against an always-pick-home baseline; player-level predictions are still to come</li>
 <li>This is the sprint the client flagged as the realistic target for "a working ML model" — treat this as the sprint where prediction quality actually needs to be defensible in a review, not just present</li>
 <li>Target accuracy: 75–80% (per client meeting), with 64% as an achievable baseline</li>
 <li>Refine prediction model beyond Elo + Four Factors as real data accumulates</li>
@@ -1922,7 +1953,7 @@
 <li>Individual ownership of Sprint 2/3 work (Sprint 1 was completed with initiative-based task selection per the <a href="../../methodology/">Methodology</a>)</li>
 </ul>
 <hr>
-<p><em>AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5]</em></p>
+<p><em>AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5]</em></p>
 
 
 

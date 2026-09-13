@@ -1684,6 +1684,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../meetings/scrum/2026-09-10-team-meeting-5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-09-10 Scrum
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../meetings/_template/" class="md-nav__link">
         
   
@@ -1854,10 +1882,12 @@
 </ul>
 <h2 id="intermediate-tier-functional-and-useful">Intermediate tier (functional and useful)<a class="headerlink" href="#intermediate-tier-functional-and-useful" title="Permanent link">¶</a></h2>
 <ul>
-<li><strong>Player comparison endpoint</strong> added alongside team-level prediction: <code>GET /v1/players/compare</code> returns side-by-side season averages, recent game logs, and head-to-head stats for 2–4 players. Per-player game-outcome prediction (e.g. predicted points/rebounds/assists for an upcoming matchup) is planned for a later sprint.</li>
-<li><strong>Model accuracy shown, not just asserted</strong> — a view comparing predicted vs. actual outcomes for games that have already happened, so the prediction isn't just a number nobody can verify. This also gives something concrete to show in Sprint 3 reviews.</li>
+<li><strong>Player comparison endpoint</strong>: <code>GET /v1/players/compare</code> returns side-by-side derived season averages for 2–4 players, for a chosen season segment. Per-player game-outcome prediction (e.g. predicted points/rebounds/assists for an upcoming matchup) is planned for a later sprint.</li>
+<li><strong>Postseason views</strong>: games and player stats are tagged with a <code>seasonType</code> (<code>REGULAR</code>, <code>PLAY_IN</code>, <code>PLAYOFFS</code>, <code>FINALS</code>) and <code>playoffRound</code>. Player profiles, the comparison page, and the players list can all switch to a postseason-only view via a <code>SeasonSegmentControl</code>, backed by <code>GET /v1/players/:id/stats/splits</code> (every segment in one request) so the UI never shows a regular-season figure mislabelled as a playoff one. Postseason games are deliberately excluded from the prediction and optimizer models — a playoff matchup isn't statistically like a regular-season one.</li>
+<li><strong>Advanced player stats</strong>: true shooting%, effective FG%, and assist-to-turnover ratio are derived on read from existing boxscore fields (verified against <code>BoxScoreAdvancedV3</code> to three decimal places). Plus-minus, usage%, offensive rating, and defensive rating are ingested per game from the same advanced boxscore and stored on <code>PlayerGameStat</code>, fetched leaguewide rather than per game to stay within the ingestion API's rate limit. All four are nullable — <code>null</code> for games ingested before these columns existed, since a real 0% usage rate is a different fact than a missing one.</li>
+<li><strong>Model accuracy shown, not just asserted</strong> — ✅ built (PR #94). <code>GET /v1/analytics/model-accuracy</code> publishes the model's real accuracy against an <strong>always-pick-home baseline</strong>, because an accuracy figure without a baseline isn't a meaningful number. As of 2026-09-11, over 231 completed games: <strong>64.1% accuracy</strong> against a <strong>58.9%</strong> home baseline, Brier score <strong>0.2163</strong>. The endpoint also reports how many <em>forward</em> predictions exist (currently <strong>0</strong>), so a backtest is never presented as a track record, and marks calibration bands with too few games as "n too small" rather than printing a percentage that looks like a fact.</li>
 <li>Richer feature set feeding the model where the data supports it (recent form, home/away split, head-to-head history) — exact feature list still open.</li>
-<li><strong>Target accuracy</strong>: 75–80% (per client meeting 2026-08-21), with 64% as an achievable baseline.</li>
+<li><strong>Target accuracy</strong>: 75–80% (per client meeting 2026-08-21), with 64% as an achievable baseline; the team reported ~65% after seeding two additional seasons (team meeting, 2026-09-10).</li>
 </ul>
 <h2 id="advanced-tier-market-ready">Advanced tier (market-ready)<a class="headerlink" href="#advanced-tier-market-ready" title="Permanent link">¶</a></h2>
 <ul>
@@ -1873,7 +1903,7 @@
 <li>Whether the current Four Factors regression model or heuristic approach will be superseded by a more sophisticated model as more real data flows through the ingestion pipeline</li>
 </ul>
 <hr>
-<p><em>AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5]</em></p>
+<p><em>AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5]</em></p>
 
 
 
