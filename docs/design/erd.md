@@ -98,6 +98,20 @@ The same reasoning as `GamePick` applies: `PlayerPrediction` is also append-and-
 **PickOutcome** (enum) — `CORRECT` / `MISSED`
 Games that ended in a tie are excluded from the challenge entirely rather than given a third outcome value: there is no correct call to make on one.
 
+## Query indexes
+
+Beyond the per-entity indexes noted above, migration `add_query_indexes` (PR #124) adds the indexes the hot read paths actually filter and sort on. Before it, `Game` was indexed only on `seasonType`, while most queries filtered or ordered by date or by team:
+
+| Table | Index | Why |
+|---|---|---|
+| `Game` | `[gameDate]` | Game lists are ordered by date almost everywhere |
+| `Game` | `[homeTeamId, gameDate]` | Team results and recent-form lookups filter by team, then order by date |
+| `Game` | `[awayTeamId, gameDate]` | The same lookup from the away side |
+| `PlayerGameStat` | `[gameId]` | Boxscore lookups by game. The existing `@@unique([playerId, gameId])` already covers lookups by player |
+| `Player` | `[teamId]` | Roster lookups |
+
+See [Performance](performance.md) for the measured effect and for what is cached rather than indexed.
+
 ## Relationship diagram
 
 ```

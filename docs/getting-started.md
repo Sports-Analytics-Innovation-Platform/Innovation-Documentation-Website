@@ -34,6 +34,8 @@ Fill in the values `.env.example` documents. The required variables are:
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID — create at [Google Cloud Console](https://console.cloud.google.com/apis/credentials) |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
 | `VITE_API_BASE_URL` | (frontend, if needed) API base URL for production builds |
+| `PRISMA_LOG_QUERIES` | Optional. `true` logs every SQL statement the API issues — used to count queries before and after a change ([Performance](design/performance.md)) |
+| `API_CACHE_DISABLED` | Optional. `true` turns off the in-process response cache, to confirm a result is genuinely cached rather than coincidentally fast |
 
 Never commit the filled-in `.env` files. See [Security](security.md) for why.
 
@@ -112,6 +114,7 @@ npx tsc -b --noEmit     # -b is required: tsconfig.json is solution-style
 | Frontend shows no data / requests to `/api/...` 404 or fail with a CORS error | Confirmed working via `vite.config.ts`'s `/api` → `http://localhost:4000` proxy — if you're still seeing this, check the backend is actually running on port 4000. |
 | Google sign-in fails locally | Check `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` are set in `apps/api/.env` and the redirect URI (`http://localhost:4000/auth/callback/google`) is registered in the Google Cloud console. |
 | `tsc` reports "Cannot find module" errors in `apps/api` for packages that *are* in `package.json` | Stale local install. Run `npm ci && npm run prisma:generate` in `apps/api`. |
+| Every `/api` and `/auth` call returns **502** from the Vite dev server | The API isn't running — usually because it crashed at boot, not because the proxy is misconfigured. Check the API's own startup log first. A known cause: `apps/api/.env` being overwritten with a copy of `.env.example`, which leaves `GOOGLE_CLIENT_ID`/`SECRET` empty and `SUPABASE_URL` as the `<project-ref>` placeholder that Supabase rejects at startup. Vite reports this as 502 because nothing is listening on port 4000. |
 
 If you hit something not covered here, add it to this table once you've solved it — that's the point of this page.
 

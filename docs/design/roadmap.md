@@ -52,6 +52,7 @@ See the [Sprint Log](../sprint-log.md) for the complete task-by-task record.
 - 🔶 Database integration with signup functionality — Google OAuth sign-up/sign-in exists; credential-based password reset still open (client accepted ~80% for auth without it, per 2026-09-07 client meeting; Daniel building a simple on-page reset)
 - ✅ Signed-in home dashboard wired to real endpoints (PR #94, merged 2026-09-11) — the shell from PR #87 now reads live data through a new user-owned personalisation layer: Beat the Model, a watchlist with per-player scouting notes, followed-team results, and saved comparisons and lineups, plus a public model-accuracy ledger and accuracy leaderboard
 - Redis/BullMQ — not needed; the ingestion pipeline hasn't required batch/scheduled processing. Zod is in use after all, validating request bodies on the write routes added in PR #94
+- ✅ Database round-trip reduction (PR #124, 13 September 2026) — an in-process response cache, query consolidation, frontend cache defaults, a session cookie cache and new indexes, with measured before/after query counts. Not in the original Sprint 2 plan; pulled in once the personalisation layer made the per-request query volume visible. See [Performance](performance.md) and [ADR-004](../decisions/adr-004-caching-strategy.md)
 - Frontend polish and responsiveness pass — ongoing per the 2026-09-10 team meeting (Figma-based UI redesign in progress, profile page planned)
 
 ## Sprint 3 — model maturity (due 2026-09-29)

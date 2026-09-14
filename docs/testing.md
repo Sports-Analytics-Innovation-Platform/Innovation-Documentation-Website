@@ -14,6 +14,8 @@ The project uses a **three-layer** testing approach, each layer targeting a diff
 
 The principle: **unit tests for logic, integration tests for routes, component tests for UI** — with no layer doing another's job. A unit test never boots the database; an E2E test never imports a React component.
 
+As of PR #124 (13 September 2026) the API suite is **414 tests** and passes in full, end-to-end specs included. The web home-page suite passes alongside it, with cases added for the Beat the Model loading state, the early load of the next game, and skipping a game that was already called.
+
 ## API tests
 
 ### Unit tests
@@ -92,6 +94,9 @@ export async function createTestApp(): Promise<INestApplication> {
 E2E tests run **serially** (`fileParallelism: false` in `vitest.config.ts`) against a single shared Postgres database. This is deliberate: parallel spec files would race each other's inserts and truncations, causing flaky unique-constraint failures. The 20-second `testTimeout` and `hookTimeout` accommodate the database round-trips.
 
 The test database is **disposable** — it is created fresh in CI (a `postgres:16-alpine` service container) and pointed at locally via `.env.test` (copied from `.env.test.example`). No test data persists between runs.
+
+!!! note "The API response cache disables itself under test"
+    The in-process response cache added in PR #124 detects Vitest and passes straight through, rather than relying on every spec to remember to clear it. Without that, a suite that truncates and reseeds one shared database between specs would serve a previous spec's rows from cache. It can also be switched off explicitly with `API_CACHE_DISABLED=true` — see [Performance](design/performance.md).
 
 ## Frontend tests
 

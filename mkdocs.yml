@@ -79,6 +79,7 @@ nav:
       - API Design: design/api-design.md
       - API Reference (Swagger): api-reference.md
       - UI Overview: design/wireframes.md
+      - Performance: design/performance.md
       - Feature Tiers: design/feature-tiers.md
       - Roadmap: design/roadmap.md
   - Process:
@@ -100,6 +101,7 @@ nav:
       - "ADR-001: Database": decisions/adr-001-database.md
       - "ADR-002: Auth": decisions/adr-002-auth.md
       - "ADR-003: Hosting Topology": decisions/adr-003-hosting-topology.md
+      - "ADR-004: Caching Strategy": decisions/adr-004-caching-strategy.md
   - Tech Stack: tech-stack.md
   - Security: security.md
   - Meetings:

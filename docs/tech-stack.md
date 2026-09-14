@@ -149,7 +149,7 @@ These were confirmed as team decisions but are not yet in the codebase:
 | Choice | Why | Status |
 |---|---|---|
 | **Redis + BullMQ** | Batch submission/ingestion processing and incremental recomputation jobs. | Planned if ingestion pipeline needs batch/scheduled processing |
-| **Redis** (cache / rate limiting) | Doubles as the cache layer and a rate-limit store — relevant given `nba_api` itself is rate-limit-sensitive (see [Security](security.md)). | Planned if rate limiting is needed |
+| **Redis** (cache / rate limiting) | **Evaluated for caching and rejected** — the API runs as a single Render instance, so an in-process cache does the same job with no network hop and no extra service to run or pay for. See [ADR-004](decisions/adr-004-caching-strategy.md), which also records when this should be revisited: if the API is ever scaled past one replica. Still the natural choice for a rate-limit store, which remains unbuilt (see [Security](security.md)). | Decided against for caching; still open for rate limiting |
 | **S3-compatible storage** (MinIO for self-hosted/course use) | For any exported/versioned data artifacts. | Planned if needed |
 | **@nestjs/swagger** | Auto-generated OpenAPI 3.0 spec and Swagger UI from NestJS controller decorators. | Setup documented — see [API Reference](api-reference.md) |
 

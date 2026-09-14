@@ -45,6 +45,7 @@ Walks a single auth-gated request end to end, including why it works cross-origi
 - **BetterAuth** (Google OAuth) for auth — see [ADR-002](../decisions/adr-002-auth.md). BetterAuth mounts its own route set at `/api/auth/*`.
 - Routes are versioned under `/v1/` — see [API Design](api-design.md) for the full endpoint table.
 - **Auth-gated endpoints**: Games, predictions, and optimizer endpoints require an authenticated session (`SessionAuthGuard`). Player and team browsing is public.
+- **Response cache** — a small in-process cache (`apps/api/src/cache/`) in front of public reads, with no external cache service. Nothing under `/v1/me` is cached. See [Performance](performance.md) and [ADR-004](../decisions/adr-004-caching-strategy.md).
 - **Health check** at `/health` for Render liveness probes.
 - Deployed on **Render** (Node.js web service, free tier). A pinger service keeps the instance warm to avoid cold-start delays.
 
