@@ -13,6 +13,15 @@ Sign in is implemented via **BetterAuth** with **Google OAuth** (see [Tech Stack
 !!! warning "Known issue: intermittent 'sign-in link expired' — mitigated, not eliminated"
     BetterAuth's OAuth state row hard-expires 10 minutes after sign-in starts, hardcoded in the library with no config option (checked against the latest release, `better-auth@1.7.4`). A normal Google sign-in finishes in seconds, so hitting that ceiling often points at Render's free-tier cold start eating into the window between the pinger's hits, not the 10-minute cap itself being too short. Mitigated 2026-09-11 by pinging `/health` on every page's header mount to give the API a head start waking up before a visitor reaches the sign-in button — this reduces exposure but can't guarantee the API is warm, since a ping doesn't block the click that follows it.
 
+### Session cookie cache
+
+Since PR #124 (13 September 2026), BetterAuth verifies a **signed session cookie** for up to 5 minutes instead of reading the `Session` and `User` tables on every authenticated request. That removed a database round trip from every signed-in page load — see [Performance](design/performance.md) and [ADR-004](decisions/adr-004-caching-strategy.md) for the reasoning.
+
+!!! warning "A revoked session stays valid for up to 5 minutes"
+    This is a security property, not only a performance one, so it is recorded here as well as on the performance page. A session revoked from another device, or a `role` changed directly in the database, does not take effect until the cookie is next re-verified — a window of up to five minutes.
+
+    **Not affected:** sign-out and account deletion clear the cookie immediately, so the paths a user actually controls stay instant. **Would be affected:** the "sign out of all devices" feature suggested above would no longer be immediate under this setting without shortening the window or bypassing the cookie cache for that one action. Worth deciding deliberately if that feature gets built, rather than discovering it during testing.
+
 ## Authorization
 
 Role-based access control is implemented via NestJS guards. The schema defines four roles (`PUBLIC`, `USER`, `ANALYST`, `ADMIN`) with `role` defaulting to `USER` and marked non-writable in the BetterAuth config so a Google profile can't grant itself elevated access.
