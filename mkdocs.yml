@@ -89,10 +89,12 @@ nav:
       - Coding Conventions: coding-conventions.md
       - CI/CD Pipeline: ci-cd.md
       - Testing: testing.md
-      - User Feedback Survey: feedback-survey.md
       - Stakeholder Interactions: stakeholder-interactions.md
       - Requirements Traceability: requirements.md
       - AI Usage Ledger: ai-usage.md
+  - User Feedback:
+      - Methodology: user-feedback-methodology.md
+      - Survey Instrument: feedback-survey.md
   - Decisions (ADRs):
       - Index: decisions/index.md
       - "ADR-001: Database": decisions/adr-001-database.md
