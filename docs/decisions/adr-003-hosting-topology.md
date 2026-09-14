@@ -1,239 +1,273 @@
 # ADR-003: Hosting topology
 
-- **Status:** Accepted — implemented 2026-08-19. Frontend deployed on Cloudflare Pages (auto-deploy via GitHub mirror), API deployed on Render (auto-deploy via GitHub mirror), Postgres on Supabase.
-- **Date:** 2026-08-19
-- **Updated:** 2026-08-24 — a pinger service now keeps the Render API instance warm, eliminating the ~30s cold-start delay that was originally accepted below.
-- **Updated:** 2026-08-19 — database moved from Azure PostgreSQL Flexible
-  Server to Supabase; frontend moved to Cloudflare Pages; API and batch jobs
-  moved to Render after Azure for Students' region policy blocked Azure Static
-  Web Apps and Fly.io's free tier proved unreliable for long-running always-on
-  compute.
-- **Fills:** the `ADR-003` stub referenced in `README.md`
-  ("production deployment/hosting generally — not decided") and on the public
-  docs site's *Decisions* section.
+- **Status:** Accepted. Implemented on 2026-08-19.
+- **Last updated:** 2026-09-14
+
+## Summary
+
+The platform is split across three hosting services, plus scripts that team members run on their own computers:
+
+| Part of the system | Where it runs |
+|---|---|
+| Website (the React front end) | Cloudflare Pages |
+| API (the NestJS back end) | Render |
+| Database and profile-picture storage | Supabase |
+| Data scripts (ingestion, predictor, optimizer) | A team member's computer, run by hand |
+
+This document explains how these parts connect, how the database is deployed and kept up to date, which other hosts were considered, and the risks of the current setup. The design of the database itself is covered in [ADR-001: Database](adr-001-database.md).
+
+## Change log
+
+| Date | Change |
+|---|---|
+| 2026-09-14 | Updated to match the live deployment. Schema changes are now applied automatically when the API starts, the API uses two database connection strings, Supabase file storage is used for profile pictures, the data scripts run on a team member's computer, and the database has no automatic backups. Added the [Database deployment](#database-deployment) section. |
+| 2026-08-24 | A *pinger* (a service that sends the API a request at regular intervals) now stops it from going to sleep, removing the start-up delay described under [Render's free plan](#renders-free-plan). |
+| 2026-08-19 | The first plan, based on Microsoft Azure, was replaced with Cloudflare Pages, Render and Supabase (see [Azure](#azure)). |
 
 ## Context
 
-The platform runs as two non-monolithic apps that only talk over HTTP, plus a
-Postgres database and a set of Python batch processes — none of which is
-deployed anywhere yet. Locally everything is run by hand:
+The platform has four parts:
 
-| Component | Local | What it is |
-|---|---|---|
-| `apps/api` | NestJS on `localhost:4000` | Long-running Node/Express server |
-| `apps/web` | Vite dev server on `localhost:5173` | React SPA (built output is static `dist/`) |
-| Postgres | Docker container on `55432` | The only thing the API talks to over the network |
-| `apps/ingestion`, `apps/optimizer`, `apps/predictor` | Run by hand | Python scripts that write **straight into Postgres**, never through the API |
-| CI | Gitea Actions (`sdp.ms.wits.ac.za`) | Lint/typecheck/test; **no deploy stage** |
+- **The website** is a React single-page application. Building it produces static files (HTML, JavaScript and CSS) that any web host can serve.
+- **The API** is a NestJS server. It is the only way the website, or anyone else, can read or change data.
+- **The database** is PostgreSQL ([ADR-001](adr-001-database.md)).
+- **The data scripts** are Python programs that download NBA data and calculate predictions, writing the results straight to the database.
 
-Two things about the API are decisive for hosting, and both come straight from
-`apps/api/src/main.ts`:
+Several requirements and constraints shaped where these could run:
 
-1. **It is a long-running server, not a stateless function.** `main.ts` builds a
-   plain `express()` instance, mounts `helmet`, `cors`, the BetterAuth handler
-   at `/auth/*splat` (raw body, ahead of `express.json()`), and *then* hands
-   that instance to `NestFactory.create()`. That bootstrap assumes a single
-   persistent process that owns its routes for the lifetime of the server.
-2. **It relies on session cookies across origins.** CORS is configured with
-   `credentials: true` and `origin: process.env.WEB_ORIGIN`, and BetterAuth
-   issues session cookies and runs the Google OAuth redirect dance. Both assume
-   a process that stays warm and a stable, addressable origin.
+1. **The API has to run continuously.** It is built as one long-running server process, not as short functions started for each request, so "serverless" hosting platforms are a poor fit.
+2. **Sign-in relies on cookies across two web addresses.** The website and the API are served from different domains. Login cookies therefore have to be configured for cross-site use (`SameSite=None; Secure`), and the API needs a fixed address.
+3. **The brief requires the API to be the only way to reach the data** (§2.1). Services that automatically generate an API from a database, such as Firebase and Supabase's own API, can't be used for that purpose.
+4. **The source code is hosted on the university's Gitea server.** Most hosting services deploy automatically from GitHub, but not from Gitea.
+5. **The budget is effectively zero.** Every service needed a free or student plan that would last for the whole semester.
 
-The database is Postgres 16 (currently `postgres:16-alpine` in
-`docker-compose.yml`). The brief requires the API remain the only thing that
-talks to the database over HTTP-facing requests; the Python apps write straight
-into Postgres as separate processes. The repo's remote is Gitea, not GitHub, so
-any CI/CD deploy step runs on the self-hosted `act_runner` — GitHub-Actions-only
-deploy integrations are not directly usable.
-
-An initial investigation picked Microsoft Azure for compute (Static Web Apps
-for the SPA, App Service for the API, Container Apps for batch jobs). However,
-the Azure for Students subscription is governed by a "best available regions"
-policy that blocks Azure Static Web Apps in every region offered by the SWA
-creation wizard (`RequestDisallowedByAzure`). Microsoft does not grant
-region-policy exceptions for student subscriptions, and App Service / Container
-Apps are at risk of the same restriction. A subsequent look at Fly.io showed
-that its free tier is not a reliable long-term home for an always-on Machine
-that must stay warm for the full duration of the course. The team therefore
-pivoted to Render for compute.
-
-We need to pick where each of these components runs in production and how they
-are wired together, so that a deploy stage can be added to CI and the platform
-can actually be hosted.
+The team first planned to use Microsoft Azure through its student subscription. Azure's student subscriptions only allow certain regions, and that policy blocked Azure Static Web Apps (the service meant to host the website) in every region offered. Microsoft doesn't grant exceptions for student subscriptions, and the other planned Azure services were at risk of the same restriction. Fly.io was considered next, but its free allowance isn't a permanent free plan for a server that has to stay on all semester. The team therefore moved to the services below.
 
 ## Decision
 
-**Host the static frontend on Cloudflare Pages, the NestJS API and Python batch
-jobs on Render, and the Postgres database on Supabase** (managed Postgres —
-Supabase's auto REST/Auth/Storage APIs deliberately unused). Keeping
-Supabase's HTTP API off means the NestJS API stays the only HTTP path to the
-data, per the brief.
+**The website is hosted on Cloudflare Pages, the API on Render, and the database on Supabase. The data scripts are run by hand from a team member's computer.**
 
-### Topology
+Supabase is used for two things only: a managed PostgreSQL database, and one private storage bucket for profile pictures. Supabase's automatically generated database API and its built-in authentication are not used, and the browser never connects to Supabase at all. All requests for data or files go through routes written by hand in the project's API, which keeps the setup within the brief's rule (§2.1).
+
+The data scripts can't run on a cloud host, because stats.nba.com, the source of the NBA data, blocks requests coming from cloud providers' networks (see [Loading production data](#loading-production-data)).
+
+### How the parts connect
 
 ```
-                        Internet (HTTPS)
-                             |
-        +--------------------+--------------------+
-        |                                         |
-  +-----------+                          +-----------------+
-  | Web SPA   |  Cloudflare Pages        | API             |  Render
-  | (Vite ->  |  (global static CDN,     | (NestJS/Express |  (free
-  |  dist/)   |   managed TLS,           |  +BetterAuth)   |   web service)
-  +-----------+   custom domain)         +-----------------+
-        |                                         |
-        |  /api/*  (CORS w/ credentials,          |
-        |   session cookies, SameSite=None+Secure)|
-        +-----------------+---------------------+
-                          |
-                +---------+---------+
-                |                   |
-        +---------------+   +-----------------------------+
-        | Supabase      |   | Batch jobs                  |
-        | Postgres      |   | Render Cron / Background    |
-        | (managed;     |   | Worker — ingestion,         |
-        | REST APIs     |   | optimizer, predictor        |
-        | unused;       |   | (write straight to Postgres)|
-        | pooled+TLS)   |   +-----------------------------+
-        +---------------+
+                           User's browser
+                                 |
+               +-----------------+------------------+
+               |                                    |
+               v                                    v
+     +-------------------+              +-----------------------+
+     | Website           |              | API                   |
+     | Cloudflare Pages  |              | Render                |
+     | (static files)    |              | (NestJS server, kept  |
+     +-------------------+              |  awake by a pinger)   |
+                                        +-----------+-----------+
+                                                    |
+                        database queries, schema    |   profile picture
+                        changes                     |   uploads and links
+                                                    v
+                                 +-------------------------------------+
+                                 | Supabase                            |
+                                 |   PostgreSQL database               |
+                                 |   Private profile-picture bucket    |
+                                 +-------------------------------------+
+                                                    ^
+                                                    | direct database connection,
+                                                    | run by hand
+                                 +-------------------------------------+
+                                 | Team member's computer              |
+                                 | (home internet connection)          |
+                                 |   Ingestion  <---  stats.nba.com    |
+                                 |   Predictor and optimizer           |
+                                 +-------------------------------------+
 ```
 
-### Component mapping
+The browser downloads the website from Cloudflare, and the website then calls the API. The browser never talks to Supabase directly.
 
-| Layer | Service | Why this service |
+### Where each part runs
+
+| Part | Service | Why this service |
 |---|---|---|
-| Frontend SPA | Cloudflare Pages | `apps/web` builds to static `dist/`. Cloudflare Pages gives a global CDN, managed TLS, custom domain support, and a generous free tier. The repo is on Gitea, so deploy is a local build followed by Wrangler CLI upload or dashboard drag-and-drop — no Git-provider integration required. |
-| NestJS API | Render Web Service (Node.js runtime, free plan) | Render's free plan spins the API down after 15 minutes of inactivity; the team has accepted the resulting ~30-second cold start. BetterAuth sessions are stored in Supabase, so they survive a cold start. Render's Blueprint (`render.yaml`) declares the service and build/start commands. Prisma migrations must be run manually (or from CI) because `preDeployCommand` is not available on Render's free tier. |
-| Postgres | Supabase (managed Postgres) | Managed Postgres with a generous free tier and built-in connection pooling. Supabase's auto REST/Auth/Storage APIs are deliberately unused — the NestJS API stays the only HTTP path to the data, per the brief. Reached over TLS via the pooled connection string. |
-| Python batch apps | Render Cron Job or Background Worker | `apps/ingestion`/`optimizer`/`predictor` are scripts that write straight to Postgres. They run on a schedule (Render Cron) or as an always-on/off Worker — no long-running web server needed, and they stay off the API's HTTP path as the brief requires. |
-| Secrets | Render env vars + Cloudflare Pages env vars | `DATABASE_URL`, `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, and `WEB_ORIGIN` are set in the Render Dashboard for the API and via the Cloudflare Pages dashboard for the build-time `VITE_API_BASE_URL`. They are never in the repo or the image. |
-| Deploy source | Gitea repo mirrored to GitHub, or Render deploy hook | Render does not natively integrate with Gitea. The simplest path is a Gitea → GitHub mirror (Gitea can keep it in sync) so Render auto-deploys on push; alternatively, trigger deploys via Render's deploy hook from a Gitea Actions workflow. |
+| Website | Cloudflare Pages | Serves the static files from a global network with HTTPS included, on a generous free plan. It deploys automatically from a GitHub mirror of the Gitea repository (an automatically updated copy). |
+| API | Render web service (free plan) | Runs a long-lived Node.js server, which the API requires. The free plan puts the server to sleep after 15 minutes without requests, so a pinger sends it requests at regular intervals to keep it awake. Login sessions are stored in the database, so users stay signed in if the server restarts. Render also deploys automatically from the GitHub mirror, using the settings in `render.yaml`. |
+| Database | Supabase (managed PostgreSQL) | Standard PostgreSQL on a free plan, with a built-in connection pooler (explained under [Connection strings](#connection-strings)). All connections are encrypted. See [Database hosting](#database-hosting) for the other providers considered. |
+| Profile pictures | Supabase Storage (private bucket) | Keeps uploaded images out of the database. See [Profile picture storage](#profile-picture-storage). |
+| Data scripts | A team member's computer | stats.nba.com blocks cloud providers' networks, so the ingestion script must run from a home internet connection. The predictor and optimizer run straight afterwards, on the same computer. |
 
-### Environment / networking that this implies
+### Configuration and secrets
 
-- `VITE_API_BASE_URL` (build-time, for `apps/web`) → the Render API URL
-  (`https://<api-app>.onrender.com` or custom domain).
-- `WEB_ORIGIN` (API CORS) → the Cloudflare Pages production URL
-  (`https://<site>.pages.dev` or custom domain).
-- `BETTER_AUTH_URL` → the Render API origin (same as `VITE_API_BASE_URL`
-  without a path prefix).
-- BetterAuth Google OAuth authorised redirect URI →
-  `https://<api-domain>/auth/callback/google` (add alongside the existing
-  `http://localhost:4000/auth/callback/google`).
-- Session cookies → `Secure` + `SameSite=None` so they survive the
-  cross-origin (web-domain ↔ api-domain) `credentials: true` flow.
-- DB access → Supabase pooled connection string (PgBouncer, transaction mode)
-  over TLS; the API and batch workers reach Supabase over the public internet
-  (Supabase IP allow-list optional). No private network because the DB is a
-  separate provider.
-- Local dev is unchanged — Docker Compose Postgres on `55432`/`55433`, `npm
-  run dev` for both apps. Production is a parallel set of managed services, not
-  a replacement for the local setup.
+Passwords, keys and addresses are stored as environment variables in each hosting service's dashboard. They are never committed to either repository.
+
+| Where | Variables |
+|---|---|
+| Render (API) | `DATABASE_URL` and `DIRECT_URL` (database connections), `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` (sign-in), `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` (Google sign-in), `WEB_ORIGIN` (the website's address, which the API accepts requests from), and `SUPABASE_URL`, `SUPABASE_SECRET_KEY` and `SUPABASE_AVATARS_BUCKET` (profile-picture storage) |
+| Cloudflare Pages (website) | `VITE_API_BASE_URL` — the API's address, built into the website's files |
+
+For sign-in to work across the two domains:
+
+- `WEB_ORIGIN` must be the website's exact production address, and `VITE_API_BASE_URL` and `BETTER_AUTH_URL` the API's.
+- Google's sign-in settings must list `https://<api-domain>/auth/callback/google` as an allowed redirect address.
+- Login cookies must be marked `Secure` and `SameSite=None`, or browsers won't send them from the website to the API.
+
+Local development is unaffected: developers run the database in Docker and start both apps on their own machine.
+
+## Database deployment
+
+### Environments
+
+Every copy of the database is built from the same migration files ([ADR-001](adr-001-database.md#schema-change-history)); only the connection details differ.
+
+| Environment | Where it runs | Is the data kept? | How the schema is applied |
+|---|---|---|---|
+| Local development | Docker container (`postgres:16-alpine`) on port `55432` | Yes, in a Docker volume | Developer runs `npx prisma migrate dev` |
+| Local tests | A second Docker container on port `55433` | No, it starts empty every time | The test suite applies all migrations before it starts |
+| Automated tests (CI) | A temporary database created for each test run ([CI/CD Pipeline](../ci-cd.md)) | No, removed after the run | The test suite, as above |
+| Production | Supabase | Yes, managed by Supabase | Applied automatically when the API starts |
+
+Tests use a separate, disposable database so they can never damage development data. Because every test run builds its database from nothing, each run also confirms that the full migration history still works on an empty database.
+
+### Connection strings
+
+PostgreSQL can only handle a limited number of open connections at once. A **connection pooler** sits in front of the database and shares a small number of real connections among many clients. Supabase provides one, but the pooler can't do everything a direct connection can, so the API is given two addresses:
+
+| Variable | Connects to | Used for | Why |
+|---|---|---|---|
+| `DATABASE_URL` | Supabase's pooler in *transaction mode* (port `6543`) | Everything the API does while serving requests | The API makes many short database requests. Transaction mode lends out a real connection only for the length of each request. An earlier setting (*session mode*) kept one real connection per client and quickly hit Supabase's connection limit. |
+| `DIRECT_URL` | The database itself (port `5432`) | Applying schema changes | Prisma locks the database while it applies migrations, and the pooler's transaction mode doesn't support that kind of lock. |
+
+The data scripts also use the direct connection.
+
+### Schema changes
+
+Render starts the API with `npx prisma migrate deploy && npm start`, and has done since 2026-08-29. This command applies any migrations that production hasn't received yet, then starts the server.
+
+- It only applies migration files that were reviewed and committed. It never creates new changes of its own, and does nothing if the database is already up to date, so it is safe to run on every start.
+- **If a migration fails, the API doesn't start.** This is deliberate: running new code against a database that is missing the columns it expects would cause errors, or save incorrect data.
+- Migrations that have already been applied must never be edited. Prisma checks each applied migration's fingerprint on every start, and would refuse to start the API if one had changed.
+
+### Loading production data
+
+Deploying the code updates the database's *structure* automatically, but not its *data*. NBA data is loaded into production by hand:
+
+1. A team member runs the ingestion script from a home internet connection, with its database address temporarily pointed at the production database. This can't be automated on a cloud server, because stats.nba.com blocks cloud providers' networks.
+2. The script upserts every row using the NBA's own IDs, so running it again updates existing rows rather than duplicating them.
+3. The predictor and optimizer are then re-run, so predictions and lineups reflect the new data.
+4. The script's database address is switched back to the local development database straight away.
+
+**New columns need a separate data run.** A migration can add a column to production, but only a data script can fill it. On 2026-09-02, for example, the player biography columns had been deployed but were empty in production; running `backfill_player_bios.py` filled them for 530 players the same day. Smaller single-purpose scripts (`backfill_player_bios.py`, `backfill_advanced_stats.py` and `ingest_postseason.py`) exist so production can be filled in without repeating the full 25–35 minute ingestion.
+
+**The sample-data script must never be run against production.** `npm run prisma:seed` deletes every game and all game statistics before inserting sample data.
+
+### Profile picture storage
+
+Profile pictures are kept in a Supabase Storage bucket called "profile pictures". This is the only Supabase feature used besides the database, and it is set up so the API remains the only way to reach user data:
+
+- The bucket is **private**. Nobody can download a file from it without a signed link.
+- Users upload pictures to the project's own API route (`POST /v1/me/avatar`). Only the API talks to Supabase Storage, using a secret key that exists only on the server.
+- The database stores the file's location, not a web link. When a profile is viewed, the API creates a link that expires after one hour, and reuses it for up to 55 minutes so that an expired link is never handed out.
+- The secret key bypasses Supabase's access rules, so it is kept only in Render's settings and is never sent to the website.
+
+The brief bans services that *generate API endpoints*. Here, Supabase Storage is used only as a place to keep files behind a route the team wrote, the same role Amazon S3 would play.
+
+### Backups and limits
+
+- **The database has no automatic backups.** Supabase backs up paid projects daily, but free projects get no automatic backups and no point-in-time recovery ([Supabase documentation](https://supabase.com/docs/guides/platform/backups)). For free projects, Supabase recommends regularly exporting the database with `supabase db dump` and keeping the export somewhere else. This isn't done yet (see [Open questions](#open-questions)).
+- **What could be recovered if the database were lost:**
+    - the *structure*, fully, by re-running the migrations;
+    - the *NBA data*, by re-running ingestion (about 25–35 minutes, plus the backfill scripts);
+    - but **not user data**. Accounts, followed players, calls and saved lineups and comparisons exist only in production.
+- **Free-plan limits.** Supabase's free plan limits the database's size and pauses projects that have been inactive for a while. The pinger doesn't prevent this: it calls the API's `/health` route, which doesn't query the database. Only real use of the website keeps the database active.
 
 ## Alternatives considered
 
 ### Azure
 
-Originally chosen for the SPA (Static Web Apps), API (App Service), batch jobs
-(Container Apps), secrets (Key Vault), and images (Container Registry). The
-Azure for Students subscription has a "best available regions" policy that
-blocks Static Web Apps in every region offered by the SWA creation wizard
-(`RequestDisallowedByAzure`). Microsoft does not grant region-policy
-exceptions for student subscriptions, and App Service / Container Apps are at
-risk of the same restriction. Azure was therefore abandoned for compute.
+Azure was the original choice for everything: Static Web Apps for the website, App Service for the API, Container Apps for the data scripts, and Azure Database for PostgreSQL for the database. The student subscription's region policy blocked Static Web Apps in every region offered, and put the other services at risk of the same block, so Azure was abandoned.
+
+Keeping only the database on Azure would still have depended on that subscription, and would have meant managing a separate Azure account alongside Render, so the database moved as well.
+
+### Database hosting
+
+When the team moved the database off a local Docker container on 2026-08-18, three managed PostgreSQL providers were considered: **Supabase, Neon and Railway**. Supabase was chosen because:
+
+- **It runs standard PostgreSQL.** The existing schema, migrations and Python scripts worked without changes; only the connection address changed.
+- **It includes a connection pooler,** which a server making many short database requests needs.
+- **It has a free plan,** which the rest of this setup also relies on.
+
+The team's records don't include a detailed comparison of Neon and Railway. Both also run standard PostgreSQL, which makes this decision easy to reverse: moving to another provider would mean changing the two connection strings and running the migrations there.
+
+Supabase is named in the brief as an example of a banned service (§2.1), because it can generate an API automatically. Using it only as a database and a private file bucket, behind the project's own API, is what keeps this setup within the rules (see [Profile picture storage](#profile-picture-storage)).
 
 ### Fly.io
 
-Considered for the API and batch jobs because its Machines can be configured
-to stay always-on. However, Fly.io's free tier is an allowance, not a
-guaranteed permanent free always-on compute tier; for a project that must stay
-online longer than the free allowance covers, it would incur billing. The team
-preferred Render's free tier and has accepted the ~30-second cold start after
-15 minutes of inactivity.
+Fly.io was considered for the API and data scripts, because its servers can be configured to stay on permanently. However, its free tier is a usage allowance rather than a permanent free plan, so a server running all semester would eventually be billed. Render's free plan was preferred.
 
-### Render free tier
+### Render's free plan
 
-Render's free Web Service tier spins down after 15 minutes of inactivity and
-takes ~30 seconds to cold-start on the next request. The team has accepted
-this cold-start latency to keep the API hosting free. The Starter plan
-($7/month) would eliminate cold starts but was not chosen.
+Render's free plan puts a server to sleep after 15 minutes without requests. The next request then waits about 30 seconds while the server starts up again. Render's Starter plan ($7 per month) avoids this, but wasn't chosen. The team initially accepted the delay, then on 2026-08-24 added a pinger that keeps the server awake.
+
+### Running the data scripts on Render
+
+The original plan ran the ingestion, predictor and optimizer scripts on a schedule using Render's scheduled jobs. This was dropped because stats.nba.com blocks requests from cloud providers' networks (a widely reported problem in the `nba_api` library's issue tracker), so ingestion fails on any cloud host. The predictor and optimizer could run on Render, but they only have new work to do straight after ingestion, so they run on the same computer.
 
 ### Vercel
 
-Considered first for the SPA because of its simple DX. Vercel's compute model
-is serverless functions, which is a poor fit for the long-running NestJS API.
-Vercel *could* host the static frontend, but Cloudflare Pages offers the same
-benefits with a simpler Gitea-compatible deploy path, so Vercel was not chosen.
+Vercel was considered first for the website because it is simple to set up. Its servers run as serverless functions, which suit the long-running API poorly. Vercel could have hosted the website alone, but Cloudflare Pages offers the same benefits and was easier to deploy to from this project's repositories.
 
 ## Consequences
 
-**Positive**
+### Benefits
 
-- The API is free to host on Render's free tier; the team has accepted the
-  ~30-second cold start after 15 minutes of inactivity. BetterAuth sessions
-  are stored in Supabase, so they survive a cold start.
-- The API runs as the long-running process `main.ts` was written to be — no
-  serverless rewrites.
-- Postgres is managed and backed up on Supabase, with built-in connection
-  pooling and a free tier.
-- Frontend is served from Cloudflare's global edge network.
-- Local development stays exactly as it is; production is a parallel managed
-  set, not a replacement.
-- The Azure region-policy problem is completely avoided.
+- The entire production system runs on free plans.
+- The API runs as the long-running server it was designed to be, and the pinger keeps it responsive.
+- Schema changes reach production without any manual step, and a broken migration stops the API from starting instead of damaging data.
+- Development, testing and production databases are all built from the same migration files, so they share exactly the same structure.
+- The website is served from Cloudflare's global network, so it loads quickly wherever users are.
 
-**Negative**
+### Drawbacks
 
-- Cost: the API is on Render's free tier. Batch jobs may add cost if they run
-  as Render Cron Jobs / Background Workers. The frontend (Cloudflare Pages)
-  and database (Supabase free tier) remain free.
-- Multi-provider stack (Cloudflare + Render + Supabase) means three dashboards
-  and three secret stores instead of one.
-- No Git-provider auto-deploy because the repo is on Gitea — deploys need a
-  Gitea → GitHub mirror or a Gitea Actions workflow that calls Render's deploy
-  hook.
-- Cross-origin cookies need `SameSite=None; Secure`, which must be set
-  correctly or sign-in silently breaks in production.
+- **No automatic backups.** If the Supabase project were lost, all user data would be lost permanently. This is the biggest open risk in the current setup.
+- **Production data can lag behind the code.** Because data is loaded by hand, a newly deployed feature can show empty values until someone runs the matching data script.
+- **Data is only as fresh as the last manual run.** Nothing refreshes the NBA data on a schedule.
+- **Loading data involves a risky temporary change.** A team member's computer is briefly pointed at the production database. If it isn't switched back, the next local test would write to production.
+- **Three providers to manage.** Cloudflare, Render and Supabase each have their own dashboard and their own copy of the settings.
+- **Deployments depend on the GitHub mirror.** If the copy from Gitea to GitHub stops updating, neither the website nor the API will deploy.
+- **Cookie settings are easy to break.** If the cross-site cookie settings are wrong, sign-in fails in production without an obvious error.
+- **One key has broad access.** The Supabase secret key bypasses all of Supabase's access rules, so anyone who obtained Render's settings could read the storage bucket as well as the database.
 
-**Neutral / follow-ups (out of scope for this ADR)**
+### Completed follow-ups
 
-- A deploy stage in `.gitea/workflows/ci.yml` (build web → upload to
-  Cloudflare Pages; trigger Render deploy for the API; deploy batch jobs) —
-  separate work once this ADR is accepted.
-- `render.yaml` entries for the Python batch Cron Jobs / Background Workers.
-- Production env/secrets mapping (`DATABASE_URL`, `WEB_ORIGIN`,
-  `GOOGLE_CLIENT_*`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `PORT`,
-  `VITE_API_BASE_URL`).
-- Prisma migrations: on the free tier Render does not run `preDeployCommand`,
-  so `npx prisma migrate deploy` must be run manually or from a Gitea Actions
-  workflow before the API deploy.
-- Updating `PROJECT_OVERVIEW.md` "Known gaps" and
-  `README.md` to mark hosting as decided once accepted.
+- Automatic deployment of the website and API: **done**, from the GitHub mirror.
+- Applying migrations in production: **done**, automatically on API start since 2026-08-29.
+- Scheduled data scripts on Render: **dropped**, because stats.nba.com blocks cloud networks.
+- Listing production settings and secrets: **done**, see [Configuration and secrets](#configuration-and-secrets).
 
-## Open questions for the team
+## Open questions
 
-1. Render region: default is Oregon; does latency to South Africa warrant
-   mirroring the Gitea repo to a GitHub org closer to the team, or choosing a
-   Render region nearer to Europe?
-2. Batch scheduling: one Render Background Worker that runs the three Python
-   scripts on a cron schedule, or three separate Render Cron Jobs?
-3. Domains: custom domains for both apps, or `*.onrender.com` +
-   `*.pages.dev` for the demo?
-4. Supabase free tier caps the DB at ~500 MB and pauses after inactivity —
-   enough for the demo/mock data, but does real full-league ingestion need a
-   paid Supabase plan?
+1. **Backups.** Should the database be exported on a schedule (for example, a weekly automated `supabase db dump` saved outside Supabase), or should the project move to Supabase's paid plan before final submission? User data can't be recreated if it is lost.
+2. **Keeping data current.** Who will run ingestion between now and submission, and how often?
+3. **Server region.** The API runs in Render's default region (Oregon, USA). Would a region closer to South Africa noticeably improve response times?
+4. **Domain names.** Should both apps get custom domain names, or keep the default `onrender.com` and `pages.dev` addresses for the demonstration?
 
-## References
+## Sources
 
-- `apps/api/src/main.ts` — the Express/BetterAuth
-  bootstrap that drives the long-running-server requirement.
-- `render.yaml` — the Render Blueprint for the API.
-- `docker-compose.yml` — local Postgres setup this
-  parallels.
-- `docs/PROJECT_OVERVIEW.md` — tech stack and the
-  "Production deployment — not done" known gap.
-- `docs/GIT_METHODOLOGY.md` — review gate this ADR's
-  *Proposed* status respects.
+In the source repository:
+
+- `apps/api/src/main.ts` — how the API server starts, which is why it needs a long-running host.
+- `render.yaml` — Render's build and start settings, including applying migrations on start and the notes on the two connection strings.
+- `apps/api/prisma/schema.prisma` — the two database connection settings.
+- `apps/api/.env.example` — the format of every connection and storage variable.
+- `apps/api/src/me/avatar-storage.service.ts` — the only code that uses Supabase Storage.
+- `apps/ingestion/README.md` — why ingestion must run from a home connection, how long it takes, and the backfill scripts.
+- `docker-compose.yml` — the local development and test databases.
+
+External:
+
+- [Supabase: Database Backups](https://supabase.com/docs/guides/platform/backups) — which backups each Supabase plan includes.
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder[Qoder Lite]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder[Qoder Lite], Claude-Code[Claude Opus 5]*
