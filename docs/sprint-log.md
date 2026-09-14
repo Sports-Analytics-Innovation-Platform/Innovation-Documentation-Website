@@ -160,6 +160,7 @@
 | Fix onboarding follow/unfollow persistence, block finishing onboarding while a preference save is still pending, add error feedback for failed writes, and refresh profile/watchlist/favourite-team locker data after changes (PR #125, closes #67) | `fix` | Daniel Passos |
 | Build an admin page (Teams/Players editing, user role management and deletion) behind the RBAC guard infrastructure (`RolesGuard`, `@Roles()`, the `ADMIN` role) that already existed in the schema but had no endpoint using it — the API's first write access to `Team`/`Player` rows (PR #120, open) | `feat` | Owen Pace (Claude Code, Claude Sonnet 5) |
 | Add model versioning to `GamePrediction` — a `modelVersion` column plus an append-only `GamePredictionRun` history table, so a prediction stays reproducible after the Elo/Four Factors model changes instead of being silently overwritten; first step of a series closing rubric gaps identified in the predictions feature (PR #126, open) | `feat` | Owen Pace (Claude Code, Claude Sonnet 5) |
+| Field the Sprint 2 user feedback survey (Google Forms via WhatsApp), collect 7 responses, and publish the findings, quantitative analysis, and feedback-to-action traceability table on the docs site; raw responses archived with emails redacted | `docs` | Adrian Draxl |
 
 ---
 

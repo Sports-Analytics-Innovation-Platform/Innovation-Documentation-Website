@@ -2,7 +2,105 @@
 
 **Target audience:** Basketball fans, fantasy sports players, sports analytics enthusiasts  
 **Distribution:** WhatsApp groups, team sharing (~2 respondents per team member = ~12 total)  
-**Estimated completion time:** 5–7 minutes
+**Estimated completion time:** 5–7 minutes  
+**Status:** Fielded via Google Forms — **7 responses collected (2026-09-14)**; see [Survey Results and Analysis](#survey-results-and-analysis)
+
+---
+
+## Survey Results and Analysis
+
+**Collected:** 2026-09-14 · **Responses:** 7 of the ~12 targeted (the form stays open) · **Raw data:** [redacted response export](assets/survey-responses/user-feedback-survey-responses-2026-09-14.csv) — respondent emails removed
+
+### Respondent profile
+
+| Measure | Result |
+|---|---|
+| Basketball familiarity (Q1) | Not at all familiar — 5 · Casual fan — 1 · Regular fan — 1 |
+| Fantasy basketball experience (Q2) | Never — 6 · Played a few seasons — 1 |
+| Device (Q3) | Phone — 5 · Desktop — 2 |
+
+The sample skews heavily toward basketball novices on mobile — not the hardcore fantasy players the tool ultimately targets. That is a stated limitation, but a useful one: it stress-tested the novice experience, and several of the sharpest findings below come from exactly that group.
+
+### Quantitative results
+
+| Question | Average (n=7) | Range | Distribution |
+|---|---|---|---|
+| Q5 — Landing page visual appeal | **4.86** / 5 | 4–5 | six 5s, one 4 |
+| Q6b — Personalised dashboard usefulness | **4.57** / 5 | 4–5 | four 5s, three 4s |
+| Q18 — Overall satisfaction | **4.43** / 5 | 4–5 | three 5s, four 4s |
+| Q10 — Ease of browsing teams | **4.14** / 5 | 3–5 | three 5s, two 4s, two 3s |
+| Q7 — Ease of finding a specific player | **4.00** / 5 | 3–5 | two 5s, three 4s, two 3s |
+| Q15 — Fantasy optimiser usefulness | **4.00** / 5 | 3–5 | two 5s, three 4s, two 3s |
+| Q16 — Optimiser output clarity | **4.00** / 5 | 3–5 | one 5, five 4s, one 3 |
+| Q6c — "Beat the Model" engagement | **3.86** / 5 | 3–5 | two 5s, two 4s, three 3s |
+| Q12 — Confidence in predictions for fantasy decisions | **3.71** / 5 | 3–4 | five 4s, two 3s |
+| Q19 — Likelihood of using the tool again | **3.57** / 5 | 1–5 | three 5s, three 3s, one 1 |
+
+Categorical picks:
+
+- **Clarity of the site's purpose (Q6):** 3 very clear, 4 somewhat clear — nobody below
+- **Player stats usefulness (Q8):** 3 extremely useful, 4 very useful
+- **More team details wanted (Q11):** 1 yes-definitely, 5 maybe, 1 no
+- **What would build trust in predictions (Q13):** show historical accuracy — 3 (plus 1 "all of the above except methodology"), compare with other sources — 2, explain methodology — 1
+- **Intended use of predictions (Q14):** fantasy decisions — 2, sports betting — 2, just for fun — 2, wouldn't use them — 1
+- **Optimiser improvements (Q17):** custom constraints — 3, projected points per player — 3, alternative lineups — 1 — *every respondent answered*
+- **Most useful feature (Q20):** fantasy lineup optimiser — 3, game predictions — 2, player browsing and stats — 2
+- **Bugs encountered (Q22):** none — 7 of 7
+
+### What worked well
+
+**The landing page sells the product.** All seven respondents correctly inferred what the tool does from the landing page — "takes a lot of data about basketball games and players, and presents them. Main focus being predicting results/stats", "analyses win probability for teams", "provides stats and line-up recommendations". Visual appeal averaged 4.86/5 (six maximum scores) — a strong return on the Sprint 2 landing-page redesign (PR #103).
+
+**The optimiser is the headline feature.** It won the most-useful-feature vote (3 of 7), and its usefulness and output clarity both averaged 4.0/5. Every respondent chose an improvement they would like (Q17 had a 100% answer rate) — which reads as engagement rather than dissatisfaction.
+
+**Zero reported bugs.** 7 of 7 encountered no bugs, errors, or confusing elements. One readability issue surfaced through Q9 instead (see F7 below), so this speaks well of stability while confirming there is polish work still to do.
+
+**Personalisation lands.** The personalised dashboard (watchlist, followed teams, Beat the Model) averaged 4.57/5 usefulness — validating the PR #94 personalisation layer.
+
+### What needs work
+
+**Prediction trust is the biggest gap.** Confidence in using predictions for fantasy decisions is the lowest-rated measure (3.71/5, nobody above 4). Respondents want *evidence*: historical accuracy (the top request), methodology, and comparison against other sources. The Model Accuracy Ledger and predicted-vs-actual view (PR #94) and the "How it works" explainer (PR #95) were completed in the same final-week window as the survey — the repeated request suggests a discoverability or presentation gap (or a desire for more depth), which the Sprint 3 model-maturity work on the [Roadmap](design/roadmap.md) (target: 75–80% accuracy) directly addresses.
+
+**Novices can't read the stats.** The clearest theme from the novice majority: unexplained stat abbreviations ("what RPG, APG, TS%, etc mean"), labels unreadable without zooming in, and "wordy… LLM-esque language" in the copy. One respondent's single feature wish was a "beginners guide to what Im looking at, and how to make use of the tool to its full extent".
+
+**Retention tracks audience fit, not product quality.** Satisfaction averaged 4.43 but likelihood-to-return only 3.57. The sharpest example: a respondent rating satisfaction 5/5 and return-likelihood 1/5 — not at all familiar with basketball, never played fantasy, wouldn't use the predictions. The tool impresses even outside its target audience; making the novice experience navigable (F7, F9 below) is what converts that goodwill into return visits.
+
+**Beat the Model engagement is middling (3.86/5).** All three 3s came from respondents not at all familiar with basketball — the game's appeal appears to depend on knowing the teams well enough to make a confident pick. The one regular-fan respondent engaged (4/5) and volunteered ideas for it (F14).
+
+### Limitations
+
+- **Sample size and profile.** 7 responses against a ~12 target, and 5 of 7 respondents are not at all familiar with basketball. The form remains open, and a second wave follows the Sprint 3 improvements.
+- **Not hands-on.** Respondents answered while viewing the landing page and app screens; several requests concern features completed in the same final-week window as the survey (PR #94, #95, #111, #123), so whether each respondent actually saw them is uncertain. Sprint 3 adds hands-on sessions and interviews to disambiguate.
+- **Contactable respondents.** Two respondents left contact details for follow-up interviews (addresses removed from the published export and withheld from this page).
+
+### Feedback-to-action traceability
+
+Every distinct piece of feedback, mapped to what happened or will happen with it — the "integration" half of the rubric's user-testing requirement.
+
+| ID | Feedback (source) | Category | Action | Status |
+|---|---|---|---|---|
+| F1 | Show historical prediction accuracy (Q13: 3 + 1 "all of the above except methodology") | Trust / ML | Model Accuracy Ledger and predicted-vs-actual accuracy view already shipped (PR #94); make accuracy more prominent next to predictions and keep expanding it with the Sprint 3 model-maturity work | Shipped (PR #94) — deepen in Sprint 3 |
+| F2 | Explain how predictions are calculated (Q13: 1) | Trust / UX | "How it works" explainer shipped on the Predictions page (PR #95); expand into a fuller methodology section | Shipped (PR #95) — expand in Sprint 3 |
+| F3 | Compare predictions with other sources, e.g. ESPN/CBS (Q13: 2) | Trust | Evaluate cost/benefit for Sprint 3 | Backlog — file as Gitea issue |
+| F4 | Optimiser: allow custom constraints, e.g. "must include LeBron" (Q17: 3) | Feature | Add hard constraints to the MILP solver (must-include / must-exclude players) | Backlog — file as Gitea issue |
+| F5 | Optimiser: show projected points per player (Q17: 3) | Feature | Per-slot predictions already render on the optimizer board and are snapshotted into saved lineups (PR #111); verify visibility and consider explicit fantasy-points projections | Shipped (PR #111) — verify + extend |
+| F6 | Optimiser: show alternative lineups, not just the best (Q17: 1) | Feature | e.g. "next-best 3 lineups" from the solver | Backlog — file as Gitea issue |
+| F7 | Stat abbreviations unexplained; labels unreadable without zooming (Q9/Q21: 1) | UX / Accessibility | Hover-over tooltips or a glossary for stat abbreviations (RPG, APG, TS%, eFG%…) plus a minimum label font size; extends the existing axe-core accessibility checks | Backlog — file as Gitea issue |
+| F8 | Landing-page copy is "wordy" with "LLM-esque language" (Q6: 1) | UX / Copy | Copy-simplification pass on landing page and in-app text | Backlog — file as Gitea issue |
+| F9 | Beginner's guide — "what am I looking at and how to use the tool" (Q23/Q21: 1) | UX / Docs | In-app beginner's guide or glossary page; directly serves the novice segment that dominated this sample | Backlog — file as Gitea issue |
+| F10 | Tolerant player search — "manon" should find "Chris Mañón" (Q24: 1) | Feature | Fuzzy/diacritic-insensitive matching on the search endpoints | Backlog — file as Gitea issue |
+| F11 | All-time NBA stat leaders (Q9: 1) | Data / Feature | Requires historical data beyond the three ingested seasons — evaluate against Sprint 3 scope | Backlog — evaluate |
+| F12 | Show player position in player stats (Q21: 1) | Feature | Position is available from the CommonPlayerInfo endpoint the bio fields already come from — verify it is surfaced on the profile page; file if missing | Verify, then file if needed |
+| F13 | More team details — recent games with outcomes (Q11: 1 yes + 5 maybe) | Feature | Team profile pages with records and recent form landed in PR #123 in the final Sprint 2 week; confirm discoverability and consider a standings view | Shipped (PR #123) — extend if needed |
+| F14 | Beat the Model: random daily/weekly games (Q23: 1) | Feature / Engagement | Idea for lifting the game's 3.86 engagement score — evaluate for Sprint 3 | Backlog — evaluate |
+| F15 | Two respondents left contact details for interviews | Process | 1:1 follow-up interviews in Sprint 3 for deeper qualitative feedback | Planned — Sprint 3 |
+
+### Next steps (Sprint 3)
+
+1. **File the backlog items** (F3–F14) as Gitea issues and prioritise them in the sprint backlog, per the [integration process](testing.md#how-feedback-is-integrated)
+2. **Interview the two follow-up volunteers** — disambiguate the discoverability questions raised above
+3. **Run hands-on testing sessions** on the live app rather than screenshots
+4. **Re-run the survey** after the Sprint 3 model and readability work — a before/after comparison of these scores doubles as evidence for the Milestone 3 *Improvement* criterion
 
 ---
 
@@ -298,4 +396,4 @@
 
 ---
 
-*AI Declaration: This survey was drafted with assistance from Qoder.*
+*AI Declaration: This survey was drafted and its responses analysed with the assistance of Qoder[Qoder Lite].*

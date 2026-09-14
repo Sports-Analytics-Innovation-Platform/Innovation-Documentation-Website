@@ -299,13 +299,15 @@ This is what the team agrees to, enforced via the [Definition of Done](definitio
 
 ## User feedback process
 
-Beyond automated testing, the project has a **formal user feedback process designed**, though it hasn't been run yet. The rubric's "extensive user testing" bar needs evidence of both collection *and* integration — this page documents the process and its integration plan; [rubric-links.md](rubric-links.md) is the honest record of where collection currently stands (drafted, not yet distributed).
+Beyond automated testing, the project runs a **formal user feedback process**. The rubric's "extensive user testing" bar needs evidence of both collection *and* integration — the survey was fielded in the final week of Sprint 2 and collected **7 responses (2026-09-14)**; findings, quantitative analysis, and the feedback-to-action traceability table are published on the [User Feedback Survey](feedback-survey.md) page.
 
 ### Feedback collection methods
 
 | Method | Tool | Status |
 |---|---|---|
-| **Structured survey** | Google Forms distributed via WhatsApp | Drafted — see [User Feedback Survey](feedback-survey.md) |
+| **Structured survey** | Google Forms distributed via WhatsApp | **Collected — 7 responses (2026-09-14)**, findings documented — see [User Feedback Survey](feedback-survey.md) |
+| **Follow-up interviews** | 1:1 sessions with survey volunteers | Planned for Sprint 3 — two respondents left contact details |
+| **Hands-on testing sessions** | Respondents using the live app rather than screenshots | Planned for Sprint 3 |
 | **Client meeting notes** | Meeting minutes with action items | Ongoing — see [Meetings](meetings/index.md) |
 
 ### How feedback is integrated
@@ -316,8 +318,8 @@ Beyond automated testing, the project has a **formal user feedback process desig
 4. Changes made in response to feedback are documented in the [Sprint Log](sprint-log.md) with a link back to the originating feedback
 5. The full feedback methodology, questions asked, distribution plan, findings, and integration actions are documented on the [User Feedback Survey](feedback-survey.md) page
 
-!!! note "Feedback methodology page"
-    The dedicated feedback methodology page is created once the Google Forms survey has been distributed and responses collected. It will include the survey instrument, sharing method, raw findings, and a traceability table showing which feedback items led to which changes.
+!!! note "Findings published"
+    The survey instrument, sharing method, findings, and the traceability table showing which feedback items led to which changes (or backlog entries) are all on the [User Feedback Survey](feedback-survey.md) page. The raw response export — with respondent emails redacted — is stored alongside it in `docs/assets/survey-responses/`.
 
 ## Bug tracking
 
