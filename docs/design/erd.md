@@ -1,148 +1,392 @@
 # ERD
 
-!!! success "Confirmed from `schema.prisma`"
-    The core, prediction, and auth entities below are built directly from the real `apps/api/prisma/schema.prisma`, verified field by field against the current schema — including the two Sprint 2 migrations that added season segments (`add_game_season_type`) and advanced per-game stats (`add_advanced_player_game_stats`). The **Personalisation entities** section carries a weaker claim and says so in its own note; read that before citing it.
+This page describes every table in the platform's PostgreSQL database: what each one holds, what its columns mean, and how the tables relate to each other. The reasons behind the design are explained in [ADR-001: Database](../decisions/adr-001-database.md), and where the database runs in [ADR-003: Hosting Topology](../decisions/adr-003-hosting-topology.md).
+
+!!! success "Checked against the schema"
+    Every table, column, constraint and index on this page was checked against `apps/api/prisma/schema.prisma` in the source repository, as of its most recent migration, `20260913140000_game_prediction_versioning` (13 September 2026).
 
 ## Diagram
 
-See the [Architecture Overview](architecture.md#database-erd) for the full visual ERD, grouped by concern (auth, domain, optimizer, predictor). PlantUML source lives alongside the main app repo's diagrams (`docs/diagrams/database-erd.puml`).
+![Database ERD](diagrams/database-erd.svg)
 
-## Core entities
+Click the diagram to enlarge it. The diagram's source file is `docs/diagrams/database-erd.puml` in the source repository.
 
-**Team**
-`id`, `nbaTeamId` (unique, external NBA API ID), `name`, `abbreviation`, `city`, `conference`, `division`, `logoUrl?`
+**How to read it**
 
-**Player**
-`id`, `nbaPlayerId` (unique), `firstName`, `lastName`, `position`, `heightInches?`, `weightLbs?`, `jerseyNumber?`, `headshotUrl?`, `teamId?` → Team
+- `*` marks a required column; `?` marks an optional one that may be empty (`NULL`).
+- `PK` is a primary key and `FK` a foreign key (a link to a row in another table).
+- Lines below a table's dotted divider list its unique constraints and indexes.
+- On the connecting lines, a crow's foot means "many", a bar means "exactly one", and a circle means "zero" is allowed. For example, one team has zero or many players.
 
-**Game**
-`id`, `nbaGameId` (unique), `gameDate`, `season`, `homeTeamId` → Team, `awayTeamId` → Team, `homeScore?`, `awayScore?`, `seasonType` (`SeasonType` enum: `REGULAR`/`PLAY_IN`/`PLAYOFFS`/`FINALS`, default `REGULAR`), `playoffRound?`
-Indexed on `seasonType`. Every pre-existing row backfilled to `REGULAR` on migration — `nba_api`'s `LeagueGameFinder` was always called with `season_type_nullable="Regular Season"` before this migration, so the default is correct for old data, not a guess.
+## Overview
 
-**GameEvent** — raw play-by-play; the source of truth every derived stat traces back to, per the brief's requirement that statistics come from event records, not typed totals
-`id`, `gameId` → Game, `sequence`, `period`, `clock`, `eventType`, `playerId?`, `description`, `createdAt`
-Indexed on `[gameId, sequence]`.
+The database has **20 tables** and **3 enums** (fixed lists of allowed values), in five groups. Each group is written by exactly one part of the system.
 
-**PlayerGameStat** — per-game boxscore, derived from `GameEvent` rows, never entered by hand
-`id`, `playerId` → Player, `gameId` → Game, `minutes`, `points`, `rebounds`, `assists`, `steals`, `blocks`, `turnovers`, `fieldGoalsMade/Attempted`, `threesMade/Attempted`, `freeThrowsMade/Attempted`, `plusMinus?`, `usagePercentage?`, `offensiveRating?`, `defensiveRating?`, `offensiveRebounds?`, `defensiveRebounds?`
-Unique on `[playerId, gameId]`. The six advanced columns are all nullable by design, fetched leaguewide from the advanced boxscore rather than per game to stay within `nba_api`'s rate limit — `null` means the row predates these columns or the advanced boxscore was unavailable, which is a different fact than a real 0% usage rate or an even plus-minus.
-
-!!! success "Confirmed: season averages, true shooting%, eFG%, and assist-to-turnover are computed on read, not stored"
-    `/v1/players/:id/stats` (in `players.controller.ts`) computes `seasonAverages` and `gameLog` at request time from `PlayerGameStat` rows via `statsService`. There is no `SeasonAverages` table in the schema — it was never a stored model, only an API response shape. True shooting%, effective FG%, and assist-to-turnover ratio are derived the same way from existing boxscore fields (verified against `BoxScoreAdvancedV3` to three decimal places) rather than given their own columns. This confirms the brief's "derived from events, not stored totals" requirement is actually being followed, not just documented as an intent.
-
-## Prediction entities
-
-Added to support game-outcome prediction (`apps/predictor`) and the fantasy-lineup optimizer (`apps/optimizer`). NestJS only reads these tables — the Python services write to them directly.
-
-**GamePrediction** — one row per game (unique on `gameId`, upserted on rerun)
-`id`, `gameId` (unique) → Game, `homeWinProbability` (Elo-based, in [0, 1]), `homeTeamEloPre`, `awayTeamEloPre`, `predictedMarginHome?` (Four Factors-based, home minus away, in points), `marginMethod?` ("regression" or "heuristic"), `createdAt`
-
-**PlayerPrediction** — one row per player per optimizer run (append-and-take-latest shape)
-`id`, `playerId` → Player, `predictedFantasyPoints`, `salary` (synthetic DFS-style cost, not a real market price), `asOf`
-Indexed on `[playerId, asOf]`.
-
-**Lineup** — a single optimizer run's chosen lineup (MILP solve)
-`id`, `totalPredictedPoints`, `totalSalary`, `budget`, `createdAt`
-
-**LineupSlot** — one player slot in a lineup
-`id`, `lineupId` → Lineup (cascade delete), `playerId` → Player
-Unique on `[lineupId, playerId]`.
-
-## Auth entities
-
-Added for the BetterAuth migration — see [ADR-002](../decisions/adr-002-auth.md).
-
-**User**
-`id`, `name`, `email` (unique), `emailVerified`, `image?`, `role` (`PUBLIC`/`USER`/`ANALYST`/`ADMIN`, project-specific RBAC field layered on BetterAuth's schema, non-writable by the OAuth flow itself), `createdAt`, `updatedAt` — has many `Session`, many `Account`
-
-**Session**
-`id`, `userId` → User (cascade delete), `token` (unique), `expiresAt`, `ipAddress?`, `userAgent?`, `createdAt`, `updatedAt`
-
-**Account** — one row per linked sign-in method (currently just Google)
-`id`, `userId` → User (cascade delete), `accountId`, `providerId`, `accessToken?`, `refreshToken?`, token expiries, `scope?`, `idToken?`, `password?`, `createdAt`, `updatedAt`
-
-**Verification** — short-lived tokens (e.g. email verification); present because it's part of BetterAuth's core schema, currently unused while Google OAuth is the only provider — see the password-reset risk flagged in [ADR-002](../decisions/adr-002-auth.md)
-
-## Personalisation entities
-
-Added by a single migration, `20260910134345_home_personalization` (PR #94, merged 2026-09-11), to back the signed-in home page. Two properties of this layer are worth stating before the field lists:
-
-- **Zero ALTERs on any NBA-data table.** The personalisation layer sits entirely alongside the existing schema. Nothing about how `Game`, `Player`, or `PlayerGameStat` behave changed to accommodate it, so none of the ingestion or prediction code had to be touched.
-- **The only genuinely new rows are records of a user's own choices.** No NBA statistic is copied into this layer, and nothing derived is stored — the watchlist averages and scoring trends are computed at request time from existing `PlayerGameStat` rows, so a newly ingested game shows up immediately rather than waiting for a recompute.
-
-!!! note "Verified from the migration's design notes, not line by line from `schema.prisma`"
-    Unlike the sections above, this one was written from the migration description rather than read field by field out of the schema. The table purposes, the frozen columns, and the constraints called out below are accurate; the surrounding field lists are the documented subset, not a guaranteed-complete column listing. A verification pass against `schema.prisma` is still owed here, and this note should be replaced with the standard "Confirmed" admonition once someone has done it.
-
-**FollowedPlayer** — a player on a user's watchlist, plus that user's own free-text scouting note
-`userId` → User, `playerId` → Player, `note?` (free text, 500 characters)
-One row per user per player. The note belongs to the follow, not to the player — two users following the same player each keep their own.
-
-**FollowedTeam** — a team a user tracks
-`userId` → User, `teamId` → Team, `isPrimary`
-At most one of a user's followed teams may have `isPrimary` set.
-
-**GamePick** — a user's call on a game, with the model's prediction frozen at pick time
-`userId` → User, `gameId` → Game, the picked side, `outcome` (`PickOutcome`), and four frozen columns: `modelHomeWinProbabilityAtPick`, `modelPredictedMarginAtPick`, `homeTeamEloAtPick`, `awayTeamEloAtPick`
-
-!!! info "Why the model's numbers are copied here instead of joined"
-    `GamePrediction` is append-and-take-latest — a later predictor run can change what the "current" prediction for a game is. If the head-to-head record re-derived the model's numbers at read time, a rerun would silently change what the user was graded against, and a record they had already seen would quietly rewrite itself. Freezing the four values at pick time is what makes "you beat the model on this game" a durable statement rather than one that depends on when you ask.
-
-**SavedComparison** / **SavedComparisonPlayer** — a named set of players saved from the Compare tab
-`SavedComparison`: `userId` → User, a user-supplied name. `SavedComparisonPlayer`: `savedComparisonId` → SavedComparison, `playerId` → Player.
-
-**SavedLineup** / **SavedLineupSlot** — a saved optimizer lineup
-`SavedLineup`: `userId` → User. `SavedLineupSlot`: `savedLineupId` → SavedLineup, `playerId` → Player, plus two frozen columns — `salaryAtSave` and `predictedPointsAtSave`.
-
-The same reasoning as `GamePick` applies: `PlayerPrediction` is also append-and-take-latest, so a slot's salary and predicted points are captured at save time. That frozen pair is precisely what makes the "drift since you saved this" line on the home page computable, and honest — without it there is no baseline to have drifted from.
-
-**PickOutcome** (enum) — `CORRECT` / `MISSED`
-Games that ended in a tie are excluded from the challenge entirely rather than given a third outcome value: there is no correct call to make on one.
-
-## Query indexes
-
-Beyond the per-entity indexes noted above, migration `add_query_indexes` (PR #124) adds the indexes the hot read paths actually filter and sort on. Before it, `Game` was indexed only on `seasonType`, while most queries filtered or ordered by date or by team:
-
-| Table | Index | Why |
+| Group | Tables | Written by |
 |---|---|---|
-| `Game` | `[gameDate]` | Game lists are ordered by date almost everywhere |
-| `Game` | `[homeTeamId, gameDate]` | Team results and recent-form lookups filter by team, then order by date |
-| `Game` | `[awayTeamId, gameDate]` | The same lookup from the away side |
-| `PlayerGameStat` | `[gameId]` | Boxscore lookups by game. The existing `@@unique([playerId, gameId])` already covers lookups by player |
-| `Player` | `[teamId]` | Roster lookups |
+| [NBA data](#nba-data) | `Team`, `Player`, `Game`, `GameEvent`, `PlayerGameStat` | The ingestion scripts (`apps/ingestion`), which download data from stats.nba.com |
+| [Game predictions](#game-predictions) | `GamePrediction`, `GamePredictionRun` | The predictor script (`apps/predictor`) |
+| [Fantasy lineups](#fantasy-lineups) | `PlayerPrediction`, `Lineup`, `LineupSlot` | The optimizer script (`apps/optimizer`) |
+| [Accounts](#accounts) | `User`, `Session`, `Account`, `Verification` | BetterAuth, the authentication library |
+| [Personal data](#personal-data) | `UserFollowedPlayer`, `GamePick`, `SavedComparison`, `SavedComparisonPlayer`, `SavedLineup`, `SavedLineupSlot` | The API, when a signed-in user saves something |
 
-See [Performance](performance.md) for the measured effect and for what is cached rather than indexed.
+The API reads every group, but never writes to the NBA data, game prediction or fantasy lineup tables.
 
-## Relationship diagram
+Unless stated otherwise, every table's primary key is `id`, a generated UUID.
+
+## NBA data
+
+### Team
+
+One row per NBA team.
+
+| Column | Type | Notes |
+|---|---|---|
+| `nbaTeamId` | int, unique | The NBA's own team ID. Ingestion uses it to update existing teams instead of creating duplicates. |
+| `name`, `abbreviation`, `city` | string | For example "Lakers", "LAL", "Los Angeles" |
+| `conference`, `division` | string | |
+| `logoUrl` | string, optional | Not currently filled in |
+
+### Player
+
+One row per player.
+
+| Column | Type | Notes |
+|---|---|---|
+| `nbaPlayerId` | int, unique | The NBA's own player ID |
+| `firstName`, `lastName`, `position` | string | |
+| `heightInches`, `weightLbs` | int, optional | |
+| `jerseyNumber`, `headshotUrl` | string, optional | |
+| `teamId` | → `Team`, optional | The player's **current** team, from the latest roster. For the team a player played for in a past game, see `PlayerGameStat.teamId`. |
+| `birthDate` | datetime, optional | Biography fields, all optional. They come from a separate NBA endpoint and are filled in by a backfill script. |
+| `school`, `country`, `lastAffiliation`, `rosterStatus` | string, optional | |
+| `seasonExp`, `draftYear`, `draftRound`, `draftNumber` | int, optional | `seasonExp` is years of NBA experience |
+
+**Index:** `teamId`, for loading a team's roster.
+
+### Game
+
+One row per game.
+
+| Column | Type | Notes |
+|---|---|---|
+| `nbaGameId` | string, unique | The NBA's own game ID |
+| `gameDate` | datetime | |
+| `season` | string | For example "2025-26" |
+| `homeTeamId`, `awayTeamId` | → `Team` | |
+| `homeScore`, `awayScore` | int, optional | Empty until the game has been played |
+| `seasonType` | `SeasonType`, default `REGULAR` | Regular season, play-in, playoffs or Finals. Every statistics query filters on this, so figures from different parts of the season never mix. All games loaded before this column was added were regular-season games, so the default is correct for them. |
+| `playoffRound` | int, optional | 1–4 for playoff and Finals games; empty otherwise |
+
+**Indexes:** `seasonType`; `gameDate`; `(homeTeamId, gameDate)` and `(awayTeamId, gameDate)`, for a team's schedule in date order.
+
+### GameEvent
+
+Raw play-by-play: one row per event in a game, such as a shot or a foul. This is the underlying event record that the brief asks statistics to be traced back to.
+
+| Column | Type | Notes |
+|---|---|---|
+| `gameId` | → `Game` | |
+| `sequence`, `period` | int | The event's position in the game and the quarter it happened in |
+| `clock` | string | Game clock at the time of the event |
+| `eventType`, `description` | string | |
+| `playerId` | string, optional | Stored as plain text, not a link to `Player` |
+| `createdAt` | datetime | |
+
+**Index:** `(gameId, sequence)`, for reading a game's events in order.
+
+### PlayerGameStat
+
+One player's box score for one game. Season averages, true shooting percentage, effective field-goal percentage and assist-to-turnover ratio are calculated from these rows each time they are requested (by the API's `/v1/players/:id/stats` route); there is no table of stored averages. Those calculations were checked against the NBA's own published figures and matched to three decimal places.
+
+| Column | Type | Notes |
+|---|---|---|
+| `playerId` | → `Player` | |
+| `gameId` | → `Game` | |
+| `teamId` | → `Team`, optional | The team the player played for **in this game**, which can differ from their current team after a trade. Empty for some rows loaded before this column was added. |
+| `minutes`, `points`, `rebounds`, `assists`, `steals`, `blocks`, `turnovers` | int | |
+| `fieldGoalsMade`, `fieldGoalsAttempted` | int | |
+| `threesMade`, `threesAttempted` | int | |
+| `freeThrowsMade`, `freeThrowsAttempted` | int | |
+| `offensiveRebounds`, `defensiveRebounds` | int, optional | |
+| `plusMinus` | int, optional | Points scored minus points conceded while the player was on court |
+| `usagePercentage` | float, optional | Share of the team's plays used by the player while on court |
+| `offensiveRating`, `defensiveRating` | float, optional | Points produced and allowed per 100 possessions, as published by the NBA |
+
+The optional statistics columns are empty for rows loaded before those columns existed, or where the NBA's data didn't include them. Empty means "not recorded", which is different from zero; the website shows "—".
+
+**Unique:** `(playerId, gameId)`, so a player has at most one row per game. **Index:** `gameId`, for loading a game's box score.
+
+## Game predictions
+
+### GamePrediction
+
+The current prediction for each game: one row per game, replaced each time the predictor runs.
+
+| Column | Type | Notes |
+|---|---|---|
+| `gameId` | → `Game`, unique | |
+| `homeWinProbability` | float | The home team's chance of winning (0 to 1), from the Elo rating model |
+| `homeTeamEloPre`, `awayTeamEloPre` | float | Each team's Elo rating (a strength score) going into the game |
+| `predictedMarginHome` | float, optional | Predicted home score minus away score, from the Four Factors model. Empty if either team has no completed games to learn from. |
+| `marginMethod` | string, optional | `regression` (a fitted model) or `heuristic` (fixed weights, used when there is too little data) |
+| `modelVersion` | string, default `unversioned` | Which version of the model produced this prediction |
+| `createdAt` | datetime | |
+
+### GamePredictionRun
+
+A permanent history of predictions: one row per game per model version. Older predictions stay available after the model changes.
+
+| Column | Type | Notes |
+|---|---|---|
+| `gameId` | → `Game` | |
+| `modelVersion` | string | |
+| `homeWinProbability`, `homeTeamEloPre`, `awayTeamEloPre` | float | As in `GamePrediction` |
+| `predictedMarginHome`, `marginMethod` | optional | As in `GamePrediction` |
+| `createdAt` | datetime | |
+
+**Unique:** `(gameId, modelVersion)`. Re-running the same model version updates its row instead of adding another. **Index:** `gameId`.
+
+## Fantasy lineups
+
+### PlayerPrediction
+
+A player's predicted fantasy points for their next game. Each optimizer run adds a new row per player, and the newest row is used.
+
+| Column | Type | Notes |
+|---|---|---|
+| `playerId` | → `Player` | |
+| `predictedFantasyPoints` | float | |
+| `salary` | int | A made-up fantasy "cost" calculated from the prediction, not a real market price |
+| `asOf` | datetime | When the prediction was made |
+
+**Index:** `(playerId, asOf)`, for finding each player's latest prediction.
+
+### Lineup
+
+The best lineup found by one optimizer run: the 5 players with the highest total predicted points within a salary budget.
+
+| Column | Type |
+|---|---|
+| `totalPredictedPoints` | float |
+| `totalSalary`, `budget` | int |
+| `createdAt` | datetime |
+
+### LineupSlot
+
+One player in a `Lineup`.
+
+| Column | Type |
+|---|---|
+| `lineupId` | → `Lineup` |
+| `playerId` | → `Player` |
+
+**Unique:** `(lineupId, playerId)`, so a player can't appear twice in one lineup.
+
+## Accounts
+
+These four tables follow the schema required by [BetterAuth](https://better-auth.com/docs/concepts/database), the authentication library ([ADR-002](../decisions/adr-002-auth.md)). `role`, `username`, `avatarUrl` and `favoriteTeamId` on `User` are the project's own additions.
+
+### User
+
+| Column | Type | Notes |
+|---|---|---|
+| `name` | string | |
+| `email` | string, unique | |
+| `emailVerified` | boolean, default `false` | |
+| `image` | string, optional | Profile image URL from Google |
+| `role` | `Role`, default `USER` | Permission level. Signing up or updating a Google profile can't change it. |
+| `username` | string, optional, unique | Chosen after first sign-in. Empty until the user finishes setting up their profile. |
+| `avatarUrl` | string, optional | Location of an uploaded profile picture in private file storage. Despite the name, this is not a web link; the API creates a temporary link when needed. |
+| `favoriteTeamId` | → `Team`, optional | The user's favourite team |
+| `createdAt`, `updatedAt` | datetime | |
+
+### Session
+
+A signed-in browser session.
+
+| Column | Type | Notes |
+|---|---|---|
+| `userId` | → `User` | |
+| `token` | string, unique | |
+| `expiresAt` | datetime | |
+| `ipAddress`, `userAgent` | string, optional | |
+| `createdAt`, `updatedAt` | datetime | |
+
+### Account
+
+One row per sign-in method linked to a user. Google is currently the only one.
+
+| Column | Type | Notes |
+|---|---|---|
+| `userId` | → `User` | |
+| `accountId`, `providerId` | string | The user's ID at the provider, and which provider it is |
+| `accessToken`, `refreshToken`, `idToken`, `scope` | string, optional | Tokens issued by the provider |
+| `accessTokenExpiresAt`, `refreshTokenExpiresAt` | datetime, optional | |
+| `password` | string, optional | Unused, because users sign in with Google |
+| `createdAt`, `updatedAt` | datetime | |
+
+### Verification
+
+Short-lived codes for flows such as email verification. Part of BetterAuth's required schema, but unused while Google is the only sign-in method. [ADR-002](../decisions/adr-002-auth.md) discusses what this means for the brief's password-reset requirement.
+
+| Column | Type |
+|---|---|
+| `identifier`, `value` | string |
+| `expiresAt`, `createdAt`, `updatedAt` | datetime |
+
+## Personal data
+
+Every table in this group records a choice a user made. No NBA statistics are stored here, apart from the deliberate copies of model figures described under `GamePick` and `SavedLineup`. When a user deletes their account, all of their rows here are deleted with it.
+
+### UserFollowedPlayer
+
+A player the user follows. This table has no `id` column; each row is identified by its user and player.
+
+| Column | Type |
+|---|---|
+| `userId` | → `User` |
+| `playerId` | → `Player` |
+| `createdAt` | datetime |
+
+**Unique:** `(userId, playerId)`, so a user can follow a player only once.
+
+### GamePick
+
+A user's call on who won a completed game, made without seeing the score, and compared with the model's prediction. Drawn games are excluded, because there is no winner to pick.
+
+| Column | Type | Notes |
+|---|---|---|
+| `userId` | → `User` | |
+| `gameId` | → `Game` | |
+| `pickedTeamId` | string | The team the user picked. Checked to be one of the game's two teams when saved, but not a database link. |
+| `outcome` | `PickOutcome` | Whether the call was right |
+| `modelHomeWinProbabilityAtPick` | float | The model's numbers **at the moment of the call** |
+| `modelPredictedMarginAtPick` | float, optional | |
+| `homeTeamEloAtPick`, `awayTeamEloAtPick` | float | |
+| `createdAt` | datetime | |
+
+The model's numbers are copied into this table because `GamePrediction` is replaced every time the predictor runs. Without the copy, a user's record against the model would change after the fact.
+
+**Unique:** `(userId, gameId)`. A call is final: a second call on the same game is rejected, not treated as a change. **Index:** `(userId, createdAt)`.
+
+### SavedComparison
+
+A named set of players the user compared side by side.
+
+| Column | Type |
+|---|---|
+| `userId` | → `User` |
+| `name` | string |
+| `createdAt` | datetime |
+
+**Index:** `(userId, createdAt)`.
+
+### SavedComparisonPlayer
+
+One player in a `SavedComparison`.
+
+| Column | Type | Notes |
+|---|---|---|
+| `savedComparisonId` | → `SavedComparison` | |
+| `playerId` | → `Player` | |
+| `position` | int | The player's left-to-right place in the comparison, not their basketball position |
+
+**Unique:** `(savedComparisonId, playerId)`.
+
+### SavedLineup
+
+A fantasy lineup the user chose to keep.
+
+| Column | Type | Notes |
+|---|---|---|
+| `userId` | → `User` | |
+| `name` | string | Required when saving |
+| `sourceLineupId` | string, optional | Reserved for linking to the optimizer run the lineup came from. Currently unused. |
+| `totalPredictedPointsAtSave` | float | Totals **at the moment of saving** |
+| `totalSalaryAtSave`, `budgetAtSave` | int | |
+| `createdAt` | datetime | |
+
+**Index:** `(userId, createdAt)`.
+
+### SavedLineupSlot
+
+One player in a `SavedLineup`.
+
+| Column | Type | Notes |
+|---|---|---|
+| `savedLineupId` | → `SavedLineup` | |
+| `playerId` | → `Player` | |
+| `predictedPointsAtSave`, `salaryAtSave` | float, int | The player's figures **at the moment of saving** |
+
+**Unique:** `(savedLineupId, playerId)`.
+
+Saved lineups copy their figures for the same reason as `GamePick`: the optimizer keeps producing new predictions, so figures looked up later would no longer match what the user saved. The saved figures are also what lets the home page show how a lineup's predictions have changed since it was saved.
+
+## Enums
+
+| Enum | Values | Used by |
+|---|---|---|
+| `Role` | `PUBLIC`, `USER`, `ANALYST`, `ADMIN` | `User.role` |
+| `SeasonType` | `REGULAR`, `PLAY_IN`, `PLAYOFFS`, `FINALS` | `Game.seasonType` |
+| `PickOutcome` | `CORRECT`, `MISSED` | `GamePick.outcome` |
+
+## Indexes for common queries
+
+An index lets the database find matching rows without reading the whole table. Each table's indexes are listed with the table above. Five of them were added together on 13 September 2026 (migration `add_query_indexes`, PR #124). Before then, `Game` was indexed only on `seasonType`, even though most of the website's queries find games by date or by team:
+
+| Table | Index | Speeds up |
+|---|---|---|
+| `Game` | `gameDate` | Lists of games, which are shown in date order almost everywhere |
+| `Game` | `(homeTeamId, gameDate)` | A team's results and recent form: games found by team, then sorted by date |
+| `Game` | `(awayTeamId, gameDate)` | The same, for games the team played away |
+| `PlayerGameStat` | `gameId` | Loading one game's box score. The existing unique constraint on `(playerId, gameId)` already covers loading by player. |
+| `Player` | `teamId` | Loading a team's roster |
+
+See [Performance](performance.md) for the measured effect of these indexes, and for which data is cached instead.
+
+## Relationships
 
 ```
-Team (1) ──────< (many) Player
-Team (1) ──────< (many) Game [as home team]
-Team (1) ──────< (many) Game [as away team]
+Team (1) ──────< (many) Player              [current team, optional]
+Team (1) ──────< (many) Game                [as home team]
+Team (1) ──────< (many) Game                [as away team]
+Team (1) ──────< (many) PlayerGameStat      [team in that game, optional]
+Team (1) ──────< (many) User                [favourite team, optional]
 Game (1) ──────< (many) GameEvent
 Game (1) ──────< (many) PlayerGameStat
 Game (1) ────── (0..1) GamePrediction
+Game (1) ──────< (many) GamePredictionRun
 Player (1) ────< (many) PlayerGameStat
 Player (1) ────< (many) PlayerPrediction
 Player (1) ────< (many) LineupSlot
-
 Lineup (1) ────< (many) LineupSlot
 
 User (1) ──────< (many) Session
 User (1) ──────< (many) Account
 
-User (1) ──────< (many) FollowedPlayer >───── (1) Player
-User (1) ──────< (many) FollowedTeam   >───── (1) Team
-User (1) ──────< (many) GamePick       >───── (1) Game
+User (1) ──────< (many) UserFollowedPlayer >───── (1) Player
+User (1) ──────< (many) GamePick           >───── (1) Game
 User (1) ──────< (many) SavedComparison
 User (1) ──────< (many) SavedLineup
-
 SavedComparison (1) ─< (many) SavedComparisonPlayer >─ (1) Player
-SavedLineup (1) ─────< (many) SavedLineupSlot      >─ (1) Player
+SavedLineup (1) ─────< (many) SavedLineupSlot       >─ (1) Player
 ```
+
+### What happens on delete
+
+| Deleting | Effect on related rows |
+|---|---|
+| A user | Their sessions, linked accounts, followed players, game calls, saved comparisons and saved lineups are all deleted |
+| A saved comparison or saved lineup | Its player rows are deleted |
+| An optimizer lineup | Its player rows are deleted |
+| A player or game | Users' follows, calls and saved items that refer to it are deleted |
+| A team | Users with it as their favourite team are left with no favourite; per-game rows that recorded it keep their other data |
+| A team, player or game that NBA statistics, events or predictions depend on | Refused, so those records never lose what they were calculated from |
 
 ## Still open
 
-- **Submissions / review workflow** — an early feature-breakdown draft mentioned approved-submitter roles and a review flow, but nothing matching that exists in the schema or codebase. Don't assume it's coming unless the team confirms it's still planned.
+- **Submitting and reviewing statistics.** The brief describes approved users submitting and managing statistics. An early feature list mentioned approved-submitter roles and a review process, but nothing in the schema supports this yet.
 
 ---
 

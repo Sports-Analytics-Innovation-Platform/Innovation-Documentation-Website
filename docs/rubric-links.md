@@ -55,7 +55,7 @@ The brief lists weights only, no descriptions, for this milestone — criteria n
 
 | Criterion | Category | Weight | Evidence |
 |---|---|---|---|
-| Data | Database | 3% | [ERD](design/erd.md) — 12 models on Supabase managed Postgres, live |
+| Data | Database | 3% | [ERD](design/erd.md) — 20 tables on Supabase managed Postgres, live |
 | Deployment | Database | 2% | [ADR-003: Hosting Topology](decisions/adr-003-hosting-topology.md) — accepted and implemented. Supabase managed Postgres with connection pooling over TLS |
 | Structure | Database | 5% | [ERD](design/erd.md), [ADR-001: Database](decisions/adr-001-database.md) |
 | Availability | API | 3% | Live at [sportsanalytics-api.onrender.com/health](https://sportsanalytics-api.onrender.com/health) — kept responsive by a pinger service |

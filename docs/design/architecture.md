@@ -18,7 +18,7 @@ The `apps/api` controller/service/guard structure: each feature module's control
 
 ![Database ERD](diagrams/database-erd.svg)
 
-Full schema grouped by concern: BetterAuth's core tables (User/Session/Account/Verification), the domain model (Team/Player/Game/GameEvent/PlayerGameStat), and the two Python-service-owned areas (PlayerPrediction/Lineup/LineupSlot for the optimizer, GamePrediction for the predictor) — NestJS only ever reads the latter two groups. See [ERD](erd.md) for the full field-by-field breakdown of every model.
+All 20 tables and 3 enums, grouped by which part of the system writes to them: user accounts (`User`, `Session`, `Account`, `Verification`), NBA data written by the ingestion scripts (`Team`, `Player`, `Game`, `GameEvent`, `PlayerGameStat`), game predictions written by the predictor (`GamePrediction`, `GamePredictionRun`), fantasy lineups written by the optimizer (`PlayerPrediction`, `Lineup`, `LineupSlot`), and personal data the API writes when a signed-in user saves something (`UserFollowedPlayer`, `GamePick`, `SavedComparison`, `SavedComparisonPlayer`, `SavedLineup`, `SavedLineupSlot`). The API only reads the NBA data, prediction and optimizer tables. See [ERD](erd.md) for what every column means, and [ADR-001: Database](../decisions/adr-001-database.md) for why the schema is designed this way.
 
 ### Sequence diagram: `GET /v1/games/:id/prediction`
 
