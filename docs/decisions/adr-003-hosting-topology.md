@@ -20,6 +20,7 @@ This document explains how these parts connect, how the database is deployed and
 
 | Date | Change |
 |---|---|
+| 2026-09-23 | Documented the queued ingestion pull (`IngestionRequest`/`pull_worker.py`), added alongside the original direct-script method — an admin can now trigger a pull from the web UI, though a human-run worker on a home connection still has to claim it. |
 | 2026-09-14 | Updated to match the live deployment. Schema changes are now applied automatically when the API starts, the API uses two database connection strings, Supabase file storage is used for profile pictures, the data scripts run on a team member's computer, and the database has no automatic backups. Added the [Database deployment](#database-deployment) section. |
 | 2026-08-24 | A *pinger* (a service that sends the API a request at regular intervals) now stops it from going to sleep, removing the start-up delay described under [Render's free plan](#renders-free-plan). |
 | 2026-08-19 | The first plan, based on Microsoft Azure, was replaced with Cloudflare Pages, Render and Supabase (see [Azure](#azure)). |
@@ -150,12 +151,12 @@ Render starts the API with `npx prisma migrate deploy && npm start`, and has don
 
 ### Loading production data
 
-Deploying the code updates the database's *structure* automatically, but not its *data*. NBA data is loaded into production by hand:
+Deploying the code updates the database's *structure* automatically, but not its *data*. NBA data reaches production one of two ways, as of 2026-09-23:
 
-1. A team member runs the ingestion script from a home internet connection, with its database address temporarily pointed at the production database. This can't be automated on a cloud server, because stats.nba.com blocks cloud providers' networks.
-2. The script upserts every row using the NBA's own IDs, so running it again updates existing rows rather than duplicating them.
-3. The predictor and optimizer are then re-run, so predictions and lineups reflect the new data.
-4. The script's database address is switched back to the local development database straight away.
+1. **Direct (original method).** A team member runs the ingestion script from a home internet connection, with its database address temporarily pointed at the production database, then switches it back afterwards. Still necessary because stats.nba.com blocks cloud providers' networks, so the pull itself can never run on Render.
+2. **Queued (added this sprint).** An admin triggers a pull from the web app's admin UI. This writes an `IngestionRequest` row rather than running anything immediately; `apps/ingestion/pull_worker.py`, polling from wherever it's running (still someone's home machine — the cloud-IP block applies here too, this just moves *where in the process* a human is involved, not whether one still is), claims the request and runs the pull. This is what the deployed API itself does when an admin clicks "Pull Data" in production, since the API process can't run `nba_api` calls directly either.
+
+Either way: the script upserts every row using the NBA's own IDs (idempotent — running it again updates existing rows rather than duplicating them), and can land a batch as `PENDING_REVIEW` for admin approval instead of auto-publishing (see [Feature Tiers](../design/feature-tiers.md)). The predictor and optimizer are then re-run so predictions and lineups reflect the new data.
 
 **New columns need a separate data run.** A migration can add a column to production, but only a data script can fill it. On 2026-09-02, for example, the player biography columns had been deployed but were empty in production; running `backfill_player_bios.py` filled them for 530 players the same day. Smaller single-purpose scripts (`backfill_player_bios.py`, `backfill_advanced_stats.py` and `ingest_postseason.py`) exist so production can be filled in without repeating the full 25–35 minute ingestion.
 
@@ -248,7 +249,7 @@ Vercel was considered first for the website because it is simple to set up. Its 
 ## Open questions
 
 1. **Backups.** Should the database be exported on a schedule (for example, a weekly automated `supabase db dump` saved outside Supabase), or should the project move to Supabase's paid plan before final submission? User data can't be recreated if it is lost.
-2. **Keeping data current.** Who will run ingestion between now and submission, and how often?
+2. **Keeping data current.** ⚠️ Partially answered 2026-09-23: an admin can now *trigger* a pull from the web app rather than only via direct script access (see [Loading production data](#loading-production-data)), but a human still has to be running `pull_worker.py` on a home connection to actually claim and execute it — the "who, how often" question is softer than it was, not closed.
 3. **Server region.** The API runs in Render's default region (Oregon, USA). Would a region closer to South Africa noticeably improve response times?
 4. **Domain names.** Should both apps get custom domain names, or keep the default `onrender.com` and `pages.dev` addresses for the demonstration?
 
@@ -270,4 +271,4 @@ External:
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder[Qoder Lite], Claude-Code[Claude Opus 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder[Qoder Lite], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5] (2026-09-23: documented the queued ingestion pull)*
