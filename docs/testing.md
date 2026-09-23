@@ -22,25 +22,49 @@ As of PR #124 (13 September 2026) the API suite is **414 tests** and passes in f
 
 Unit specs live next to the source files they exercise (`src/**/*.spec.ts`) and test individual services and utilities in isolation. They do **not** start a Nest application, connect to a database, or make HTTP requests.
 
+!!! note "Table rebuilt 2026-09-23 — was listing 27 of 52 unit spec files"
+    A week's worth of admin/dataset/custom-statistics work had no corresponding row here. Regenerated directly from `find src -name "*.spec.ts"`.
+
 | Spec file | What it tests |
 |---|---|
+| `src/admin/admin-batches.controller.spec.ts` | Admin batch review controller (approve/reject request handling) |
+| `src/admin/admin-batches.service.spec.ts` | Batch listing filters/sort, approve/reject status transitions |
+| `src/admin/admin-consumers.service.spec.ts` / `.mock.spec.ts` | External API consumer + key issuance, revoke, hard-delete |
+| `src/admin/admin-events.service.mock.spec.ts` | Event-correction preview/apply/undo, validation, supersede-protection on undo |
+| `src/admin/admin-ingestion.service.spec.ts` | Manual/scheduled ingestion pull queueing |
 | `src/admin/admin-players.controller.spec.ts` | Admin player management endpoints |
 | `src/admin/admin-players.service.spec.ts` | Admin player service logic |
 | `src/admin/admin-teams.controller.spec.ts` | Admin team management endpoints |
 | `src/admin/admin-teams.service.spec.ts` | Admin team service logic |
 | `src/admin/admin-users.controller.spec.ts` | Admin user management endpoints |
 | `src/admin/admin-users.service.spec.ts` | Admin user service logic |
+| `src/admin/derive-player-game-stats.spec.ts` | Event-to-PlayerGameStat aggregation math |
+| `src/admin/event-correction-request.spec.ts` | Correction request parsing/validation |
+| `src/admin/event-correction-rules.spec.ts` | Which corrections are allowed (e.g. rejects a credit landing on the wrong player) |
+| `src/admin/plan-stat-recompute.spec.ts` | Incremental recompute — only the affected player(s), never the whole roster |
+| `src/admin/stat-anomalies.spec.ts` | Internal-consistency anomaly flags (negative stats, impossible shooting splits) |
 | `src/analytics/evaluated-games.service.spec.ts` | Games evaluated for model accuracy |
 | `src/analytics/leaderboard-ranking.spec.ts` | Leaderboard ranking computation |
 | `src/analytics/leaderboard.service.spec.ts` | Leaderboard service logic |
 | `src/analytics/model-accuracy.service.spec.ts` | Model accuracy computation (Brier score, calibration bands) |
 | `src/cache/response-cache.service.spec.ts` | Response cache service |
 | `src/common/all-exceptions.filter.spec.ts` | The global exception filter maps errors to correct HTTP status codes |
+| `src/common/api-key.guard.spec.ts` | API key auth, rate limit, and daily quota enforcement |
+| `src/common/api-keys.spec.ts` | Key generation/hashing |
+| `src/common/api-version.guard.spec.ts` | `/v1/` version enforcement, `Accept-Version` negotiation |
+| `src/common/csv.spec.ts` | CSV export escaping/formatting |
+| `src/common/deprecation.interceptor.spec.ts` | `Deprecation`/`Sunset`/`Link` headers on a deprecated route |
+| `src/common/optional-session.guard.spec.ts` | Session-or-API-key gate on public read controllers |
 | `src/common/origin-check.guard.spec.ts` | Origin check guard for CSRF protection |
 | `src/common/pagination.spec.ts` | Pagination helper produces correct offsets and page counts |
 | `src/common/parse-body.spec.ts` | Zod-based request body parser |
 | `src/common/roles.guard.spec.ts` | Role-based guard allows/denies access correctly |
+| `src/custom-statistics/custom-statistics.controller.spec.ts` / `.service.spec.ts` | Custom statistic CRUD and per-player calculation |
+| `src/custom-statistics/expression-evaluator.spec.ts` | Hand-rolled expression parser (no `eval`), division-by-zero rejection |
+| `src/custom-statistics/expression-validator.spec.ts` | Whitelisted-identifier validation before a definition is stored |
+| `src/datasets/datasets.controller.spec.ts` / `.service.spec.ts` | Dataset release listing, publish, checksum, diff/changes-since |
 | `src/games/games.service.spec.ts` | Games service logic |
+| `src/me/api-keys/me-api-keys.controller.spec.ts` / `.service.spec.ts` | Self-service API key issuance/listing/revoke |
 | `src/me/follows/game-orientation.spec.ts` | Team results oriented to the caller's side |
 | `src/me/follows/recent-points.spec.ts` | Recent points computation for watchlist |
 | `src/me/follows/watchlist-averages.spec.ts` | Watchlist season averages derivation |
@@ -57,17 +81,27 @@ Unit specs live next to the source files they exercise (`src/**/*.spec.ts`) and 
 
 E2E specs live in `apps/api/test/` and exercise the **full NestJS application** — real routing, real middleware, real exception filter, real Prisma queries against a disposable Postgres database. They use [Supertest](https://github.com/ladjs/supertest) to make HTTP requests against the running test app.
 
+!!! note "Table rebuilt 2026-09-23 — was listing 9 of 17 e2e spec files"
+
 | Spec file | What it tests |
 |---|---|
-| `test/health.e2e-spec.ts` | `GET /health` returns 200 with `{ status: "ok" }` |
-| `test/players.e2e-spec.ts` | Player endpoints — list, detail, filtering, pagination, stats, splits, compare |
-| `test/teams.e2e-spec.ts` | Team endpoints — list, detail, roster lookup |
-| `test/games.e2e-spec.ts` | Game endpoints — list, detail, predictions, postseason filtering |
-| `test/optimizer.e2e-spec.ts` | Optimizer endpoint — lineup generation, validation, predictions |
+| `test/admin-anomalies.e2e-spec.ts` | Admin anomaly-flag listing against real seeded rows |
+| `test/admin-auth.e2e-spec.ts` | `/v1/admin/*` genuinely rejects a non-admin session/no session |
+| `test/admin-batches-ordering.e2e-spec.ts` | Batch list orders through the `Game` relation correctly (a bug a mocked Prisma client couldn't have caught) |
+| `test/admin-events.e2e-spec.ts` | The full event-correction workflow against a real database — preview, apply, undo, validation, history |
+| `test/admin-games.e2e-spec.ts` | Admin game lookup + play-by-play with resolved credit |
+| `test/admin-ingestion-queue.e2e-spec.ts` | Ingestion pull request queue/claim/finish lifecycle |
 | `test/analytics.e2e-spec.ts` | Analytics endpoints — model accuracy, leaderboard |
-| `test/picks.e2e-spec.ts` | Beat the Model — challenge next game, submit pick, grade outcome, record |
-| `test/saved-lineups.e2e-spec.ts` | Saved lineups — create, list, delete, drift computation |
+| `test/datasets.e2e-spec.ts` | Dataset release publish, download, checksum reproducibility, diff/changes-since |
+| `test/games.e2e-spec.ts` | Game endpoints — list, detail, predictions, postseason filtering |
+| `test/health.e2e-spec.ts` | `GET /health` returns 200 with `{ status: "ok" }` |
 | `test/not-found.e2e-spec.ts` | Unknown routes return 404 via the `NotFoundController` catch-all |
+| `test/openapi-contract.e2e-spec.ts` | The API's public surface hasn't silently changed shape versus its own generated OpenAPI document |
+| `test/optimizer.e2e-spec.ts` | Optimizer endpoint — lineup generation, validation, predictions |
+| `test/picks.e2e-spec.ts` | Beat the Model — challenge next game, submit pick, grade outcome, record |
+| `test/players.e2e-spec.ts` | Player endpoints — list, detail, filtering, pagination, stats, splits, compare |
+| `test/saved-lineups.e2e-spec.ts` | Saved lineups — create, list, delete, drift computation |
+| `test/teams.e2e-spec.ts` | Team endpoints — list, detail, roster lookup |
 
 ### Test infrastructure
 
@@ -118,7 +152,7 @@ Frontend specs live next to the components and pages they test (`src/**/*.spec.{
 | `src/pages/PlayerProfilePage.spec.tsx` | Player profile — stats, season splits, follow button |
 | `src/pages/PlayersListPage.spec.tsx` | Players list — search, filters, postseason toggle, pagination |
 | `src/pages/PredictionsPage.spec.tsx` | Predictions — model accuracy, calibration, leaderboard |
-| `src/pages/ProfilePage.spec.tsx` | User profile — account settings, password change |
+| `src/pages/ProfilePage.spec.tsx` | User profile — favorite team/followed players, API keys, account deletion. No password change: auth is Google OAuth only, there's no password on our side (see [Security](security.md)) |
 | `src/pages/TeamProfilePage.spec.tsx` | Team profile with roster |
 | `src/pages/TeamsListPage.spec.tsx` | Teams list with search and cards |
 
@@ -294,13 +328,13 @@ This is what the team agrees to, enforced via the [Definition of Done](definitio
 
 ### What is not required (yet)
 
-- **Coverage threshold** — CI produces coverage numbers but does not gate on them. An agreed floor (e.g. 70% line coverage) should be set before Sprint 2 ends, once current coverage is measured.
-- **Visual regression tests** — not planned for Sprint 2
-- **Performance / load tests** — not in scope for the current milestone
+- **Coverage threshold** — CI produces coverage numbers but does not gate on them. Sprint 2's deadline for setting this passed (2026-09-15) without it happening; still open as of 2026-09-23.
+- **Visual regression tests** — not planned
+- **Performance / load tests** — ⚠️ **status changed 2026-09-23.** This is a named Sprint 3 rubric criterion (5%), not out of scope. `apps/api/scripts/load-test.mjs` now exists (`npm run load-test`), benchmarking the hot read paths against a stated target (p95<300ms, p99<800ms) at the brief's stated scale — see [Performance](design/performance.md) and [Feature Tiers](design/feature-tiers.md). It has not yet been run against a real at-scale database, so there's tooling but no recorded result yet.
 
 ### axe-core accessibility scans
 
-✅ **Done as of 2026-09-11** (PR #92) — no longer a gap. `src/test/accessibility.ts` wraps `jest-axe`/`axe-core` assertions used as component-test cases ("has no automated accessibility violations") across the players list, home, optimizer, and predictions pages, running in the same CI `coverage` job as the rest of the Vitest suite. Manual accessibility checks per the Definition of Done continue alongside this, not instead of it.
+⚠️ **Partial, not "no longer a gap."** `src/test/accessibility.ts` wraps `jest-axe`/`axe-core` assertions ("has no automated accessibility violations") on 4 of the app's 14+ pages — Home, PlayersListPage, Optimizer, Predictions, plus the `PlayersFilterBar` component — running in the same CI `coverage` job as the rest of the Vitest suite. The remaining 10 pages (AdminPage, ComparePage, DatasetsPage, GameDetailPage, LandingPage, OnboardingPage, PlayerProfilePage, ProfilePage, TeamProfilePage, TeamsListPage) have no automated scan, and there's been no full manual responsiveness/accessibility audit beyond a documented contrast fix (see [Tech Stack](tech-stack.md#confirmed-local-dev-proxy) and the main app repo's `PROJECT_OVERVIEW.md`). Manual accessibility checks per the Definition of Done are meant to run alongside this, not instead of it — worth confirming that's actually happening.
 
 ## User feedback process
 
@@ -348,4 +382,4 @@ The bug tracker is also used for feature/process tracking beyond bugs (e.g. [#73
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude-Code[Claude Sonnet 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude-Code[Claude Sonnet 5] (2026-09-23: rebuilt test-file tables, corrected accessibility/performance status, removed a fabricated password-change test claim)*

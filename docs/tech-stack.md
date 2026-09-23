@@ -18,7 +18,7 @@ Every component below is listed with why it was chosen, not just what it is — 
 
 | Choice | Why |
 |---|---|
-| **Prisma 5.22** (ORM) | Type-safe query builder and migration tool over Postgres. Keeps the schema in one place (`schema.prisma`), generates TypeScript types automatically, and makes migrations reviewable in PRs rather than hand-written SQL drifting from the actual DB state. Confirmed as the team's choice — a real `schema.prisma` with 15 models and multiple migrations exist in the repo. |
+| **Prisma 5.22** (ORM) | Type-safe query builder and migration tool over Postgres. Keeps the schema in one place (`schema.prisma`), generates TypeScript types automatically, and makes migrations reviewable in PRs rather than hand-written SQL drifting from the actual DB state. Confirmed as the team's choice — `schema.prisma` has grown to 31 models and 6 enums (checked 2026-09-23) across dozens of migrations. |
 | **PostgreSQL** (via Supabase) | Relational DB, matches the naturally relational shape of NBA data (players, teams, games, events, predictions) and is well-supported by Prisma and Supabase's managed hosting. |
 
 ### Authentication
@@ -39,6 +39,12 @@ Every component below is listed with why it was chosen, not just what it is — 
 | Choice | Why |
 |---|---|
 | **Zod** | Schema validation for incoming request bodies. Provides runtime type-checking with descriptive rejection errors. Confirmed built — a shared `parseBody` helper runs a Zod schema over every request body on the write routes added in PR #94. |
+
+### API documentation
+
+| Choice | Why |
+|---|---|
+| **@nestjs/swagger** | Auto-generates an OpenAPI 3.0 spec and Swagger UI from controller/DTO decorators. **Live**, not just set up — `/api/docs` on the deployed API. See [API Reference](api-reference.md). |
 
 ### Environment
 
@@ -65,7 +71,7 @@ Every component below is listed with why it was chosen, not just what it is — 
 | **React 19** | Team familiarity, large ecosystem, straightforward to keep the frontend fully decoupled from the backend (non-monolithic requirement) since it only talks to the API over HTTP. |
 | **Vite 8** | Fast dev server and build tool, minimal config compared to older bundlers. Uses `@vitejs/plugin-react` for Fast Refresh in development and optimised production builds. |
 | **TypeScript 6** | Type-safe JavaScript for the frontend — catches prop-type mismatches, missing route params, and API response shape errors at compile time rather than in the browser. |
-| **React Router 7** (`react-router-dom`) | Client-side routing with thirteen routes: `/`, `/home`, `/onboarding`, `/profile`, `/players`, `/players/:playerId`, `/compare`, `/teams`, `/teams/:teamId`, `/predictions`, `/optimizer`, `/games/:gameId`, `/admin`. |
+| **React Router 7** (`react-router-dom`) | Client-side routing, grown to fourteen page routes: `/`, `/home`, `/onboarding`, `/profile`, `/players`, `/players/:playerId`, `/compare`, `/teams`, `/teams/:teamId`, `/datasets`, `/predictions`, `/optimizer`, `/games/:gameId`, `/admin` (plus `/api-keys` as a redirect to `/profile`, where that feature now lives). |
 
 ### Styling & UI
 
@@ -148,10 +154,9 @@ These were confirmed as team decisions but are not yet in the codebase:
 
 | Choice | Why | Status |
 |---|---|---|
-| **Redis + BullMQ** | Batch submission/ingestion processing and incremental recomputation jobs. | Planned if ingestion pipeline needs batch/scheduled processing |
+| **Redis + BullMQ** | Batch submission/ingestion processing and incremental recomputation jobs. | **The need was real and got built — without Redis/BullMQ.** A Postgres-backed `IngestionRequest`/`IngestionWorker` queue (`pull_worker.py`) handles scheduled/async ingestion pulls, and incremental stat recompute after a correction (`plan-stat-recompute.ts`) is a plain, targeted Prisma write. No queueing library was needed at this scale — revisit only if a real throughput problem shows up. |
 | **Redis** (cache / rate limiting) | **Evaluated for caching and rejected** — the API runs as a single Render instance, so an in-process cache does the same job with no network hop and no extra service to run or pay for. See [ADR-004](decisions/adr-004-caching-strategy.md), which also records when this should be revisited: if the API is ever scaled past one replica. Still the natural choice for a rate-limit store, which remains unbuilt (see [Security](security.md)). | Decided against for caching; still open for rate limiting |
-| **S3-compatible storage** (MinIO for self-hosted/course use) | For any exported/versioned data artifacts. | Planned if needed |
-| **@nestjs/swagger** | Auto-generated OpenAPI 3.0 spec and Swagger UI from NestJS controller decorators. | Setup documented — see [API Reference](api-reference.md) |
+| **S3-compatible storage** (MinIO for self-hosted/course use) | For any exported/versioned data artifacts. | Not needed as built — dataset releases store their CSV directly on the `DatasetRelease` row in Postgres rather than object storage, which was simpler at the current data volume |
 
 !!! success "CI/CD host confirmed: Gitea + GitHub mirror"
     CI runs on Gitea Actions, matching everywhere else the repo is described. CD is now live: the Gitea repo is mirrored to GitHub, which triggers auto-deploys to Cloudflare Pages (frontend) and Render (API). The docs site deploys separately via GitHub Pages from the docs repo.

@@ -28,10 +28,10 @@ Role-based access control is implemented via NestJS guards. The schema defines f
 
 | Role | Can do | Status |
 |---|---|---|
-| `public` | Read-only access to player/team/stat endpoints, no account needed | Implemented — player and team endpoints have no auth guard |
-| `user` | Access to predictions, games, and optimizer endpoints (auth-gated) | Implemented — `SessionAuthGuard` on games, predictions, optimizer |
-| `admin` | Edit `Team`/`Player` rows, manage user accounts and roles | `/v1/admin/teams`, `/v1/admin/players`, `/v1/admin/users`, all behind `SessionAuthGuard` + `@Roles(ADMIN)` (PR #120, open — not yet merged to `main`) |
-| `analyst` | Submit or correct statistics, manage data quality flags | Schema exists, not yet used by any endpoint |
+| `public` (no session) | Read-only access to player/team/game/dataset endpoints — **but no longer without a credential.** Since PR #172, a request needs either a signed-in session or a valid `X-API-Key`; a truly anonymous request gets `401 API_KEY_REQUIRED` | Implemented |
+| `user` | The above, plus predictions and optimizer endpoints (`SessionAuthGuard`), self-service API keys, watchlists/picks/saved comparisons | Implemented |
+| `analyst` | Define and evaluate custom statistics over event-derived fields | Implemented — `/v1/custom-statistics/*` behind `@Roles(ANALYST, ADMIN)` |
+| `admin` | Edit `Team`/`Player`/`User` rows, review and approve/reject ingestion batches, correct individual play-by-play events (preview/apply/undo), manage external API consumers and keys | Implemented and merged — `/v1/admin/*`, all behind `SessionAuthGuard` + `@Roles(ADMIN)` |
 
 ## Third-party data and credentials
 
@@ -54,11 +54,12 @@ Implemented:
 - **CORS** — configured in `apps/api/src/main.ts` with `credentials: true` and `origin: process.env.WEB_ORIGIN`, restricting cross-origin requests to the known frontend domain(s).
 - **Request body validation** — a shared `parseBody` helper runs a Zod schema over every request body on the write routes added in PR #94, rejecting anything that doesn't match the schema before it reaches a handler.
 
-Not yet implemented — tracked here so it isn't forgotten before Milestone 4:
+**Rate limiting: implemented, not still open.** Every API-key-authenticated request is checked against a DB-backed sliding-window limit (requests/minute) and a daily quota, per `ApiConsumer` (`apps/api/src/common/api-key.guard.ts`, backed by `ApiUsageLog`) — hand-rolled rather than `@nestjs/throttler`, so the limit survives a server restart. Exceeding either returns `429` (`RATE_LIMIT_EXCEEDED` / `QUOTA_EXCEEDED`). This also protects `nba_api`/`stats.nba.com` indirectly, since a rate-limited public consumer can't drive proportional ingestion load.
 
-- **Rate limiting** on public API endpoints, both to protect our own DB and because `nba_api` itself depends on stats.nba.com not banning our IP for excessive scraping — see the ingestion risk section below.
+Still not yet implemented — tracked here so it isn't forgotten before Milestone 4:
+
 - **Security headers** (e.g. `helmet` middleware in NestJS) — CSP, HSTS, X-Frame-Options, etc. Note: `helmet` is already imported in `main.ts` but the full header suite should be verified in production.
-- **A project-wide `ValidationPipe`/DTO layer.** Request bodies are validated (see `parseBody` above), but query and path parameters are still parsed per-controller rather than through one uniform pipe — worth closing before any endpoint accepts analyst/admin-submitted stat corrections.
+- **A project-wide `ValidationPipe`/DTO layer.** Request bodies are validated (see `parseBody` above), but query and path parameters are still parsed per-controller rather than through one uniform pipe. Worth noting this caveat's original context has changed: analyst/admin-submitted stat corrections are now live (the admin event-corrections workflow, `AdminEventsService.correctEvent`) and have their own dedicated validation (`event-correction-rules.ts` — rejects a correction that leaves a play's credit on the wrong player, requires a reason) rather than routing through `parseBody`. The uniform-pipe gap is still real, just no longer blocking on that specific feature.
 
 ## Data ingestion risk
 
@@ -69,4 +70,4 @@ Not yet implemented — tracked here so it isn't forgotten before Milestone 4:
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5] (2026-09-23: rate limiting and role-authorization status corrected)*
