@@ -34,8 +34,8 @@ Beat the Model is the page's focal action, and the clearest illustration of why 
 
 Two sections from the original shell — **"Add to Locker"** and **"Jump Back In"** — were removed. Both were layout with nothing behind them: one searched nothing, the other listed views nobody had recorded. Removing "Add to Locker" left no way to *start* a follow, so an "Add to watchlist" control was added to the [player profile](#player-profile-playersplayerid) instead — that is now the entry point into the watchlist.
 
-!!! warning "Known gap: these flows are not yet clickable in a browser"
-    Google OAuth credentials are not configured on the deployed environment, so every `/v1/me/*` route returns `401` to a signed-out browser — which is currently every browser. The routes themselves are proven end to end by the API's e2e suite against a real Postgres database, including cross-user isolation (see [Testing](../testing.md)); what has *not* happened is a human clicking through the flow in production. Cite the e2e suite as the evidence here, not a live demo, until the OAuth client is configured.
+!!! success "Resolved — checked 2026-09-23"
+    This page previously claimed Google OAuth wasn't configured in production, so `/v1/me/*` routes were unreachable outside the e2e suite. That's stale: production sign-in has been live and debugged since at least mid-September (see `docs/decisions/adr-003-hosting-topology.md`'s cross-origin/session-cookie fixes and the 2026-09-17 session summary in the main app repo, which walks through live sign-in verification on the deployed site). Still true and worth keeping as evidence either way: the routes are proven end to end by the API's e2e suite against a real Postgres database, including cross-user isolation (see [Testing](../testing.md)).
 
 ### Players list (`/players`)
 
@@ -73,11 +73,27 @@ Lists games with their Elo-based win probabilities and Four Factors predicted ma
 
 ### Game detail (`/games/:gameId`) — auth-gated
 
-Single game view showing win probability, predicted score margin, and a **court view** visualising predicted top scorers from both teams by position on a basketball court. Data comes from `GET /v1/games/:id` and `GET /v1/games/:id/prediction`.
+Single game view showing win probability, predicted score margin, a real sportsbook-derived win probability from The Odds API (de-vigged, averaged across bookmakers) shown alongside the model's own — a genuinely demanding baseline ("does the model beat the market," not just a coin flip) — and a **court view** visualising predicted top scorers from both teams by position on a basketball court. Data comes from `GET /v1/games/:id` and `GET /v1/games/:id/prediction`.
 
 ### Optimizer (`/optimizer`) — auth-gated
 
 Fantasy-lineup optimizer page showing the latest MILP-solved lineup: five players selected under a salary cap with their predicted fantasy points. Data comes from `GET /v1/optimizer/lineup`.
+
+### Datasets (`/datasets`) — added 2026-09-23, not yet on this page until now
+
+Browse and download versioned dataset releases — publish date, row count, per-field schema, and a SHA-256 checksum shown against the file you actually download so drift is detectable rather than assumed away. Data comes from `GET /v1/datasets`, `GET /v1/datasets/:version`, `GET /v1/datasets/:version/download`.
+
+### Profile (`/profile`)
+
+Account settings: favorite team, followed players, avatar upload, self-service API key issuance (with live rate-limit/quota usage), and account deletion. `/api-keys` now redirects here — API keys used to have their own page.
+
+### Onboarding (`/onboarding`)
+
+First-run flow for a newly signed-in user: pick a username, a favorite team, and players to follow, before landing on `/home`.
+
+### Admin (`/admin`) — `ADMIN` role required
+
+Not a public/demo-able screen, but real and substantial: ingestion batch review (approve/reject a `PENDING_REVIEW` pull before its data goes live), per-event corrections with preview/apply/undo and a required-reason audit trail, and API consumer/key management. See [Demo Guide](../demo-guide.md#9d-what-you-wont-see-without-an-admin-account) for what it does in detail.
 
 ## Visual design
 
@@ -116,4 +132,4 @@ Charts (Recharts — `RadarChart`, `LineChart`) are themed against these CSS var
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5] (2026-09-23: added the four missing pages, corrected the stale OAuth-in-production claim, added the market-odds detail)*

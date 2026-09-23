@@ -1,8 +1,11 @@
 # API Design
 
+!!! warning "Table below is a Sprint 1/2 snapshot — checked 2026-09-23"
+    This table is missing everything added since (datasets, custom statistics, self-service API keys, the whole `/v1/admin/*` surface — admin corrections, batch review, consumer management), and its `Auth` column is wrong for the rows it does have: **every** public route below now requires either a session *or* an `X-API-Key` (mandatory since PR #172), not "None." The full, current endpoint list lives on [API Reference](../api-reference.md) — this page is kept for the request/response-shape and error-handling detail below, which is still accurate.
+
 ## Confirmed endpoints
 
-Confirmed directly from the backend controllers in `apps/api/src/`:
+Confirmed directly from the backend controllers in `apps/api/src/` — **as of PR #94 (2026-09-11)**; see [API Reference](../api-reference.md) for what's been added since:
 
 | Method | Path | Auth | Query params | Returns |
 |---|---|---|---|---|
@@ -90,7 +93,7 @@ In dev, `vite.config.ts` proxies `/api/*` to `http://localhost:4000`. In product
 
 ## Auth model
 
-Player and team endpoints are **public** — no authentication required. Games, predictions, and optimizer endpoints are **auth-gated** via `SessionAuthGuard` — a valid BetterAuth session cookie is required. This matches the frontend routing: `/players` and `/teams` are accessible to anyone, while `/predictions`, `/optimizer`, and `/games/:gameId` are wrapped in `<ProtectedRoute>`.
+⚠️ **Updated 2026-09-23 — was wrong about which routes need what.** Players, teams, games, analytics, and datasets are "public" in the sense of not needing a specific role — but since PR #172, **every** one of them needs either a signed-in session *or* a valid `X-API-Key`; there is no truly anonymous path anymore (`OptionalSessionGuard` + `ApiKeyGuard`). Predictions and the optimizer additionally require a session specifically — no API-key path exists for those two. Admin routes (`/v1/admin/*`) require the `ADMIN` role; custom statistics require `ANALYST` or `ADMIN`. This matches the frontend routing: `/players`, `/teams`, `/datasets` are reachable by anyone with a key or a session, while `/predictions`, `/optimizer`, `/games/:gameId`, and `/admin` are wrapped in `<ProtectedRoute>`.
 
 Two of the routes added in PR #94 sit on the public side deliberately. `GET /v1/analytics/model-accuracy` and `GET /v1/analytics/leaderboard` return the same response to everyone — they describe the model and the board, not the caller — so gating them would add nothing. The leaderboard reads only each user's `id` and `name`; email addresses are never selected.
 
@@ -102,9 +105,13 @@ See the [Architecture Overview](architecture.md#sequence-diagram-get-v1gamesidpr
 
 ## Not yet built
 
-- **Analyst write access** — the `/v1/me/*` routes only ever write a user's *own* choices: follows, notes, picks, and saved comparisons and lineups. The `analyst` role in [Security](../security.md) still has no endpoint behind it (submitting/correcting statistics, data quality flags).
-- **Admin write access** — no longer a gap for `Team`/`Player` data: `/v1/admin/teams`, `/v1/admin/players`, `/v1/admin/users` (behind `SessionAuthGuard` + `@Roles(ADMIN)`) are the API's first endpoints that write NBA data rather than a user's own choices — see [Security](../security.md). PR #120, open, not yet merged to `main`.
-- **Versioning beyond `/v1/`** — no `/v2/` or deprecation policy exists yet, which is fine at this stage but worth deciding before it matters.
+All three of the below were true as of PR #94 (2026-09-11) and are **no longer accurate as of 2026-09-23** — corrected rather than left to mislead:
+
+- ~~Analyst write access~~ — **built.** `/v1/custom-statistics/*` (`ANALYST`/`ADMIN`) lets an analyst define and evaluate a statistic as an expression over a player's event-derived fields.
+- ~~Admin write access~~ — **built, merged, and grown well past Team/Player/User management.** `/v1/admin/*` now also covers ingestion batch review/approval, per-event corrections (preview/apply/undo, with an audit trail), and external API-consumer/key management. PR #120 merged long ago; treat any doc still citing it as "open" as stale.
+- ~~Versioning beyond `/v1/`~~ — **real machinery exists**, even without a `/v2/` yet: `api-version.guard.ts` enforces `/v1/` and `Accept-Version`, and `@DeprecateEndpoint` + `deprecation.interceptor.ts` emit real `Deprecation`/`Sunset`/`Link` headers (one live example: `GET /health`, deprecated in favour of `GET /v1/health`).
+
+**Genuinely still not built:** an async job pattern for large consumer requests (every response, including dataset publication, is synchronous), and a live/late-arriving event feed (ingestion is still batch-per-game, run after the fact — a deliberate scope decision, not an oversight, since this project has one automated "submitter," not many competing human ones). See [Feature Tiers](feature-tiers.md) for the full current picture.
 
 ## OpenAPI / Swagger documentation
 
@@ -112,4 +119,4 @@ The full API reference is documented on the [API Reference (Swagger)](../api-ref
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5] (2026-09-23: corrected the auth model and "Not yet built" section, flagged the endpoint table as a Sprint 1/2 snapshot)*

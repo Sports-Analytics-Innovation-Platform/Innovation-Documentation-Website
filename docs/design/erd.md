@@ -5,6 +5,9 @@ This page describes every table in the platform's PostgreSQL database: what each
 !!! success "Checked against the schema"
     Every table, column, constraint and index on this page was checked against `apps/api/prisma/schema.prisma` in the source repository, as of its most recent migration, `20260913140000_game_prediction_versioning` (13 September 2026).
 
+!!! warning "Stale as of 2026-09-23 — schema has grown from 20 to 31 models"
+    A large batch of work since 13 September added tables this page doesn't cover: `IngestionBatch` and `EventCorrection` (the submission-review/correction workflow — see the "still open" note below, which is now wrong), `ApiConsumer`/`ApiKey`/`ApiUsageLog` (external API key issuance and rate limiting), `DatasetRelease` (versioned, checksummed dataset snapshots), `CustomStatistic` (analyst-defined statistics), `IngestionRequest`/`IngestionWorker` (a queued ingestion job), and `GameMarketOdds` (the second external API integration). Not rewritten in full here given the size of this page — see `apps/api/prisma/schema.prisma` directly, or [ADR-001](../decisions/adr-001-database.md)'s matching currency note, or [Feature Tiers](feature-tiers.md) for what these tables back.
+
 ## Diagram
 
 ![Database ERD](diagrams/database-erd.svg)
@@ -386,8 +389,9 @@ SavedLineup (1) ─────< (many) SavedLineupSlot       >─ (1) Player
 
 ## Still open
 
-- **Submitting and reviewing statistics.** The brief describes approved users submitting and managing statistics. An early feature list mentioned approved-submitter roles and a review process, but nothing in the schema supports this yet.
+- ~~Submitting and reviewing statistics.~~ — **built, checked 2026-09-23.** `IngestionBatch` (a submission record — accepted/rejected event counts, `PENDING_REVIEW`/`COMPLETED`/`REJECTED` status, reviewer, notes) and `EventCorrection` (an append-only audit trail of individual event edits, with `revertsCorrectionId` linking an undo back to what it reverted) now implement exactly this. Not documented on this page yet — see [ADR-001](../decisions/adr-001-database.md)'s currency note above and `apps/api/prisma/schema.prisma` directly for the real column list.
+- **Multi-human-submitter approval**, specifically — still genuinely not built, and deliberately so per the schema's own doc comment: this project has one automated "submitter" (the ingestion pipeline itself, source-tagged per batch), not many competing human ones. Don't confuse this with the line above, which is a different and now-closed gap.
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5] (2026-09-23: flagged staleness, corrected the "submission/review not built" claim — it is)*
