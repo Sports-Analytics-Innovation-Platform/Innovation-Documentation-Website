@@ -794,6 +794,104 @@ Saved optimizer lineups. Each slot's `salaryAtSave` and `predictedPointsAtSave` 
 
 ---
 
+### Datasets
+
+Versioned, checksummed snapshots of season-level player statistics — the brief's "datasets should become releases" requirement.
+
+#### `GET /v1/datasets`
+
+Paginated list of published dataset releases, most recent first. **Public** (session or API key).
+
+#### `GET /v1/datasets/:version`
+
+One release's metadata: its per-field schema (column name, type, description), publish date, row count, and SHA-256 checksum. Does not include the CSV body — see the download route.
+
+#### `GET /v1/datasets/:version/download`
+
+The release's CSV file, byte-identical to what was hashed at publish time. Response header `X-Checksum-SHA256` carries the recomputed checksum of the exact bytes being sent, so a caller can verify it against the published value independently rather than trusting the response body alone.
+
+**Response `409`:** the release is marked stale (a correction landed on data it covers) and has no stored file to fall back to — refuses to silently rebuild corrected data under the old version's name.
+
+#### `GET /v1/datasets/diff?from=&to=`
+
+Compares two named releases' metadata/schema and reports what changed between them.
+
+#### `GET /v1/datasets/changes?since=<ISO timestamp>`
+
+Every release published after the given instant, oldest first, with a `nextSince` cursor in the response — lets a consumer already holding one release pull only what's changed since, rather than re-downloading everything.
+
+#### `POST /v1/datasets/admin/publish`
+
+**Admin only.** Generates the current season's CSV, computes its checksum, and publishes it as a new immutable release.
+
+---
+
+### Custom Statistics
+
+Analyst-defined statistics evaluated over event-derived per-game fields (points, rebounds, assists, steals, blocks, turnovers, minutes) — the brief's "define a new statistic over the event schema" requirement. **Requires the `ANALYST` or `ADMIN` role.**
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/v1/custom-statistics` | List the caller's own definitions |
+| `POST` | `/v1/custom-statistics` | Create a definition — `{ name, expression }`. The expression is validated (whitelisted field names only, no arbitrary code) before it's stored |
+| `PUT` | `/v1/custom-statistics/:id` | Update a definition's expression; increments its `version` so a figure published under an old version stays reproducible |
+| `GET` | `/v1/custom-statistics/:id/calculate?playerId=&seasonType=` | Evaluate the definition for one player over one season segment, returning per-game averages it was computed from and the resulting value |
+
+The expression evaluator is a hand-rolled recursive-descent parser (no `eval`/`Function`/`vm`) — division by zero and any identifier outside the whitelisted field list are rejected before evaluation, not caught after.
+
+---
+
+### Admin
+
+Everything under `/v1/admin/*` requires a session with the `ADMIN` role (`SessionAuthGuard` + `RolesGuard`).
+
+#### Ingestion batches — `/v1/admin/batches`
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/v1/admin/batches` | Paginated, filterable by status/search, sortable by game date/season/ingest time |
+| `GET` | `/v1/admin/batches/:id` | One batch's full detail |
+| `POST` | `/v1/admin/batches/:id/approve` | Promote a `PENDING_REVIEW` batch to `COMPLETED` — this is what actually publishes its events/stats on the public API, not just a status change |
+| `POST` | `/v1/admin/batches/:id/reject` | Mark a `PENDING_REVIEW` batch `REJECTED` — its data stays unpublished |
+
+#### Game lookup & corrections — `/v1/admin/games`, `/v1/admin/events`
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/v1/admin/games` | Games filtered by season/team/date window, with event and correction counts |
+| `GET` | `/v1/admin/games/:id/play-by-play` | Every event in the game, in order, with each play's resolved assist/block/steal credit and whether it's been corrected |
+| `POST` | `/v1/admin/events/:gameId/:sequence/preview` | Preview a correction's effect (recomputed stats) without writing it |
+| `POST` | `/v1/admin/events/:gameId/:sequence` | Apply a correction — validated, requires a reason, recomputes only the affected player(s)' stats, all in one transaction |
+| `POST` | `/v1/admin/events/:gameId/:sequence/revert` | Undo a correction by applying its previous values as a *new* correction — never deletes the audit trail |
+| `GET` | `/v1/admin/corrections?gameId=` | Paginated correction history |
+
+#### Ingestion queue — `/v1/admin/ingestion`
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/v1/admin/ingestion/pull` | Queue a manual ingestion pull (season/date-range scoped) for a worker to claim — used where the API host itself can't run `nba_api` calls directly |
+| `GET` | `/v1/admin/ingestion/queue` | Pending/claimed/finished pull requests |
+
+#### API consumers & keys — `/v1/admin/consumers`
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/v1/admin/consumers` | List external API consumers with their rate limit/quota and usage count |
+| `POST` | `/v1/admin/consumers` | Create a consumer and issue its first key |
+| `POST` | `/v1/admin/consumers/:id/keys` | Issue an additional key for an existing consumer |
+| `DELETE` | `/v1/admin/consumers/:id` | Hard-delete a consumer, cascading to its keys and usage log |
+| `DELETE` | `/v1/admin/consumers/:id/keys/:keyId/purge` | Hard-delete one key (alongside the existing soft-delete/revoke) |
+
+### Self-service API keys — `/v1/me/api-keys`
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/v1/me/api-keys` | The signed-in user's own keys and usage total |
+| `POST` | `/v1/me/api-keys` | Issue a new key for the signed-in user |
+| `DELETE` | `/v1/me/api-keys/:id` | Revoke a key |
+
+---
+
 ## Error format
 
 Every error response uses a structured envelope, applied globally by `AllExceptionsFilter`:
@@ -804,17 +902,26 @@ Every error response uses a structured envelope, applied globally by `AllExcepti
 
 | HTTP status | Code | Meaning |
 |---|---|---|
-| `400` | `VALIDATION_ERROR` | Invalid request body or query parameters |
-| `401` | `UNAUTHORIZED` | No valid session cookie |
+| `400` | `VALIDATION_ERROR` / `BAD_REQUEST` | Invalid request body or query parameters |
+| `401` | `UNAUTHENTICATED` | No valid session cookie |
+| `401` | `API_KEY_REQUIRED` | No valid session *and* no valid `X-API-Key` on a route that requires one |
 | `403` | `FORBIDDEN` | Insufficient role permissions |
 | `404` | `NOT_FOUND` | Resource not found |
+| `406` | — | `Accept-Version` header doesn't match a supported API version |
+| `409` | — | Conflict — e.g. downloading a dataset release marked stale with no stored file to serve |
+| `429` | `RATE_LIMIT_EXCEEDED` | Too many requests this minute for the calling API key |
+| `429` | `QUOTA_EXCEEDED` | Daily request quota exhausted for the calling API key |
 | `500` | `INTERNAL_ERROR` | Unexpected server error (logged server-side) |
 
 ---
 
 ## Authentication
 
-The API uses **BetterAuth** for session-based authentication. Authenticated endpoints require a valid session cookie:
+Two independent ways to authenticate a request — either is enough for the five public read controllers (players, games, teams, analytics, datasets); a request with neither gets `401 API_KEY_REQUIRED`.
+
+### Session cookie
+
+The API uses **BetterAuth** for session-based authentication, **Google OAuth as the only sign-in method** — there is no email/password path, so there is nothing to "sign up with a credential." Authenticated endpoints require a valid session cookie:
 
 ```
 Cookie: better-auth.session_token=<token>
@@ -822,10 +929,25 @@ Cookie: better-auth.session_token=<token>
 
 Sessions are created via:
 - **Google OAuth:** `GET /auth/sign-in/social` → redirect to Google → callback sets session cookie
-- **Credential sign-up:** `POST /auth/sign-up/email`
-- **Credential sign-in:** `POST /auth/sign-in/email`
 
-See [ADR-002: Auth](decisions/adr-002-auth.md) for the full auth architecture.
+See [ADR-002: Auth](decisions/adr-002-auth.md) for the full auth architecture, including the still-open password-reset question this design raises.
+
+### API key
+
+Send an `X-API-Key` header. Two kinds of key exist:
+
+- **Self-service** — issued from the signed-in user's Profile page (API Keys section); scoped to that user's own rate limit/quota.
+- **Admin-issued** — created for an external `ApiConsumer` from the admin Consumers tab, for a third party consuming the API outside the web app.
+
+Every keyed request is rate-limited and quota-checked against the issuing consumer's own limits (`ApiConsumer.rateLimit` per minute, `dailyQuota` per day), enforced against `ApiUsageLog` — not `@nestjs/throttler`, a hand-rolled DB-backed check so the limit survives a server restart. Exceeding either returns `429` with a distinct error code (`RATE_LIMIT_EXCEEDED` / `QUOTA_EXCEEDED`).
+
+```
+X-API-Key: <key>
+```
+
+### Versioning and deprecation
+
+Every route is versioned under `/v1/`, enforced by a guard that 406s a mismatched `Accept-Version` header. A deprecated endpoint (so far: `GET /health`, in favour of `GET /v1/health`) responds with `Deprecation`, `Sunset`, and `Link` headers rather than silently changing behaviour or being removed outright.
 
 ---
 
@@ -854,4 +976,4 @@ Derived statistics (offensive rating, PIE, usage%) are calculated by the team fr
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude-Code[Claude Opus 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5]*

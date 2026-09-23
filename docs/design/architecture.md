@@ -18,7 +18,10 @@ The `apps/api` controller/service/guard structure: each feature module's control
 
 ![Database ERD](diagrams/database-erd.svg)
 
-All 20 tables and 3 enums, grouped by which part of the system writes to them: user accounts (`User`, `Session`, `Account`, `Verification`), NBA data written by the ingestion scripts (`Team`, `Player`, `Game`, `GameEvent`, `PlayerGameStat`), game predictions written by the predictor (`GamePrediction`, `GamePredictionRun`), fantasy lineups written by the optimizer (`PlayerPrediction`, `Lineup`, `LineupSlot`), and personal data the API writes when a signed-in user saves something (`UserFollowedPlayer`, `GamePick`, `SavedComparison`, `SavedComparisonPlayer`, `SavedLineup`, `SavedLineupSlot`). The API only reads the NBA data, prediction and optimizer tables. See [ERD](erd.md) for what every column means, and [ADR-001: Database](../decisions/adr-001-database.md) for why the schema is designed this way.
+!!! warning "Diagram not regenerated — schema has grown substantially since"
+    The schema is now 31 models and 6 enums (`schema.prisma`, checked 2026-09-23), not the 20 tables/3 enums this diagram and its caption originally described. The image above has not been regenerated against the current schema and should not be trusted for exact table names/relationships until it is — see [ERD](erd.md) and `apps/api/prisma/schema.prisma` directly in the meantime.
+
+Grouped by which part of the system writes to them: user accounts (`User`, `Session`, `Account`, `Verification`), NBA data written by the ingestion scripts (`Team`, `Player`, `Game`, `GameEvent`, `PlayerGameStat`), the submission/review layer (`IngestionBatch`, `EventCorrection`), game predictions written by the predictor (`GamePrediction`, `GamePredictionRun`), fantasy lineups written by the optimizer (`PlayerPrediction`, `Lineup`, `LineupSlot`), the API-consumer layer (`ApiConsumer`, `ApiKey`, `ApiUsageLog`), dataset releases (`DatasetRelease`), analyst-defined statistics (`CustomStatistic`), the ingestion job queue (`IngestionRequest`, `IngestionWorker`), and personal data the API writes when a signed-in user saves something (`UserFollowedPlayer`, `GamePick`, `SavedComparison`, `SavedComparisonPlayer`, `SavedLineup`, `SavedLineupSlot`, and more added since). See [ERD](erd.md) for what every column means, and [ADR-001: Database](../decisions/adr-001-database.md) for why the schema is designed this way.
 
 ### Sequence diagram: `GET /v1/games/:id/prediction`
 
@@ -29,7 +32,7 @@ Walks a single auth-gated request end to end, including why it works cross-origi
 ## Frontend (`apps/web`)
 
 - **React + Vite**, **Tailwind CSS v4** (via `@theme` custom properties in `index.css`, not the older `tailwind.config.js` token approach).
-- **React Router** — client-side routing with eight routes: `/` (Home), `/players`, `/players/:playerId`, `/teams`, `/teams/:teamId`, `/predictions` (auth-gated), `/optimizer` (auth-gated), `/games/:gameId` (auth-gated).
+- **React Router** — grown well past the original eight routes: `/` (landing), `/onboarding`, `/profile` (API keys live here now, `/api-keys` redirects), `/home` (signed-in dashboard), `/players`, `/players/:playerId`, `/compare`, `/teams`, `/teams/:teamId`, `/datasets`, `/optimizer` (signed-in), `/predictions` (signed-in), `/games/:gameId`, `/admin` (`ADMIN` role).
 - **Recharts** — `RadarChart` (player traits) and `LineChart` (points trend), both themed against the same CSS variables as the rest of the UI.
 - **TanStack Query** for data-fetching/caching against the API.
 - **shadcn/ui** for component library, paired with Tailwind.
@@ -44,7 +47,7 @@ Walks a single auth-gated request end to end, including why it works cross-origi
 - **NestJS** on top of **Prisma** and **PostgreSQL (Supabase)** — see [ADR-001](../decisions/adr-001-database.md).
 - **BetterAuth** (Google OAuth) for auth — see [ADR-002](../decisions/adr-002-auth.md). BetterAuth mounts its own route set at `/api/auth/*`.
 - Routes are versioned under `/v1/` — see [API Design](api-design.md) for the full endpoint table.
-- **Auth-gated endpoints**: Games, predictions, and optimizer endpoints require an authenticated session (`SessionAuthGuard`). Player and team browsing is public.
+- **Auth-gated endpoints**: predictions and optimizer endpoints require an authenticated session (`SessionAuthGuard`). Players, teams, games, analytics, and datasets are public reads — but "public" no longer means "no auth at all": since PR #172, every request to those routes needs *either* a signed-in session *or* a valid `X-API-Key` (`OptionalSessionGuard` + `ApiKeyGuard`), so a truly anonymous, keyless request gets `401 API_KEY_REQUIRED`. Admin endpoints (`/v1/admin/*`) require the `ADMIN` role via `RolesGuard` — the first real use of the role infrastructure, wired up once the admin corrections/consumer-management features landed.
 - **Response cache** — a small in-process cache (`apps/api/src/cache/`) in front of public reads, with no external cache service. Nothing under `/v1/me` is cached. See [Performance](performance.md) and [ADR-004](../decisions/adr-004-caching-strategy.md).
 - **Health check** at `/health` for Render liveness probes.
 - Deployed on **Render** (Node.js web service, free tier). A pinger service keeps the instance warm to avoid cold-start delays.
@@ -53,7 +56,7 @@ Walks a single auth-gated request end to end, including why it works cross-origi
 
 Three Python services run alongside the TypeScript apps, writing directly to Postgres:
 
-- **`apps/ingestion`** — `nba_api` client that fetches teams, rosters, games, and box scores into Postgres. Orchestrated by `ingest.py`. Built during Sprint 1 (week of 18 Aug).
+- **`apps/ingestion`** — `nba_api` client that fetches teams, rosters, games, and box scores into Postgres. Orchestrated by `ingest.py`, which now writes real per-play `GameEvent` rows (not just bookend markers) and can land a batch as `PENDING_REVIEW` for admin approval (`--review`) instead of auto-publishing. `pull_worker.py` polls an `IngestionRequest` queue so an admin can trigger a pull from the web app on a host that can't run `nba_api` calls directly (Render, per stats.nba.com's cloud-IP blocking — see [Getting Started](../getting-started.md)). Built during Sprint 1 (week of 18 Aug); the review/queue/event-derivation work above landed in Sprint 3.
 - **`apps/predictor`** — computes Elo-based home win probability and Four Factors-based predicted score margin for each game. Writes to the `GamePrediction` table.
 - **`apps/optimizer`** — predicts per-player fantasy points and solves a 5-player lineup under a salary cap via MILP (PuLP/CBC). Writes to `PlayerPrediction`, `Lineup`, and `LineupSlot` tables.
 
@@ -78,4 +81,4 @@ Production hosting per [ADR-003](../decisions/adr-003-hosting-topology.md):
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder[Qoder Lite]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder[Qoder Lite], Claude-Code[Claude Sonnet 5]*

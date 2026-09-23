@@ -163,6 +163,31 @@
 | Add model versioning to `GamePrediction` — a `modelVersion` column plus an append-only `GamePredictionRun` history table, so a prediction stays reproducible after the Elo/Four Factors model changes instead of being silently overwritten; first step of a series closing rubric gaps identified in the predictions feature (PR #126, open) | `feat` | Owen Pace (Claude Code, Claude Sonnet 5) |
 | Field the Sprint 2 user feedback survey (Google Forms via WhatsApp), collect 7 responses, and publish the findings, quantitative analysis, and feedback-to-action traceability table on the docs site; raw responses archived with emails redacted | `docs` | Adrian Draxl |
 
+### Week of 15 Sep — Intermediate & Advanced tier event-sourcing (Sprint 3)
+
+The largest batch of work in the project so far — roughly 35 merged PRs, mostly landing the brief's own Intermediate/Advanced-tier requirements (submission review, dataset releases, API maturity, custom statistics) rather than adjacent features. Backfilled from `git log` since this window's own AI usage/docs entries were behind by over a week.
+
+| Task | Type | PRs |
+|---|---|---|
+| Submission review workflow, API keys, an audit trail, career stats and dataset releases — the first big drop of Intermediate-tier work (`intermediate-brief-features` branch) | `feat` | #136, #138, #140, #141 |
+| Re-derive stats on correction and support an on-demand game replay | `feat` | #139 |
+| Flag basic sanity-check failures in `PlayerGameStat` rows (negative stats, impossible shooting splits) — internal-consistency anomaly detection, not statistical-baseline outlier detection | `feat` | #142 |
+| API deprecation path, public API contract checks, and version negotiation | `feat` | #144, #145, #146 |
+| Dataset release diffing, a change feed, and marking a release stale after a correction | `feat` | #147, #150, #155 |
+| Player aggregate queries and point-in-time (`asOf`) player stats | `feat` | #149, #154 |
+| Async ingestion jobs and resumable ingestion batches | `feat` | #156, #157 |
+| Filtered games CSV export and a live/in-progress game event feed | `feat` | #158, #161 |
+| Analyst-defined custom statistics over the event schema (sandboxed expression evaluator, versioned) | `feat` | #159, #173 |
+| Reorder late-arriving game events within one ingestion fetch | `feat` | #148 |
+| Delete API consumers/keys; move API keys from their own page into profile; make keys mandatory for public reads | `feat`/`refactor` | #151, #171, #172, #178 |
+| Dataset sorting/downloads; admin batch date filters and pull-range controls | `feat` | #179, #180 |
+| Fix play-by-play action-type translation drift against NBA's live feed vocabulary; tolerate a pooled `DATABASE_URL` in the ingestion db helper; route the dataset download link through the API proxy; allow only one ingestion pull at a time; disable pull scheduling where ingestion is unavailable | `fix` | #167, #168, #169, #170, #181 |
+| Read-aloud and screen reader accessibility | `feat` | #166 |
+| UI animation/tap-feedback polish, scroll-reveal fix | `fix` | #174 |
+| **Admin event-corrections workflow**: game lookup + resolved-credit play-by-play, a preview/apply/undo flow with validation, incremental per-player stat recompute after a correction | `feat` | #182 |
+| Fix teammate-credit resolution: disambiguate teammates sharing a surname/initial, match the name prefix NBA's own feed writes | `fix` | #183 |
+| Found and fixed two real bugs auditing this week's work against the brief: review didn't actually gate publication (a `PENDING_REVIEW` batch's data was already live), and a batch's resume mechanism could be silently defeated by a crash mid-phase. Wrote a load-test script against a stated performance target (not yet run at scale). Both fixes are open PRs, not yet on `main` as of this entry | `fix` | `fix-batch-review-gating`, `fix-ingestion-resume-durability`, `add-api-load-test` (branch names — not yet numbered PRs) |
+
 ---
 
 *AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude Code[Claude Sonnet 5], Claude-Code[Claude Opus 5]*
