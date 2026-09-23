@@ -167,26 +167,27 @@
 
 The largest batch of work in the project so far — roughly 35 merged PRs, mostly landing the brief's own Intermediate/Advanced-tier requirements (submission review, dataset releases, API maturity, custom statistics) rather than adjacent features. Backfilled from `git log` since this window's own AI usage/docs entries were behind by over a week.
 
-| Task | Type | PRs |
+| Task | Type | Owner |
 |---|---|---|
-| Submission review workflow, API keys, an audit trail, career stats and dataset releases — the first big drop of Intermediate-tier work (`intermediate-brief-features` branch) | `feat` | #136, #138, #140, #141 |
-| Re-derive stats on correction and support an on-demand game replay | `feat` | #139 |
-| Flag basic sanity-check failures in `PlayerGameStat` rows (negative stats, impossible shooting splits) — internal-consistency anomaly detection, not statistical-baseline outlier detection | `feat` | #142 |
-| API deprecation path, public API contract checks, and version negotiation | `feat` | #144, #145, #146 |
-| Dataset release diffing, a change feed, and marking a release stale after a correction | `feat` | #147, #150, #155 |
-| Player aggregate queries and point-in-time (`asOf`) player stats | `feat` | #149, #154 |
-| Async ingestion jobs and resumable ingestion batches | `feat` | #156, #157 |
-| Filtered games CSV export and a live/in-progress game event feed | `feat` | #158, #161 |
-| Analyst-defined custom statistics over the event schema (sandboxed expression evaluator, versioned) | `feat` | #159, #173 |
-| Reorder late-arriving game events within one ingestion fetch | `feat` | #148 |
-| Delete API consumers/keys; move API keys from their own page into profile; make keys mandatory for public reads | `feat`/`refactor` | #151, #171, #172, #178 |
-| Dataset sorting/downloads; admin batch date filters and pull-range controls | `feat` | #179, #180 |
-| Fix play-by-play action-type translation drift against NBA's live feed vocabulary; tolerate a pooled `DATABASE_URL` in the ingestion db helper; route the dataset download link through the API proxy; allow only one ingestion pull at a time; disable pull scheduling where ingestion is unavailable | `fix` | #167, #168, #169, #170, #181 |
-| Read-aloud and screen reader accessibility | `feat` | #166 |
-| UI animation/tap-feedback polish, scroll-reveal fix | `fix` | #174 |
-| **Admin event-corrections workflow**: game lookup + resolved-credit play-by-play, a preview/apply/undo flow with validation, incremental per-player stat recompute after a correction | `feat` | #182 |
-| Fix teammate-credit resolution: disambiguate teammates sharing a surname/initial, match the name prefix NBA's own feed writes | `fix` | #183 |
-| Found and fixed two real bugs auditing this week's work against the brief: review didn't actually gate publication (a `PENDING_REVIEW` batch's data was already live), and a batch's resume mechanism could be silently defeated by a crash mid-phase. Wrote a load-test script against a stated performance target (not yet run at scale). Both fixes are open PRs, not yet on `main` as of this entry | `fix` | `fix-batch-review-gating`, `fix-ingestion-resume-durability`, `add-api-load-test` (branch names — not yet numbered PRs) |
+| Submission review workflow, API keys, an audit trail, career stats and dataset releases — the first big drop of Intermediate-tier work (`intermediate-brief-features` branch, PRs #136, #138, #140, #141) | `feat` | Owen Pace |
+| Delete API consumers/keys (PR #151); user-owned API keys made mandatory for public reads (PRs #171, #172) | `feat` | Owen Pace |
+| Fix play-by-play action-type translation drift against NBA's live feed vocabulary (PR #167); tolerate a pooled `DATABASE_URL` in the ingestion db helper (PR #168); route the dataset download link through the API proxy (PR #169); allow only one ingestion pull at a time (PR #170) | `fix` | Owen Pace |
+| Read-aloud and screen reader accessibility (PR #166) | `feat` | Owen Pace |
+| Re-derive stats on correction and support an on-demand game replay (PR #139) | `feat` | Adrian Draxl |
+| Flag basic sanity-check failures in `PlayerGameStat` rows (negative stats, impossible shooting splits) — internal-consistency anomaly detection, not statistical-baseline outlier detection (PR #142) | `feat` | Adrian Draxl |
+| API deprecation path, public API contract checks, and version negotiation (PRs #144, #145, #146) | `feat` | Daniel Passos |
+| Dataset release diffing, a change feed, and marking a release stale after a correction (PRs #147, #150, #155) | `feat` | Daniel Passos |
+| Reorder late-arriving game events within one ingestion fetch (PR #148) | `feat` | Daniel Passos |
+| Player aggregate queries and point-in-time (`asOf`) player stats (PRs #149, #154) | `feat` | Daniel Passos |
+| Async ingestion jobs and resumable ingestion batches (PRs #156, #157) | `feat` | Daniel Passos |
+| Filtered games CSV export and a live/in-progress game event feed (PRs #158, #161) | `feat` | Daniel Passos |
+| Analyst-defined custom statistics over the event schema (sandboxed expression evaluator, versioned) (PRs #159, #173) | `feat` | Daniel Passos |
+| UI animation/tap-feedback polish, scroll-reveal fix (PR #174) | `fix` | Josh Sawyer |
+| Move API keys from their own page into profile (PR #178); dataset sorting/downloads; admin batch date filters and pull-range controls (PRs #179, #180) | `feat`/`refactor` | Sanele H. |
+| Fix play-by-play action-type drift after the vocabulary changed again; disable pull scheduling where ingestion is unavailable (PR #181) | `fix` | Sanele H. |
+| **Admin event-corrections workflow**: game lookup + resolved-credit play-by-play, a preview/apply/undo flow with validation, incremental per-player stat recompute after a correction (PR #182) | `feat` | Sanele H. |
+| Fix teammate-credit resolution: disambiguate teammates sharing a surname/initial, match the name prefix NBA's own feed writes (PR #183) | `fix` | Sanele H. |
+| Audited this week's work against the brief and found two real bugs: review didn't actually gate publication (a `PENDING_REVIEW` batch's data was already live), and a batch's resume mechanism could be silently defeated by a crash mid-phase. Fixed both, added a load-test script against a stated performance target (not yet run at scale), backfilled the AI usage ledger and this log, and corrected a week of stale documentation across the docs site. Not yet merged to `main` as of this entry | `fix`/`docs` | Owen Pace |
 
 ---
 
