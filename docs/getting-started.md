@@ -36,8 +36,19 @@ Fill in the values `.env.example` documents. The required variables are:
 | `VITE_API_BASE_URL` | (frontend, if needed) API base URL for production builds |
 | `PRISMA_LOG_QUERIES` | Optional. `true` logs every SQL statement the API issues — used to count queries before and after a change ([Performance](design/performance.md)) |
 | `API_CACHE_DISABLED` | Optional. `true` turns off the in-process response cache, to confirm a result is genuinely cached rather than coincidentally fast |
+| `INGESTION_MODE` | Optional. Set to `"queue"` to force ingestion pulls through the queue/worker flow locally instead of running `ingest.py` directly |
+| `SUPABASE_URL` / `SUPABASE_SECRET_KEY` / `SUPABASE_AVATARS_BUCKET` | Only needed for avatar uploads (Supabase Storage, server-side only). Everything else works without these set |
 
 Never commit the filled-in `.env` files. See [Security](security.md) for why.
+
+!!! warning "Also needed: apps/web/.env, since mandatory API keys landed (added 2026-09-23)"
+    `cp apps/web/.env.example apps/web/.env` and set `SITE_PROXY_API_KEY`. Since API keys became mandatory for public reads (`OptionalSessionGuard` + `ApiKeyGuard` on players/games/teams/analytics/datasets), a **signed-out** visitor to `http://localhost:5173` — e.g. the landing page's live-match widget — needs this key set, or every request 401s with `API_KEY_REQUIRED`. If you're testing signed-in only, you can skip this step at first (a session bypasses the key requirement) — but you'll hit it eventually, so it's worth doing now:
+
+    1. Sign in once via Google OAuth (step 6 below).
+    2. Go to Profile → API Keys, issue a self-service key.
+    3. Paste it into `apps/web/.env` as `SITE_PROXY_API_KEY` and restart `npm run dev` in `apps/web`.
+
+    There's no way to shortcut this with a raw database insert — only a SHA-256 hash of the key is ever stored, so the key has to come from the actual issuance flow.
 
 ## 3. Start Postgres
 
@@ -120,4 +131,4 @@ If you hit something not covered here, add it to this table once you've solved i
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Sonnet 5] (2026-09-23: added the now-required `apps/web/.env` / `SITE_PROXY_API_KEY` step)*

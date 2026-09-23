@@ -271,10 +271,10 @@ Tracked here rather than lost in a chat log:
 2. **Move to `actions/upload-artifact@v4`** once the Gitea server is upgraded past 1.24.7 and exposes the v4 artifact backend.
 3. **Gate on coverage.** Add a threshold so the `coverage` job fails below an agreed floor, instead of only proving the suites pass. Agree the number first — a threshold set above current coverage lands as an immediately-red pipeline.
 4. **Confirm where the test schema comes from.** The workflow runs no migration against the service container; if that is handled by the test harness it should be stated in the testing docs, and if it isn't, the job needs a `prisma migrate deploy` step.
-5. **Remove the now-unused `cors` dependency** (`apps/api/package.json:32`). Deliberately deferred: it touches the lockfile, so it belongs in its own change.
+5. ~~Remove the now-unused `cors` dependency~~ — **checked 2026-09-23, this is wrong: `cors` is actively imported and called in `main.ts`** (`import cors from "cors"`, configured with `credentials: true` and the `WEB_ORIGIN` allowlist). Whatever made it look unused no longer applies; removing this item rather than leaving a stale TODO.
 6. **Consider stricter linting** by swapping to `recommendedTypeChecked` + `projectService`. Expect considerably more findings — worth its own pass rather than bundling into unrelated work.
 7. **Add the missing stages** as they become real: build (in CI), secret scanning, `axe-core`.
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Code[Claude Opus 5], Qoder[Qoder Lite]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Code[Claude Opus 5], Qoder[Qoder Lite], Claude-Code[Claude Sonnet 5] (2026-09-23: corrected the `cors` dependency claim)*

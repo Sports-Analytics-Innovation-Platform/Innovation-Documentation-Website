@@ -3,6 +3,9 @@
 - **Status:** Accepted. In use since the project was first set up on 2026-08-06.
 - **Last updated:** 2026-09-14
 
+!!! warning "Structural details below are stale — checked 2026-09-23"
+    The schema has grown to **31 models and 6 enums** (from the 20/3 this page describes), across many more migrations than the 13 listed in "Schema change history" below. The eleven design rules below are still real architectural principles and (as far as checked) still hold for the newer tables too — they just aren't individually catalogued here. What's missing entirely: the submission/review layer (`IngestionBatch`, `EventCorrection`), the external API-consumer layer (`ApiConsumer`, `ApiKey`, `ApiUsageLog`), versioned dataset releases (`DatasetRelease`), analyst-defined statistics (`CustomStatistic`), a queued ingestion job (`IngestionRequest`, `IngestionWorker`), and market odds (`GameMarketOdds`). See `apps/api/prisma/schema.prisma` directly for the current ground truth, and [Feature Tiers](../design/feature-tiers.md) for what these tables back.
+
 ## Summary
 
 The platform stores all of its data in a single **PostgreSQL** database. The structure of that database (its *schema*) is defined in one file and changed only through **Prisma** migrations.
@@ -213,4 +216,4 @@ All 13 migrations are in `apps/api/prisma/migrations/` and are applied in date o
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5] (2026-09-23: flagged the table/enum counts and migration history as stale, not rewritten in full)*
