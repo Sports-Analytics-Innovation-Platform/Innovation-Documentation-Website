@@ -98,6 +98,42 @@ The same reasoning as `GamePick` applies: `PlayerPrediction` is also append-and-
 **PickOutcome** (enum) — `CORRECT` / `MISSED`
 Games that ended in a tie are excluded from the challenge entirely rather than given a third outcome value: there is no correct call to make on one.
 
+## Become Pro entities
+
+Added by migration `20260923000000_add_become_pro` for [Become Pro](../become-pro/index.md) (PR #192, 27 September 2026). Like the personalisation layer, it sits entirely alongside the NBA-data tables: nothing about `Game`, `Player` or `PlayerGameStat` changed.
+
+!!! success "Confirmed from `schema.prisma`"
+    The field lists below were read from `apps/api/prisma/schema.prisma` on 2026-09-27. The visual ERD in the [Architecture Overview](architecture.md#database-erd) predates these tables and doesn't show them yet.
+
+**CompetitionLevel** (enum) — `NCAA_D1` / `NCAA_D2` / `NCAA_D3` / `NAIA` / `JUCO` / `INTERNATIONAL_PRO` / `SEMI_PRO` / `HIGH_SCHOOL` / `REC`
+The API's validation enum is built from this one, so there is no second hand-written list to drift.
+
+**ProspectSeason** — one league year at one competition level for one user
+`id`, `userId` → User (cascade delete), `season` (e.g. `"2025-26"`, the same format as `Game.season`), `competitionLevel` (`CompetitionLevel`), `position`, `teamName?`, `createdAt`, `updatedAt`
+Unique on `[userId, season]`, which is what makes logging the same league year twice a `409` rather than a silently split game log. Indexed on `[userId, createdAt]`.
+
+**ProspectGame** — one self-reported box score
+`id`, `seasonId` → ProspectSeason (cascade delete), `gameDate`, `opponent`, `minutes`, `points`, `rebounds`, `assists`, `steals`, `blocks`, `turnovers`, `fieldGoalsMade/Attempted`, `threesMade/Attempted`, `freeThrowsMade/Attempted`, `createdAt`, `updatedAt`
+Unique on `[seasonId, gameDate, opponent]`: two games against the same opponent on the same day is a double entry, not a doubleheader. Indexed on `[seasonId, gameDate]`. It mirrors the `PlayerGameStat` columns a person can actually know about their own game, and deliberately **omits** `plusMinus`, `usagePercentage` and the two ratings, which need the possession context of a tracked game. That is why a user's derived line returns `null` for those four rather than a zero.
+
+**ProspectValuation** — one stored valuation of a season (append-and-take-latest)
+`id`, `seasonId` → ProspectSeason (cascade delete), `projectedDraftSlot?`, `projectedValueUsd?`, `projectedValueLowUsd?`, `projectedValueHighUsd?`, `rookieScaleYear`, `levelFactor`, `levelFactorBasis`, `drivers` (JSON), `comparablePlayerIds` (string array), `comparableScores` (float array), `slotAlumniPlayerIds` (string array), `modelVersion`, `computedAt`, `modelId?` → ProspectValuationModel (set null on delete)
+Indexed on `[seasonId, computedAt]`.
+
+**ProspectValuationModel** — one trained draft-slot model, written by `apps/valuation/train_valuation_model.py`
+`id`, `modelVersion`, `bundle` (JSON), `trainingRows`, `mae`, `rankCorrelation`, `fittedAt`
+Indexed on `[fittedAt]`; the API always applies the newest.
+
+!!! info "Why valuations are written by the API but the model by Python"
+    **Training** needs the whole NBA rookie dataset and numpy's least-squares solver, and only has to happen when NBA data changes, so Python writes `ProspectValuationModel`. **Applying** a trained linear model is a dot product that has to happen the moment a user's season changes, which only the always-on API can do, so the API writes `ProspectValuation`. The `bundle` carries everything needed to apply the model (coefficients, rookie scale, level factors with their bases, interval widths, and the comparable index), so each of those tables is defined once, in Python.
+
+Four properties of these tables are decisions rather than accidents:
+
+- **Money columns are null, never 0, when there is no figure.** A zero would be a valuation the model never made.
+- **History, not one upserted row.** The value card plots value over time, which needs the history. A row is only appended when a figure actually changes, so correcting a typo in an opponent's name adds nothing.
+- **Each valuation records the exact model and scale behind it.** `modelId` names the exact trained model: a version string alone can't, because retraining keeps the code version but changes every coefficient. Comparing it with the newest model's id is how the API notices a stale valuation and re-values it. `rookieScaleYear` stops a stored figure being silently re-read against a newer scale. `onDelete: SetNull` means pruning old models never deletes a user's history.
+- **Comparables are stored as player ids, not foreign keys.** The API resolves them to `Player` rows on read, so the comparables survive a player being re-ingested.
+
 ## Query indexes
 
 Beyond the per-entity indexes noted above, migration `add_query_indexes` (PR #124) adds the indexes the hot read paths actually filter and sort on. Before it, `Game` was indexed only on `seasonType`, while most queries filtered or ordered by date or by team:
@@ -138,6 +174,10 @@ User (1) ──────< (many) SavedLineup
 
 SavedComparison (1) ─< (many) SavedComparisonPlayer >─ (1) Player
 SavedLineup (1) ─────< (many) SavedLineupSlot      >─ (1) Player
+
+User (1) ──────< (many) ProspectSeason
+ProspectSeason (1) ──< (many) ProspectGame
+ProspectSeason (1) ──< (many) ProspectValuation >── (0..1) ProspectValuationModel
 ```
 
 ## Still open
@@ -146,4 +186,4 @@ SavedLineup (1) ─────< (many) SavedLineupSlot      >─ (1) Player
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Opus 5.5]*

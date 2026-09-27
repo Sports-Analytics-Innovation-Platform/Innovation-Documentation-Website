@@ -115,6 +115,28 @@ Click **Optimizer** in the navbar.
 - Five players selected under a salary cap with their predicted fantasy points
 - This demonstrates the optimisation engine: `apps/optimizer` predicts per-player fantasy points and solves a 5-player lineup via MILP (PuLP/CBC)
 
+### 9b. Become Pro
+
+Click **Become Pro** (the last link in the navbar).
+
+**What to do:**
+
+1. Start a season: pick a league year, a position and a competition level (for example NCAA Division II).
+2. Log a few games. Press Enter to save from any field, and use **Copy last game** to fill the next row quickly.
+3. Try an impossible line, such as more makes than attempts. It is refused with a "Fix" note. A points total that disagrees with the shooting splits saves with a "Check" note instead.
+4. Keep going to 10 games. Before that the card reads "N more games needed", with no dollar figure.
+
+**What to look for:**
+
+- The **season line** is derived from the games, never typed: FG% comes from season totals, not an average of each game's percentage.
+- The **value card** leads with the projected draft pick, then the rookie-scale dollar figure, a deliberately wide range, the scale year, the level factor and its basis, and "not an offer and not a market price".
+- **Compared with NBA rookies**: the three real rookies whose rookie line is closest, each linking to their player page, plus "Drafted at pick N".
+- Change the season's competition level and watch the value move. Level is the biggest single input.
+- Back on **Home**, the Become Pro card in the right-hand rail shows the same pick and value.
+- Everything here is **private to you**. There is no leaderboard, and no other user can see it.
+
+How the figure is produced, and what it can't claim, is on [Valuation Model](become-pro/valuation-model.md).
+
 ---
 
 ## Part 3: API verification
@@ -147,6 +169,8 @@ This proves the NestJS backend is live and reachable. The API is hand-written (n
 | `GET /v1/games/:id/prediction` | Yes | Win probability + predicted margin |
 | `GET /v1/optimizer/lineup` | Yes | Latest MILP-solved fantasy lineup |
 | `GET /v1/optimizer/predictions/:playerId` | Yes | Predicted fantasy points for one player |
+| `GET /v1/me/become-pro` | Yes | Your own Become Pro page: seasons, derived line, games, valuation, NBA comparables |
+| `GET /v1/me/become-pro/summary` | Yes | The Home/Profile Become Pro card |
 
 Full API documentation: [API Design](design/api-design.md)
 
@@ -164,7 +188,8 @@ Full API documentation: [API Design](design/api-design.md)
 | **Responsiveness** | Try resizing your browser window — the layout adapts at mobile/tablet/desktop breakpoints |
 | **Accessibility** | Skip-to-content link (tab from page load), `aria-label` on navigation, keyboard-navigable |
 | **Optimisation** | The Optimizer page (step 9) demonstrates MILP-based lineup optimisation; predictions use Elo + Four Factors |
+| **Trained model on real data** | Become Pro (step 9b) applies a least-squares model fitted on real NBA rookie seasons, re-valuing your season the moment a game is logged |
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude-Code[Claude Opus 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude-Code[Claude Opus 5], Claude-Code[Claude Opus 5.5]*

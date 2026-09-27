@@ -29,9 +29,22 @@ Role-based access control is implemented via NestJS guards. The schema defines f
 | Role | Can do | Status |
 |---|---|---|
 | `public` | Read-only access to player/team/stat endpoints, no account needed | Implemented — player and team endpoints have no auth guard |
-| `user` | Access to predictions, games, and optimizer endpoints (auth-gated) | Implemented — `SessionAuthGuard` on games, predictions, optimizer |
+| `user` | Access to predictions, games, and optimizer endpoints (auth-gated); their own personalisation and Become Pro data | Implemented — `SessionAuthGuard` on games, predictions, optimizer, and every `/v1/me/*` route, each scoped to the session user |
 | `admin` | Edit `Team`/`Player` rows, manage user accounts and roles | `/v1/admin/teams`, `/v1/admin/players`, `/v1/admin/users`, all behind `SessionAuthGuard` + `@Roles(ADMIN)` (PR #120, open — not yet merged to `main`) |
 | `analyst` | Submit or correct statistics, manage data quality flags | Schema exists, not yet used by any endpoint |
+
+## Self-reported data: Become Pro
+
+[Become Pro](become-pro/index.md) (PR #192) is the first feature where a user enters statistics about themselves. Its security model follows from one design decision: **the data is private to its owner.** There is no leaderboard, no public profile, and no comparison between users. A user is compared only with real NBA players.
+
+- **Every route is guarded and scoped.** All eight routes sit under `/v1/me/become-pro` behind `SessionAuthGuard`, and every query is scoped to the session user.
+- **Another user's season or game returns `404`,** exactly like an id that doesn't exist, so the response never confirms that someone else's row exists. This follows the `/v1/me/*` rule in [API Design](design/api-design.md#auth-model).
+- **Nothing a user enters is verified, and that is deliberate.** A self-reported figure only ever reaches the person who reported it, so a false figure misleads nobody else. This is also why the first design's evidence uploads, reliability score and admin evidence-review queue were removed when the feature was re-scoped on 2026-09-26, and why the Supabase storage bucket for evidence is no longer needed. **If Become Pro ever becomes public or comparative, verification has to come back first.**
+- **Impossible lines are still rejected.** Each game goes through the same anomaly checker the admin correction tools use (`apps/api/src/admin/stat-anomalies.ts`). This is for data quality, not trust: it stops typos from producing a nonsense valuation.
+- **Bounded writes.** 12 seasons per user, 120 games per season, every count 0–200, text fields capped at 120 characters, and duplicate games refused. One account can't grow its rows without limit.
+
+!!! warning "The valuation job must not be pointed at production by accident"
+    The repository's root `.env` points `DATABASE_URL` at the production database. `apps/valuation/db.py` therefore loads only its own `apps/valuation/.env` (or a `DATABASE_URL` already set in the environment), never a bare `load_dotenv()`, which would walk up the tree and find the root file. A missing file fails loudly instead of silently training against production. Production training is a deliberate act: it was done once, on 2026-09-27, writing only the one model row.
 
 ## Third-party data and credentials
 
@@ -69,4 +82,4 @@ Not yet implemented — tracked here so it isn't forgotten before Milestone 4:
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5], Claude-Code[Claude Opus 5.5]*

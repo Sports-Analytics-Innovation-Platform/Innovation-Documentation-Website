@@ -61,6 +61,7 @@ See the [Sprint Log](../sprint-log.md) for the complete task-by-task record.
 - This is the sprint the client flagged as the realistic target for "a working ML model" — treat this as the sprint where prediction quality actually needs to be defensible in a review, not just present
 - Target accuracy: 75–80% (per client meeting), with 64% as an achievable baseline
 - Refine prediction model beyond Elo + Four Factors as real data accumulates
+- ✅ **Become Pro** (PR #192, merged and deployed; production model trained 2026-09-27) — a user logs their own games and gets a projected NBA draft pick, a rookie-scale value and the NBA rookies their line most resembles, private to each user. Not in the original Sprint 3 plan. It adds a trained model (`apps/valuation`) that records its own fit statistics on every model row (in-sample MAE 10.9 picks, rank correlation 0.54), in the same spirit as the prediction model's published accuracy. See [Become Pro](../become-pro/index.md) and [Valuation Model](../become-pro/valuation-model.md)
 
 ## Submission (due 2026-10-11)
 
@@ -75,4 +76,4 @@ See the [Sprint Log](../sprint-log.md) for the complete task-by-task record.
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Opus 5.5]*

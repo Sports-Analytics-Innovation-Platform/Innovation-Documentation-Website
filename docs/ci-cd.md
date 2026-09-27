@@ -199,9 +199,10 @@ Across the whole API source that left exactly **one** genuine error: an unused `
 | Web typecheck | ✅ | `tsc -b` — solution-style config, build mode required |
 | API tests | ✅ | Against a real, disposable Postgres — self-managed, not a `services:` container (see [The test database](#the-test-database)) |
 | Web tests | ✅ | |
-| Combined coverage report | ⚠️ produced, **not gated** | The report is built and uploaded; nothing fails on a low coverage number |
+| Coverage threshold | ✅ **gated at 80%** | `apps/api/vitest.config.ts` and `apps/web/vite.config.ts` both set 80% thresholds for lines, statements, functions and branches, and CI runs `vitest run --coverage` (`npm run test:cov`), so the job fails below the floor (PR #101, #102) |
+| Combined coverage report | ✅ produced and uploaded | The merged report is built and uploaded as the `coverage-report` artifact |
 
-That last row is the one to read carefully. CI proves the suites **run and pass**; it does not yet enforce any coverage floor. Download the `coverage-report` artifact from the run to see the actual numbers — a green `coverage` job on its own says nothing about how much of the code is exercised.
+The coverage floor is enforced per app, by Vitest itself. Download the `coverage-report` artifact from the run to see the actual numbers above the floor. For example, at the Become Pro hand-off (PR #192) the web suite stood at 90.2% lines and 84.2% branches.
 
 ## CD Pipeline
 
@@ -224,7 +225,7 @@ Per [ADR-003](decisions/adr-003-hosting-topology.md): Cloudflare Pages provides 
 Other pages on this site describe CI steps that are planned but **not in `ci.yml` today**. Stated plainly so nobody assumes coverage that doesn't exist:
 
 - **No build step.** Lint, typecheck, and test only — nothing verifies that `apps/api` or `apps/web` actually builds in the CI pipeline (the build is verified by the CD deploy step instead).
-- **No coverage threshold.** See above: reported, not gated.
+- **No Python tests.** None of the four Python services (`ingestion`, `predictor`, `optimizer`, `valuation`) has its `pytest` suite run in CI; they are run locally only.
 - **No secret scanning.** [Git Methodology](git-methodology.md) and [Security](security.md) describe `gitleaks`/`trufflehog` as a PR backstop — that's the intent, not yet the implementation. The manual pre-commit check is currently the only line of defence.
 
 ## Local parity
@@ -269,7 +270,7 @@ Tracked here rather than lost in a chat log:
 
 1. **Enable npm caching** via the commented-out block once the runner's cache server is confirmed reachable. This is now the only remaining runner-environment unknown — the `runs-on` label question is settled (`ubuntu-latest`, since 2026-09-07) and so is the Postgres connection strategy (see [The test database](#the-test-database)).
 2. **Move to `actions/upload-artifact@v4`** once the Gitea server is upgraded past 1.24.7 and exposes the v4 artifact backend.
-3. **Gate on coverage.** Add a threshold so the `coverage` job fails below an agreed floor, instead of only proving the suites pass. Agree the number first — a threshold set above current coverage lands as an immediately-red pipeline.
+3. ~~**Gate on coverage.**~~ Done: an 80% threshold on lines, statements, functions and branches in both apps (PR #101, #102). See [What each job enforces](#what-each-job-enforces) above.
 4. **Confirm where the test schema comes from.** The workflow runs no migration against the service container; if that is handled by the test harness it should be stated in the testing docs, and if it isn't, the job needs a `prisma migrate deploy` step.
 5. **Remove the now-unused `cors` dependency** (`apps/api/package.json:32`). Deliberately deferred: it touches the lockfile, so it belongs in its own change.
 6. **Consider stricter linting** by swapping to `recommendedTypeChecked` + `projectService`. Expect considerably more findings — worth its own pass rather than bundling into unrelated work.
@@ -277,4 +278,4 @@ Tracked here rather than lost in a chat log:
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Code[Claude Opus 5], Qoder[Qoder Lite]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Code[Claude Opus 5], Qoder[Qoder Lite], Claude-Code[Claude Opus 5.5]*

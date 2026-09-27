@@ -5,7 +5,7 @@
 
 ## Navigation
 
-Header component (`LandingHeader`, renamed from the original `Navbar` when it was unified across routes — PR #50) with two link sets: the landing page shows just **Home**, **Players**, **Compare**, **Teams** (`overlaysContent` mode, since it sits over a full-bleed hero); every other route adds **Optimizer** and **Predictions**. The navbar also includes a recent-result widget (hidden on small screens) and an auth status button (sign in/sign out). A skip-to-content link is available for keyboard navigation.
+Header component (`LandingHeader`, renamed from the original `Navbar` when it was unified across routes — PR #50). It is now one header with one link set on every page, landing included: **Home**, **Players**, **Compare**, **Teams**, **Datasets**, **Optimizer**, **Predictions** and **Become Pro**, plus **Admin** for a signed-in admin. Become Pro was appended last (PR #192) so no existing link moved. Below the `xl` breakpoint the links move into a drawer behind a menu button. The cutover was `lg` until the eighth link was measured overflowing the header at 1024px wide. The navbar also includes a recent-result widget (hidden on small screens) and an auth status button (sign in/sign out). A skip-to-content link is available for keyboard navigation.
 
 The sidebar from the initial scaffold was replaced with the top navbar during Sprint 1 (week of 11 Aug) to accommodate the growing number of pages.
 
@@ -29,6 +29,7 @@ Every figure on the page is now live (PR #94, merged 2026-09-11), replacing the 
 | **Model accuracy ledger** | The model's real accuracy against an always-pick-home baseline, its Brier score, and per-band calibration | `GET /v1/analytics/model-accuracy` |
 | **Accuracy leaderboard** | Callers ranked by hit rate, with the Elo model on the board as a benchmark row rather than a rival | `GET /v1/analytics/leaderboard` |
 | **Saved shelf** | Saved player comparisons, and saved optimizer lineups showing how far each slot's salary and predicted points have drifted since you saved it | `GET /v1/me/saved/comparisons`, `GET /v1/me/saved/lineups` |
+| **Become Pro card** | In the right-hand rail (also on `/profile`): your current season, level, projected pick, value and a value sparkline, or an invitation to "Start a season". Added by PR #192 | `GET /v1/me/become-pro/summary` |
 
 Beat the Model is the page's focal action, and the clearest illustration of why the account is required at all: the server can only hide a completed game's score from you *and still score you on it* if it knows who you are.
 
@@ -79,6 +80,19 @@ Single game view showing win probability, predicted score margin, and a **court 
 
 Fantasy-lineup optimizer page showing the latest MILP-solved lineup: five players selected under a salary cap with their predicted fantasy points. Data comes from `GET /v1/optimizer/lineup`.
 
+### Become Pro (`/become-pro`) — auth-gated, private to its owner
+
+The user's own seasons, logged games, derived season line, projected NBA draft pick and rookie-scale value, and the three real NBA rookies their line most resembles (PR #192). It is on the locker palette, and it reuses the NBA pages' `StatTile`, `PointsTrendChart`, `PlayerTraitsRadar` and `ComparisonTraitsRadar`, because the season line has exactly the `SeasonAverages` shape. The user's line is drawn in the leather accent on the comparison radar.
+
+- **Header** — season details, "Edit details", "Add a season", "Delete season" (second click to confirm), and a radio-group season picker once there is more than one season.
+- **Value card** — leads with the pick ("Pick 14"), then the dollar figure, the range, a value sparkline, a provenance sentence, the level's basis and server-written drivers. Below 10 games it shows "N more games needed" and no dollar figure. On phones it sits directly under the header; from `lg` up it tops the right-hand rail.
+- **Season line** — a stat grid, a "Scoring by game" chart and a traits radar.
+- **Game entry** — one row per game, built for back-filling a season quickly: Enter saves from any field, the date carries forward, "Copy last game" pre-fills the previous row, and the number fields use a numeric keypad on phones.
+- **Games table** — newest first, with in-place Edit and a two-click Remove.
+- **Compared with NBA rookies** — three comparables with similarity percentages and links to their player pages, plus "Drafted at pick N".
+
+With no season yet, the page opens straight onto the "Start your first season" form. All data comes from `GET /v1/me/become-pro` in one request. See [Become Pro](../become-pro/index.md) for why each part works the way it does.
+
 ## Visual design
 
 Two palettes, both defined as Tailwind `@theme` custom properties in `index.css`. The dark "hardwood court" app shell was the only theme through Sprint 1; the lighter "locker" language was introduced for the landing page and has since spread to every other page, most recently Compare and Teams in Sprint 2 (the last two holdouts on the dark shell).
@@ -116,4 +130,4 @@ Charts (Recharts — `RadarChart`, `LineChart`) are themed against these CSS var
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5], Claude-Code[Claude Opus 5.5]*

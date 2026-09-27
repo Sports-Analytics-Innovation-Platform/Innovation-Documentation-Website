@@ -165,4 +165,21 @@
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude Code[Claude Sonnet 5], Claude-Code[Claude Opus 5]*
+## Sprint 3 — Model Maturity
+
+### Week of 22 Sep
+
+| Task | Type | Owner |
+|---|---|---|
+| Build Become Pro: a private `/become-pro` page where a signed-in user logs their own seasons and per-game box scores, with fast entry, in-place edit and two-click remove, a derived season line, scoring chart and traits radar, and a Become Pro card on Home and Profile (PR #192) | `feat` | Kiran Soodyall |
+| Add session-guarded `/v1/me/become-pro` routes and the `ProspectSeason`, `ProspectGame`, `ProspectValuation` and `ProspectValuationModel` tables (migration `20260923000000_add_become_pro`); extract `deriveSeasonAverages` so a user's line and an NBA player's are computed by identical code (PR #192) | `feat` | Kiran Soodyall |
+| Validate box scores with the same anomaly checker the admin correction tools use — impossible lines block the save, mismatched points only warn (PR #192) | `feat` | Kiran Soodyall |
+| Add `apps/valuation`: a least-squares model fitted on real NBA rookie seasons (rookie season taken from `draftYear`, published games only), priced on the published 2026-27 rookie scale, with judgement-based competition-level factors; the API applies it on every write and re-values on a newer model (PR #192) | `feat` | Kiran Soodyall |
+| Re-scope Become Pro to private, you-versus-NBA only: remove the value leaderboard and "#N" badge, public profiles and directory, evidence uploads, reliability score and admin evidence-review queue | `refactor` | Kiran Soodyall |
+| Fix bugs found in the 65-check live browser run: a rookie scale 11% high and a year stale, an unclamped value range, repeated value-history points, a duplicated level sentence, and a phone layout that buried the value card | `fix` | Kiran Soodyall |
+| Train the production valuation model (140 rookie seasons from the 2023–2025 draft classes, MAE 10.9 picks, rank correlation 0.54) | `chore` | Kiran Soodyall |
+| Document Become Pro on the docs site and log the AI transcript | `docs` | Kiran Soodyall |
+
+---
+
+*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude Code[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Opus 5.5]*

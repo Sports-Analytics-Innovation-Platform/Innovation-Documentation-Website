@@ -7,7 +7,7 @@ This page should get a new contributor from a clean clone to a running app in un
 - **Node.js** (LTS, v24+) and **npm** — for both `apps/api` (NestJS) and `apps/web` (React + Vite)
 - **Docker** and **Docker Compose** — runs Postgres locally
 - **Git**, with access to the project's Gitea repository
-- **Python 3** — only if you're working on the `nba_api` ingestion piece (`apps/ingestion`), the predictor (`apps/predictor`), or the optimizer (`apps/optimizer`)
+- **Python 3** — only if you're working on the `nba_api` ingestion piece (`apps/ingestion`), the predictor (`apps/predictor`), the optimizer (`apps/optimizer`), or the Become Pro valuation model (`apps/valuation`, see [Valuation Model](become-pro/valuation-model.md#operating-it) for training it)
 
 ## 1. Clone the repo
 
@@ -115,9 +115,10 @@ npx tsc -b --noEmit     # -b is required: tsconfig.json is solution-style
 | Google sign-in fails locally | Check `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` are set in `apps/api/.env` and the redirect URI (`http://localhost:4000/auth/callback/google`) is registered in the Google Cloud console. |
 | `tsc` reports "Cannot find module" errors in `apps/api` for packages that *are* in `package.json` | Stale local install. Run `npm ci && npm run prisma:generate` in `apps/api`. |
 | Every `/api` and `/auth` call returns **502** from the Vite dev server | The API isn't running — usually because it crashed at boot, not because the proxy is misconfigured. Check the API's own startup log first. A known cause: `apps/api/.env` being overwritten with a copy of `.env.example`, which leaves `GOOGLE_CLIENT_ID`/`SECRET` empty and `SUPABASE_URL` as the `<project-ref>` placeholder that Supabase rejects at startup. Vite reports this as 502 because nothing is listening on port 4000. |
+| `train_valuation_model.py` fails with "DATABASE_URL is not set" even though the root `.env` has one | Deliberate. `apps/valuation/db.py` reads only `apps/valuation/.env` (copy it from `.env.example`), or a `DATABASE_URL` already set in the environment. The root `.env` points at production, and a bare `load_dotenv()` would have walked up to it and trained against production by accident. |
 
 If you hit something not covered here, add it to this table once you've solved it — that's the point of this page.
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5.5]*

@@ -82,6 +82,9 @@ nav:
       - Performance: design/performance.md
       - Feature Tiers: design/feature-tiers.md
       - Roadmap: design/roadmap.md
+  - Become Pro:
+      - Overview: become-pro/index.md
+      - Valuation Model: become-pro/valuation-model.md
   - Process:
       - Methodology: methodology.md
       - Sprint Log: sprint-log.md

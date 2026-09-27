@@ -794,6 +794,167 @@ Saved optimizer lineups. Each slot's `salaryAtSave` and `predictedPointsAtSave` 
 
 ---
 
+### Become Pro
+
+Added in PR #192 (27 September 2026). A signed-in user logs their own games and gets a projected NBA draft pick, a rookie-scale value, and the NBA rookies their line most resembles. See [Become Pro](become-pro/index.md) for the feature and [Valuation Model](become-pro/valuation-model.md) for how the figure is produced.
+
+Every route **requires authentication** (`SessionAuthGuard` on the `v1/me/become-pro` controller) and acts only on the caller's own data. Like the rest of `/v1/me/*`, **another user's season or game returns `404`, not `403`**, exactly as for an id that doesn't exist. There is no public Become Pro route: no leaderboard, no public profile, no comparison between users.
+
+Logging, correcting or removing a game, and editing a season, all re-value the season before the response returns, so the next `GET` already carries the new figure.
+
+| Method | Path | Does |
+|---|---|---|
+| `GET` | `/v1/me/become-pro?seasonId=` | The full page |
+| `GET` | `/v1/me/become-pro/summary` | The small Home/Profile card |
+| `POST` | `/v1/me/become-pro/seasons` | Start a season |
+| `PATCH` | `/v1/me/become-pro/seasons/:seasonId` | Edit a season's details (re-values it) |
+| `DELETE` | `/v1/me/become-pro/seasons/:seasonId` | Delete a season and its games |
+| `POST` | `/v1/me/become-pro/seasons/:seasonId/games` | Log a game (re-values the season) |
+| `PATCH` | `/v1/me/become-pro/games/:gameId` | Correct a game (re-values the season) |
+| `DELETE` | `/v1/me/become-pro/games/:gameId` | Remove a game (re-values the season) |
+
+**Error codes**, in the standard `{ error: { code, message } }` envelope:
+
+| HTTP status | Code | When |
+|---|---|---|
+| `400` | `INVALID_BOX_SCORE` | The line can't be true: a negative stat, more makes than attempts, more threes than field goals, over 65 minutes, or a future date |
+| `404` | `SEASON_NOT_FOUND` / `GAME_NOT_FOUND` | The id doesn't exist, **or belongs to another user** |
+| `409` | `SEASON_ALREADY_EXISTS` | The caller already has a season for that league year |
+| `409` | `SEASON_LIMIT_REACHED` | The caller already has 12 seasons |
+| `409` | `GAME_LIMIT_REACHED` | The season already holds 120 games |
+| `409` | `DUPLICATE_GAME` | A game with the same date and opponent is already logged in that season |
+
+A points total that disagrees with the shooting splits (`POINTS_MISMATCH`) is **not** an error. The game is saved, and the browser flags it for the user to check.
+
+#### `GET /v1/me/become-pro`
+
+Everything the Become Pro page shows, in one response.
+
+**Query parameters:**
+
+| Param | Type | Default | Description |
+|---|---|---|---|
+| `seasonId` | string | The most recent league year | Which season to return in full |
+
+**Response `200`** (`MyBecomePro` in `types/nba.ts`):
+
+```ts
+{
+  seasons: ProspectSeason[],          // every season the caller has
+  activeSeasonId: string | null,
+  seasonAverages: SeasonAverages | null, // DERIVED from the games, never typed
+  gameLog: GameLogEntry[],            // the same type the NBA endpoints return
+  games: ProspectGame[],
+  valuationState: "VALUED" | "BELOW_GAMES_FLOOR" | "AWAITING_MODEL" | null,
+  valuation: ProspectValuation | null, // null unless valuationState is VALUED
+  valueHistory: { computedAt, valueUsd }[], // oldest first; identical runs collapsed
+  minimumGamesRequired: number        // 10, echoed rather than hardcoded client-side
+}
+```
+
+`ProspectValuation` carries `projectedDraftSlot`, `projectedValueUsd`, `projectedValueLowUsd`, `projectedValueHighUsd`, `rookieScaleYear`, `levelFactor`, `levelFactorBasis`, `modelVersion`, `computedAt`, the server-written `drivers`, the `levelAdjustedAverages` the comparison was measured on, three `comparables` (each a `Player`, their rookie `seasonAverages`, `rookieSeason` and a 0–1 `similarity`), and `slotAlumni` (players actually drafted at the projected pick).
+
+A caller with no seasons gets `200` with empty lists and nulls. That is a normal state for your own page, not an error. If a newer model has been trained since the season was last valued, this read re-values it first.
+
+**Response `404`:** `seasonId` is not one of the caller's seasons.
+
+---
+
+#### `GET /v1/me/become-pro/summary`
+
+The small card on Home and Profile: a figure and a trend, without the NBA comparables.
+
+**Response `200`** (`MyBecomeProSummary`):
+
+```ts
+{
+  season: string | null,
+  competitionLevel: CompetitionLevel | null,
+  gamesLogged: number,
+  valuationState: ValuationState | null,
+  projectedDraftSlot: number | null,
+  projectedValueUsd: number | null,
+  valueHistory: { computedAt, valueUsd }[],
+  minimumGamesRequired: number
+}
+```
+
+---
+
+#### `POST /v1/me/become-pro/seasons`
+
+Start a season.
+
+**Request body:**
+
+```json
+{
+  "season": "2025-26",
+  "competitionLevel": "NCAA_D2",
+  "position": "G",
+  "teamName": "Riverside College"
+}
+```
+
+`season` must match `YYYY-YY`, the format `Game.season` uses. `competitionLevel` is one of `NCAA_D1`, `NCAA_D2`, `NCAA_D3`, `NAIA`, `JUCO`, `INTERNATIONAL_PRO`, `SEMI_PRO`, `HIGH_SCHOOL`, `REC`. `position` is required (the page offers `G`, `F`, `C`, `G-F`, `F-C`); `teamName` is optional, up to 120 characters.
+
+**Response `201`:** the created season. **`409`:** `SEASON_ALREADY_EXISTS` or `SEASON_LIMIT_REACHED`.
+
+---
+
+#### `PATCH /v1/me/become-pro/seasons/:seasonId`
+
+Edit a season's details. Takes any subset of the `POST` body. Changing the competition level changes the level factor, so the season is re-valued.
+
+---
+
+#### `DELETE /v1/me/become-pro/seasons/:seasonId`
+
+Delete a season, along with every game and valuation in it (cascade).
+
+**Response `200`:** `{ "deleted": true }`
+
+---
+
+#### `POST /v1/me/become-pro/seasons/:seasonId/games`
+
+Log one game. The season is re-valued before the response returns.
+
+**Request body** (`ProspectGameInput`):
+
+```json
+{
+  "gameDate": "2026-01-17",
+  "opponent": "Hillcrest",
+  "minutes": 31,
+  "points": 18, "rebounds": 5, "assists": 4,
+  "steals": 2, "blocks": 0, "turnovers": 3,
+  "fieldGoalsMade": 7, "fieldGoalsAttempted": 15,
+  "threesMade": 2, "threesAttempted": 6,
+  "freeThrowsMade": 2, "freeThrowsAttempted": 2
+}
+```
+
+Every count is a whole number from 0 to 200. Whether the *line* is possible is decided separately, by the same checker the admin correction tools run over ingested NBA data (`apps/api/src/admin/stat-anomalies.ts`).
+
+**Response `201`:** the stored game. **`400`:** `INVALID_BOX_SCORE`. **`409`:** `DUPLICATE_GAME` or `GAME_LIMIT_REACHED`.
+
+---
+
+#### `PATCH /v1/me/become-pro/games/:gameId`
+
+Correct a game. Takes any subset of the game body. The box-score check runs on the **merged** row, not the patch alone, because raising makes on their own can break a line whose attempts were never touched. Re-values the season.
+
+---
+
+#### `DELETE /v1/me/become-pro/games/:gameId`
+
+Remove a game. Re-values the season, which drops it back to `BELOW_GAMES_FLOOR` if it falls under 10 games.
+
+**Response `200`:** `{ "deleted": true }`
+
+---
+
 ## Error format
 
 Every error response uses a structured envelope, applied globally by `AllExceptionsFilter`:
@@ -854,4 +1015,4 @@ Derived statistics (offensive rating, PIE, usage%) are calculated by the team fr
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude-Code[Claude Opus 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude-Code[Claude Opus 5], Claude-Code[Claude Opus 5.5]*

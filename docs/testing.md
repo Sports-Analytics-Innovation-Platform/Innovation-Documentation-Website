@@ -16,6 +16,8 @@ The principle: **unit tests for logic, integration tests for routes, component t
 
 As of PR #124 (13 September 2026) the API suite is **414 tests** and passes in full, end-to-end specs included. The web home-page suite passes alongside it, with cases added for the Beat the Model loading state, the early load of the next game, and skipping a game that was already called.
 
+At the Become Pro hand-off (PR #192, 27 September 2026) the API suite was **974 tests** passing, including 31 Become Pro end-to-end tests, and the web suite **717 tests** passing at **90.2% line and 84.2% branch coverage**, above the enforced 80% threshold. The `apps/valuation` Python suite adds 24 tests. See [Become Pro testing](#become-pro) below.
+
 ## API tests
 
 ### Unit tests
@@ -34,6 +36,11 @@ Unit specs live next to the source files they exercise (`src/**/*.spec.ts`) and 
 | `src/analytics/leaderboard-ranking.spec.ts` | Leaderboard ranking computation |
 | `src/analytics/leaderboard.service.spec.ts` | Leaderboard service logic |
 | `src/analytics/model-accuracy.service.spec.ts` | Model accuracy computation (Brier score, calibration bands) |
+| `src/become-pro/level-adjustment.spec.ts` | Competition-level factor discounts volume stats and leaves rates untouched |
+| `src/become-pro/prospect-box-score.spec.ts` | Which anomalies block a save and which (`POINTS_MISMATCH`) only warn |
+| `src/become-pro/rookie-season.spec.ts` | A draftee's rookie season worked out from `draftYear` |
+| `src/become-pro/valuation-model.spec.ts` | Draft slot, value on the rookie scale, clamped interval, comparables and drivers |
+| `src/become-pro/valuation-state.spec.ts` | The 10-game floor and the `VALUED` / `BELOW_GAMES_FLOOR` / `AWAITING_MODEL` states |
 | `src/cache/response-cache.service.spec.ts` | Response cache service |
 | `src/common/all-exceptions.filter.spec.ts` | The global exception filter maps errors to correct HTTP status codes |
 | `src/common/origin-check.guard.spec.ts` | Origin check guard for CSRF protection |
@@ -67,6 +74,7 @@ E2E specs live in `apps/api/test/` and exercise the **full NestJS application** 
 | `test/analytics.e2e-spec.ts` | Analytics endpoints — model accuracy, leaderboard |
 | `test/picks.e2e-spec.ts` | Beat the Model — challenge next game, submit pick, grade outcome, record |
 | `test/saved-lineups.e2e-spec.ts` | Saved lineups — create, list, delete, drift computation |
+| `test/become-pro.e2e-spec.ts` | Become Pro (31 tests) — privacy between users, season and game CRUD, validation, valuation on write, awaiting-model, level changes, a new model taking effect, history, comparables, summary |
 | `test/not-found.e2e-spec.ts` | Unknown routes return 404 via the `NotFoundController` catch-all |
 
 ### Test infrastructure
@@ -158,6 +166,22 @@ Frontend specs live next to the components and pages they test (`src/**/*.spec.{
 | `src/components/home/WatchlistBoard.spec.tsx` | Player watchlist with stats and trends |
 | `src/components/home/YourTeamsList.spec.tsx` | Followed teams with recent results |
 
+**Become Pro (9 specs):**
+
+| Spec file | What it tests |
+|---|---|
+| `src/pages/BecomeProPage.spec.tsx` | The whole page — privacy notice, first-season form, a valued season's line, the NBA rookie comparison, and managing seasons (including a confirmed delete) |
+| `src/components/becomepro/SeasonSetupForm.spec.tsx` | Starting and editing a season — league years already used are left out, blank team name, why level matters |
+| `src/components/becomepro/SeasonEntryPanel.spec.tsx` | The games table (newest first, real column headers), saving a game, correcting one in place, deleting once confirmed |
+| `src/components/becomepro/GameEntryRow.spec.tsx` | One-row box-score entry — Enter to save, date carried forward, "Copy last game" |
+| `src/components/becomepro/ProspectValueCard.spec.tsx` | Value card — pick first, range, provenance, drivers, no figure below the games floor |
+| `src/components/becomepro/MyProspectCard.spec.tsx` | The Home/Profile summary card — value and pick, sparkline only from more than one valuation, no figure below the floor, the "Start a season" state |
+| `src/lib/becomeProApi.spec.ts` | Become Pro API client — page, summary, season and game calls go to the caller's own `/v1/me/become-pro` routes |
+| `src/lib/boxScoreValidation.spec.ts` | Browser mirror of the server's box-score rules ("Fix" vs "Check") |
+| `src/lib/prospectValue.spec.ts` | League years, labels, and value/range/slot formatting |
+
+Shared fixtures for these live in `src/test/becomeProFixtures.ts`.
+
 **Landing (5 specs):**
 
 | Spec file | What it tests |
@@ -239,8 +263,8 @@ All tests run automatically on every push and pull request via the `coverage` jo
 | Coverage merge | `npm run coverage:report` (root script) combines both into a single HTML report |
 | Artifact | The merged `coverage-report/` directory is uploaded as a CI artifact |
 
-!!! warning "Tests are enforced; coverage is not (yet)"
-    CI **fails** if any test fails — there is no `--passWithNoTests` tolerance. However, CI does **not** fail on low coverage numbers. The coverage report is generated and uploaded, but no threshold gate exists yet. See [CI/CD Pipeline — Open items](ci-cd.md#what-ci-does-not-do-yet).
+!!! success "Tests and coverage are both enforced"
+    CI **fails** if any test fails — there is no `--passWithNoTests` tolerance. It also fails if either app drops below **80%** lines, statements, functions or branches: the thresholds are set in `apps/api/vitest.config.ts` and `apps/web/vite.config.ts`, and CI runs the suites with `--coverage` (PR #101, #102). See [CI/CD Pipeline](ci-cd.md#what-each-job-enforces).
 
 ## Coverage
 
@@ -294,13 +318,41 @@ This is what the team agrees to, enforced via the [Definition of Done](definitio
 
 ### What is not required (yet)
 
-- **Coverage threshold** — CI produces coverage numbers but does not gate on them. An agreed floor (e.g. 70% line coverage) should be set before Sprint 2 ends, once current coverage is measured.
+- **Python tests in CI** — the Python services' `pytest` suites (including `apps/valuation`'s 24 tests) run locally only; CI runs no Python tests yet
 - **Visual regression tests** — not planned for Sprint 2
 - **Performance / load tests** — not in scope for the current milestone
 
 ### axe-core accessibility scans
 
 ✅ **Done as of 2026-09-11** (PR #92) — no longer a gap. `src/test/accessibility.ts` wraps `jest-axe`/`axe-core` assertions used as component-test cases ("has no automated accessibility violations") across the players list, home, optimizer, and predictions pages, running in the same CI `coverage` job as the rest of the Vitest suite. Manual accessibility checks per the Definition of Done continue alongside this, not instead of it.
+
+## Become Pro
+
+[Become Pro](become-pro/index.md) (PR #192) is tested at every layer above, plus the valuation model's own Python suite and a scripted run in a real browser.
+
+| Layer | Where | Result at hand-off (27 September 2026) |
+|---|---|---|
+| API unit | `apps/api/src/become-pro/*.spec.ts` | Passing, within the full API suite of 974 |
+| API end-to-end | `apps/api/test/become-pro.e2e-spec.ts`, against a real Postgres | 31 tests passing |
+| Web component | The [Become Pro specs](#component-tests) above | Passing, within the full web suite of 717 (90.2% lines, 84.2% branches) |
+| Python | `apps/valuation/test_valuation.py`, no database needed | 24 tests passing, run locally (`pytest`) |
+| Live browser | Headless Edge against the real stack | 65 of 65 checks passed, no console errors |
+
+### Live browser test (26–27 September 2026)
+
+A headless Edge browser drove the real web app, API and Postgres database (filled by the `nba_api` pull), with a model trained on that data and **two real signed-in users**. It ran against a local stack, not production.
+
+The 65 checks covered: starting a season; the 10-game floor; the value appearing on the 10th game; editing and removing games; validation; duplicate games; changing competition level; switching and deleting seasons; comparables linking to real player pages; the Home and Profile cards agreeing with the page; phone width; and privacy between the two users.
+
+The run found real bugs, all fixed before hand-off:
+
+- The rookie scale had pick 1 about 11% too high and was a year out of date. It was replaced with the published 2026-27 figures and cross-checked against 2025-26.
+- The value range could exceed what pick 1 is paid. It is now clamped to the scale.
+- The value history repeated identical points. Runs of the same value now collapse.
+- The competition-level sentence was printed twice on the value card.
+- On phones the value card was buried at the bottom and the games table's headers ran together. On desktop the stat inputs wrapped.
+
+The full run is recorded in the [Become Pro transcript](transcripts/ai_transcripts/kiran-2026-09-27-become-pro.txt).
 
 ## User feedback process
 
@@ -348,4 +400,4 @@ The bug tracker is also used for feature/process tracking beyond bugs (e.g. [#73
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude-Code[Claude Sonnet 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude-Code[Claude Sonnet 5], Claude-Code[Claude Opus 5.5]*

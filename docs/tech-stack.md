@@ -1,6 +1,6 @@
 # Tech Stack
 
-Every component below is listed with why it was chosen, not just what it is — this doc exists specifically to score the brief's "Tech Stack" criterion (motivated stack, not just named). Every runtime dependency in `apps/api/package.json`, `apps/web/package.json`, and the three Python services' `requirements.txt` is accounted for here.
+Every component below is listed with why it was chosen, not just what it is — this doc exists specifically to score the brief's "Tech Stack" criterion (motivated stack, not just named). Every runtime dependency in `apps/api/package.json`, `apps/web/package.json`, and the four Python services' `requirements.txt` is accounted for here.
 
 ## Backend (apps/api)
 
@@ -65,7 +65,7 @@ Every component below is listed with why it was chosen, not just what it is — 
 | **React 19** | Team familiarity, large ecosystem, straightforward to keep the frontend fully decoupled from the backend (non-monolithic requirement) since it only talks to the API over HTTP. |
 | **Vite 8** | Fast dev server and build tool, minimal config compared to older bundlers. Uses `@vitejs/plugin-react` for Fast Refresh in development and optimised production builds. |
 | **TypeScript 6** | Type-safe JavaScript for the frontend — catches prop-type mismatches, missing route params, and API response shape errors at compile time rather than in the browser. |
-| **React Router 7** (`react-router-dom`) | Client-side routing with thirteen routes: `/`, `/home`, `/onboarding`, `/profile`, `/players`, `/players/:playerId`, `/compare`, `/teams`, `/teams/:teamId`, `/predictions`, `/optimizer`, `/games/:gameId`, `/admin`. |
+| **React Router 7** (`react-router-dom`) | Client-side routing with fifteen routes: `/`, `/home`, `/onboarding`, `/profile`, `/players`, `/players/:playerId`, `/compare`, `/teams`, `/teams/:teamId`, `/datasets`, `/become-pro`, `/predictions`, `/optimizer`, `/games/:gameId`, `/admin`. |
 
 ### Styling & UI
 
@@ -124,6 +124,19 @@ Every component below is listed with why it was chosen, not just what it is — 
 | **`psycopg2-binary`** | Reads player predictions from Postgres, writes the optimised lineup back to the `Lineup` and `LineupSlot` tables. |
 | **`python-dotenv`** | Environment variable loading, same convention as other services. |
 
+### Valuation (apps/valuation)
+
+Trains the draft-slot model behind [Become Pro](become-pro/index.md) — see [Valuation Model](become-pro/valuation-model.md). No LLM is involved anywhere.
+
+| Choice | Why |
+|---|---|
+| **NumPy 2.1** | `numpy.linalg.lstsq` fits the ordinary least-squares model (four features → draft pick) and computes its MAE and Spearman rank correlation. OLS was chosen over anything heavier because about 140 training rows support little more, and a linear model keeps every coefficient inspectable in the stored model row. |
+| **`psycopg2-binary` 2.9** | Reads NBA rookie seasons from Postgres, writes the trained model as one `ProspectValuationModel` row. |
+| **`python-dotenv` 1.0** | Environment variable loading. `db.py` deliberately loads only `apps/valuation/.env`: the root `.env` points at production, and a bare `load_dotenv()` walks up the directory tree and finds it. |
+| **pytest 8.3** | 24 unit tests in `test_valuation.py` (the rookie scale, level factors, true shooting, rookie-season arithmetic, the fit, and what the stored model bundle carries), none needing a database. |
+
+The API has no Python on Render, so this service runs from a developer machine like the predictor and optimizer. The API applies the trained model itself, in TypeScript: applying a linear model is a dot product, and it has to happen the moment a user logs a game.
+
 ### Python services: shared architecture
 
 `nba_api` is a Python package, and the backend is NestJS/TypeScript. This is resolved by running `nba_api` as a separate Python ingestion service (`apps/ingestion`) that writes directly to Postgres — NestJS then reads from the same database. The two languages coexist without needing an inter-process bridge because Postgres is the shared data layer. See [Architecture](design/architecture.md) for the full diagram.
@@ -162,4 +175,4 @@ These were confirmed as team decisions but are not yet in the codebase:
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder[Qoder Lite], Claude-Code[Claude Opus 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder[Qoder Lite], Claude-Code[Claude Opus 5], Claude-Code[Claude Opus 5.5]*

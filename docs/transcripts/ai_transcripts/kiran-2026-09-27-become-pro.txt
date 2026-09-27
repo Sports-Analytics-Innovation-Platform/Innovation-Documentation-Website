@@ -1,0 +1,2904 @@
+========================================================================
+CHAT EXPORT
+Become Pro: log your own games, get a projected NBA rookie-scale value,
+and compare yourself with real NBA rookies
+Date: 22-27 September 2026
+Branches: BecomeProFeat (feature, merged to main as 3374a85),
+          train-valuation-model, become-pro-docs
+========================================================================
+
+HOW THIS FILE WAS PRODUCED: exported from the Claude Code session
+transcript by a script. User prompts, the user's answers to the
+assistant's multiple-choice questions, messages the user sent while the
+assistant was working, and the assistant's replies are reproduced as
+written. Tool calls are summarised after each turn by tool name, the
+repository files written or edited, and the one-line description of
+each command run, rather than reproducing raw tool JSON or its output.
+The assistant's internal reasoning is not included. Some of the short
+status lines printed between tool calls were not persisted to the
+transcript, so they are absent here. Long pasted logs
+are cut to their first 25 lines. Connection strings and secrets never
+appear in the prompts or replies reproduced here; a redaction pass was
+run anyway. The session's context filled up once (26 Sep) and was
+summarised; that point is marked. The export was generated during the
+final turn, so that turn's closing reply is not included.
+
+Companion file: kiran-2026-09-27-become-pro-feature-summary.md (feature
+by feature: what it is, how it works, what it uses, where the files
+are, and why).
+
+========================================================================
+SESSION SUMMARY
+========================================================================
+
+GOAL
+Add a "Become Pro" feature: a player logs their own season, gets a
+monetary value computed by real algorithms (not AI) from data the
+project already collects, compares themselves with NBA players, and can
+update their data. The first design also had a value leaderboard and a
+"#N" rank badge; that was later removed (see "Re-scope").
+
+KEY DECISIONS (the user's answers)
+- Value anchor: the published NBA rookie salary scale. Nothing in the
+  repo or nba_api has salary data, so the model projects a draft pick
+  and the pick is priced on the scale.
+- Input: per-game box scores; the season line is derived, never typed.
+- Competition level: required, and it scales the value.
+- Valuation timing: the API values a season on every write, so the
+  figure appears the moment the 10th game is logged.
+- Data for testing: pull real NBA data locally with nba_api (bulk
+  copying from production was blocked by the permission system and was
+  not attempted again).
+- Visibility: private to each user.
+
+WHAT WAS BUILT
+1. Web (apps/web): the /become-pro page; season setup, editing,
+   switching and deletion; fast game entry with edit and remove;
+   box-score validation that blocks impossible lines and warns on
+   mismatched points; season line, scoring chart and traits radar;
+   projected value card (pick, dollars, range, history, provenance,
+   drivers); comparison radar against three NBA rookies, plus players
+   drafted at the projected pick; a Become Pro card on Home and
+   Profile; an eighth nav link.
+2. API (apps/api/src/become-pro): session-guarded /v1/me/become-pro
+   routes; season line derived with the same code as NBA players;
+   valuation applied on every write and refreshed when a newer model
+   exists; comparables from the model's own training set, restricted
+   to rookie regular seasons and published games; Prisma models and
+   one consolidated migration.
+3. Model (apps/valuation): trains a least-squares model on real NBA
+   rookie seasons (rookie season taken from draftYear, published games
+   only), mapping points, rebounds, assists and true shooting to a
+   draft pick, and stores the fitted model, rookie scale, level
+   factors and comparable index as one row the API applies.
+
+RE-SCOPE (26 Sep)
+The user removed the leaderboard and all comparison between users:
+Become Pro is now you versus NBA rookies only, private to each user.
+With nobody else seeing a user's figures there is nothing to verify,
+so the evidence upload, reliability score and admin review queue were
+removed too, and the Supabase evidence bucket is no longer needed.
+
+TESTING
+- Live browser run: 65 of 65 checks passed, with no console errors.
+  It used headless Edge with the real web app, API, local Postgres
+  filled from nba_api, a model trained on that data, and two real
+  signed-in users.
+- Automated: API 974 tests (31 Become Pro end-to-end), web 717 tests
+  (90.2% line, 84.2% branch coverage), valuation 24 tests; typecheck,
+  lint and production build clean.
+
+BUGS FOUND AND FIXED DURING TESTING
+- The rookie scale was wrong (pick 1 about 11% too high) and a year
+  stale. It was replaced with the published 2026-27 figures and
+  cross-checked against 2025-26 (every pick rose exactly with the
+  salary cap).
+- The value range could exceed what pick 1 is paid; it is now clamped
+  to the scale.
+- The value history repeated identical points; runs now collapse.
+- The competition-level sentence was printed twice on the value card.
+- On phones the value card was buried at the bottom and the games
+  table's headers ran together; the stat inputs wrapped on desktop.
+- Earlier in the build: the model used the earliest season on record
+  as the rookie season (wrong for veterans), comparables ignored the
+  published-games rule, and the radar plotted the raw line while the
+  similarity used the level-adjusted one. All fixed.
+
+PRODUCTION
+- The user merged the branch to main; Render applied the migration.
+- The valuation model was trained against production on 27 Sep from
+  its own branch: 140 real rookie seasons (the 2023-2025 draft
+  classes), MAE 10.9 picks, rank correlation 0.54, model
+  c40a1d20-5001-4ec1-8aac-dad196768e61. Nothing else in production
+  was written.
+- A CI failure on the push was a network error during npm ci, not the
+  code; the runner is a Docker container on the user's machine.
+
+OPEN ITEMS AT HAND-OFF
+- Retrain production once the 2026 draft class has about 20 games, and
+  every summer when the new rookie scale is published.
+- CI runs no Python tests for any service.
+- apps/api/.env lacks DIRECT_URL and has a placeholder SUPABASE_URL
+  (local only).
+- Ingestion keeps only players on current rosters, which leans the
+  model towards rookies who stayed in the league.
+
+========================================================================
+CONVERSATION
+========================================================================
+
+------------------------------------------------------------------------
+[1] USER  (22 Sep 16:00)
+------------------------------------------------------------------------
+I want you to start exploring a plan to build a new tab and feature for
+the webapp that allows players to submit their own seasonal stats.
+Players can then view their stats, update them, view other player stats
+on the webapp. Players should be given a monetary value for their stats
+using the data we actually collect from our apis, we can also call upon
+the existing apis to find monetary value of pro players. The idea of the
+monetary value of a user/player is to see their possible value as a
+future nba/pro level player and compare themselves to real players. This
+should not be using ai to calculate rather using real algorithms/machine
+learning to calculate these values. Lastly there should be a leaderboard
+displaying users with the highest monetary value and a "#number" badge
+should show next to your name displaying your current rank. This feature
+will require an update to the profile page and the Homepage.
+
+
+You are purely going to be building the front end of this idea. I will
+hand off the backend code to another ai to save usage.
+
+------------------------------------------------------------------------
+[1] ASSISTANT
+------------------------------------------------------------------------
+I'll start by exploring the codebase to understand the webapp's
+structure, existing patterns, and what data the APIs collect.
+
+Three Explore agents are mapping the codebase in parallel — frontend
+structure, data/auth patterns, and the NBA stats domain. While they run,
+let me get a quick top-level orientation myself.
+
+Good — Vite + React + TS + Tailwind SPA, NestJS + Prisma API. Let me
+read the web app's own README and the project overview.
+
+Strong convention here — every component has a co-located `.spec.tsx`.
+Let me read the routing shell and key pages.
+
+There's already a `LeaderboardCard` on the home page — highly relevant.
+Let me read the routing and that component.
+
+Excellent — a strong existing pattern to mirror: ranked rows, a model
+benchmark, a qualification threshold. Let me read the nav shell and the
+two pages I'll need to modify.
+
+Key discovery: the optimizer already deals in player **salaries**. Let
+me check the API surface and types.
+
+Important: the optimizer's salary is explicitly **synthetic DFS-style**,
+not real NBA money. And there's a `custom-statistics` module — a user-
+defined-stat precedent. Let me dig into both.
+
+This codebase has a rigorous, backtest-driven, honesty-first culture.
+Let me read the API contract layer.
+
+`StatTile` already has an editing mode with numeric inputs — let me find
+what uses it.
+
+There's already an "Edit stats" what-if mode on the player profile — the
+closest precedent to a stat-entry form. Let me read it.
+
+I have a strong picture. Let me check the comparison machinery —
+"compare yourself to real players" is core to this feature.
+
+The branch is already named `BecomeProFeat`. Let me nail the testing
+convention since every component here ships with a spec.
+
+One agent down with a thorough report. Note: **80% coverage thresholds
+are enforced in CI**, so every new component needs a spec. Let me check
+the existing rank semantics while the others finish.
+
+Two reports in. Let me confirm the single most pivotal fact myself:
+whether any *real* NBA salary data exists anywhere.
+
+Confirmed: **no real NBA salary/contract data exists anywhere** in this
+project. There's also a `CustomStatistic` model — user-owned data. Let
+me check it.
+
+All three explorations are back. I have a complete picture — and one
+finding that directly affects a premise in your request:
+
+**There is no real NBA salary or contract data anywhere in this
+project.** The only dollar figure that exists is
+`PlayerPrediction.salary`, which
+[predict.py:126-133](apps/optimizer/predict.py#L126-L133) computes as
+`$3000 + predictedFantasyPoints × $160`, clamped to $3k–$11k. Both the
+schema and the Python explicitly label it synthetic DFS pricing, "not a
+real market price." `nba_api` doesn't expose contracts either. So "call
+upon the existing APIs to find monetary value of pro players" isn't
+currently possible — that anchor has to come from somewhere new.
+
+Everything else lines up well. There's already an
+`/v1/analytics/leaderboard` with dense ranking and a qualification floor
+to mirror, a `CustomStatistic` model showing the user-owned-data
+pattern, and `StatTile` already supports inline numeric editing.
+
+Four decisions genuinely change what I build:
+
+------------------------------------------------------------------------
+[1] USER'S ANSWERS TO THE ASSISTANT'S QUESTIONS
+------------------------------------------------------------------------
+  Q: There's no real salary data in the repo. What should the dollar
+  figure be anchored to?
+  A: NBA rookie salary scale (Recommended)
+  Q: What exactly does a player type in when they submit a season?
+  A: Per-game box scores (Recommended)
+  Q: A 30 PPG rec-league season isn't a 30 PPG NCAA season. How should
+  competition level factor in?
+  A: Required field, scales the value (Recommended)
+  Q: Anyone can type 40 PPG. How should self-reported stats be treated?
+  A: Use the recommended tool, but lastly we could add a feautre where
+  you submit an official score card or something along the lines to
+  verify that that the stats are real. Then we give each player a
+  realiability score which determines how accurate the results are based
+  on the actual values and confirmed scoring through verified 3rd
+  parties
+
+------------------------------------------------------------------------
+[1] ASSISTANT
+------------------------------------------------------------------------
+Good — and the verification/reliability idea fits neatly: avatar upload
+already proves the multipart + private-storage path, and there's an
+existing `lib/reliability.ts` I need to check for a naming clash.
+
+Confirmed a naming clash worth avoiding: `reliability.ts` already means
+*prediction* reliability. Your reliability score will need its own
+namespace.
+
+Now let me run a design panel — three independent approaches, scored by
+three different lenses, plus a completeness critic.
+
+The design panel is running. Let me start the plan file with the parts
+that won't change.
+
+While the panel runs, let me capture two more patterns I'll reference:
+the stat-row table config and the newest full page.
+
+The `#N` badge needs to sit next to the user's name — let me check where
+that's rendered.
+
+This is the key spot for the `#N` badge — and a hidden hazard.
+`AuthStatus` renders in the header on every page; its own comment warns
+it's "rendered by nearly every page's test suite." Let me verify that.
+
+Good — page specs render pages directly, not the layout, so the badge's
+blast radius is small. Let me grab the verification commands.
+
+I have everything I need on the codebase side. Waiting on the design
+panel to return before finalizing.
+
+The three design agents are running and reading files actively. Let me
+wait for them rather than duplicate their work.
+
+I have full detail on every primitive I'll reuse. Holding for the design
+panel now.
+
+All three design agents are mid-run. I'll wait for the panel to complete
+rather than burn effort on work they're already doing.
+
+I've set a watcher on the design phase. While it runs, let me pin down
+one thing that will shape the API contract — how the existing point-in-
+time and season-scoped endpoints name things.
+
+Let me study the house pattern for a Python model service — the backend
+AI will need to replicate it for the valuation model.
+
+Clear house pattern for model services: a flat Python dir with `db.py`,
+pure testable modules, and co-located pytest files. Let me pin the API's
+guard conventions for the contract.
+
+Still running. I'll yield here and pick this straight back up — I have a
+background watcher armed on the design phase plus the workflow's own
+completion notification, so I'll be resumed automatically.
+
+**Where things stand:**
+
+Exploration is complete and your four decisions are locked in. One
+finding changed a premise in your request: there is no real NBA salary
+data in the repo, and `nba_api` doesn't expose any — the only dollar
+figure is synthetic DFS pricing in
+[predict.py:227-235](apps/optimizer/predict.py#L227-L235). That's why
+the rookie-scale anchor you picked is doing real work rather than
+dressing up a fake number.
+
+Useful things I found that the build will lean on:
+
+-
+  [LeaderboardCard.tsx](apps/web/src/components/home/LeaderboardCard.tsx
+  ) is a near-exact template — dense ranking, a qualification floor, a
+  benchmark row labelled in words rather than colour, and a real empty
+  state.
+- [StatTile.tsx](apps/web/src/components/StatTile.tsx) already has an
+  inline numeric edit mode, and [PlayerProfilePage.tsx:243-
+  275](apps/web/src/pages/PlayerProfilePage.tsx#L243-L275) already does
+  local "what-if" stat overrides.
+- Shaping the derived season line like the existing `SeasonAverages`
+  type means `PointsTrendChart`, `Sparkline`, `PlayerTraitsRadar` and
+  `ComparisonTraitsRadar` all work on a user's season with no new chart
+  code — and `ComparisonTraitsRadar` takes `{player, seasonAverages}[]`,
+  which is exactly how "compare yourself to a real NBA player" gets
+  built.
+
+Two hazards I've already flagged for the plan: `lib/reliability.ts`
+**already exists** meaning prediction reliability, so your reliability
+score needs its own namespace; and the `#N` badge belongs in
+[AuthStatus.tsx:122](apps/web/src/components/AuthStatus.tsx#L122) next
+to the display name — sourced from the existing `useMe()` call rather
+than a new query, since that component mounts in the header on every
+page.
+
+I'll finalize the plan once the panel's three rival designs, three
+judging lenses, and completeness critic land.
+
+You've hit your org's monthly spend limit · run /usage-credits to ask
+your admin for a higher limit · your session limit resets 8:30pm
+(Africa/Johannesburg)
+
+TOOL ACTIVITY IN THIS TURN
+  Tools: Bash x39, Read x16, Agent x3, AskUserQuestion x1, Workflow x1, Write x1, ToolSearch x1
+  Scratch/helper files written: 1
+  Commands and lookups:
+    - Agent: Map webapp frontend structure
+    - Agent: Map data fetching and auth patterns
+    - Agent: Map NBA stats domain and player value data
+    - List repo root, apps and packages
+    - List claude config, docs and web app contents
+    - Show web src directory tree
+    - List pages, components, hooks, lib and types
+    - List src root files and home/landing components
+    - Search for salary data in schema and code
+    - Read optimizer salary schema section
+    - Inspect how optimizer computes salary
+    - Read api client and main entry
+    - List exported types in nba.ts
+    - Read Player and SeasonAverages types
+    - Read Leaderboard and MeProfile types
+    - Extract locker and landing design tokens
+    - Find StatTile usages and editing mode
+    - Read player profile edit-stats what-if feature
+    - Read comparison radar and color helpers
+    - Read trait normalization config
+    - Search docs for valuation concepts and check branch
+    - Read a representative spec and vitest config
+    - Read existing leaderboard ranking rules
+    - List Prisma models and search for contract data sources
+    - Inspect CustomStatistic model and web usage
+    - Workflow: Design panel for Become Pro frontend
+    - Read nbaApi fetcher conventions
+    - Read SeasonSplitsTable stat row config
+    - Read small sample helper
+    - Check which specs render AuthStatus and mock useMe
+    - List npm scripts for verification steps
+    - Check position vocabulary for submission form
+    - Read LockerSection API
+    - Check workflow progress cheaply
+    - Read Reveal wrapper API
+    - Read workflow journal
+    - Check PlayerHeadshot signature
+    - Wait and re-check workflow journal
+    - Wait for design phase agents to finish
+    - Check season identifier conventions
+    - ...and 3 more
+
+------------------------------------------------------------------------
+[2] USER  (22 Sep 23:14)
+------------------------------------------------------------------------
+continue
+
+------------------------------------------------------------------------
+[2] ASSISTANT
+------------------------------------------------------------------------
+The design panel returned **three complete plans**, but the three
+judging agents and the critic failed — your org hit its monthly spend
+limit (resets 8:30pm Africa/Johannesburg). I'll synthesize the plans
+myself rather than spawn more agents.
+
+One judge survived — the "does it deliver user intent" lens. Let me
+extract all four results.
+
+All four extracted. Let me read the surviving judge's verdict first — it
+scores all three against your literal asks.
+
+This verdict is rigorous and decisive. Before reading the winning plan,
+let me settle the contract bug it flagged — how the API already handles
+a 0-attempt percentage.
+
+Contract bug resolved definitively: `percentageOf` returns **0** for
+zero attempts, and percentages derive from season *totals*, not averaged
+per-game rates. `SeasonAverages` stays verbatim. Now the winning plan.
+
+Plan A is strong and the judge's grafts are specific. Let me verify the
+two load-bearing code claims before I commit them to the plan.
+
+Both verified — the radar reads only `id`/`firstName`/`lastName`, so the
+prop widening is safe. Let me capture the anomaly rules I'll mirror
+client-side.
+
+Everything's verified. Writing the final plan.
+
+[The user approved the plan. It is reproduced in the appendix.]
+
+Plan approved. Starting with step 1 — types and the pure libraries. Let
+me check where to append in the types file.
+
+Now let me append the Become Pro types.
+
+Now the pure libraries. First `boxScoreValidation.ts`, mirroring the
+server's anomaly codes.
+
+Now `prospectValue.ts` — the formatters and the local derivation that
+mirrors the API exactly.
+
+Now the specs for both pure modules.
+
+Let me run these two specs before building on them.
+
+48 tests green. Now the API fetcher layer — let me check the existing
+spec style I need to mirror for the contract pin.
+
+Now the fetcher module.
+
+`tsc` caught a missing field the tests couldn't — I dropped
+`freeThrowPercentage`. Fixing:
+
+Types clean. Now the contract pin and shared fixtures.
+
+The heredoc choked on this content. Let me use the Write tool for this
+file rather than fight shell quoting.
+
+Steps 1–2 done. Now the rank badge — the most visible ask.
+
+Now wiring the badge into the header next to the account name.
+
+The badge changes the link's accessible name when ranked, so existing
+queries need the default mock to be unranked. Let me patch the spec.
+
+Badge wired. Let me check the specs that render the header still pass.
+
+Now the reliability meter, then the value card that uses it.
+
+Now the value card — the centerpiece, presentational so its branches
+stay cheap to test.
+
+Two matches — "self-reported" appears in both the micro-label and the
+provenance sentence, which is the intended behaviour. The assertion
+needs to be specific.
+
+`ProspectRankSummary` is deliberately lean, so it can't feed the full
+card. Rather than ship a dead `compact` branch, let me make the card
+always-full and give Home/Profile their own lean self-fetching card.
+
+Now drop the compact tests and add the self-fetching card for
+Home/Profile.
+
+Now the self-fetching summary card for Home and Profile, with the value-
+over-time sparkline.
+
+`useSession` needs an explicit module mock here, as other specs do. Let
+me check the house pattern.
+
+Same multiple-match issue — "self-reported" correctly appears twice.
+Fixing the assertion:
+
+Step 3 complete. Now the leaderboard — let me check the Pagination props
+I'll reuse.
+
+Now the directory — the browse surface that makes "view other players'
+stats" mean *everyone*, not just the ranked.
+
+Tests pass but the debounce logs act warnings. `waitFor` from testing-
+library wraps in act; `vi.waitFor` doesn't.
+
+Now the hub page.
+
+10 pass. Now wiring the routes and the nav link.
+
+Routes are in. Now the entry surface — the one genuinely novel
+component, and the one everything else depends on.
+
+Now the evidence uploader, mirroring the avatar precedent.
+
+`userEvent.upload` honours the `accept` attribute, so the file never
+reaches the handler. That's worth testing both ways.
+
+Now the season entry panel that owns the game list and the entry row.
+
+Real bug, not just test noise: `mutateAsync` rejects and nothing catches
+it. A failed save should also *keep* the user's typed row rather than
+clearing it.
+
+25 pass, rejection gone. Now widen the comparison radar so a prospect
+can be overlaid without faking a `Player`.
+
+The blanket replace mangled the comment. Fixing that, then building the
+page.
+
+Now the prospect page itself.
+
+Types clean. Now the ProspectPage spec.
+
+Both failures are genuine duplicates across tiles (FG% and TS% both
+compute to 40%). Let me scope assertions to the specific tile.
+
+16 pass. Now Home and Profile.
+
+Now the admin review tab — without it, nothing ever reaches `VERIFIED`.
+
+Now the review queue spec, then I'll patch the affected existing specs
+and run the full suite.
+
+Now the existing specs that mount the changed pages need the new module
+mocked. Let me run them to see what breaks.
+
+My new card on Profile adds a second "Try again" because its fetcher is
+unmocked. Both specs need the module mocked, as the plan flagged.
+
+Both green. Now the full suite plus lint and typecheck.
+
+Lint clean (exit 0, no warnings in new files), types build. Now the full
+suite with coverage — the CI gate.
+
+Coverage clears every CI threshold (statements 90.1%, branches 84.5%,
+functions 86.3%, lines 91.4%), with `becomepro/` at 96%. Let me confirm
+the run itself had no failures.
+
+All 742 tests pass across 79 files. Let me confirm coverage on each new
+file specifically.
+
+Every new file clears the gate except `ProspectPage` branches at 77.8%.
+Let me check whether thresholds are global or per-file.
+
+Thresholds are global and clear. Still, `ProspectPage`'s uncovered
+branches are the season chips — worth testing since that's real
+behaviour.
+
+`ProspectPage` now at 96%/98%. Final verification — full suite plus
+production build.
+
+A ComparePage test failed. I did touch `ComparisonTraitsRadar`, so I
+need to rule myself out. Let me run it alone.
+
+Passes alone. My change to that component was purely type-level — let me
+confirm with the diff, then re-run the suite to check it's intermittent.
+
+Confirmed: every changed line is a type name or a comment — no runtime
+change. Re-running the suite to confirm the failure is intermittent.
+
+All 746 pass on re-run — load-induced flakiness, matching this repo's
+known pattern. Let me update that memory note, then do the production
+build.
+
+Build succeeds. Now the one check no test can do — the 8-link nav row at
+desktop widths. Let me start the dev server.
+
+Server is up. Let me check the nav row at the three widths the plan
+calls out.
+
+Headless browser is up. Let me measure the nav row at the widths the
+plan flagged.
+
+Real measurements: the 8th link **fits at 1024px** — no overflow, 40px
+clearance before the account control. No breakpoint change needed. But
+there's horizontal page scroll at some widths; let me find whether
+that's mine or pre-existing.
+
+Important: at 1024px the **"Sign in with Google" button overflows the
+viewport** (right edge 1098 vs 1009). That appears on `/players` too. I
+need to know if my 8th link caused it — let me test with the link
+removed.
+
+Definitive — and my earlier read was wrong. With 7 links the row ends at
+976px (no overflow); with my 8th it pushes the sign-in button to 1098px,
+past the 1024 viewport. The `ul` itself doesn't overflow, so my first
+check missed it. The plan's fallback is needed.
+
+Fixed — no horizontal scroll at any width now, and the row is clean at
+1280+. Let me verify the drawer still works at 1024 and reaches all
+eight links.
+
+Drawer works — 8 links, 44px targets. Now let me see the actual page.
+The API isn't running, so this also tests the error states.
+
+Page structure renders correctly. The board sections show only headings
+— let me confirm they reach their error states rather than hanging,
+since the API is down.
+
+Both resolve to error states with working retry — no hang, no invented
+figures. Let me clean up and run the final verification.
+
+Done. The frontend is complete, and everything verifies.
+
+## What's built
+
+**13 new files** under `becomepro/` plus three libs, two pages, and a
+shared fixture module — each with a co-located spec:
+
+- [prospectValue.ts](apps/web/src/lib/prospectValue.ts) — formatters
+  plus `deriveSeasonAverages`, mirroring the API's
+  `percentageOf`/`averageOf` exactly
+- [boxScoreValidation.ts](apps/web/src/lib/boxScoreValidation.ts) —
+  client mirror of [stat-anomalies.ts](apps/api/src/admin/stat-
+  anomalies.ts), reusing its real codes
+- [becomeProApi.ts](apps/web/src/lib/becomeProApi.ts) — every fetcher,
+  the single module specs mock
+-
+  [GameEntryRow.tsx](apps/web/src/components/becomepro/GameEntryRow.tsx)
+  , [SeasonEntryPanel.tsx](apps/web/src/components/becomepro/SeasonEntry
+  Panel.tsx), [EvidenceUploader.tsx](apps/web/src/components/becomepro/E
+  videnceUploader.tsx), [EvidenceReviewQueue.tsx](apps/web/src/component
+  s/becomepro/EvidenceReviewQueue.tsx), [ProspectValueCard.tsx](apps/web
+  /src/components/becomepro/ProspectValueCard.tsx), [ProspectLeaderboard
+  .tsx](apps/web/src/components/becomepro/ProspectLeaderboard.tsx), [Pro
+  spectDirectory.tsx](apps/web/src/components/becomepro/ProspectDirector
+  y.tsx), [MyProspectCard.tsx](apps/web/src/components/becomepro/MyProsp
+  ectCard.tsx), [ReliabilityMeter.tsx](apps/web/src/components/becomepro
+  /ReliabilityMeter.tsx),
+  [ProRankBadge.tsx](apps/web/src/components/becomepro/ProRankBadge.tsx)
+- [BecomeProPage.tsx](apps/web/src/pages/BecomeProPage.tsx),
+  [ProspectPage.tsx](apps/web/src/pages/ProspectPage.tsx)
+
+The `#N` badge sits next to your name in
+[AuthStatus.tsx](apps/web/src/components/AuthStatus.tsx), fed by the
+lean `/v1/me/become-pro` and gated on `session`, so no existing spec
+starts firing an unmocked request. Home, Profile and Admin each gained a
+section; the admin evidence tab is in scope precisely so `VERIFIED` is
+reachable.
+
+## The nav — I was wrong on first read, then measured
+
+I initially checked whether the `<ul>` overflowed and concluded eight
+links fit at 1024px. That was the wrong check. The links do fit, but
+they push the `ml-auto` account block to a right edge of **1098px
+against a 1024px viewport**, giving the whole page a horizontal
+scrollbar. I confirmed it by removing the link and re-measuring: seven
+links end at 976px with no page scroll.
+
+So I moved the in-row breakpoint `lg` → `xl` and the landing banner `xl`
+→ `2xl`, and rewrote the header comment with the actual numbers.
+Verified after: no horizontal scroll at 390/768/1024/1152/1280/1440,
+drawer opens at 1024 with all eight links at 44px targets. The cost —
+1024–1279px now gets the drawer — is real and documented in the code.
+
+## Verification
+
+`tsc -b` clean · `lint` exit 0 · **746 tests / 79 files pass** ·
+coverage **90.1% stmts, 84.9% branches, 86.4% funcs, 91.5% lines**, all
+above the 80% CI gate, with `becomepro/` at 96%. Production build
+succeeds. With the API down, the board and directory resolve to error
+states with working retries rather than hanging.
+
+Two things worth flagging:
+
+- One `ComparePage` test failed in a full run and passed both alone and
+  on re-run. My only change to that component was type-level — `git
+  diff` confirms zero runtime-affecting lines. It's the repo's known
+  load-flakiness; I've added it to that memory note.
+- I left everything uncommitted on `BecomeProFeat`.
+
+## For the backend AI
+
+The contract in §4 of the plan is unchanged and complete, with one
+correction worth repeating: **`seasonAverages` is the existing
+`SeasonAverages` type verbatim**. `percentageOf` returns `0` for zero
+attempts, not null, and percentages derive from season totals — the UI
+suppresses a meaningless 0% by checking attempts rather than widening a
+type every NBA page depends on. The panel's draft caught this backwards,
+and it would have been a contract the API couldn't compile against.
+
+TOOL ACTIVITY IN THIS TURN
+  Tools: Bash x97, Write x26, ToolSearch x3, Read x2, ExitPlanMode x1, Edit x1, mcp__plugin_browser-use_browser-use__browser_exec x1, TaskStop x1
+  Repository files written or edited:
+    - apps/web/src/types/nba.ts
+    - apps/web/src/lib/boxScoreValidation.ts
+    - apps/web/src/lib/prospectValue.ts
+    - apps/web/src/lib/boxScoreValidation.spec.ts
+    - apps/web/src/lib/prospectValue.spec.ts
+    - apps/web/src/lib/becomeProApi.spec.ts
+    - apps/web/src/components/becomepro/ProspectValueCard.tsx
+    - apps/web/src/components/becomepro/ProspectValueCard.spec.tsx
+    - apps/web/src/components/becomepro/MyProspectCard.tsx
+    - apps/web/src/components/becomepro/MyProspectCard.spec.tsx
+    - apps/web/src/components/becomepro/ProspectLeaderboard.tsx
+    - apps/web/src/components/becomepro/ProspectLeaderboard.spec.tsx
+    - apps/web/src/components/becomepro/ProspectDirectory.tsx
+    - apps/web/src/components/becomepro/ProspectDirectory.spec.tsx
+    - apps/web/src/pages/BecomeProPage.tsx
+    - apps/web/src/pages/BecomeProPage.spec.tsx
+    - apps/web/src/components/becomepro/GameEntryRow.tsx
+    - apps/web/src/components/becomepro/GameEntryRow.spec.tsx
+    - apps/web/src/components/becomepro/EvidenceUploader.tsx
+    - apps/web/src/components/becomepro/EvidenceUploader.spec.tsx
+    - apps/web/src/components/becomepro/SeasonEntryPanel.tsx
+    - apps/web/src/components/becomepro/SeasonEntryPanel.spec.tsx
+    - apps/web/src/pages/ProspectPage.tsx
+    - apps/web/src/pages/ProspectPage.spec.tsx
+    - apps/web/src/components/becomepro/EvidenceReviewQueue.tsx
+    - apps/web/src/components/becomepro/EvidenceReviewQueue.spec.tsx
+  Scratch/helper files written: 1
+  Commands and lookups:
+    - Inspect workflow output structure
+    - Inspect journal result entries
+    - List journal entry keys
+    - Extract plans and judge verdict to files
+    - Check how API computes percentages with zero attempts
+    - Read percentageOf helper
+    - Verify stat-anomalies module and its codes
+    - Check which player fields the comparison radar reads
+    - Read points mismatch and minutes rules
+    - Read tail of types file
+    - Run the two new pure-module specs
+    - Read meApi spec contract-pin style
+    - Write becomeProApi module and typecheck
+    - Add missing freeThrowPercentage and recheck types
+    - Write typed Become Pro fixtures
+    - Write and run the API contract pin spec
+    - Run the contract pin spec
+    - Write ProRankBadge component
+    - Write and run ProRankBadge spec
+    - Wire rank badge into AuthStatus header
+    - Read AuthStatus spec header
+    - Read rest of AuthStatus spec
+    - Patch AuthStatus spec and run it
+    - Run header-rendering specs for regressions
+    - Write ReliabilityMeter component
+    - Write and run ReliabilityMeter spec
+    - Run ProspectValueCard spec
+    - Fix self-reported assertion and rerun
+    - Remove compact variant from ProspectValueCard
+    - Trim compact-variant tests and rerun
+    - Read Sparkline props
+    - Run MyProspectCard spec
+    - Check authClient mock pattern
+    - Add authClient mock and rerun
+    - Fix assertion and rerun MyProspectCard spec
+    - Read Pagination props
+    - Run ProspectLeaderboard spec
+    - Run ProspectDirectory spec
+    - Use testing-library waitFor to wrap act
+    - Run BecomeProPage spec
+    - ...and 57 more
+
+------------------------------------------------------------------------
+[3] USER  (23 Sep 00:29)
+------------------------------------------------------------------------
+now do thee backend
+
+------------------------------------------------------------------------
+[3] ASSISTANT
+------------------------------------------------------------------------
+Right — I'll build the backend. Let me map the API's structure and
+conventions first.
+
+Now the derivation source I must mirror exactly, and the ranking module.
+
+I have the conventions. Let me check the `User` model, migrations
+naming, and how `deriveSeasonAverages` is structured for reuse.
+
+Everything's mapped. To keep one source of truth for derivation, I'll
+extract the pure function rather than mirror it. Let me check the blast
+radius first.
+
+Only used inside `stats.service.ts` — extraction is safe. Let me do that
+first.
+
+Heredoc is choking on this content again. Using the Write tool.
+
+Now rewire `stats.service.ts` to delegate to it, removing the duplicate.
+
+These are a stale generated Prisma client, not my change. Let me
+regenerate.
+
+Two things: a missing dep (pre-existing) and constants still used
+elsewhere in the file. Let me look.
+
+Clean. Let me verify the extraction didn't change behaviour before
+building on it.
+
+The API suite needs its disposable test database. Let me bring it up.
+
+Docker isn't running, so the API suite's global setup can't provision
+its database. Let me check how unit vs e2e tests are configured.
+
+Docker Desktop is installed but not running. I'll start it in the
+background (it's the repo's documented test prerequisite) and keep
+building while it boots.
+
+Now the schema. Let me add the Become Pro models.
+
+Heredocs keep failing on large content. Let me write the schema block to
+a file and append it.
+
+Schema-level validation needs env vars. Let me validate against the test
+env.
+
+Schema valid, client generated. Let me author the migration.
+
+Both databases are up. Now the migration.
+
+The migration picked up two unrelated statements from local dev-DB
+drift. Let me confirm they're not mine and strip them.
+
+Confirmed — those two `updatedAt` lines are in my own new models. The
+`IngestionBatch`/`IngestionSchedule` statements are pre-existing local
+drift, so they don't belong in this migration.
+
+The migration is clean and complete. Let me apply it to the test
+database to prove it runs.
+
+Migration applies cleanly. Now the API module — let me check the anomaly
+checker's input shape so I can reuse it rather than duplicate.
+
+Good — I can reuse `findStatAnomalies` directly. Let me write the pure
+logic modules.
+
+Now the specs for these three pure modules.
+
+Let me run these three pure specs now that the test DB is up.
+
+64 pass — including the existing players specs, confirming the
+extraction is behaviour-preserving. Let me check the cache service
+before writing the read layer.
+
+Now the evidence storage service, mirroring the avatar precedent.
+
+Now the read service — the biggest piece, shaping every public response.
+
+I referenced a method that doesn't exist — avatars are a different
+bucket. Let me check how `AvatarStorageService` is provided.
+
+I'll provide it in my own module, as this codebase does with
+`SessionAuthGuard`. Let me fix the service and add the missing constants
+file.
+
+Now the rookie-scale reference constants.
+
+Now the write service and the three controllers.
+
+Now the controllers.
+
+Let me clean up a sloppy import — and derive the level list from the
+Prisma enum rather than a second hand-written copy.
+
+Now the admin review controller and the module.
+
+The `include: { team: true }` widens the row past bare `Player`. The
+existing `PlayerWithTeam` type covers it.
+
+Types clean. Let me boot the app to confirm routes register, then write
+the e2e test.
+
+Let me add the new tables to the FK-safe reset, then write the e2e spec.
+
+27/30 pass. The three failures are all admin routes 403-ing. Let me see
+how `RolesGuard` reads the role and how existing admin e2e tests handle
+it.
+
+`RolesGuard` reads `request.user.role` from the session — my mock only
+supplied an id. That's a fixture gap, not a production bug. Let me check
+the house pattern and fix.
+
+All 30 e2e tests pass. Now the Python valuation service.
+
+Now the valuation service. Starting with the rookie scale and level
+factors.
+
+I made the scale non-monotonic — pick 30 can't exceed pick 29. Let me
+fix it and align the API's reference constants.
+
+Now the level factors and the model itself.
+
+Now the db module and the main entry point that ties it together.
+
+Now the Python tests, requirements and README.
+
+My expected value was wrong, not the code: 24/(2×18.76)×100 = 63.97 →
+64.0.
+
+25 Python tests pass. Let me write the README and run the whole thing
+end to end against a real database.
+
+Now let me prove the Python service actually runs against a real
+database, end to end.
+
+`?schema=public` is a Prisma-ism psycopg2 rejects — worth pinning in the
+example file.
+
+The model correctly refuses to fit on zero training rows — the mock seed
+has no draft data. Let me check what's there and stamp draft numbers to
+exercise the full path.
+
+Only 168 stat rows across 28 games, so no player has 20 rookie games — a
+dev-data volume limit, not a bug. Let me exercise the real SQL and write
+path with the threshold temporarily relaxed.
+
+The full pipeline runs and writes. Let me verify the row and read it
+back through the API.
+
+Row is well-formed. Let me clean up and verify the API serves it end to
+end.
+
+The API can't boot without `SUPABASE_URL` — a pre-existing condition
+from `AvatarStorageService`, not my change. Let me confirm and pass one
+inline rather than editing their `.env`.
+
+`SUPABASE_URL` is present but malformed in the local `.env` — pre-
+existing and unrelated to my work. Let me boot with a valid dummy inline
+to get the live check.
+
+API is up. Let me hit the real endpoints.
+
+The live board serves real data. Let me check the profile endpoint too.
+
+Everything works end to end — including real slot alumni (Dylan Harper,
+Alex Sarr, Brandon Miller are genuine #2 picks). Let me clean up my
+verification artifacts.
+
+Now the full verification pass across both apps.
+
+Two unused imports left from the extraction. Let me confirm and remove
+them.
+
+Clean. Now the full API test suite.
+
+All 848 API tests pass. There's an OpenAPI contract test — let me check
+whether my new public routes should be pinned in it.
+
+All 848 pass. The contract test is a curated whitelist (it omits the
+existing analytics leaderboard too), so I'll leave it consistent. Let me
+cross-check the frontend contract against what the API actually returns.
+
+Line 800 needs widening — the API returns `null` when a season has never
+been valued.
+
+Web types build. Final check — the full web suite plus a repo-wide
+confirmation.
+
+Backend is done and verified end to end.
+
+## What I built
+
+**Schema + migration** — `ProspectSeason`, `ProspectGame`,
+`ProspectEvidence`, `ProspectValuation` plus two enums, in
+[schema.prisma](apps/api/prisma/schema.prisma) and [20260923000000_add_b
+ecome_pro](apps/api/prisma/migrations/20260923000000_add_become_pro/migr
+ation.sql). Prisma emitted two unrelated statements from local dev-DB
+drift (a `DROP INDEX` on `IngestionBatch`, a `DROP DEFAULT` on
+`IngestionSchedule`); I stripped them and documented why in the
+migration header — left in, they'd have silently altered the ingestion
+tables on every other environment.
+
+**One derivation, not two.** I extracted `deriveSeasonAverages` into
+[season-averages.ts](apps/api/src/players/season-averages.ts) and made
+`StatsService` delegate to it, so a prospect's season line comes from
+the *same* code as an NBA player's. Re-implementing it would have given
+two definitions of "true shooting" that could drift — and a prospect's
+figures would stop being comparable with the pros they're measured
+against, which is the whole feature. Safe to do: `DerivedSeasonAverages`
+had no importers outside that file.
+
+**Three controllers over two services**, split by guard: public reads,
+owner writes, admin review. Notable choices —
+- Validation reuses [stat-anomalies.ts](apps/api/src/admin/stat-
+  anomalies.ts) rather than restating it; [prospect-box-
+  score.ts](apps/api/src/become-pro/prospect-box-score.ts) only adds
+  *severity*, so a points total that disagrees with its own splits is
+  recorded, not refused.
+- `PATCH` on a game clears its `evidenceId`. Without that, reliability
+  is farmable: log a modest game, get it verified, edit the numbers
+  upward, keep the credit.
+- Ownership failures return **404, not 403** — a 403 would confirm the
+  id is real but somebody else's.
+- Ranking happens over the whole board before filtering, so a level
+  filter can't renumber prospects from 1 and disagree with the header
+  badge.
+
+**`apps/valuation/`** — Python, house pattern, numpy only, no LLM. The
+README states plainly what the model *doesn't* do: it isn't trained on
+"amateur season → draft slot" because no such dataset exists here. It
+fits draft slot against NBA **rookie** production and inverts it, and
+the three real limitations of that are written down rather than buried.
+
+## Verification
+
+- **848 API tests / 71 files pass**, including 30 new e2e covering
+  derivation, ownership, privacy, the games floor, rank states, and the
+  verification flow.
+- **746 web tests still pass**; both apps lint and typecheck clean.
+- **Ran the real pipeline against a live database**: seeded a 14-game D2
+  season, ran `value_prospects.py`, and read it back through the running
+  API. It returned slot 2 / $11.45M with a wide interval (unverified +
+  short log), the four amateur-impossible figures as `null`, reliability
+  `UNDOCUMENTED` with a *measured* score of 0, three resolved NBA
+  comparables, and three real #2 picks as slot alumni (Dylan Harper,
+  Alex Sarr, Brandon Miller). I then removed the demo data and the
+  temporary API key.
+
+One cross-check caught a real contract mismatch:
+`ProspectValuation.computedAt` is `null` when a season has never been
+valued, but the frontend typed it `string`. Widened.
+
+## Worth knowing
+
+- **I started Docker Desktop** to get the test database up — it's the
+  repo's documented test prerequisite, but it's now running on your
+  machine.
+- **`SUPABASE_URL` in `apps/api/.env` is malformed**, so the API won't
+  boot locally (`Invalid supabaseUrl`). Pre-existing —
+  `AvatarStorageService` has constructed eagerly since before this work.
+  I booted with a dummy inline rather than editing your `.env`.
+- The valuation model needs a real ingestion run to be any good. On the
+  mock seed it fit on 11 rookie seasons and honestly reported MAE 10
+  picks / rank correlation 0.11 — which is why it prints those figures
+  every run.
+- `SUPABASE_EVIDENCE_BUCKET` (default `"prospect evidence"`) needs
+  creating as a **private** bucket before uploads work.
+- Everything is uncommitted on `BecomeProFeat`.
+
+TOOL ACTIVITY IN THIS TURN
+  Tools: Bash x90, Write x26
+  Repository files written or edited:
+    - apps/api/src/players/season-averages.ts
+    - apps/api/src/become-pro/prospect-box-score.ts
+    - apps/api/src/become-pro/prospect-reliability.ts
+    - apps/api/src/become-pro/prospect-ranking.ts
+    - apps/api/src/become-pro/prospect-ranking.spec.ts
+    - apps/api/src/become-pro/prospect-reliability.spec.ts
+    - apps/api/src/become-pro/prospect-box-score.spec.ts
+    - apps/api/src/become-pro/evidence-storage.service.ts
+    - apps/api/src/become-pro/become-pro.service.ts
+    - apps/api/src/become-pro/rookie-scale-reference.ts
+    - apps/api/src/become-pro/me-become-pro.service.ts
+    - apps/api/src/become-pro/become-pro.controller.ts
+    - apps/api/src/become-pro/competition-level.ts
+    - apps/api/src/become-pro/me-become-pro.controller.ts
+    - apps/api/src/become-pro/admin-become-pro.controller.ts
+    - apps/api/src/become-pro/become-pro.module.ts
+    - apps/api/test/become-pro.e2e-spec.ts
+    - apps/valuation/rookie_scale.py
+    - apps/valuation/level_factors.py
+    - apps/valuation/draft_slot_model.py
+    - apps/valuation/db.py
+    - apps/valuation/value_prospects.py
+    - apps/valuation/test_valuation.py
+    - apps/valuation/README.md
+  Scratch/helper files written: 1
+  Commands and lookups:
+    - Map API source structure
+    - Read app module and common helpers
+    - Read saved module, controller, auth request type and session guard
+    - Read a service, exception class and optional session guard
+    - Read the season averages derivation in full
+    - Read dense ranking and avatar storage service
+    - Read rest of avatar storage and upload endpoint
+    - Read User model and migration naming
+    - Read stats.service header and helper region
+    - Count DerivedSeasonAverages importers
+    - Extract pure season-averages module
+    - Rewire stats.service to delegate to extracted module
+    - Regenerate prisma client and typecheck
+    - Inspect remaining constant usage and deps
+    - Export shared constants and check schedule dep
+    - Install deps and typecheck
+    - Run players unit tests after extraction
+    - Create test env and start test database
+    - Inspect API vitest configuration
+    - Check test DB port and Docker Desktop presence
+    - Confirm docker availability
+    - Locate Docker Desktop executable
+    - Launch Docker Desktop
+    - Read tail of prisma schema
+    - Add Become Pro models and validate schema
+    - Append schema block and add user relations
+    - See full prisma validate output
+    - Validate schema with test env loaded
+    - Validate and generate prisma client
+    - Check docker readiness
+    - Start the disposable test database
+    - Create the become pro migration
+    - Rename migration to house convention and inspect
+    - Confirm the extra statements are unrelated drift
+    - Strip unrelated statements and document the migration
+    - Apply migrations to test database
+    - Read CheckablePlayerGameStat shape
+    - Run new pure specs and players specs
+    - Inspect cache service API
+    - Read cache invalidation method
+    - ...and 50 more
+
+------------------------------------------------------------------------
+[4] USER  (26 Sep 18:33)
+------------------------------------------------------------------------
+I want you to do a full end to end testing of all the new features added
+in the BecomePro feature. Ensure that everything works with live data
+and no mock data, this must be ready for production. Ensure that
+everything visually matches the rest of the project
+
+------------------------------------------------------------------------
+[4] ASSISTANT
+------------------------------------------------------------------------
+I'll start by re-orienting — three days have passed and several files
+changed on disk, so I need the current state before testing anything.
+
+Confirmed: `.gitignore` has per-app `__pycache__` rules for the other
+three Python services but not `valuation`. Let me see that block so I
+match it, and start Docker.
+
+Good — `.env` is globally ignored. Now fix the pycache rule and untrack
+the committed bytecode.
+
+Now let me understand what "live" means for this deployment — which env
+vars are configured (names only, no values) and how production is wired.
+
+Credentials are nominally set, yet last session the API reported both
+Google and Supabase as missing/malformed. Let me check their *shape*
+without exposing any values.
+
+No scheduled jobs in CI and only the API on Render. Let me find how the
+existing Python model services actually get run in production —
+valuation must hook into the same place.
+
+Still setting up — I'm getting a read-only view of the production
+database so I can test against real NBA data without writing anything to
+it. Fixing a Windows path issue in my helper.
+
+Sed mangled the escaping. I'll write the helper as a proper Python
+script instead.
+
+Production has migration
+`20260919120000_add_event_correction_revert_link` applied — which I
+don't recognise from this branch. Per my memory note, local lags the
+remote. Let me fetch and compare.
+
+The staged `.pyc` removals block the merge. I'll restore them to the
+index, merge, then redo the cleanup on top.
+
+Both overlapping files auto-merged cleanly. Let me re-apply the
+`.gitignore` fix and verify the merged schema is valid.
+
+Merged schema is valid (the `admin-events.service.spec.ts` deletion
+comes from main). Now let me look at the gating filter and apply it to
+my public reads.
+
+Those errors are main's code against my stale generated Prisma client
+(main added the correction-revert columns). Regenerating.
+
+Merged code typechecks. Now the frontend side of that fix — the contract
+gains `rookieSeason` so the UI can say *which* season a player is being
+compared on.
+
+Now wire it into the valuation payload.
+
+Now the Python side: the valuation trains on `PlayerGameStat` too, and
+its figures are published — so it should also exclude games from
+unreviewed batches. Let me check how batches link to games.
+
+Now the frontend: add both new fields to the contract, and make the
+radar plot the adjusted line with honest labels.
+
+The typed fixtures caught both contract changes immediately — exactly
+what they're for. Updating fixtures, spec, and the panel.
+
+Now the panel itself — plot the adjusted line, and say so in words.
+
+Let me add spec coverage for both fixes so they can't regress silently.
+
+Now the API side must agree — derive the rookie season from the draft
+year too, so the season it plots and labels is the one the model used.
+
+And a matching Python test so the two implementations are pinned to the
+same answers.
+
+Local DB rebuilt with all migrations. Now the copy script.
+
+A base ingest is 35–45 minutes but only keeps each team's ~15 most
+recent games — too few for rookies to reach the model's 20-game floor.
+Let me check the full-season option.
+
+Verified — with no valuation `.env`, it no longer picks up the
+production URL. Now the isolated ingestion copy.
+
+The isolated copy resolves to `localhost:55432` even with
+`override=True`. Checking dependencies, then starting the live pull.
+
+Dependencies are in place. Before committing to a 40-minute run, one
+quick call to confirm stats.nba.com isn't blocking this network.
+
+Reachable. Let me confirm which season `ingest.py` defaults to, then
+start it.
+
+I'll add a `comparables` block to the e2e spec that builds a real NBA
+player with games across several seasons and batch states.
+
+All 35 Become Pro e2e tests pass, including the 5 new ones. Let me check
+on the live ingestion.
+
+------------------------------------------------------------------------
+[4] USER'S ANSWERS TO THE ASSISTANT'S QUESTIONS
+------------------------------------------------------------------------
+  Q: Valuations only happen when someone manually runs
+  value_prospects.py, so in production a prospect who logs their 10th
+  game would sit in "awaiting valuation" indefinitely. How should
+  valuation run in production?
+  A: API values on every write (Recommended)
+  Q: Evidence upload needs real Supabase Storage, but apps/api/.env has
+  a placeholder URL and an empty service key. How should I verify
+  uploads end to end?
+  A: Run real supabase storage locally, the recommended option. But
+  remind me with clear instructions on how to add this bucket
+  Q: The permission system blocked me from copying NBA data out of
+  production, so I'm pulling live data from nba_api instead. That takes
+  about 1.5-2 hours in total, because the model needs a full season of
+  rookie games. Which do you want?
+  A: Keep the nba_api pull running (Recommended)
+
+------------------------------------------------------------------------
+[4] ASSISTANT
+------------------------------------------------------------------------
+Now the migration. I'll generate it against a throwaway shadow database
+so I don't disturb either the live ingestion or the test database.
+
+Python on Windows doesn't see Git Bash's `/tmp`. I'll route the file
+through the scratchpad (the shadow DB was already dropped, so
+regenerating).
+
+Migration is clean. Now restructuring the Python side so it **only
+trains**. `draft_slot_model.py` keeps the fitting math and the
+parameters it ships; the application functions move to TypeScript.
+
+Now the trainer itself, replacing `value_prospects.py`. It fits the
+model and writes one bundle holding everything the API needs.
+
+Now the Python tests: drop the ones for functions that moved to
+TypeScript (they'll be ported there), and add tests pinning the bundle
+the API consumes.
+
+That's just my own earlier edit; now that it's read, writing the new
+version.
+
+24 trainer tests pass. Now the API's application module — pure
+functions, no Nest or Prisma, so it's unit-testable from literals.
+
+Now its spec — porting the Python application tests and adding the
+TypeScript-specific ones (feature-name safety, bounds).
+
+33 pass. Now the service that runs it — applies the current model on
+every write, and lazily re-values anything a newly trained model has
+made stale.
+
+------------------------------------------------------------------------
+[4] USER, WHILE THE ASSISTANT WAS WORKING  (26 Sep 19:12)
+------------------------------------------------------------------------
+remove the leaderboard feature where we compare the users of the
+webapp's player value/evaluation. We will not do any comparison between
+users stats, just comparing your stats to nba players/rookies and then
+you can update your data. Therefore there is no need for any
+verification of the data that a person inputs since it doesnt affect
+anyones experience on the app.
+
+------------------------------------------------------------------------
+[4] USER'S ANSWERS TO THE ASSISTANT'S QUESTIONS
+------------------------------------------------------------------------
+  Q: With the leaderboard and verification gone, should other users
+  still be able to see someone's Become Pro page at all?
+  A: Private to each user (Recommended)
+
+------------------------------------------------------------------------
+[4] ASSISTANT
+------------------------------------------------------------------------
+Ingestion is well along (408 drafted players with real bios, now on the
+postseason). Starting the refactor with the schema: dropping evidence,
+the enum, `isPublic`, and the reviewer relation.
+
+The Become Pro block runs from line 1043 to the end of the file. I'll
+replace it wholesale with the private design.
+
+Schema valid. Now consolidating the two unshipped migrations into one
+clean one — generated from main's migration history straight to the new
+schema.
+
+Dev DB migrated with the consolidated migration, and the live NBA data
+is intact. Now removing the backend pieces that no longer exist in this
+design.
+
+Now the small shared modules: the games floor with the "why no value
+yet" state, and the game-row adapter.
+
+Now the valuation service, without evidence or the global stale sweep.
+With data private, stale figures refresh when the owner next reads their
+own page.
+
+Just my own earlier python edits. Writing the new version now.
+
+Now the write service — every mutation re-values immediately, and
+evidence, `isPublic` and the username requirement (which only existed so
+the board could key on it) all go.
+
+Base ingestion finished. Let me check the result and immediately queue
+the full historical seasons the model needs for real rookie training
+data.
+
+Back to the write service rewrite.
+
+Now the controller: evidence routes gone, `GET /` returns the full page,
+`GET /summary` the lean card data.
+
+Typechecks. Now rewriting the e2e spec for the new design — including
+valuation-on-write, privacy (no public routes exist), and model
+staleness.
+
+The test database still carries the old migration, so I'll recreate it
+(it's disposable; the suite's global setup re-migrates it) and run the
+Become Pro specs.
+
+Header and admin page now match `main` exactly. Next, the frontend
+contract — rewriting the Become Pro section of the types to match the
+new API.
+
+Now the API client — just the owner's endpoints now.
+
+Now the formatters: dropping rank, reliability and evidence helpers, and
+replacing the rank-state sentence with a valuation-state one.
+
+Now the typed fixtures, rebuilt for the new contract (they fail `tsc` if
+the backend shape drifts).
+
+Now the value card, simplified: no rank, no reliability ladder. It takes
+the valuation (or `null`) and explains the absence in words.
+
+Now the Home/Profile card, rewired to the summary endpoint without the
+rank.
+
+Two entry rows can be on screen at once (add + edit), so the fixed input
+`id`s would collide and break label association. I'll scope them with
+`useId()`, and adjust the buttons for edit mode.
+
+Now the season panel: no evidence column, plus an **Edit** action per
+game that opens the row pre-filled.
+
+Now the missing **start-a-season form**. Let me match it to the existing
+admin form fields so it looks native.
+
+Now the league-year helper and the season form itself.
+
+Now the season form — used both to start a season and to edit an
+existing one's details.
+
+Now writing the owner page.
+
+[The conversation's context filled up here and was summarised; the work continued in the same session.]
+
+I'm finishing the frontend refactor: Home and Profile still point at the
+removed leaderboard and public profile routes.
+
+Updating the component specs to the private design (no evidence column,
+no username prop, edit flow).
+
+Now the GameEntryRow edit-mode tests and a rewritten SeasonEntryPanel
+spec.
+
+Types are clean apart from the old page spec; writing the new
+BecomeProPage spec now.
+
+All 158 related specs pass. Running lint and the full web suite with
+coverage, and checking on the NBA data ingestion meanwhile.
+
+Web: lint clean (exit 0), all 717 tests pass, coverage 90/84/86/92.
+Checking lint for any warnings in the new files, then on to the API
+suite and training.
+
+Queued pull confirmed pointing at the local database. Now updating the
+valuation README, which still describes the old flow.
+
+Fixing stale cross-references left over from the old design (deleted
+files and leaderboard wording).
+
+Now the README rewrite.
+
+API typecheck and lint pass; the unit suite is still running. Setting up
+the live browser E2E next — checking what's left in the scratchpad from
+the earlier run.
+
+Full API suite green: 972 tests, including the 30 Become Pro e2e tests
+against a real Postgres. Now checking the local dev database has the
+final schema before booting the stack.
+
+Schema matches apart from the two pre-existing drift statements
+(documented in the migration header). Building and booting the API
+against the local database.
+
+Both servers are up (unauthenticated request correctly gets 401).
+Creating two local test users with real BetterAuth sessions.
+
+Real sessions authenticate through both the API and the Vite proxy.
+Launching headless Edge with DevTools protocol to drive the actual UI.
+
+Edge is up. Writing the first live scenario: Alice starts a season and
+logs games through the real UI.
+
+Page renders correctly; the check just needs to be case-insensitive (the
+headings are CSS-uppercased). Patching and rerunning.
+
+Fixing two things the live run exposed: the history collapses runs of an
+unchanged value, and the value card printed the level-basis sentence
+twice (once as provenance, once as a "Level" driver).
+
+77 Become Pro API tests pass. Rebuilding and restarting the local API so
+the live run picks up the change.
+
+While the API rebuilds, writing part 2 (editing, validation, season
+management, comparables, Home/Profile, mobile) and part 3 (privacy
+between users, signed-out access).
+
+Part 2 passes 27/27, no console errors. One thing to check: at Division
+I the same line projects to pick 1 ($12.80M), so I'm verifying the
+rookie-scale table that figure comes from.
+
+Hoops Rumors lists pick 1 at $11,521,600 (100% of scale), so the table
+in the repo overstates it by about 11%. Cross-checking against a second
+source before replacing it.
+
+Confirmed from the published 2026-27 cap sheet: two-way salary $678,882,
+max Exhibit 10 bonus $91,000. Updating `rookie_scale.py` to the exact
+2026-27 figures with sources.
+
+Python tests still pass (24). Checking nothing else hardcodes the old
+scale year, then retraining so the bundle carries the new scale.
+
+The re-value on read works live: Alice's season now shows the 2026-27
+scale ($12.29M at pick 1) with no restart. Now part 3: privacy between
+users and signed-out access.
+
+The API correctly answers 404 for another user's season, same as a
+nonexistent id, so it doesn't reveal that the season exists. My
+assertion was wrong; fixing it.
+
+19/20. Signed out, `/become-pro` stays on the same URL. Checking whether
+that's how `ProtectedRoute` behaves everywhere (a sign-in prompt in
+place) or a real gap.
+
+It's the house behaviour: every protected page shows a "Sign in
+required" prompt in place (same as `/home`). Correcting the check to
+assert that and rerunning.
+
+Range clamp done and tested (47 pass). Now the two web layout fixes:
+one-row stat inputs on desktop, and padded, non-squashing table cells on
+phones.
+
+Restarting the API with the clamp, then retaking screenshots from the
+top of the page (the app scrolls inside its own container, so I'll
+capture it in viewport-sized steps).
+
+Range is now $7.01M–$12.29M, capped at what pick 1 is paid. Git Bash
+rewrote the `/become-pro` argument as a Windows path, so rerunning with
+path conversion off.
+
+Lower half is consistent too: the season line reuses the players-page
+stat tiles, and the rookie comparison reuses the Compare page's radar
+and drill-down. Now phone width.
+
+Phone now shows the value card straight under the header, and desktop is
+unchanged. Checking the desktop rail stays together (traits directly
+under the value card, no gap).
+
+Desktop rail flows as before. Running the full web and API suites again
+after these fixes, and checking ingestion progress.
+
+Only the API is deployed on Render; checking whether the API itself
+launches the Python jobs (it has an ingestion scheduler), which would
+decide how the valuation model gets trained in production.
+
+Build succeeds (the chunk-size warning was already there before this
+feature). Rerunning all three live scenarios in order; part 1 resets
+Alice first.
+
+65/65 live checks pass against the final code, with no console errors.
+Pulling the headline figures from this run.
+
+Saving one note for future sessions about what the local API needs to
+boot, since it cost time to rediscover.
+
+Become Pro is tested end to end with live data and ready to ship, apart
+from two go-live steps only you can do (below). It's now the private
+version you chose: log games, see your value, compare yourself with NBA
+rookies, edit your data. The leaderboard, rank badge, public profiles,
+evidence upload, reliability score and admin review are all removed.
+
+**You no longer need the Supabase evidence bucket.** It only existed for
+evidence uploads, so ignore those instructions.
+
+## How it was tested
+
+- **Live browser run:** 65 of 65 checks passed across three scenarios,
+  with no browser console errors. It used headless Edge, the real API,
+  local Postgres filled from `nba_api`, a model trained on that data,
+  and two real signed-in test users.
+  - **Logging a season:** start a season, log 9 games (no figure yet),
+    log the 10th (the value appears straight away), then log more.
+  - **Changing data:** edit and delete games, see an impossible box
+    score blocked, see a duplicate game refused, change competition
+    level, add, switch and delete seasons. Also: comparables open the
+    real NBA player pages, and Home and Profile show the same value.
+  - **Privacy:** a second user can't see, edit or delete the first
+    user's data (the API answers 404 either way). Signed out, the page
+    shows the usual "Sign in required". The old public routes return
+    404.
+- **Automated suites:** API 974 tests, web 717 tests (90% line and 84%
+  branch coverage, above the 80% gate), Python 24 tests. Typecheck, lint
+  and the production build are clean.
+- **Visual check:** I compared the page with Players, a player profile
+  and Home at desktop and phone widths. It reuses the same header card,
+  stat tiles, radar and rail cards.
+
+## Bugs the live run found, all fixed
+
+- **The rookie salary table was wrong and a year out of date.** Pick 1
+  was about 11% too high, and it used the 2025-26 scale. I replaced it
+  with the published 2026-27 figures, cross-checked against 2025-26:
+  every pick rose 6.67%, exactly the salary cap increase. The second-
+  round figure ($678,882, the two-way salary) and the undrafted figure
+  ($91,000, the maximum Exhibit 10 bonus) are the exact 2026-27 amounts.
+- **The value range could go above what pick 1 is paid** (it showed
+  $7.3M–$18.3M). It's now capped to what the salary scale can actually
+  pay.
+- **The value-over-time line showed repeated identical points.** A run
+  of the same value now counts as one point.
+- **The competition-level explanation was printed twice** on the value
+  card; it now appears once.
+- **Phone layout:** the value was buried at the bottom of the page and
+  now sits straight under the header. The games table headers ran
+  together and now scroll inside the table. On desktop, the 13 stat
+  inputs now fit on one row.
+
+## The model
+
+It's trained on real rookie seasons from the NBA data we ingest:
+currently 43 players, with an average error of 10.2 draft picks and a
+rank correlation of 0.57. That's a small sample, so projections run
+optimistic; for example, a Division I guard scoring 21.6 points a game
+comes out as pick 1.
+
+The data pull is still running (2025-26, then 2024-25, 2023-24 and
+2022-23, a few hours in total), and the local model retrains
+automatically as each batch finishes.
+
+## Go-live steps for you
+
+1. **Deploy.** The migration runs automatically through the existing
+   `prisma migrate deploy` on Render.
+2. **Train the model against production.** The deployed API has no
+   Python, so run this from a machine with the Python environment:
+   `cd apps/valuation && pip install -r requirements.txt &&
+   DATABASE_URL=<prod> python train_valuation_model.py`
+   I didn't write to production. Until you run this, anyone with 10+
+   games sees "the valuation model has not been trained yet". After
+   that, retrain each summer when the new salary scale is published (see
+   `apps/valuation/README.md`).
+
+## Other things you should know
+
+- **Nothing is committed**, including the earlier merge of
+  `origin/main`. Should I commit it?
+- **CI doesn't run any Python tests**, for any service, not just this
+  one.
+- **`apps/api/.env` can't run things locally as it is:** it's missing
+  `DIRECT_URL`, so Prisma commands fail, and its placeholder
+  `SUPABASE_URL` crashes the API on startup. I worked around both with
+  temporary overrides and changed neither file.
+- **Two schema differences that predate this work** are documented in
+  the migration header.
+- **An unrelated bug:** the Players page shows a true-shooting leader at
+  101.7%, which looks like a problem with how few games that leaderboard
+  requires.
+- I removed the test users and stopped the local servers.
+
+Sources:
+- [Hoops Rumors: Rookie Scale Salaries For 2026 NBA First-Round Picks](https://www.hoopsrumors.com/2026/07/rookie-scale-salaries-for-2026-nba-first-round-picks.html)
+- [Hoops Rumors: Rookie Scale Salaries For 2025 NBA First-Round Picks](https://www.hoopsrumors.com/2025/07/rookie-scale-salaries-for-2025-nba-first-round-picks.html)
+- [Hoops Rumors: Salary Cap, Tax Line Set For 2026/27 NBA Season](https://www.hoopsrumors.com/2026/06/salary-cap-tax-line-set-for-2026-27-nba-season.html)
+
+Waiting on the automatic retrain that follows the finished 2024-25 pull;
+it polls every two minutes, so it should land shortly.
+
+The 2025-26 and 2024-25 pulls both finished cleanly. The local model
+retrains automatically from those two draft classes within a couple of
+minutes, and I'm watching for the result.
+
+I also added one limitation to `apps/valuation/README.md`. The data pull
+only keeps players still on a current roster; it skipped 5,679 stat rows
+from 2024-25 alone. So draftees who have since left the league are
+missing from the training data. They tend to be the weaker rookie
+seasons, which makes the model lean optimistic, and more so for older
+draft classes.
+
+The 2023-24 and 2022-23 pulls are next and take a few hours. The model
+retrains again automatically once they're done. I'll post the new
+training size and accuracy as soon as this retrain lands.
+
+The local model has retrained on two full draft classes: **100 real
+rookie seasons**, up from 43, with an average error of 10.9 draft picks
+and a rank correlation of 0.55.
+
+The accuracy looks slightly worse than the earlier 10.2 picks, but
+that's expected. Both numbers are measured on the same players the model
+was fitted to, and a fit on 43 players flatters itself more than one on
+100. The new figure is the more honest estimate.
+
+The 2023-24 pull has started, with 2022-23 after it, a few hours in
+total. The model retrains automatically once 2022-23 finishes, and all
+of this runs against the local database only.
+
+Nothing else has changed. Production still needs the model trained once
+before anyone sees a figure there (step 2 of the go-live steps), and
+nothing is committed yet.
+
+TOOL ACTIVITY IN THIS TURN
+  Tools: Bash x224, Write x44, Read x14, TaskStop x6, WebFetch x6, Grep x5, ToolSearch x3, AskUserQuestion x2, Edit x2, WebSearch x2, Glob x1, Monitor x1
+  Repository files written or edited:
+    - apps/api/src/become-pro/level-adjustment.ts
+    - apps/api/src/become-pro/level-adjustment.spec.ts
+    - apps/valuation/draft_slot_model.py
+    - apps/valuation/train_valuation_model.py
+    - apps/valuation/test_valuation.py
+    - apps/api/src/become-pro/valuation-model.ts
+    - apps/api/src/become-pro/valuation-model.spec.ts
+    - apps/api/src/become-pro/prospect-valuation.service.ts
+    - apps/api/src/become-pro/become-pro.service.ts
+    - apps/api/src/become-pro/me-become-pro.service.ts
+    - apps/api/src/become-pro/me-become-pro.controller.ts
+    - apps/api/src/become-pro/become-pro.module.ts
+    - apps/api/test/become-pro.e2e-spec.ts
+    - apps/web/src/lib/becomeProApi.ts
+    - apps/web/src/lib/becomeProApi.spec.ts
+    - apps/web/src/lib/prospectValue.ts
+    - apps/web/src/lib/prospectValue.spec.ts
+    - apps/web/src/test/becomeProFixtures.ts
+    - apps/web/src/components/becomepro/ProspectValueCard.tsx
+    - apps/web/src/components/becomepro/ProspectValueCard.spec.tsx
+    - apps/web/src/components/becomepro/MyProspectCard.tsx
+    - apps/web/src/components/becomepro/MyProspectCard.spec.tsx
+    - apps/web/src/components/becomepro/SeasonEntryPanel.tsx
+    - apps/web/src/components/becomepro/SeasonSetupForm.tsx
+    - apps/web/src/components/becomepro/SeasonSetupForm.spec.tsx
+    - apps/web/src/pages/BecomeProPage.tsx
+    - apps/web/src/components/becomepro/SeasonEntryPanel.spec.tsx
+    - apps/web/src/pages/BecomeProPage.spec.tsx
+    - apps/valuation/README.md
+    - README.md
+  Scratch/helper files written: 11
+  Commands and lookups:
+    - Show repo state, branch and recent commits
+    - Show files in the Become Pro commit
+    - Check Docker, containers and pycache ignore rule
+    - Read gitignore python block and start Docker
+    - Check env ignore rules
+    - Ignore valuation pycache and untrack bytecode
+    - List configured env var names without values
+    - Inspect credential shapes without revealing values
+    - Check root env shapes and render config
+    - Read render config and scheduled workflows
+    - Find where predictor and optimizer are invoked
+    - Read ingestion README run-order section
+    - Inspect pull worker chaining
+    - Wait for Docker and start both databases
+    - Read-only check of production migrations
+    - Fix path and query production read-only
+    - Query production migrations read-only
+    - Fetch and compare branch with origin/main
+    - Find files changed on both main and branch
+    - Inspect the batch-review gating commit
+    - Merge origin/main without committing
+    - Restore index and retry merge
+    - Reapply gitignore fix and validate merged schema
+    - Read the published game filter and its usage
+    - Read the comparables resolver
+    - Read rest of comparables resolver
+    - Gate comparables on published rookie regular season
+    - Regenerate prisma client and typecheck merged code
+    - Locate comparable type and panel usage
+    - Read comparables panel markup
+    - Locate serializeValuation
+    - Add level-adjusted line to valuation payload
+    - Inspect batch-to-game relation
+    - Gate valuation training on published games
+    - Add rookieSeason and levelAdjustedAverages to types
+    - Update fixtures for new contract fields
+    - Make comparison radar plot the compared line
+    - Add radar and rookie season spec cases
+    - Read-only production data volume
+    - Read the rookie training query
+    - ...and 190 more
+
+------------------------------------------------------------------------
+[5] USER  (27 Sep 00:22)
+------------------------------------------------------------------------
+progress report
+
+------------------------------------------------------------------------
+[5] ASSISTANT
+------------------------------------------------------------------------
+Checking the background jobs before reporting.
+
+## Progress report
+
+**The feature itself hasn't changed since my last report.** It's built,
+the 65-check live browser test passes, and all automated suites are
+green. Nothing is committed yet.
+
+**NBA data pull (local database only)**
+
+| Season | Regular-season games | Status |
+|---|---|---|
+| 2025-26 | 1,230 / 1,230 | Done |
+| 2024-25 | 1,230 / 1,230 | Done |
+| 2023-24 | 1,230 / 1,230 | Done |
+| 2022-23 | 550 / 1,230 | Running, roughly an hour left |
+
+**Valuation model**
+- **Current:** trained on 100 real rookie seasons (the 2024 and 2025
+  draft classes). Average error is 10.9 draft picks and rank correlation
+  0.55.
+- **Next:** it retrains automatically once 2022-23 finishes, adding the
+  2022 and 2023 draft classes. The 2023-24 data is loaded but not yet in
+  the model, because I set the retrain to run only after the final
+  season.
+- **Bias still to watch:** the pull only keeps players still on a
+  current roster, and the gap grows with age. It skipped 9,812 stat rows
+  for 2023-24, against 5,679 for 2024-25. The older classes will lean
+  further towards rookies who stuck in the league; that limitation is
+  already written into `apps/valuation/README.md`.
+
+**Still waiting on you**
+1. **Commit.** Everything is uncommitted, including the earlier merge of
+   `origin/main`. Should I commit it?
+2. **Production model.** Run `train_valuation_model.py` once against the
+   production database before anyone sees a figure there; the command is
+   in my earlier report. I haven't touched production.
+
+I'll post the final training size and accuracy when the last retrain
+lands.
+
+TOOL ACTIVITY IN THIS TURN
+  Tools: Bash x2
+  Commands and lookups:
+    - Check ingestion and retrain status
+    - Estimate pace and count ingested games per season
+
+------------------------------------------------------------------------
+[6] USER  (27 Sep 00:25)
+------------------------------------------------------------------------
+done the commit, run train_valuation_model.py
+
+------------------------------------------------------------------------
+[6] ASSISTANT
+------------------------------------------------------------------------
+Checking the commit, then how production is set up before running
+anything against it.
+
+I ran `train_valuation_model.py` against the local database. I couldn't
+run it against production, because production doesn't have the Become
+Pro tables yet.
+
+**Local run:** the model is now trained on **169 real rookie seasons**
+across four draft classes, up from 100. Average error is 10.4 draft
+picks and rank correlation 0.575, the best so far on the largest sample.
+
+| Draft class | Rookies in the model |
+|---|---|
+| 2025 | 52 |
+| 2024 | 48 |
+| 2023 | 40 |
+| 2022 | 29 (the 2022-23 pull is still running) |
+
+The 2022-23 pull is about half done. The model retrains automatically
+once it finishes, which will fill out the 2022 class.
+
+**Production:** your commit is on `origin/BecomeProFeat`, but Render
+deploys from `main`. I checked production's schema with a read-only
+query: it has neither Become Pro table and none of its migrations.
+Running the script there now would read production's rookie data and
+then fail when saving the model. To go live:
+1. Merge `BecomeProFeat` into `main`. Render's deploy runs `prisma
+   migrate deploy`, which creates the tables.
+2. Then train against production:
+   `cd apps/valuation && pip install -r requirements.txt &&
+   DATABASE_URL=<prod> python train_valuation_model.py`
+
+Once it's deployed, I can run step 2 for you. It reads production's
+rookie-season averages and writes one model row. Just confirm you want
+me to write to production.
+
+TOOL ACTIVITY IN THIS TURN
+  Tools: Bash x7
+  Commands and lookups:
+    - Verify the commit and branch state
+    - Find what the user said about production earlier
+    - Read the prod query helper and deploy branch
+    - Check production schema for Become Pro tables (read-only)
+    - Check the 2022-23 pull and retrain log
+    - Train the valuation model on the local database
+    - Break down training rows by draft class
+
+------------------------------------------------------------------------
+[7] USER  (27 Sep 00:32)
+------------------------------------------------------------------------
+[Pasted content]
+2026-09-26T22:25:51.4222266Z sportsanalytics-runner(version:v0.6.1)
+received task 33881 of job api, be triggered by event: push
+2026-09-26T22:25:51.4639521Z workflow prepared
+2026-09-26T22:25:51.4728972Z evaluating expression 'success()'
+2026-09-26T22:25:51.4883667Z expression 'success()' evaluated to 'true'
+2026-09-26T22:25:51.4885937Z 🚀  Start image=gitea/runner-images:ubuntu-
+latest
+2026-09-26T22:25:51.6323763Z   🐳  docker pull image=gitea/runner-
+images:ubuntu-latest platform= username= forcePull=false
+2026-09-26T22:25:51.6324422Z   🐳  docker pull gitea/runner-
+images:ubuntu-latest
+2026-09-26T22:25:51.7179488Z Image exists? true
+2026-09-26T22:25:51.8616786Z Cleaning up network for job API — lint,
+typecheck, and network name is: GITEA-ACTIONS-TASK-33881-WORKFLOW-CI-
+JOB-API--lint-typecheck-
+bd36833f51c9507b0a26b2781f375c715e25c966220cb88200b7791831a193a2-api-
+network
+2026-09-26T22:25:52.1018839Z   🐳  docker create image=gitea/runner-
+images:ubuntu-latest platform= entrypoint=["/bin/sleep" "10800"] cmd=[]
+network="GITEA-ACTIONS-TASK-33881-WORKFLOW-CI-JOB-API--lint-typecheck-
+bd36833f51c9507b0a26b2781f375c715e25c966220cb88200b7791831a193a2-api-
+network"
+2026-09-26T22:25:52.7109144Z Created container name=GITEA-ACTIONS-
+TASK-33881-WORKFLOW-CI-JOB-API--lint-typecheck-
+bd36833f51c9507b0a26b2781f375c715e25c966220cb88200b7791831a193a2
+id=dc17cdecd9fc8a340ce162ac10153ab686a42564982fa1251954d7c8f29eeb04 from
+image gitea/runner-images:ubuntu-latest (platform: )
+2026-09-26T22:25:52.7111562Z ENV ==>
+[RUNNER_TOOL_CACHE=/opt/hostedtoolcache RUNNER_OS=Linux RUNNER_ARCH=X64
+RUNNER_TEMP=/tmp LANG=C.UTF-8]
+2026-09-26T22:25:52.7111970Z   🐳  docker run image=gitea/runner-
+images:ubuntu-latest platform= entrypoint=["/bin/sleep" "10800"] cmd=[]
+network="GITEA-ACTIONS-TASK-33881-WORKFLOW-CI-JOB-API--lint-typecheck-
+bd36833f51c9507b0a26b2781f375c715e25c966220cb88200b7791831a193a2-api-
+network"
+2026-09-26T22:25:52.7113260Z Starting container:
+dc17cdecd9fc8a340ce162ac10153ab686a42564982fa1251954d7c8f29eeb04
+2026-09-26T22:25:53.6611886Z Started container:
+dc17cdecd9fc8a340ce162ac10153ab686a42564982fa1251954d7c8f29eeb04
+2026-09-26T22:25:53.9889321Z Writing entry to tarball
+workflow/event.json len:15229
+2026-09-26T22:25:53.9911390Z Writing entry to tarball workflow/envs.txt
+len:0
+2026-09-26T22:25:53.9912340Z Extracting content to '/var/run/act/'
+2026-09-26T22:25:54.0733253Z   ☁  git clone 'https://github.com/actions/checkout' # ref=v4
+2026-09-26T22:25:54.0737404Z   cloning https://github.com/actions/checkout to /root/.cache/act/c3fe249fe73091a17d6638fe1341e7bd0bcc3466ce52323c0688e83e2463a4ab
+2026-09-26T22:25:57.1633752Z Unable to pull refs/heads/v4: non-fast-
+forward update
+2026-09-26T22:25:57.1634543Z Cloned https://github.com/actions/checkout to /root/.cache/act/c3fe249fe73091a17d6638fe1341e7bd0bcc3466ce52323c0688e83e2463a4ab
+2026-09-26T22:25:57.2085673Z Checked out v4
+2026-09-26T22:25:57.2407796Z   ☁  git clone 'https://github.com/actions/setup-node' # ref=v4
+2026-09-26T22:25:57.2408713Z   cloning https://github.com/actions/setup-node to /root/.cache/act/e5877e7fc2f7e5000a2f22526584a2565cc2ae38cd26a9b1938dbca653b056cc
+[... 139 more lines of the pasted log omitted ...]
+[End of pasted content]
+
+------------------------------------------------------------------------
+[7] ASSISTANT
+------------------------------------------------------------------------
+That log fails at `npm ci`, before lint or typecheck even start.
+Checking the runner logs, whether the npm registry is reachable from the
+runner's network, and that the committed code itself passes.
+
+[The user stopped this tool call before it ran.]
+
+TOOL ACTIVITY IN THIS TURN
+  Tools: Bash x4
+  Commands and lookups:
+    - Read runner logs around the failed CI run
+    - Check the working tree matches the commit and read the install step
+    - Show recent runner log lines
+    - Reproduce the CI install step in the runner image
+
+------------------------------------------------------------------------
+[8] USER  (27 Sep 00:43)
+------------------------------------------------------------------------
+continue
+
+------------------------------------------------------------------------
+[8] ASSISTANT
+------------------------------------------------------------------------
+The session restarted, which stopped my two background jobs: the 2022-23
+data pull and the automatic retrain waiting on it. Checking whether the
+pull is still alive before I sum up the CI failure.
+
+That CI failure isn't caused by the code. The job died while downloading
+npm packages and never reached lint or typecheck.
+
+**What the log shows:** the "API — lint, typecheck" job failed at `npm
+ci` with `ECONNRESET` / "network aborted", 30 seconds into the install.
+That's the connection between the runner and the npm registry dropping.
+The code itself passed locally after my last change: API typecheck, lint
+and all 974 tests, plus web typecheck, lint and all 717 tests. Your
+commit `3374a85` matches that tree exactly, and the working tree is
+clean.
+
+**Why re-running won't work right now:** the job runs on the
+`sportsanalytics-runner` container on this machine, and Docker Desktop
+isn't running any more. Until it's back, the runner is offline and any
+re-run will just wait in the queue. I didn't try to reproduce the failed
+install myself, since you stopped that command.
+
+**To fix it:**
+1. Start Docker Desktop.
+2. In Gitea, open the failed run under Actions and re-run the failed
+   jobs.
+
+If the same network error keeps coming back, the workflow's own comments
+explain why npm caching is switched off: it needs the runner's cache
+server to be reachable. Turning it on would cut how much each job
+downloads, but that's a separate change and one for you to decide.
+
+**Also caught by Docker going down:**
+- **Local database:** the 2022-23 data pull stopped at 650 of 1,230
+  games, and the automatic retrain waiting on it ended with the session.
+  The local model stays trained on 169 rookie seasons until that's
+  finished. Once Docker is back, I can resume the pull and retrain; just
+  say so.
+- **The other two CI jobs** from the same push (Web lint/typecheck and
+  the coverage job) also ran on this runner. Its logs don't record
+  whether they passed, so check them in Gitea when you re-run.
+
+TOOL ACTIVITY IN THIS TURN
+  Tools: Bash x2, PowerShell x1, Grep x1
+  Commands and lookups:
+    - Check whether the 2022-23 pull is still running
+    - List Python processes with their command lines
+    - Check for uncommitted changes since the commit
+
+------------------------------------------------------------------------
+[9] USER  (27 Sep 13:07)
+------------------------------------------------------------------------
+okay, i have pushed and merged to main. ready for you to begin training
+against production
+
+------------------------------------------------------------------------
+[9] ASSISTANT
+------------------------------------------------------------------------
+Checking the merge landed on `origin/main` and that production has the
+Become Pro tables before training.
+
+------------------------------------------------------------------------
+[9] USER, WHILE THE ASSISTANT WAS WORKING  (27 Sep 13:10)
+------------------------------------------------------------------------
+perform the training on a separte branch though to follow proper pull
+request andrepo management
+
+------------------------------------------------------------------------
+[9] ASSISTANT
+------------------------------------------------------------------------
+On `train-valuation-model` with a clean tree. Running the training
+against production. The connection string is read from the root `.env`
+and never printed.
+
+Trained. Verifying the row in production (read-only) and that the
+deployed API is serving the Become Pro routes.
+
+The production model row is in place and correct. Looking for the
+deployed API's address to confirm it's serving Become Pro.
+
+The valuation model is now trained on production data and saved to the
+production database.
+
+**The production model:**
+
+| | |
+|---|---|
+| Model ID | `c40a1d20-5001-4ec1-8aac-dad196768e61` |
+| Trained on | 140 real rookie seasons (2023, 2024 and 2025 draft classes) |
+| Average error | 10.9 draft picks |
+| Rank correlation | 0.54 |
+| Salary scale | 2026-27 (pick 1 = $12,290,000) |
+
+Production has 29 fewer rookies than my local copy because it has no
+2022-23 season.
+
+**Checks after training:**
+- A read-only query confirms the model row is in production with the
+  numbers above.
+- The deployed API is serving the new version: `/health` returns 200,
+  the private Become Pro endpoints return 401 when signed out, and the
+  old public leaderboard returns 404.
+- No production user has started a season yet. The first one to log 10
+  games gets a figure straight away.
+
+**About the branch:** I ran the training from a new `train-valuation-
+model` branch, created from `3374a85`, the commit you merged. Training
+writes one row to the database and doesn't touch any repo files. So the
+branch has nothing on it, and there's nothing to open a pull request
+for. Your checkout is on that branch now. If you don't want it, `git
+switch main && git branch -d train-valuation-model` removes it. If you'd
+like a PR out of this, one option is recording production training runs
+in `apps/valuation/README.md`, but it would go out of date with every
+retrain, so I'd skip it.
+
+**Worth knowing:**
+- Your local `main` is behind the remote and still points at #181. Run
+  `git pull` on `main` once Gitea is reachable again; it wasn't from
+  here.
+- **When to retrain production:** once the 2026 draft class has played
+  about 20 games of 2026-27, which adds a fourth class, and each summer
+  when the new salary scale comes out.
+- The local 2022-23 data pull is still stopped at 650 of 1,230 games
+  from when Docker went down. It only matters for local testing; I can
+  finish it if you want.
+
+TOOL ACTIVITY IN THIS TURN
+  Tools: Bash x10, Write x1, Grep x1
+  Scratch/helper files written: 1
+  Commands and lookups:
+    - Confirm the merge and list root env keys
+    - Check production migrations and model table (read-only)
+    - Preview production seasons and qualifying rookies (read-only)
+    - List every write statement in the training script
+    - Check why the valuation files are missing
+    - Export the merged valuation code and list its writes
+    - Create a training branch from the merged commit
+    - Train the valuation model against production
+    - Verify the production model row and find the API URL
+    - Probe the deployed API's Become Pro routes
+
+------------------------------------------------------------------------
+[10] USER  (27 Sep 13:14)
+------------------------------------------------------------------------
+give me data to test on the actual webapp so i can see how it works
+
+------------------------------------------------------------------------
+[10] ASSISTANT
+------------------------------------------------------------------------
+Checking the API's validation rules first, so every row I give you is
+accepted.
+
+Building the test profiles and computing what the live model should show
+for each, using the API's own compiled valuation code and the production
+model's parameters.
+
+------------------------------------------------------------------------
+[10] USER, WHILE THE ASSISTANT WAS WORKING  (27 Sep 13:16)
+------------------------------------------------------------------------
+dont build text profiles, just give me input for the become a pro
+
+------------------------------------------------------------------------
+[10] USER, WHILE THE ASSISTANT WAS WORKING  (27 Sep 13:16)
+------------------------------------------------------------------------
+test*
+
+------------------------------------------------------------------------
+[10] ASSISTANT
+------------------------------------------------------------------------
+Here's the input to type into the Become Pro page.
+
+**Start a season**
+
+| Field | Enter |
+|---|---|
+| Season | 2025-26 |
+| Position | G |
+| Competition level | NCAA Division II |
+| Team (optional) | Riverside College |
+
+**Games** (in the same order as the form's fields)
+
+| Date | Opponent | MIN | PTS | REB | AST | STL | BLK | TOV | FGM | FGA | 3PM | 3PA | FTM | FTA |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 2025-11-08 | Lincoln Tech | 32 | 23 | 5 | 6 | 2 | 0 | 3 | 8 | 16 | 3 | 7 | 4 | 5 |
+| 2025-11-12 | Northfield State | 30 | 21 | 4 | 7 | 1 | 0 | 2 | 7 | 15 | 2 | 6 | 5 | 6 |
+| 2025-11-15 | Carver College | 34 | 27 | 6 | 5 | 3 | 1 | 4 | 10 | 19 | 4 | 9 | 3 | 4 |
+| 2025-11-19 | Westbrook U | 28 | 19 | 3 | 8 | 2 | 0 | 3 | 6 | 14 | 1 | 5 | 6 | 7 |
+| 2025-11-22 | Mesa Valley | 33 | 23 | 5 | 4 | 1 | 0 | 2 | 9 | 17 | 3 | 8 | 2 | 2 |
+| 2025-11-29 | Harbor City | 31 | 22 | 7 | 6 | 2 | 1 | 3 | 8 | 18 | 2 | 7 | 4 | 6 |
+| 2025-12-03 | Pine Ridge | 29 | 18 | 4 | 9 | 1 | 0 | 1 | 7 | 13 | 3 | 5 | 1 | 2 |
+| 2025-12-06 | St. Albans | 35 | 31 | 6 | 5 | 2 | 0 | 4 | 11 | 21 | 4 | 10 | 5 | 6 |
+| 2025-12-10 | Eastgate | 30 | 19 | 5 | 6 | 3 | 0 | 2 | 7 | 16 | 2 | 6 | 3 | 4 |
+| 2025-12-13 | Riverside Poly | 32 | 25 | 4 | 7 | 1 | 1 | 3 | 9 | 18 | 3 | 8 | 4 | 5 |
+| 2025-12-17 | Lakeshore | 27 | 16 | 3 | 5 | 2 | 0 | 2 | 6 | 12 | 2 | 4 | 2 | 3 |
+| 2025-12-20 | Granite Falls | 33 | 25 | 5 | 6 | 1 | 0 | 3 | 9 | 17 | 4 | 9 | 3 | 3 |
+
+**What you should see**, worked out with the live production model:
+- **Games 1–9:** a countdown, "N more games needed", and no dollar
+  figure.
+- **Game 10:** Pick 14, $4.36M, range $2.48M – $6.23M.
+- **Games 11–12:** the figure stays the same.
+- **Change the level with Edit details:**
+
+| Level | Result |
+|---|---|
+| NCAA Division I | Pick 1, $12.29M |
+| NAIA | Pick 17, $3.73M |
+| Recreational | 2nd round, $679K |
+
+TOOL ACTIVITY IN THIS TURN
+  Tools: Bash x4, Write x1
+  Scratch/helper files written: 1
+  Commands and lookups:
+    - Read the box-score validation rules
+    - Fetch the production model bundle and check the built API
+    - Check built exports needed to compute expected figures
+    - Validate the test data and compute expected figures
+
+------------------------------------------------------------------------
+[11] USER  (27 Sep 13:42)
+------------------------------------------------------------------------
+create a feature summary list. Feature, description, how it works. what
+it uses, where the files it uses can be found, why we used what we used.
+This will all be put into a prompt for you to handle when i switch over
+to the documentation website. Also export this chat fir documentation
+
+------------------------------------------------------------------------
+[11] ASSISTANT
+------------------------------------------------------------------------
+Checking how the repo already stores exported chats, so both files
+follow the existing convention.
+
+The last export was produced by an exporter script ("Patch exporter and
+regenerate the transcript"). Looking for it so this export matches
+exactly.
+
+Branch `become-pro-docs` is ready. Writing the feature summary first.
+
+Checking a few claims in the summary against the code: the e2e test
+count, which fields the level adjustment scales, and the playmaking
+threshold.
+
+Mid-turn messages are stored as "queued_command" attachments marked as
+human. Writing the exporter to the same format as your 13 Sep export.
+
+Doing a first pass to list the turns, so the session summary at the top
+matches what's in the transcript.
+
+Escaping went wrong in that patch. Fixing the helper directly.
+
+Answers and the plan approval now appear in the right places. Writing
+the header and session summary.
+
+No secrets found, and nothing needed redacting. Spot-checking the export
+for leftover system text and reading a sample section.
+
+Some of my shorter status lines in turn 9 are missing from the export
+(for example "Gitea isn't reachable from here right now"). Finding out
+how those were stored.
+
+TOOL ACTIVITY IN THIS TURN
+  Tools: Bash x23, Write x3, Edit x2, Read x1
+  Repository files written or edited:
+    - AI Chat Docs/kiran-2026-09-27-become-pro-feature-summary.md
+  Scratch/helper files written: 2
+  Commands and lookups:
+    - Inspect the chat-export folder and docs layout
+    - Read an existing chat export and the AI-usage doc
+    - Read the export's turn format and Kiran's ledger rows
+    - Read the export's summary tail, turn layout and ending
+    - Search for the previous chat exporter script
+    - Profile the session transcript file
+    - List the Become Pro file inventory
+    - Gather routes, limits and error codes
+    - Read box-score rules, caching and slot logic
+    - Read alumni query, model fit and level factor bases
+    - Create docs branch and confirm remaining facts
+    - Verify facts cited in the feature summary
+    - Inspect how special messages are stored
+    - Find where mid-turn user messages are stored
+    - Run a draft export and list its turns
+    - Inspect stored answers to the assistant's questions
+    - Add answers and plan approval to the export
+    - Rerun the export and check the answers section
+    - Write the final export and scan it for secrets
+    - Check for leftover markup and read a sample turn
+    - Locate the missing status lines in the transcript
+    - Read the matched record and count turn 9's text blocks
+    - Regenerate the export and confirm the branch state
+
+========================================================================
+APPENDIX: THE PLAN THE USER APPROVED (turn 1)
+========================================================================
+
+Superseded in part on 26 Sep 2026: the leaderboard, rank badge, public
+profiles, evidence upload, reliability score and admin review it
+describes were removed when Become Pro was re-scoped to private.
+It is kept here as the record of what was approved.
+
+# Become Pro — user-submitted seasons, player valuation, and a value leaderboard
+
+> **Scope: `apps/web` only.** The backend is implemented separately from the API
+> contract in §4. Everything here builds and tests with the backend absent.
+
+## 1. Context
+
+The platform only knows about NBA professionals. Every published statistic derives from
+real `GameEvent` rows, and the only leaderboard ranks people calling game winners against
+the Elo model. A user can follow players, save lineups and make picks — but cannot put
+*themselves* into the system.
+
+**Become Pro** closes that gap: a player logs their own games, the platform derives their
+season line the same way it derives a pro's, prices that season against the real NBA rookie
+salary scale, and ranks them against everyone else who has done the same.
+
+### The premise that had to change
+
+The request assumed we could "call upon the existing APIs to find monetary value of pro
+players." **We cannot.** There is no salary, contract or market-value data anywhere in this
+repo, and `nba_api` exposes none. The only dollar figure is `PlayerPrediction.salary`, which
+[predict.py:227-235](apps/optimizer/predict.py#L227-L235) computes as
+`$3000 + predictedFantasyPoints × $160` clamped to `$3k–$11k`; both the Python and
+[schema.prisma:501-504](apps/api/prisma/schema.prisma#L501-L504) label it synthetic DFS
+pricing and "not a real market price."
+
+So the valuation anchors on the **published NBA rookie salary scale** — a small, fixed,
+public table shipped as a constant, no scraping. The model maps a season line to a projected
+**draft slot**; the slot maps to real rookie-scale dollars. That is also the most honest
+framing of the goal: not "what is this player worth today" but "what would they sign for
+entering the league."
+
+### Decisions taken
+
+| Decision | Choice |
+| --- | --- |
+| Value anchor | Real NBA rookie scale; stats → projected draft slot → dollars |
+| What a user submits | **Per-game box scores**; the season line is *derived*, never typed |
+| Competition level | Required per season, and it **scales** the valuation |
+| Trust | Public, labelled self-reported, minimum-games floor on the board |
+| Verification | Per-game evidence upload driving a **reliability score** |
+
+Per-game entry is deliberate: it preserves the founding rule that every published statistic
+traces back to per-game records (README, opening paragraph), and it lets the derived line be
+shaped exactly like `SeasonAverages` — so `PointsTrendChart`, `Sparkline`,
+`PlayerTraitsRadar` and `ComparisonTraitsRadar` all work on a user's season with **no new
+chart code**.
+
+---
+
+## 2. Core design
+
+**One page serves both "my season" and "someone else's."**
+`ProspectPage` at `/become-pro/:username` switches on `isOwn` to reveal the entry panel,
+evidence uploader and delete affordances. This is the single largest surface saving — there
+is no `/become-pro/me`.
+
+**The derived line is `SeasonAverages` verbatim.** This is what makes the whole feature
+cheap, and it constrains the contract (see §4.3).
+
+**Reuse map** — each of these carries the feature unchanged:
+
+| Existing | Used for |
+| --- | --- |
+| [StatTile.tsx](apps/web/src/components/StatTile.tsx) | The derived stat grid; its `isEditing`/`editValue` mode powers the stretch what-if |
+| [ComparisonTraitsRadar.tsx](apps/web/src/components/ComparisonTraitsRadar.tsx) | Prospect overlaid on NBA comparables |
+| [PlayerTraitsRadar.tsx](apps/web/src/components/PlayerTraitsRadar.tsx) | `traitInputsFor`, `TRAIT_CEILINGS`, `clampToPercent` |
+| [PointsTrendChart.tsx](apps/web/src/components/PointsTrendChart.tsx), [Sparkline.tsx](apps/web/src/components/Sparkline.tsx) | Game log; value-over-time on Home |
+| [LeaderboardCard.tsx](apps/web/src/components/home/LeaderboardCard.tsx) | Structural template for the board — Shell, skeleton, error+retry, `sr-only` caption, footnote |
+| [advancedStats.ts](apps/web/src/lib/advancedStats.ts), [playerBio.ts](apps/web/src/lib/playerBio.ts) | `formatPercentage`/`formatNumber`, `NO_VALUE` (`"—"`) |
+| [ProfilePage.tsx:57-119](apps/web/src/pages/ProfilePage.tsx#L57-L119) | `AvatarEditor` is the line-for-line precedent for evidence upload |
+| [PlayerProfilePage.tsx:243-275](apps/web/src/pages/PlayerProfilePage.tsx#L243-L275) | `statOverrides` local what-if pattern |
+| [seasonType.ts:107](apps/web/src/lib/seasonType.ts#L107) | `isSmallSample` de-emphasises rate stats under 4 games |
+| [LockerSection.tsx](apps/web/src/components/home/LockerSection.tsx), [Reveal.tsx](apps/web/src/components/landing/Reveal.tsx), [Pagination.tsx](apps/web/src/components/Pagination.tsx) | Section headers, scroll-in, paging (`tone="locker"`) |
+
+**One prop widening.** `ComparisonTraitsRadar`'s `entries` moves from
+`PlayerComparisonEntry[]` to a new `TraitsComparisonEntry[]`. Verified safe: the component
+reads only `player.id`, `player.firstName`, `player.lastName` — nothing else.
+`PlayerComparisonEntry` satisfies the wider type structurally, so `ComparePage.tsx` needs no
+edit. **Add a comment at the prop declaration naming those three fields as the contract**,
+because widening removes the type-level guarantee that entries are real NBA players.
+
+A prospect must **never** be given a fabricated `Player` — inventing an `nbaPlayerId` is
+exactly the "never invent a figure" rule this codebase enforces everywhere.
+
+---
+
+## 3. Routes and navigation
+
+Both inside the existing `<Route element={<AppLayout />}>` block in
+[App.tsx](apps/web/src/App.tsx):
+
+```tsx
+<Route path="/become-pro" element={<BecomeProPage />} />
+<Route path="/become-pro/:username" element={<ProspectPage />} />
+```
+
+**Public, not gated.** This matches the house reasoning at
+`apps/api/src/analytics/analytics.controller.ts:36` — "a leaderboard nobody can see until
+they sign in is not a leaderboard." Write affordances are gated *inside* the component on
+`me?.username === username`, not by the router.
+
+**One gate that is needed:** a signed-in user with `username === null` (mid-onboarding)
+cannot be ranked, because the board keys on username. The *write* surfaces
+(`SeasonEntryPanel`, `EvidenceUploader`) render a "finish setting up your profile" prompt
+linking to `/onboarding` rather than a form that posts data the board cannot key on.
+
+### The 8th nav link
+
+Append to `APP_LINKS` in
+[LandingHeader.tsx:8-16](apps/web/src/components/landing/LandingHeader.tsx#L8-L16) **last**,
+so no existing link shifts position — the same reasoning the Admin link documents at `:37-44`.
+
+```tsx
+{ label: "Become Pro", to: "/become-pro" },
+```
+
+The file comment at `:46-50` states "seven nowrap links cannot fit a phone width." Below
+`lg` they already collapse to a drawer, so phone width is fine. **Whether eight fit in the
+`lg` row is genuinely unknown** — jsdom has no layout engine and nothing in the test suite
+can answer it. Do not guess:
+
+1. Add the link and **check `/home` in a browser at 1024px, 1152px and 1280px.**
+2. If the row overflows, move the in-row breakpoint `lg` → `xl` (`:128`, `:129`, `:158`,
+   `:171`) **and** push the landing banner slot `xl` → `2xl` (`:145`) — leaving the banner at
+   `xl` re-breaks the row you just fixed.
+3. Update the `:46-50` comment to say eight, whichever way it lands.
+
+Moving the breakpoint costs the inline nav for 1024–1279px viewports, which is a real
+regression. If the team rejects it, ship **no nav link**: the Home card, the Profile section
+and the header rank badge are all already entry points.
+
+---
+
+## 4. API contract (for the backend AI)
+
+Error envelope `{ error: { code, message } }`; pagination `{ data, page, pageSize, total }`
+via `parsePageParams` (default 25, max 100).
+
+### 4.1 Guards
+
+| Surface | Guards |
+| --- | --- |
+| `@Controller("v1/become-pro")` — public reads | `@UseGuards(OptionalSessionGuard, ApiKeyGuard)`, as `AnalyticsController` |
+| `@Controller("v1/me/become-pro")` — own data/writes | `@UseGuards(SessionAuthGuard)`, as the picks/lineups controllers |
+| `@Controller("v1/admin/become-pro")` — review | `@UseGuards(SessionAuthGuard, RolesGuard)` + `@Roles("ADMIN")` |
+
+Bodies validated with `zod` + `parseBody`, as
+[saved-comparisons.controller.ts](apps/api/src/me/saved/saved-comparisons.controller.ts).
+
+### 4.2 Endpoints
+
+**Public**
+
+| Method | Path | Query | Returns |
+| --- | --- | --- | --- |
+| GET | `/v1/become-pro/leaderboard` | `page?`, `pageSize?`, `search?`, `level?` | `ProspectLeaderboard` |
+| GET | `/v1/become-pro/prospects` | `page?`, `pageSize?`, `search?`, `level?` | `PagedResult<ProspectDirectoryEntry>` |
+| GET | `/v1/become-pro/prospects/:username` | `seasonId?` | `ProspectProfile` |
+
+> The **directory** endpoint exists because a prospect below the games floor never appears on
+> the leaderboard. Without it, "view other players' stats" silently means "view the top of a
+> value board." Everyone with a public season is listed here, ranked or not.
+
+**Session required** (`/v1/me/become-pro`)
+
+| Method | Path | Body | Returns |
+| --- | --- | --- | --- |
+| GET | `/v1/me/become-pro` | — | `ProspectRankSummary` (join-free; backs the header badge) |
+| POST | `/seasons` | `CreateProspectSeasonBody` | `ProspectSeason` |
+| PATCH | `/seasons/:seasonId` | `Partial<CreateProspectSeasonBody>` | `ProspectSeason` |
+| DELETE | `/seasons/:seasonId` | — | `{ deleted: true }` |
+| POST | `/seasons/:seasonId/games` | `ProspectGameInput` | `ProspectGame` |
+| PATCH | `/games/:gameId` | `Partial<ProspectGameInput>` | `ProspectGame` |
+| DELETE | `/games/:gameId` | — | `{ deleted: true }` |
+| POST | `/seasons/:seasonId/evidence` | multipart `file`, optional `gameIds` (CSV), optional `wholeSeason=true` | `ProspectEvidence` |
+| DELETE | `/evidence/:evidenceId` | — | `{ deleted: true }` |
+
+**Admin** (`/v1/admin/become-pro`) — **in scope, with UI**
+
+| Method | Path | Returns |
+| --- | --- | --- |
+| GET | `/evidence?status=PENDING&page&pageSize` | `PagedResult<AdminProspectEvidence>` |
+| PATCH | `/evidence/:evidenceId` body `{ status: "VERIFIED" \| "REJECTED"; note?: string }` | `ProspectEvidence` |
+
+> **This is not optional.** Without a reviewer, nothing reaches `VERIFIED`, every prospect
+> sits permanently at reliability 0, and the evidence upload and reliability score — two
+> explicit asks — ship as a queue nobody can empty.
+
+**Error codes** — `UNAUTHENTICATED` 401 · `PROSPECT_NOT_FOUND` / `SEASON_NOT_FOUND` /
+`GAME_NOT_FOUND` / `EVIDENCE_NOT_FOUND` 404 · `NOT_SEASON_OWNER` 403 ·
+`INVALID_BOX_SCORE` 400 · `INVALID_COMPETITION_LEVEL` 400 · `DUPLICATE_GAME` 409 ·
+`SEASON_LIMIT_REACHED` / `GAME_LIMIT_REACHED` 409 · `UNSUPPORTED_EVIDENCE_TYPE` 415 ·
+`EVIDENCE_TOO_LARGE` 413 · `VALUATION_NOT_READY` 409 · `USERNAME_REQUIRED` 409.
+
+### 4.3 Derivation rules — read this carefully
+
+`seasonAverages` **is the existing `SeasonAverages` type, unchanged.** Do not widen it; the
+three shooting percentages are non-nullable `number` at
+[types/nba.ts:56-62](apps/web/src/types/nba.ts#L56-L62) and widening them breaks
+`PlayerProfilePage`, `SeasonSplitsTable` and every `advancedStats` caller.
+
+Mirror [stats.service.ts:182-195](apps/api/src/players/stats.service.ts#L182-L195) exactly:
+
+- `percentageOf(made, attempted)` → **`0` when `attempted === 0`**, else
+  `round((made / attempted) * 100)`. Never null.
+- Percentages come from **season totals**, never by averaging per-game percentages —
+  "a 1-for-1 night and a 5-for-20 night average to 52.5% but are really 6-for-21."
+- `round` is one decimal; `assistToTurnoverRatio` is two.
+- `trueShootingPercentage` uses the 0.44 free-throw possession weight, `0` when attempts are 0.
+- `assistToTurnoverRatio` is `null` when turnovers are 0 (already nullable).
+- `plusMinusPerGame`, `usagePercentage`, `offensiveRating`, `defensiveRating` are **always
+  `null`** — amateur box scores don't carry them, and a zero would be a real measurement.
+
+**A 0% from zero attempts is meaningless but type-legal.** The UI suppresses it by checking
+`fieldGoalsAttemptedPerGame === 0` and rendering `NO_VALUE`, *not* by making the type
+nullable.
+
+Other rules the API owns:
+- `minimumGamesRequired` defaults to **10**, echoed in every payload; the client never
+  hardcodes it. Rationale mirrors `MINIMUM_CALLS_REQUIRED = 5`
+  ([leaderboard-ranking.ts:18](apps/api/src/analytics/leaderboard-ranking.ts#L18)).
+- Ranking is **dense**, as `rankLeaderboard`. Order: `projectedValueUsd` desc → more
+  `gamesLogged` → higher `verifiedCoverage` → `username` for determinism.
+- **`PATCH /games/:gameId` resets that game's `evidenceId` to `null` and its evidence row to
+  `PENDING`.** Without this, reliability is farmable: log a modest game, get it verified,
+  then edit the numbers upward while keeping the verified flag.
+- `ProspectEvidence.fileUrl` is **`null` for anyone who is not the owner or an admin.** A
+  scorecard carries other people's names; the public gets the status, never the file.
+
+### 4.4 Types to add to `apps/web/src/types/nba.ts`
+
+```ts
+// ── Become Pro ────────────────────────────────────────────────────────────
+// Self-reported, per-game amateur box scores; the season line is DERIVED from
+// them, never typed directly, so every published prospect figure traces back
+// to a game row exactly as every NBA figure here does.
+
+export type CompetitionLevel =
+  | "NCAA_D1" | "NCAA_D2" | "NCAA_D3" | "NAIA" | "JUCO"
+  | "INTERNATIONAL_PRO" | "SEMI_PRO" | "HIGH_SCHOOL" | "REC";
+
+export interface ProspectSeason {
+  id: string;
+  season: string;                       // league year, e.g. "2025-26"
+  competitionLevel: CompetitionLevel;   // REQUIRED — it scales the valuation
+  position: string;
+  teamName: string | null;
+  gamesLogged: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProspectGameInput {
+  gameDate: string;                     // ISO date
+  opponent: string;
+  minutes: number;
+  points: number;
+  rebounds: number;
+  assists: number;
+  steals: number;
+  blocks: number;
+  turnovers: number;
+  fieldGoalsMade: number;
+  fieldGoalsAttempted: number;
+  threesMade: number;
+  threesAttempted: number;
+  freeThrowsMade: number;
+  freeThrowsAttempted: number;
+}
+
+export interface ProspectGame extends ProspectGameInput {
+  id: string;
+  seasonId: string;
+  // Which uploaded document covers this game. null = self-reported with
+  // nothing behind it, which is a real state and must render as such.
+  evidenceId: string | null;
+  evidenceStatus: EvidenceStatus | null;
+}
+
+export interface CreateProspectSeasonBody {
+  season: string;
+  competitionLevel: CompetitionLevel;
+  position: string;
+  teamName?: string | null;
+}
+
+export type EvidenceStatus = "PENDING" | "VERIFIED" | "REJECTED";
+
+export interface ProspectEvidence {
+  id: string;
+  seasonId: string;
+  fileName: string;
+  // Signed, directly renderable URL, as MeProfile.avatarUrl already works.
+  // NULL for anyone who is not the owner or an admin.
+  fileUrl: string | null;
+  mimeType: string;
+  status: EvidenceStatus;
+  reviewedAt: string | null;
+  reviewNote: string | null;            // shown verbatim on REJECTED
+  gamesCovered: number;
+  uploadedAt: string;
+}
+
+export interface AdminProspectEvidence extends ProspectEvidence {
+  owner: { username: string; displayName: string };
+}
+
+// The "reliability score". Named apart from lib/reliability.ts, which already
+// means PREDICTION reliability (how close a player's last N games landed to
+// today's predicted points) — a completely different concept.
+export interface ProspectReliability {
+  gamesLogged: number;
+  gamesVerified: number;
+  gamesDocumented: number;
+  verifiedCoverage: number;             // 0-1, share of logged games VERIFIED
+  documentedCoverage: number;           // 0-1, share with evidence of any status
+  // Computed server-side so tier boundaries cannot drift from the model.
+  tier: "UNDOCUMENTED" | "PARTIAL" | "STRONG";
+  // NULL only when gamesLogged === 0. With games on record a score of 0 is a
+  // REAL measurement and renders as 0, not "—".
+  score: number | null;                 // 0-100
+}
+
+export interface ProspectComparable {
+  player: Player;
+  seasonAverages: SeasonAverages;
+  similarity: number;                   // 0-1, the model's own distance metric
+}
+
+// Real players actually taken at the projected slot, from Player.draftYear /
+// draftRound / draftNumber, which the repo already carries.
+export interface DraftSlotAlumnus {
+  player: Player;
+  draftYear: number;
+}
+
+export interface ProspectValuation {
+  seasonId: string;                     // echoed so a figure can't be mislabelled
+  basis: "LOGGED" | "HYPOTHETICAL";
+  // NULL — not zero — when the games floor is unmet.
+  projectedDraftSlot: number | null;
+  projectedValueUsd: number | null;     // whole USD, first-year rookie scale
+  projectedValueLowUsd: number | null;  // widens with a short log / thin evidence
+  projectedValueHighUsd: number | null;
+  rookieScaleYear: string;              // e.g. "2025-26" — which table this is
+  levelFactor: number;                  // e.g. 0.62
+  levelFactorBasis: string;             // one sentence: where that factor comes from
+  modelVersion: string;
+  computedAt: string;
+  // SERVER-AUTHORED. The client renders these and never composes one —
+  // a client-written explanation of a server-side model would be invention.
+  drivers: { label: string; detail: string }[];
+  minimumGamesRequired: number;
+  comparables: ProspectComparable[];
+  slotAlumni: DraftSlotAlumnus[];
+}
+
+export interface ProspectProfile {
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+  isSelf: boolean;
+  rank: number | null;
+  // Why there is no rank, so the UI never shows a dead chip with no reason.
+  rankState: "RANKED" | "BELOW_GAMES_FLOOR" | "AWAITING_VALUATION" | "HIDDEN";
+  seasons: ProspectSeason[];
+  activeSeasonId: string;
+  seasonAverages: SeasonAverages;       // DERIVED server-side; authoritative
+  gameLog: GameLogEntry[];              // reuses the existing type verbatim
+  games: ProspectGame[];
+  evidence: ProspectEvidence[];
+  reliability: ProspectReliability;
+  valuation: ProspectValuation;
+}
+
+export interface ProspectDirectoryEntry {
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+  competitionLevel: CompetitionLevel;
+  gamesLogged: number;
+  pointsPerGame: number;
+  rank: number | null;
+}
+
+export interface ProspectLeaderboardEntry extends ProspectDirectoryEntry {
+  rank: number;
+  projectedDraftSlot: number | null;
+  projectedValueUsd: number;
+  reliabilityTier: ProspectReliability["tier"];
+  isSelf: boolean;
+}
+
+// A rookie-scale anchor row (pick 1 / 14 / 30) shown on the board as a
+// benchmark — excluded from `total` and from ranking. Same move LeaderboardCard
+// already makes with the Elo model, and it makes a day-one board meaningful.
+export interface ProspectLeaderboardReference {
+  label: string;                        // "Pick 1", "Pick 14", "Pick 30"
+  draftSlot: number;
+  valueUsd: number;
+}
+
+export interface ProspectLeaderboard extends PagedResult<ProspectLeaderboardEntry> {
+  minimumGamesRequired: number;
+  rookieScaleYear: string;
+  references: ProspectLeaderboardReference[];
+  // The signed-in user's own standing even when off this page. Null when
+  // signed out or unranked.
+  yourStanding: ProspectLeaderboardEntry | null;
+}
+
+// Backs the header rank badge — deliberately join-free so the header never
+// pulls a paged list on every page.
+export interface ProspectRankSummary {
+  rank: number | null;
+  rankState: ProspectProfile["rankState"];
+  username: string | null;
+  projectedValueUsd: number | null;
+  gamesLogged: number;
+  minimumGamesRequired: number;
+  // For the Home sparkline — value over time, oldest first.
+  valueHistory: { computedAt: string; valueUsd: number }[];
+}
+
+// Widened radar input — a prospect has no nbaPlayerId and must never be given
+// a fabricated one. PlayerComparisonEntry satisfies this structurally, so
+// ComparePage needs no change.
+export interface TraitsRadarSubject { id: string; firstName: string; lastName: string }
+export interface TraitsComparisonEntry {
+  player: TraitsRadarSubject;
+  seasonAverages: SeasonAverages;
+}
+```
+
+### 4.5 Where the valuation model lives
+
+`apps/valuation/` — a Python service in the house pattern of `apps/optimizer` and
+`apps/predictor`: `db.py`, `value_prospects.py`, `rookie_scale.py` (the fixed public table as
+a module constant keyed by scale year), `level_factors.py` (each factor carrying a documented
+`basis` string), and co-located `test_*.py`. It writes valuation rows Nest only reads.
+Dependencies: `psycopg2-binary`, `numpy`, `python-dotenv`, `pytest` — adding sklearn needs
+justifying, per house style. **No LLM anywhere in the path.**
+
+The model **inverts NBA rookie production → draft slot** rather than fitting on amateur
+lines, because the repo has no amateur training data. Training set: players with non-null
+`draftYear` + `draftNumber` having a rookie season in `PlayerGameStat`. Report MAE and
+Spearman on a chronological split in the module docstring, exactly as
+[predict.py:12-55](apps/optimizer/predict.py#L12-L55) does. **`apps/valuation/README.md` must
+state this inversion plainly** — it is the honest limit of what the figure can claim.
+
+---
+
+## 5. Files
+
+### New — `apps/web/src/lib/`
+
+| File | Purpose |
+| --- | --- |
+| `becomeProApi.ts` | Every fetcher, shaped like `nbaApi.ts`/`meApi.ts`. The single module specs `vi.mock`, which is what makes the frontend testable with no backend. Also exports `invalidateProspectQueries(queryClient)` in the [preferenceQueries.ts](apps/web/src/lib/preferenceQueries.ts) idiom, invalidating `["prospectRank"]`, `["prospectLeaderboard"]`, `["prospect", username]`. |
+| `prospectValue.ts` | Pure reading vocabulary: `COMPETITION_LEVEL_LABELS`, `LEVEL_FACTOR_NOTE`, `formatProjectedValue` (null → `NO_VALUE`), `formatValueRange`, `formatDraftSlot`, `formatRank`, `formatReliability`, `ALLOWED_EVIDENCE_MIME_TYPES`, `MAX_EVIDENCE_SIZE_MB`, and `deriveSeasonAverages(games)` for the unsaved local preview only. |
+| `boxScoreValidation.ts` | Client mirror of [stat-anomalies.ts](apps/api/src/admin/stat-anomalies.ts), reusing its **actual** codes so client and server cannot disagree. Same rationale comment `lib/avatar.ts` carries. |
+
+`boxScoreValidation` splits severity, which the server-side module does not:
+
+- **Blocking** (`INVALID_BOX_SCORE`): `NEGATIVE_STAT`, `FIELD_GOALS_MADE_EXCEEDS_ATTEMPTED`,
+  `THREES_MADE_EXCEEDS_ATTEMPTED`, `FREE_THROWS_MADE_EXCEEDS_ATTEMPTED`,
+  `THREES_MADE_EXCEEDS_FIELD_GOALS_MADE`, `THREES_ATTEMPTED_EXCEEDS_FIELD_GOALS_ATTEMPTED`,
+  `INVALID_MINUTES` (outside 0–65), future `gameDate`.
+- **Warning only**: `POINTS_MISMATCH` — `points !== (fgm - 3pm)*2 + 3pm*3 + ftm`. A real
+  scoresheet sometimes disagrees with its own total; refusing the user's own sheet is worse
+  than flagging it. Show "check this" and let them save.
+
+### New — `apps/web/src/components/becomepro/`
+
+| File | Notes |
+| --- | --- |
+| `ProRankBadge.tsx` | `{ rank, className }` → `#12` with an aria-label. Returns `null` when rank is null — never `#—`, never `#0`. Stays tone-dumb; callers pass `text-brand-accent` on the dark header, `text-locker-leather` on locker surfaces. |
+| `ProspectValueCard.tsx` | `{ username?, variant?: "full" \| "compact" }`. Four call sites: Home, Profile, `BecomeProPage`, `ProspectPage`. |
+| `ProspectLeaderboard.tsx` | `{ compact?, limit? }`. Structurally cloned from `LeaderboardCard.tsx`. Search + pagination collapse under `compact`. |
+| `ProspectDirectory.tsx` | The public browse surface — everyone with a season, ranked or not. Search + level filter + `Pagination tone="locker"`. |
+| `SeasonEntryPanel.tsx` | Season header fields + the game table. Owns `GameEntryRow`. |
+| `GameEntryRow.tsx` | The one genuinely novel surface. Enter saves and returns focus to a fresh row with the date pre-filled; "Duplicate last game" and "Same opponent" prefills; `inputMode="numeric"`; validation severity from `boxScoreValidation`. **Nobody logs twenty games through a generic form** — this is the ask every other ask depends on. |
+| `EvidenceUploader.tsx` | Mirrors `AvatarEditor` almost line for line. Attach per-game **or** whole-season (a league stat page covers everything at once — the highest-leverage single upload). Status in words. |
+| `ReliabilityMeter.tsx` | Fraction in text, tier as a word, 3-segment meter. Colour reinforces only. |
+
+Each ships a co-located `.spec.tsx`.
+
+### New — pages
+
+| File | Route |
+| --- | --- |
+| `pages/BecomeProPage.tsx` | `/become-pro` — your value card, the board, the directory, and a `<details>` explainer. Compositional only. |
+| `pages/ProspectPage.tsx` | `/become-pro/:username` — identity + badge, value card, season chips, StatTiles, traits radar, trend chart, comparables radar, game log. `isOwn` adds entry/evidence. |
+
+### Modified
+
+| File | Change |
+| --- | --- |
+| [App.tsx](apps/web/src/App.tsx) | Two routes + two imports |
+| [LandingHeader.tsx](apps/web/src/components/landing/LandingHeader.tsx) | Append the link; breakpoint decision per §3 |
+| [AuthStatus.tsx:122](apps/web/src/components/AuthStatus.tsx#L122) | `<ProRankBadge>` beside `displayName` inside the existing `<Link to="/profile">` |
+| [ComparisonTraitsRadar.tsx](apps/web/src/components/ComparisonTraitsRadar.tsx) | Widen `entries` to `TraitsComparisonEntry[]` + the contract comment |
+| [HomePage.tsx](apps/web/src/pages/HomePage.tsx) | Right rail gains `ProspectValueCard variant="compact"` and `ProspectLeaderboard compact limit={5}` |
+| [ProfilePage.tsx](apps/web/src/pages/ProfilePage.tsx) | New `Reveal` section between "Saved lineups" and "API keys" |
+| [AdminPage.tsx](apps/web/src/pages/AdminPage.tsx) | New `"evidence"` tab in the existing `TABS` radiogroup — a table of `PENDING` uploads with approve/reject |
+| `HomePage.spec.tsx`, `ProfilePage.spec.tsx`, `AuthStatus.spec.tsx`, `AdminPage.spec.tsx` | Add `vi.mock("@/lib/becomeProApi", …)` — **required**, their mock factories are exhaustive module replacements and the pages will not mount otherwise |
+
+**Profile note:** the page's local `LockerButton` (`:33`) takes `onClick`, not `to`. Don't
+widen it for one caller — have the `<Link>` carry the same class string, the pattern
+[PlayerProfilePage.tsx:26-29](apps/web/src/pages/PlayerProfilePage.tsx#L26-L29) already uses.
+
+---
+
+## 6. Presenting the value honestly
+
+The figure is never a bare number:
+
+```
+PROJECTION · SELF-REPORTED          ← font-mono text-[9px] tracking-[0.1em] text-locker-ink-muted
+#12  KIRAN                          ← ProRankBadge + display name
+Slot 18            $4.37M           ← font-display tabular-nums; SLOT FIRST
+Range $3.1M – $5.9M                 ← always shown, never suppressed
+```
+
+then, in words: *"Projected from 14 self-reported games at NCAA D2, translated by a 0.62
+level factor against the 2025-26 rookie scale. This is a projection of a published draft-slot
+salary, not an offer and not a market price."*
+
+- **The slot is the object; the dollars are its consequence.** The scale is public and fixed,
+  so the model's actual claim is the slot. Leading with `$4.37M` would overstate what was
+  computed — the same discipline that made `PlayerPrediction.salary` carry its label.
+- **`rookieScaleYear` is always printed**, so the figure cannot go silently stale.
+- **`levelFactor` + `levelFactorBasis` are printed as an assumption**, not a fact.
+- **`drivers[]` are server-authored** and rendered verbatim.
+- **Below the floor there is no figure at all** — `null` slot and value, and the card renders
+  *"3 more games needed — minimum 10 to be valued and ranked"*, the same shape as
+  [LeaderboardCard.tsx:104-108](apps/web/src/components/home/LeaderboardCard.tsx#L104-L108).
+- **Nothing renders `0` for absent.**
+- **"Self-reported" appears wherever a figure does** — not once at the top of the page.
+
+**Reliability ladder.** A word carries every step; size and colour only reinforce:
+
+| Tier | Headline | Micro-label |
+| --- | --- | --- |
+| `STRONG` (≥70% verified) | `font-display text-[34px]`, narrow band | `PROJECTION · SELF-REPORTED` |
+| `PARTIAL` | same size | `PROJECTION · PROVISIONAL` |
+| `UNDOCUMENTED` | point estimate demoted to `text-[20px] text-locker-ink-muted`; **the range becomes the headline** | `UNVERIFIED ESTIMATE` |
+
+The server genuinely widens the low/high band as coverage falls, so the demotion reflects a
+real change in model confidence rather than styling.
+
+> **UI wording:** the label is **"Reliability"**, as asked, with a one-line subtitle stating
+> exactly what it measures — *how much of this line is backed by verified documents* — since
+> it measures documentation, not truth. The code namespace is `ProspectReliability` /
+> `prospectValue.ts` to stay clear of `lib/reliability.ts`.
+
+**Comparables** render through `ComparisonTraitsRadar` with the prospect passed **first**, so
+it takes `COMPARISON_PLAYER_COLORS[0]` (`--color-locker-leather`) and the existing legend
+names each series in words. Beneath it, `slotAlumni` turns an abstract figure into
+*"Pick 24 — Josh Hart, 2017"*, each linking to `/players/:id`.
+
+**Rank absence** is always explained, never a silent gap. `rankState` distinguishes
+below-the-floor (with "6 of 10 logged" as a link), awaiting-valuation, and hidden. The header
+badge renders nothing; page surfaces render the word **"Not yet ranked"** plus the reason —
+a silently absent badge on Profile reads as a bug, the word reads as a state.
+
+---
+
+## 7. Testing
+
+Coverage thresholds of **80% on lines/statements/functions/branches are enforced in CI**
+(`src/components/ui/**` excluded), so every new non-`ui` component needs a spec.
+
+**Buildable before the backend exists:** every component reads through `becomeProApi.ts`, and
+every spec replaces it with `vi.mock("@/lib/becomeProApi", …)` — the pattern
+[LeaderboardCard.spec.tsx:7](apps/web/src/components/home/LeaderboardCard.spec.tsx#L7) uses.
+Nothing touches `fetch` or a server.
+
+Plus a **contract pin**: `becomeProApi.spec.ts` stubs global `fetch` and asserts URL, method,
+headers and serialised body verbatim (the `meApi.spec.ts` style), and typed fixtures in
+`src/test/becomeProFixtures.ts` fail `tsc` if the backend's shape drifts.
+
+**Meeting the branch gate:** push conditionals down into the small components (each cheap to
+drive through every state from a mocked resolver); keep the two pages compositional as
+`HomePage.tsx` is; `prospectValue.spec.ts` and `boxScoreValidation.spec.ts` are pure-function
+near-100% coverage that offsets the pages.
+
+Representative cases:
+
+- `prospectValue.spec.ts` — `deriveSeasonAverages([])` → `gamesPlayed: 0`, percentages `0`,
+  `assistToTurnoverRatio` / `plusMinusPerGame` / `usagePercentage` / ratings all `null`;
+  `fieldGoalsAttempted: 0` → `fieldGoalPercentage === 0` **and** the card suppresses it;
+  percentages from totals not averaged rates (6-for-21, not 52.5%); `formatProjectedValue(null) === "—"`;
+  `formatDraftSlot` across `null` / `1` / `30` / `31` / `61`; every `CompetitionLevel` has a label.
+- `boxScoreValidation.spec.ts` — `fgm 6 / fga 4` blocks; `POINTS_MISMATCH` warns but allows save.
+- `ProspectValueCard.spec.tsx` — ranked+`STRONG` renders figure/slot/range/"self-reported";
+  below floor renders **no dollar figure** and "3 more games needed"; `UNDOCUMENTED` promotes
+  the range; signed out → `expect(screen.queryByText(/\$/)).toBeNull()`; `drivers[]` render verbatim.
+- `ProspectLeaderboard.spec.tsx` — mirrors `LeaderboardCard.spec.tsx` case for case: ranks best
+  first, real `columnheader`s, marks your row **in words** (the analogue of its `benchmark`
+  test), explains the floor, empty board shows the invitation, `compact` hides pager+search.
+- `SeasonEntryPanel.spec.tsx` — invalid row never calls the mutation; the derived line moves
+  as a row is typed; `ApiError` envelope text surfaces; delete is two-click.
+- `EvidenceUploader.spec.tsx` — bad mime and oversize both error without calling `postFormData`.
+- `ProRankBadge.spec.tsx` — `null` → `container.firstChild === null`; a number → `#12` with an
+  accessible name.
+- Pages — signed-out, own-no-season, own-below-floor, own-ranked, another prospect (assert edit
+  affordances **absent**), load error with working Retry, each ending in
+  `await expectNoAccessibilityViolations(container)`.
+- Charts — assert `role="img"` and that the `aria-label` names the series in words, as
+  [PointsTrendChart.tsx:77](apps/web/src/components/PointsTrendChart.tsx#L77) does.
+
+**No timers.** `useCountUp`/`ModelExplainer` already fail under full-suite load and pass alone;
+nothing here is timer-driven. The board's search uses `useDebouncedValue`, exercised with
+`vi.useFakeTimers` in that one spec only.
+
+---
+
+## 8. Build order
+
+1. Types + `prospectValue.ts` + `boxScoreValidation.ts` + their specs (no UI; pure, fast).
+2. `becomeProApi.ts` + contract pin + fixtures.
+3. `ProRankBadge` → `AuthStatus` → `ProspectValueCard`. **The badge lands early** — it is the
+   most visible ask and the cheapest to verify.
+4. `ProspectLeaderboard` + `ProspectDirectory` → `BecomeProPage`.
+5. `GameEntryRow` → `SeasonEntryPanel` → `ProspectPage`.
+6. `EvidenceUploader` + `ReliabilityMeter` + the Admin review tab.
+7. Home + Profile sections; nav link and the browser breakpoint check.
+
+Stop after any step and the app still builds, tests green.
+
+---
+
+## 9. Verification
+
+```bash
+cd apps/web
+npm run lint          # oxlint
+npx tsc -b            # the contract pin fails here first if shapes drift
+npm test              # vitest, all specs
+npm run test:cov      # must clear 80% lines/statements/functions/branches
+```
+
+Then, with the backend running (`npm run db:up`, `npm run api:dev`, `npm run web:dev`):
+
+1. `/become-pro` signed out — board and directory render, no dollar figure anywhere, an
+   invitation instead of empty modules.
+2. Sign in, create a season, log 3 games — the derived line updates live; the card says
+   *"7 more games needed"* and shows **no** figure; the header badge is absent.
+3. Log to 10 — a slot, a dollar figure and a range appear; the header badge shows `#N`;
+   `/home` and `/profile` agree with it.
+4. Edit a game's points — the value moves and that game's evidence returns to `PENDING`.
+5. Upload a scorecard → `PENDING`; approve it in `/admin` → reliability rises and the headline
+   moves up the ladder.
+6. Open another user's `/become-pro/:username` — no edit affordances anywhere.
+7. **Resize to 1024px, 1152px and 1280px** and confirm the nav row holds (§3). This is the one
+   thing no test can check.
+8. Tab through the entry form and the board; confirm focus order, 44px targets, and that every
+   colour signal is paired with a word.
+
+---
+
+## 10. Risks
+
+1. **The 8th nav link may not fit at `lg`.** Nothing in jsdom can answer this — it needs the
+   browser check in §9.7, with the `lg`→`xl` fallback (and its 1024–1279px cost) as the
+   documented remedy.
+2. **The rookie-scale table goes stale annually.** Mitigated by echoing and printing
+   `rookieScaleYear`, but somebody must update `apps/valuation/rookie_scale.py` each summer and
+   nothing will warn them.
+3. **Public usernames on self-reported figures is a moderation surface** — fabricated
+   prospects, abusive team/opponent names, and **real minors' names if `HIGH_SCHOOL` is
+   enabled**. No reporting or takedown path is in scope. This is a policy decision to make
+   before launch, not a frontend one.
+4. **`deriveSeasonAverages` can drift from the API's authoritative derivation.** Mitigated by
+   using it *only* for the unsaved local preview and re-reading the server figure after every
+   mutation — but §4.3's rules must be honoured on both sides.
+5. **Page-level branch coverage is the likeliest CI failure.** The mitigation must be followed
+   during the build, not retrofitted.
+6. Widening `ComparisonTraitsRadar`'s prop removes the type-level guarantee that entries are
+   real NBA players; if someone later reads `player.headshotUrl` there it fails only for
+   prospects. Hence the contract comment at the prop.
+
+### Deferred
+
+The **what-if overlay** (`StatTile`'s edit mode over the derived line, POSTed to a
+`/valuation-preview` endpoint returning `basis: "HYPOTHETICAL"`) is a natural fit for existing
+machinery but is **not one of the asks**, and it forces the model to be callable at request
+time — which breaks the "Python writes, Nest reads" pattern and needs a stored-coefficients
+row to resolve. Deferred to a follow-up. If it ships, the value must stay model-computed: a
+browser-side multiply by `levelFactor` would publish a figure no model produced.

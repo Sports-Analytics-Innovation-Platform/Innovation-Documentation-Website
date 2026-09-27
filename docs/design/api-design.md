@@ -34,8 +34,16 @@ Confirmed directly from the backend controllers in `apps/api/src/`:
 | `GET` | `/v1/me/teams/results` | `SessionAuthGuard` | — | Recent results for the caller's teams, oriented to their side (`yourTeam`/`opponent`, `won`) |
 | `GET` `POST` `DELETE` | `/v1/me/saved/comparisons` | `SessionAuthGuard` | — | Saved player comparisons |
 | `GET` `POST` `DELETE` | `/v1/me/saved/lineups` | `SessionAuthGuard` | — | Saved lineups, with drift since save |
+| `GET` | `/v1/me/become-pro` | `SessionAuthGuard` | `seasonId` | The caller's whole Become Pro page: seasons, the active season's derived line, game log, valuation state, valuation, value history and games floor |
+| `GET` | `/v1/me/become-pro/summary` | `SessionAuthGuard` | — | The Home/Profile card: season, level, games, state, pick, value, history |
+| `POST` | `/v1/me/become-pro/seasons` | `SessionAuthGuard` | — | Start a season; `409` if that league year exists or the 12-season limit is reached |
+| `PATCH` `DELETE` | `/v1/me/become-pro/seasons/:seasonId` | `SessionAuthGuard` | — | Edit a season's details (re-values it), or delete it and its games |
+| `POST` | `/v1/me/become-pro/seasons/:seasonId/games` | `SessionAuthGuard` | — | Log a game and re-value the season; `400 INVALID_BOX_SCORE`, `409 DUPLICATE_GAME` |
+| `PATCH` `DELETE` | `/v1/me/become-pro/games/:gameId` | `SessionAuthGuard` | — | Correct or remove a game, re-valuing the season |
 
 The `/v1/analytics/*` and `/v1/me/*` routes were added in PR #94 (merged 2026-09-11) to back the signed-in home page. They are the API's first write endpoints — see [Auth model](#auth-model) below for how they are scoped, and [API Reference](../api-reference.md) for full request/response shapes.
+
+The `/v1/me/become-pro/*` routes were added in PR #192 (27 September 2026) for [Become Pro](../become-pro/index.md). They follow the same `/v1/me` scoping rules, and there is deliberately no public counterpart: a user's Become Pro data is compared only with real NBA players, never with other users. The game writes and season edits also do more than store a row: each one re-derives the season line and re-values it against the latest trained model before responding — see [Valuation Model](../become-pro/valuation-model.md#valuing-a-season-on-every-write).
 
 BetterAuth mounts its own route set at `/api/auth/*` (sign in, sign out, session management, Google OAuth redirect). These are not hand-written NestJS controllers — they are managed by the BetterAuth library.
 
@@ -112,4 +120,4 @@ The full API reference is documented on the [API Reference (Swagger)](../api-ref
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5], Claude-Code[Claude Opus 5.5]*

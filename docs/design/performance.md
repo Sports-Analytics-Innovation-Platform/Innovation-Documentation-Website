@@ -35,13 +35,15 @@ A small in-process cache in `apps/api/src/cache/`, with **no new dependencies**.
 |---|---|---|
 | `REFERENCE_DATA_TTL_MS` | 1 hour | Teams, seasons — effectively fixed for a season |
 | `DERIVED_DATA_TTL_MS` | 5 minutes | Stats, games, predictions, Elo ratings, optimizer lineups |
-| `USER_ACTIVITY_TTL_MS` | 60 seconds | Leaderboard user counts |
+| `USER_ACTIVITY_TTL_MS` | 60 seconds | Leaderboard user counts; the current Become Pro valuation model |
 
 ### What is cached, and what deliberately is not
 
 Only **public, non-user-specific reads** are cached: games and game detail, seasons, teams, Elo ratings, suggested players, player lookups and stats, matchup projections, model accuracy, leaderboard counts, and optimizer lineups and predictions.
 
 **Nothing under `/v1/me` is cached.** Those responses are per-user, change often, and are already cheap — and caching anything keyed on a session would be the easiest way to serve one user another user's data. The rule is simpler to keep than to audit.
+
+[Become Pro](../become-pro/index.md) (PR #192) keeps the rule. A user's seasons, games, valuations and page responses are never cached. The one thing it does cache is the **current trained valuation model**: a single key, held for `USER_ACTIVITY_TTL_MS` (60 seconds), shared by every user, because the model is not user data. Without it, every game write would re-read the model row and its JSON bundle before re-valuing.
 
 Caching is applied at the **service layer rather than as a controller interceptor**, so a shared sub-result is cached once and reused by every route that needs it, and cache keys contain only the parameters that actually change the answer. Two consequences show up in the measurements below: sorted and paginated player lists reuse the same cached intermediate as the leaders band, and the leaderboard reuses the evaluated-games set that the model-accuracy route already loaded.
 
@@ -120,7 +122,8 @@ Worth stating plainly, since it is the price paid for everything above:
 
 - Public NBA data can be **up to 5 minutes stale** after an ingestion or predictor run — 1 hour for teams and seasons.
 - A **session revoked elsewhere stays valid for up to 5 minutes**; sign-out and account deletion are immediate.
-- **Nothing a user owns is ever stale.** Watchlist, picks, notes, saved comparisons and saved lineups are never cached, and a new pick invalidates the leaderboard immediately.
+- **Nothing a user owns is ever stale.** Watchlist, picks, notes, saved comparisons, saved lineups and Become Pro seasons are never cached, and a new pick invalidates the leaderboard immediately.
+- A **newly trained valuation model** takes up to 60 seconds to reach the API, and then re-values each Become Pro season the next time its owner opens the page.
 
 ## Measuring it yourself
 
@@ -135,4 +138,4 @@ Load Home, Predictions, Players (leaders plus a sort) and a player profile, then
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Code[Claude Opus 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Code[Claude Opus 5], Claude-Code[Claude Opus 5.5]*
