@@ -1,0 +1,25 @@
+Date: 2026-09-27
+Author: Daniel Passos
+Tool: OpenAI Codex
+Model: Not specified in transcript
+Purpose: Tested the live deployed API using a generated consumer API key, verified the required X-API-Key header format, confirmed valid authenticated access, checked missing/invalid key handling, and reviewed rate-limit behaviour without stress-testing production.
+
+Transcript
+==========
+
+USER:
+i need you to test the live API using this API key: [REDACTED]. make sure `team-git-workflow`, `code-cleanup` and `coding-conventions` are active. first inspect the current API key auth code so you use the correct header/format and dont guess. then test the live deployed API properly, including a normal authenticated request, an invalid/missing key case, and rate-limit behaviour if it can be tested safely without spamming the service. tell me exactly which endpoints you tested, the request method, status code, and whether the response is correct. do not modify any code, do not commit or push anything, and do not print the full API key back in your response.
+
+ASSISTANT:
+Live API authentication works with `X-API-Key: <key>` (raw key, not Bearer token).
+
+| Method | Endpoint | Result | Correct? |
+| --- | --- | --- | --- |
+| GET | `/health` | 200 `{status:"ok"}` | Yes (note: deprecated; `/v1/health` is preferred) |
+| GET | `/v1/teams?pageSize=1` with supplied key | 200; paginated data, 1 returned row, total 30 | Yes |
+| GET | `/v1/teams?pageSize=1` with no key | 401 `API_KEY_REQUIRED` | Yes |
+| GET | `/v1/teams?pageSize=1` with invalid key | 401 `UNAUTHORIZED` | Yes |
+
+Rate limiting: I made only two authenticated reads, both accepted. I did not force a 429 because the implementation requires reaching the consumer’s per-minute threshold (typically 60 or 100 requests), which would be unnecessary service spam. The code correctly enforces a rolling one-minute limit and returns `429 RATE_LIMIT_EXCEEDED` once reached.
+
+No code, files, commits, or pushes were modified. The requested Git workflow, cleanup, and coding-conventions guidance was applied; no cleanup or code-style changes were appropriate for this read-only test.
