@@ -24,8 +24,8 @@ Status legend: ✅ done · ⚠️ partially done, with the gap named · ❌ not 
 > "A batch should be staged and validated before it lands... Resubmitting a batch should not double-count anything, and a batch that fails part way through should resume rather than restart. Submissions should pass a review before publication... a change to the event data should only cause the figures that depend on it to be recomputed... Queries should meet a stated response time... The API should be versioned, should issue keys... and hold them to rate limits and quotas... with repeated reads served from cache... datasets should become releases... versioned snapshots published with their schema, a description of every field, and a checksum." — brief §1.1.2
 
 - ✅ **Idempotent resubmission.** Ingestion upserts `GameEvent` on `(gameId, sequence)` — a re-run overwrites the same rows, never double-counts (`apps/ingestion/play_by_play.py`).
-- 🔀 **Batch resume survives a real crash, not just a graceful one.** The resume mechanism itself (`IngestionBatch.resumeAfterSequence`) was real, but only committed once per ~40-minute phase — a crash could silently roll back every already-successful game and the failing game's own resume marker along with it. Fixed to commit per game and before re-raising on failure; **open PR, not yet on `main`** (`fix-ingestion-resume-durability`).
-- 🔀 **Review actually gates publication**, not just labels a batch. Until this fix, a `PENDING_REVIEW`/`REJECTED` batch's events and derived stats were already live on the public API the moment ingestion wrote them — the status was an audit label, not a gate. Now `PUBLISHED_GAME_FILTER` excludes a game from every public read until its latest batch is `COMPLETED`. **Open PR, not yet on `main`** (`fix-batch-review-gating`).
+- ✅ **Batch resume survives a real crash, not just a graceful one.** The resume mechanism itself (`IngestionBatch.resumeAfterSequence`) was real, but only committed once per ~40-minute phase — a crash could silently roll back every already-successful game and the failing game's own resume marker along with it. Fixed to commit per game and before re-raising on failure; merged to `main` on 2026-09-23 (PR #186). See [Data Ingestion](ingestion.md#how-one-games-batch-runs).
+- ✅ **Review actually gates publication**, not just labels a batch. Until this fix, a `PENDING_REVIEW`/`REJECTED` batch's events and derived stats were already live on the public API the moment ingestion wrote them — the status was an audit label, not a gate. Now `PUBLISHED_GAME_FILTER` excludes a game from every public read while any of its batches (other than deleted ones) is pending, running, failed or rejected. Merged to `main` on 2026-09-23 (PR #184). See [Data Ingestion](ingestion.md#review-and-publication).
 - ✅ **Validation catches impossible/conflicting data**, and **corrections leave a history.** `event-correction-rules.ts` validates a correction (e.g. rejects one that leaves a play's credit on the wrong player); `EventCorrection` is an append-only audit trail, and undo is a *new* correction reverting a prior one, never a delete.
 - ✅ **Incremental recompute, not full recompute.** `plan-stat-recompute.ts` only recomputes the players who actually appear in the corrected game — never the whole roster, never other games.
 - ⚠️ **Figures checked against reference results.** Exact-value unit tests exist and pin real formulas (e.g. `stats.service.spec.ts` against a real Finals boxscore, matched to 3 decimal places against `BoxScoreAdvancedV3`). What's missing: a committed, automated "golden" regression test replaying one real game's full play-by-play against that game's own externally-published box score.
@@ -35,7 +35,7 @@ Status legend: ✅ done · ⚠️ partially done, with the gap named · ❌ not 
 - ✅ **Repeated reads served from cache.** `apps/api/src/cache/response-cache.service.ts` — single-flight, TTL-tiered by data volatility, invalidated on writes. See [Performance](performance.md) for the query-count side of this (a related but separate optimisation pass).
 - ✅ **Dataset releases: versioned, schema-documented, checksummed, reproducible.** `DatasetRelease` snapshots a CSV at publish time with a per-field schema description and a SHA-256 checksum; a later correction marks the affected release stale rather than silently rewriting it under the same version name.
 
-**Intermediate tier: substantially complete.** The two real gaps (review-gating, resume durability) are fixed and sitting in open PRs as of 2026-09-23 — see the repo's [main app README](https://github.com/Sports-Analytics-Innovation-Platform) or ask Owen for the PR links. Load testing has tooling but no recorded result yet.
+**Intermediate tier: substantially complete.** The two real gaps (review-gating, resume durability) were fixed and merged on 2026-09-23 (PRs #184 and #186). Load testing has tooling but no recorded result yet.
 
 ## Advanced tier
 
@@ -67,7 +67,6 @@ Not required by the brief, but real, working, and worth presenting:
 ## Still open
 
 - Run `npm run load-test` against a database populated at the brief's stated scale and record the actual number here.
-- Merge the two open PRs above (review-gating, resume durability) — until then, `main` still has the bugs they fix.
 - Decide whether to invest further in the two Advanced-tier gaps (async consumer jobs, per-consumer usage dashboard) given remaining sprint time, or treat them as explicit stretch goals for the submission milestone.
 
 ---

@@ -76,6 +76,7 @@ nav:
   - Architecture:
       - Overview: design/architecture.md
       - ERD: design/erd.md
+      - Data Ingestion: design/ingestion.md
       - API Design: design/api-design.md
       - API Reference (Swagger): api-reference.md
       - UI Overview: design/wireframes.md

@@ -1115,6 +1115,8 @@ Everything under `/v1/admin/*` requires a session with the `ADMIN` role (`Sessio
 
 #### Ingestion batches — `/v1/admin/batches`
 
+What batches are for and how review publishes a game are explained on [Data Ingestion](design/ingestion.md#batches).
+
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/v1/admin/batches` | Paginated, filterable by status/search, sortable by game date/season/ingest time |
@@ -1135,12 +1137,18 @@ Only games with stored play-by-play can be corrected, and that means 2025-26 gam
 | `POST` | `/v1/admin/events/:gameId/:sequence/revert` | Undo a correction by applying its previous values as a *new* correction — never deletes the audit trail |
 | `GET` | `/v1/admin/corrections?gameId=` | Paginated correction history |
 
-#### Ingestion queue — `/v1/admin/ingestion`
+#### Ingestion pulls and schedule — `/v1/admin/ingestion`
+
+How pulls, the queue and the pull worker fit together is explained on [Data Ingestion](design/ingestion.md#the-pull-worker).
 
 | Method | Path | Description |
 |---|---|---|
-| `POST` | `/v1/admin/ingestion/pull` | Queue a manual ingestion pull (season/date-range scoped) for a worker to claim — used where the API host itself can't run `nba_api` calls directly |
-| `GET` | `/v1/admin/ingestion/queue` | Pending/claimed/finished pull requests |
+| `POST` | `/v1/admin/ingestion/pull` | Start a pull. Optional body `{ season, fromDate, toDate }`. Where the API can run ingestion itself (local development) it starts `ingest.py --review`; on the deployed API it queues the pull for a pull worker. Refused while another pull is queued or running. |
+| `GET` | `/v1/admin/ingestion/requests` | The 10 most recent queued pulls, newest first, with status, the worker that ran each one and the end of its output |
+| `POST` | `/v1/admin/ingestion/requests/:id/cancel` | Cancel a pull no worker has claimed yet. `409` once it has been claimed. |
+| `GET` | `/v1/admin/ingestion/schedule` | The pull schedule, whether this API runs pulls itself or queues them (`pullMode`), and when a pull worker last checked in |
+| `PUT` | `/v1/admin/ingestion/schedule` | Set the schedule. Body `{ frequency }`: `NEVER`, `HOURLY`, `DAILY` or `WEEKLY`. |
+| `DELETE` | `/v1/admin/ingestion/batches/:id` | Delete a batch. This is a soft delete: it hides the batch and stops it holding its game back from publication, and deletes no game data. |
 
 #### API consumers & keys — `/v1/admin/consumers`
 

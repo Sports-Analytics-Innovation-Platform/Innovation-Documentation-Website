@@ -142,7 +142,7 @@ The optional statistics columns are empty for rows loaded before those columns e
 
 ## Ingestion and review
 
-The records behind getting NBA data in and keeping it correct: one row per ingestion run for a game, one per admin correction, the queue of data pulls waiting for a machine that can reach stats.nba.com, and the automatic-pull schedule. All five were added in Sprint 3.
+The records behind getting NBA data in and keeping it correct: one row per ingestion run for a game, one per admin correction, the queue of data pulls waiting for a machine that can reach stats.nba.com, and the automatic-pull schedule. All five were added in Sprint 3. How they are used, including how to run the pull worker, is explained on [Data Ingestion](ingestion.md).
 
 ### IngestionBatch
 
@@ -164,7 +164,7 @@ One ingestion run for one game: the pipeline's own "submission", which a publish
 
 **Indexes:** `gameId`; `status`.
 
-**Review gates publication.** A game is left out of every public read while any of its batches that hasn't been removed is `PENDING_REVIEW`, `RUNNING`, `FAILED` or `REJECTED` (`PUBLISHED_GAME_FILTER` in `apps/api/src/common/game-visibility.ts`). A game with no batch at all is unaffected. Games loaded before batches existed either have none, or a `COMPLETED` placeholder batch added by `apps/ingestion/backfill_batches.py`.
+**Review gates publication.** A game is left out of every public read while any of its batches that hasn't been removed is `PENDING_REVIEW`, `RUNNING`, `FAILED` or `REJECTED` (`PUBLISHED_GAME_FILTER` in `apps/api/src/common/game-visibility.ts`). A game with no batch at all is unaffected. Games loaded before batches existed either have none, or a `COMPLETED` placeholder batch added by `apps/ingestion/backfill_batches.py`. How batches are created, reviewed and removed is explained on [Data Ingestion](ingestion.md#batches).
 
 ### EventCorrection
 

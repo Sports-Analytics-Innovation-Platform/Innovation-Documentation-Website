@@ -20,7 +20,7 @@ This document explains how these parts connect, how the database is deployed and
 
 | Date | Change |
 |---|---|
-| 2026-09-28 | Added the database's size against the free plan's 500 MB limit, and linked [ADR-005](adr-005-play-by-play-storage.md), which limits stored play-by-play to one season because of it. |
+| 2026-09-28 | Added the database's size against the free plan's 500 MB limit, and linked [ADR-005](adr-005-play-by-play-storage.md), which limits stored play-by-play to one season because of it. Linked the new [Data Ingestion](../design/ingestion.md) page, which explains batches and the pull worker, and corrected the ingestion time to 35–45 minutes. |
 | 2026-09-23 | Documented the queued ingestion pull (`IngestionRequest`/`pull_worker.py`), added alongside the original direct-script method — an admin can now trigger a pull from the web UI, though a human-run worker on a home connection still has to claim it. |
 | 2026-09-14 | Updated to match the live deployment. Schema changes are now applied automatically when the API starts, the API uses two database connection strings, Supabase file storage is used for profile pictures, the data scripts run on a team member's computer, and the database has no automatic backups. Added the [Database deployment](#database-deployment) section. |
 | 2026-08-24 | A *pinger* (a service that sends the API a request at regular intervals) now stops it from going to sleep, removing the start-up delay described under [Render's free plan](#renders-free-plan). |
@@ -140,7 +140,7 @@ PostgreSQL can only handle a limited number of open connections at once. A **con
 | `DATABASE_URL` | Supabase's pooler in *transaction mode* (port `6543`) | Everything the API does while serving requests | The API makes many short database requests. Transaction mode lends out a real connection only for the length of each request. An earlier setting (*session mode*) kept one real connection per client and quickly hit Supabase's connection limit. |
 | `DIRECT_URL` | The database itself (port `5432`) | Applying schema changes | Prisma locks the database while it applies migrations, and the pooler's transaction mode doesn't support that kind of lock. |
 
-The data scripts also use the direct connection.
+The data scripts and the pull worker use a third address: Supabase's pooler in *session mode* (port `5432` on the pooler host). Session mode keeps one real connection per client, which suits a single long-running script and can be reached from a home connection. See [Data Ingestion](../design/ingestion.md#2-point-it-at-the-right-database).
 
 ### Schema changes
 
@@ -159,7 +159,9 @@ Deploying the code updates the database's *structure* automatically, but not its
 
 Either way: the script upserts every row using the NBA's own IDs (idempotent — running it again updates existing rows rather than duplicating them), and can land a batch as `PENDING_REVIEW` for admin approval instead of auto-publishing (see [Feature Tiers](../design/feature-tiers.md)). The predictor and optimizer are then re-run so predictions and lineups reflect the new data.
 
-**New columns need a separate data run.** A migration can add a column to production, but only a data script can fill it. On 2026-09-02, for example, the player biography columns had been deployed but were empty in production; running `backfill_player_bios.py` filled them for 530 players the same day. Smaller single-purpose scripts (`backfill_player_bios.py`, `backfill_advanced_stats.py` and `ingest_postseason.py`) exist so production can be filled in without repeating the full 25–35 minute ingestion.
+How batches are reviewed and published, why the queued method needs a pull worker, and step-by-step instructions for running one are on [Data Ingestion](../design/ingestion.md).
+
+**New columns need a separate data run.** A migration can add a column to production, but only a data script can fill it. On 2026-09-02, for example, the player biography columns had been deployed but were empty in production; running `backfill_player_bios.py` filled them for 530 players the same day. Smaller single-purpose scripts (`backfill_player_bios.py`, `backfill_advanced_stats.py` and `ingest_postseason.py`) exist so production can be filled in without repeating the full 35–45 minute ingestion.
 
 **The sample-data script must never be run against production.** `npm run prisma:seed` deletes every game and all game statistics before inserting sample data.
 
@@ -179,7 +181,7 @@ The brief bans services that *generate API endpoints*. Here, Supabase Storage is
 - **The database has no automatic backups.** Supabase backs up paid projects daily, but free projects get no automatic backups and no point-in-time recovery ([Supabase documentation](https://supabase.com/docs/guides/platform/backups)). For free projects, Supabase recommends regularly exporting the database with `supabase db dump` and keeping the export somewhere else. This isn't done yet (see [Open questions](#open-questions)).
 - **What could be recovered if the database were lost:**
     - the *structure*, fully, by re-running the migrations;
-    - the *NBA data*, by re-running ingestion (about 25–35 minutes, plus the backfill scripts);
+    - the *NBA data*, by re-running ingestion (about 35–45 minutes for a standard pull, plus the backfill scripts; a whole season with its play-by-play takes several hours);
     - but **not user data**. Accounts, followed players, calls and saved lineups and comparisons exist only in production.
 - **Free-plan limits.** Supabase's free plan limits the database to 500 MB and pauses projects that have been inactive for a while. The pinger doesn't prevent pausing: it calls the API's `/health` route, which doesn't query the database. Only real use of the website keeps the database active. On 2026-09-27 the database was at 392 MB, 323 MB of it one season of play-by-play. That is why play-by-play is stored for 2025-26 only; see [ADR-005: Play-by-play storage](adr-005-play-by-play-storage.md).
 
@@ -272,4 +274,4 @@ External:
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder[Qoder Lite], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5] (2026-09-23: documented the queued ingestion pull), Claude-Code[Claude Opus 5.5] (2026-09-28: database size and ADR-005)*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder[Qoder Lite], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5] (2026-09-23: documented the queued ingestion pull), Claude-Code[Claude Opus 5.5] (2026-09-28: database size, ADR-005 and the Data Ingestion links)*
