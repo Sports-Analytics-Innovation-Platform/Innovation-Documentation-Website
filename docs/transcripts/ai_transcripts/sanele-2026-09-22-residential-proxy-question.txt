@@ -1,0 +1,28 @@
+Session: 9092c991-042d-4679-b262-aacb9ad8e31b
+Title: Automating pulls with residential proxy
+Started: 2026-09-22 18:53:01 UTC
+======================================================================
+
+=== USER  (2026-09-22 18:53:01) ===
+Pick up from where we left off on our discussion of automating the pulls instead of relying on running the pull worker locally. I just want you to explain this for me really quick. 
+D. A residential proxy — works, but deliberately circumvents NBA's block. I wouldn't do it for a university project.
+
+DOnt do anything else
+
+=== CLAUDE  (2026-09-22 18:53:21) ===
+<cc-memory filenames="prod-data-loading-is-manual.md">Quick explanation of option D, in the context of why pulls still have to run on someone's home machine:</cc-memory>
+
+**What the problem actually is.** stats.nba.com doesn't block you by account or API key — it blocks you by *where the request comes from*. Requests from datacenter IP ranges (AWS, Render, Fly, Railway, Supabase Edge, GitHub Actions runners) get refused or hang forever. Requests from ordinary home broadband connections go through. That's the entire reason the pull worker has to run on a teammate's machine instead of on the server the rest of the app already runs on.
+
+**What a residential proxy is.** A paid service that routes your HTTP requests through real home internet connections — usually other people's, via phones and desktops running an SDK that resells their spare bandwidth, sometimes bundled into a free VPN or a "free" app they installed. You point your HTTP client at the proxy, it forwards your request out through someone's home IP in, say, Ohio, and sends the response back to you. To the NBA, the request looks like a person in Ohio browsing stats.nba.com.
+
+**Why it would solve the problem.** The pull worker could then run anywhere — on the same host as the API, on a cron job, triggered by the queue we already built. No home machine, no teammate needing to be awake, no manual step. It's the only one of the options that fully removes the human from the loop.
+
+**Why I'd still say no for this project.**
+
+- It's a deliberate circumvention of a block. The datacenter block isn't an accident or a rate limit you're politely backing off from — it's NBA explicitly saying "not from servers." Routing around it is knowingly defeating an access control, which is a different thing from the "be a good citizen, throttle your requests" posture the rest of our ingestion takes.
+- The supply chain is genuinely murky. Residential proxy pools are largely built from consent that's buried in an EULA on a free app. You'd be sending your project's traffic through a stranger's home connection, and their IP is the one that eats any consequence.
+- It costs money, typically per gigabyte, and it's an ongoing bill for a project that ends at the end of the year.
+- It's the part of the architecture you'd have to explain to a marker. "We pay a proxy service to make our server look like a home user so the league can't tell it's us" is not a sentence you want in a report, and it undercuts the honest version of the same slide: "the data source blocks servers, so ingestion is operator-triggered, and here's the queue we built to make that safe and auditable."
+
+**What it means for the decision.** Full automation and staying above board are in tension here — there's no option that gives you both. The realistic ceiling is what we already have: the queue makes the pull one click, and someone on a home connection has to be the one to click it (or leave a scheduled task running on their own machine, which is the closest legitimate thing to automation). That's a constraint of the data source, not a gap in our build, and it's worth writing up that way.
