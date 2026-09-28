@@ -1,0 +1,1766 @@
+Session: d55acf63-0cee-42cd-8a1d-bb4c87ee305b
+Title: Admin corrections feature
+Started: 2026-09-19 10:32:08 UTC
+======================================================================
+
+=== USER  (2026-09-19 10:32:08) ===
+Build the admin "Corrections" feature for this project (NBA sports analytics monorepo:
+apps/api = NestJS + Prisma/Postgres, apps/web = React + Vite + TanStack Query,
+apps/ingestion = Python). Work on a new branch `admin-event-corrections` from an
+up-to-date `main`.
+
+## What a correction is
+Player counting stats (points, FG/3P/FT made+attempted, O/D rebounds, assists,
+steals, blocks, turnovers) are derived from each game's play-by-play (`GameEvent`
+rows). When a play was recorded wrong (wrong player, 2pt vs 3pt, made vs missed,
+wrong assist), an admin corrects that one play and the game's stats re-derive
+automatically. The project brief requires corrections to "leave a history behind
+them": who changed what, from what, to what, when, and why.
+
+## What already exists (read these first)
+- apps/api/src/admin/admin-events.service.ts and admin-events.controller.ts
+  (all ADMIN-only via SessionAuthGuard + RolesGuard):
+  - GET  /v1/admin/events/corrections             paginated history
+  - GET  /v1/admin/games/:gameId/corrections      history for one game
+  - POST /v1/admin/games/:gameId/events/:sequence/correct
+  - POST /v1/admin/games/:gameId/replay           re-derive a game's stats, no edit
+  correctEvent snapshots previous/new values, then in ONE transaction updates the
+  event, runs recomputeDerivedStats, marks that season's DatasetRelease rows
+  isStale, and writes an EventCorrection row; then invalidates the "games" and
+  "players" caches. CORRECTABLE_FIELDS: period, clock, eventType, subType,
+  playerId, teamId, success, value, description.
+- apps/api/src/admin/derive-player-game-stats.ts: the derivation (a TS mirror
+  of apps/ingestion/derive_player_game_stats.py; keep them consistent).
+- EventCorrection model in apps/api/prisma/schema.prisma.
+- apps/web/src/pages/AdminPage.tsx: `AdminCorrectionsSection` is a read-only
+  history table that shows only changed field NAMES. Nothing in the web app
+  calls the correct/replay endpoints, and NO page shows a game's play-by-play.
+- apps/api/test/admin-events.e2e-spec.ts: existing e2e tests.
+
+## Decisions already made
+1. It lives in the existing Admin → Corrections tab (no new tab). That tab both
+   makes corrections and shows their history.
+2. Edit existing plays only. No adding or deleting plays.
+3. Include a preview (before saving) and undo.
+4. `reason` is required in the API (400 if missing or blank), not just the form.
+
+## Backend: bugs and gaps to fix
+1. Double-counting bug: recomputeDerivedStats only updates players who still act
+   in the game's events AFTER the correction. If you move a player's ONLY play
+   to someone else, the old player isn't recomputed and keeps the points. The
+   test "moves derived stats to the corrected player..." passes by coincidence,
+   because its seeded stat rows start at 0. Fix it (at least recompute the
+   corrected event's previous playerId), and make that test seed non-zero stats
+   so it would have caught this. Don't regress the PR #181 behaviour: players
+   who never act in a game's events keep their stats. That matters because
+   older games hold only period-marker events, and replay must not zero them.
+   Note the side effect: a player with no events drops out of the credit
+   roster (see 3); decide how to handle that and explain it.
+2. No input validation. Today, bad input either causes a 500 (non-integer
+   period, unknown teamId FK) or silently corrupts stats: an unknown eventType
+   drops the points, a playerId not in the game is accepted (GameEvent.playerId
+   has no FK), and value 5 on a 2pt counts 5. Validate the RESULTING event
+   (existing row merged with the patch) and return 400 with a clear message:
+   - eventType must be in the platform vocabulary (mirror KNOWN_ACTION_TYPES in
+     apps/ingestion/event_validation.py)
+   - period is an integer from 1 to 10
+   - clock is well-formed
+   - playerId is null or a player with a PlayerGameStat row for this game
+   - teamId is null or the game's home/away team, and matches the player's team
+   - success is only set for 2pt/3pt/freethrow
+   - value is consistent with type and success
+   First inspect real ingested rows so valid existing plays aren't rejected.
+3. Assists/blocks/steals are not fields. They're a "(Name N AST|BLK|STL)"
+   suffix on the event's description, resolved by folded surname (optionally
+   first-initial-prefixed, e.g. "L. James") against players who act in the
+   game. An assist must come from the shooter's team; a block or steal from the
+   other team. Assists attach to made shots, blocks to missed shots, steals to
+   turnovers. Admins need a structured "Assisted by / Blocked by / Stolen by"
+   choice (including "none") that rewrites the suffix for them. Prefer doing
+   the rewrite server-side, where the roster and folding logic already live.
+   Confirm with resolveSecondaryPlayer that the rewritten credit resolves to
+   the intended player, and reject it if not. The N in the suffix is cosmetic
+   to the derivation.
+4. correctEvent reads the "before" row outside the transaction. Move it inside.
+5. Stored clocks are ISO durations like "PT11M30.00S" (some older test rows use
+   "11:30"; check real data). The UI shows and edits mm:ss and converts back.
+
+## Backend: new endpoints (ADMIN-only; names are suggestions)
+- Admin game lookup: search by season, team and date range. GET /v1/games only
+  filters by status/season/seasonType. Show each game's event count, so it's
+  clear which games have real play-by-play (older games hold only period
+  markers).
+- GET /v1/admin/games/:gameId/events: the game header (teams, date, season,
+  score), ALL events ordered by sequence (~450–550; the public endpoint caps
+  pageSize at 100 and has no names), player names, and the game's roster
+  (players with PlayerGameStat rows: id, name, teamId).
+- Preview (dry run): same body as correct. Returns validation errors or per-player
+  before→after diffs of the counting stats that would change. It writes nothing,
+  and must share the exact code path save uses, so preview == result.
+- Undo: POST /v1/admin/corrections/:id/revert (reason required). It applies the
+  correction's previousValues as a NEW correction, so history is never deleted.
+  Return 409 if a later correction has since changed those fields. Optionally
+  add a nullable column linking an undo to the correction it reverts. If you
+  write a migration, beware existing schema drift: `prisma migrate diff` also
+  emits DROP INDEX "IngestionBatch_reviewedById_idx" and an
+  IngestionSchedule.updatedAt default change. Keep those OUT of the migration.
+
+## Frontend (Corrections tab)
+1. Pick a game: season, team and date filters.
+2. Add a "Correct plays" link on each Admin → Batches row that opens the
+   Corrections tab with that game selected.
+3. Play-by-play table: quarter, mm:ss clock, team, player, play type,
+   made/missed, description. Filter by quarter, player and play type.
+4. Edit form using dropdowns, not free text:
+   - player (this game's roster only)
+   - team (home/away)
+   - play type (vocabulary)
+   - made/missed
+   - credit picker
+   - required reason
+5. Show the preview diff, then confirm.
+6. After saving:
+   - refresh the affected queries
+   - show a notice that the season's dataset releases are now stale, with a
+     link to /datasets (the publish control already exists there)
+7. History table:
+   - show the matchup and date, old → new value per field, reason, who and when
+   - filter by the selected game
+   - an Undo button per row
+8. A "Recalculate stats" button for the selected game (the replay endpoint)
+   that reports playersRecomputed.
+Match the existing AdminPage style (locker-*/landing-* Tailwind tokens,
+AdminPage's existing tables and pagination patterns).
+
+## Not in scope
+Adding or deleting plays. Box-score-sourced fields (minutes, plusMinus, usage,
+ratings) and the game's final score are never re-derived from plays; leave them.
+ANALYST users get no access.
+
+## Safety rules (important)
+- apps/api/.env points at LOCAL Postgres (localhost:55432). apps/ingestion/.env
+  may point at PRODUCTION Supabase, and apps/ingestion/db.py loads it with
+  override=True, so an exported DATABASE_URL is ignored. A local "Pull Data"
+  click runs ingest.py, which writes wherever apps/ingestion/.env says. Before
+  pulling local test data, check that file's active DATABASE_URL is local (look
+  at the host only; don't print the password). For ad-hoc DB checks, use
+  psycopg2.connect() with an explicit local URL.
+- Never run `prisma db seed` or any write script against production. Never
+  commit .env files. Check staged diffs for secrets.
+- Leave these untracked files alone: apps/api/prisma/dev-fixtures.ts,
+  docs/admin-datasets-ingestion-guide.md, docs/running-the-pull-worker.md,
+  docs/shot-chart-feasibility.md.
+
+## Testing
+- Docker Desktop must be running (docker-compose.yml: dev DB on 55432, test DB on
+  55433). API: `npm test` in apps/api (uses .env.test → 55433). Web: `npm test`
+  in apps/web. Stop the API dev server before `prisma generate` (Windows locks
+  the engine DLL).
+- Add e2e tests for:
+  - each validation 400
+  - the required reason (update tests that post without one)
+  - the double-counting fix
+  - credit rewrites
+  - preview writing nothing
+  - undo, including the 409 conflict
+  Add AdminPage.spec.tsx tests for the new UI.
+- For manual testing, the local DB needs games pulled with current main: a
+  short date-range pull, e.g. season 2025-26, a few days in April 2026. The web
+  dev server should be on 5173; if Vite starts on 5174, a stale Vite is running.
+
+## How to work
+Post a short plan first, then proceed without waiting unless the code contradicts
+this prompt. In that case, stop and tell me. Commit in logical steps on the
+branch, each with its tests passing. Do NOT push. At the end, give me:
+(1) a plain-language summary of what changed and where,
+(2) a PR title and description I can paste (I open PRs manually on Gitea),
+(3) a short local click-through test checklist.
+Report test results honestly, including anything you couldn't run.
+
+=== CLAUDE  (2026-09-19 10:32:12) ===
+I'll start by loading the project's coding conventions and git workflow skills, then read the existing code.
+
+  [tool: Skill]
+  [tool: Skill]
+  [tool: Bash - Show git state and admin file sizes]
+  [tool: Read - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-events.service.ts]
+  [tool: Read - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-events.controller.ts]
+  [tool: Read - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\derive-player-game-stats.ts]
+  [tool: Read - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\test\admin-events.e2e-spec.ts]
+  [tool: Grep - model (EventCorrection|GameEvent|Game|PlayerGameStat|DatasetRelease|Team|Player|Season) \{]
+  [tool: Read - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\prisma\schema.prisma]
+  [tool: Read - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\prisma\schema.prisma]
+
+=== CLAUDE  (2026-09-19 10:32:33) ===
+Now the Python side: vocabulary, derivation, translation.
+
+  [tool: Bash - List ingestion files and show event validation]
+  [tool: Bash - Show feed translation and play-by-play ingestion]
+  [tool: Bash - Show Python derivation and db.py env handling]
+
+=== CLAUDE  (2026-09-19 10:32:46) ===
+Now let me check the environment: Docker, which DBs the .env files point at (hosts only), and whether local data exists.
+
+  [tool: Bash - Check Docker and database hosts in env files (masked)]
+
+=== CLAUDE  (2026-09-19 10:32:57) ===
+Docker isn't running. Both .env files point at local Postgres (ingestion .env's only DATABASE_URL is localhost:55432). I'll start Docker Desktop and continue reading while it boots.
+
+  [tool: PowerShell - Start Docker Desktop]
+  [tool: Bash - Show docker-compose, api scripts, test and migration dirs]
+
+=== CLAUDE  (2026-09-19 10:33:05) ===
+Now the web side. AdminPage is large, so I'll read it in full since I'll be extending it.
+
+  [tool: Read - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\pages\AdminPage.tsx]
+  [tool: Read - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\pages\AdminPage.tsx]
+  [tool: Read - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\pages\AdminPage.tsx]
+  [tool: Bash - Inspect admin API client structure]
+  [tool: Bash - Show corrections API client, apiClient and spec setup]
+  [tool: Bash - List AdminPage spec tests]
+
+=== CLAUDE  (2026-09-19 10:33:24) ===
+Let me check whether Docker is up yet and what data the local DB holds.
+
+  [tool: Bash - Wait for Docker daemon and list containers]
+
+=== CLAUDE  (2026-09-19 10:33:47) ===
+Both Postgres containers are up. Now I'll inspect real ingested GameEvent rows in the local dev DB (explicit local URL, read-only queries).
+
+  [tool: Bash - Find a Python with psycopg2]
+  [tool: Bash - Inspect local dev GameEvent data shapes]
+  [tool: Bash - Show ingest.py CLI arguments]
+  [tool: Bash - Show ingest.py argument parsing and main]
+  [tool: Bash - List ingestion env key names and db connection code]
+
+=== CLAUDE  (2026-09-19 10:34:40) ===
+Local-only. Starting the pull (3 days in April 2026) in the background.
+
+  [tool: Bash - Pull 3 days of April 2026 games into local DB]
+
+=== CLAUDE  (2026-09-19 10:36:01) ===
+While that runs, I'll create the branch from an up-to-date main.
+
+  [tool: Bash - Fetch origin and compare main with origin/main]
+  [tool: Bash - Create branch and check routing and admin module]
+
+=== CLAUDE  (2026-09-19 10:36:22) ===
+Now the existing unit tests for the events service, which my changes will affect.
+
+  [tool: Bash - Show admin-events unit tests]
+
+=== CLAUDE  (2026-09-19 10:39:00) ===
+Let me check on the pull.
+
+  [tool: Bash - Show pull progress]
+
+=== CLAUDE  (2026-09-19 10:39:04) ===
+Output is buffered; I'll keep reading while it runs: ApiException, pagination helper, the games service (for query patterns), and the OpenAPI contract test.
+
+  [tool: Bash - Show ApiException, pagination, contract test, test DB helpers]
+  [tool: Bash - Check pull log, web routes and core types]
+  [tool: Bash - Check local DB row counts during pull]
+
+=== CLAUDE  (2026-09-19 10:39:34) ===
+No contradictions with the brief so far: the code matches what you described, and the local DB confirms both clock formats (82 ISO rows, 56 legacy `mm:ss` rows). It also has legacy `PERIOD_START`/`PERIOD_END` event types that aren't in the vocabulary. The pull is still loading rosters.
+
+## Plan
+
+**Backend (apps/api)**
+1. **Pure rules module** `event-correction-rules.ts`:
+   - The event vocabulary, mirroring `KNOWN_ACTION_TYPES`.
+   - ISO ↔ mm:ss clock parsing.
+   - `validateCorrectedEvent`, which checks the merged event.
+   - Credit-suffix rewrite, checked with `resolveSecondaryPlayer`.
+   - Unit tested.
+2. **Refactor `AdminEventsService`** around one shared "plan" step. Inside a transaction it locks the game row, then reads the event, game, roster and stats. It merges the patch, validates, rewrites the credit and derives before→after stats.
+   - Preview returns the plan and writes nothing.
+   - Save applies the same plan, so preview == result.
+   - Reason becomes required.
+   - The recompute set gains the corrected event's previous player (the double-counting fix).
+   - That player also stays resolvable as a credit target, so moving their only play doesn't also wipe credits on *other* plays. Replay keeps the PR #181 behaviour.
+3. **Undo:** `POST /v1/admin/corrections/:id/revert` re-applies `previousValues` through the same path. It returns 409 if a later correction touched those fields, or if the event no longer holds the correction's values. A hand-written migration adds a nullable, unique `revertsCorrectionId`, kept free of the known schema drift.
+4. **Reads:**
+   - `GET /v1/admin/games` (season/team/date filters, with an event count).
+   - `GET /v1/admin/games/:gameId/events` (header, all events with names, roster).
+   - The corrections list gains a `gameId` filter, matchup and player names.
+5. **e2e tests** for every validation 400, required reason, double counting (non-zero seeds), credit rewrites, preview writing nothing, and undo + 409.
+
+**Frontend (apps/web):** in the Corrections tab:
+- A game picker.
+- A play-by-play table with filters.
+- A dropdown-based edit form, then preview diff, then confirm.
+- A stale-release notice linking to /datasets.
+- A history table with old → new values and Undo.
+- A Recalculate button.
+- A "Correct plays" link on Batches rows.
+- AdminPage.spec tests for all of it.
+
+Commits in order: rules + validation → double-count fix → preview/undo + migration → read endpoints → web UI. Proceeding.
+
+  [tool: Bash - Show test app setup, vitest config, games service]
+  [tool: Bash - Find seasons endpoint and web fetchers]
+
+=== CLAUDE  (2026-09-19 10:39:43) ===
+Good: `fetchSeasons` and `fetchTeams` already exist for the picker dropdowns. Checking the pull again.
+
+  [tool: Bash - Recheck pull progress after a minute]
+
+=== CLAUDE  (2026-09-19 10:39:47) ===
+The pull finished. Let me look at the log and the real event shapes.
+
+  [tool: Bash - Show pull log tail and re-inspect event shapes]
+  [tool: Bash - Check clock formats, roster/team invariants, credit suffixes]
+  [tool: Bash - Inspect the event whose player lacks a stat row]
+  [tool: Bash - Check ApiException and raw SQL usage in services]
+  [tool: Bash - See how services signal errors]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\derive-player-game-stats.ts]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\derive-player-game-stats.ts]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\derive-player-game-stats.ts]
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\event-correction-rules.ts]
+
+=== CLAUDE  (2026-09-19 10:44:08) ===
+Next, a pure module for the stat recompute plan that preview, save and replay will all share.
+
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\plan-stat-recompute.ts]
+
+=== CLAUDE  (2026-09-19 10:44:21) ===
+Now request parsing (types plus required reason), split out of the service.
+
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\event-correction-request.ts]
+
+=== CLAUDE  (2026-09-19 10:44:38) ===
+Replacing the generic suffix check with one that finds a suffix that doesn't belong to this play's credit type:
+
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\event-correction-rules.ts]
+
+=== CLAUDE  (2026-09-19 10:44:46) ===
+Making that clearer with a capture group instead of string matching:
+
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\event-correction-rules.ts]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\event-correction-rules.ts]
+
+=== CLAUDE  (2026-09-19 10:45:00) ===
+Now a shared loader for one game's snapshot (game, events, stat rows, roster teams). Both the corrections service and the new play-by-play endpoint will use it.
+
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\game-snapshot.ts]
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-events.service.ts]
+
+=== CLAUDE  (2026-09-19 10:46:11) ===
+Now the controller: it uses the new parser and lets the service's `ApiException`s through.
+
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-events.controller.ts]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-events.controller.ts]
+
+=== CLAUDE  (2026-09-19 10:46:26) ===
+Type-checking the API before writing tests:
+
+  [tool: Bash - Type-check the API]
+  [tool: PowerShell - List running node processes]
+  [tool: Bash - Regenerate Prisma client and type-check]
+
+=== CLAUDE  (2026-09-19 10:47:39) ===
+The API type-checks. Now unit tests for the pure rules and request parsing.
+
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\event-correction-rules.spec.ts]
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-events.service.spec.ts]
+
+=== CLAUDE  (2026-09-19 10:48:33) ===
+That spec now only covers request parsing, so I'll rename it to match its module, then update the mock-based service spec for the new transaction shape.
+
+  [tool: Bash - Rename the request-parsing spec]
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-events.service.mock.spec.ts]
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\test\admin-events.e2e-spec.ts]
+
+=== CLAUDE  (2026-09-19 10:50:28) ===
+Tightening two test cases whose labels didn't match what they actually checked:
+
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\test\admin-events.e2e-spec.ts]
+
+=== CLAUDE  (2026-09-19 10:50:39) ===
+Running the admin unit specs and the events e2e spec:
+
+  [tool: Bash - Run admin event unit and e2e tests]
+
+=== CLAUDE  (2026-09-19 10:51:33) ===
+All 95 pass. Before committing, the full API suite and lint:
+
+  [tool: Bash - Run full API test suite and lint admin code]
+
+=== CLAUDE  (2026-09-19 10:54:44) ===
+Five failures in `admin-ingestion.service.spec.ts`, a file I haven't touched. Let me see why, and whether they fail on a clean main too.
+
+  [tool: Bash - Show admin-ingestion spec failure details]
+  [tool: Bash - Check whether ingestion spec fails on clean main]
+  [tool: Bash - Verify working tree after stash pop]
+
+=== CLAUDE  (2026-09-19 10:55:34) ===
+Everything's intact, and `dev-fixtures.ts` is still untracked. Lint check, then staging commit 1 and scanning the staged diff for secrets:
+
+  [tool: Bash - Lint, stage commit 1 files and scan for secrets]
+
+=== CLAUDE  (2026-09-19 10:55:49) ===
+Lint is clean and the secret scan found nothing. Committing step 1:
+
+  [tool: Bash - Commit validation and required reason]
+
+=== CLAUDE  (2026-09-19 10:56:06) ===
+Commit 1 is in. Now the double-counting fix. `planCorrection` retains the corrected play's previous player: they're recomputed, and they stay resolvable as a credit target.
+
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-events.service.ts]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-events.service.ts]
+
+=== CLAUDE  (2026-09-19 10:56:15) ===
+Now the e2e test with non-zero seeds (it would have caught the bug), plus the credit side-effect case:
+
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\test\admin-events.e2e-spec.ts]
+
+=== CLAUDE  (2026-09-19 10:56:30) ===
+And unit tests for the pure recompute planner:
+
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\plan-stat-recompute.spec.ts]
+
+=== CLAUDE  (2026-09-19 10:56:43) ===
+That first test's expectation came out convoluted; simplifying it:
+
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\plan-stat-recompute.spec.ts]
+
+=== CLAUDE  (2026-09-19 10:56:48) ===
+Now proving the reseeded test catches the bug: run it once without the fix, then with it.
+
+  [tool: Bash - Show new tests fail without fix and pass with it]
+
+=== CLAUDE  (2026-09-19 10:57:29) ===
+Both tests fail without the fix and pass with it. Type-check, lint, secret scan, commit:
+
+  [tool: Bash - Verify and commit the double-counting fix]
+
+=== CLAUDE  (2026-09-19 10:58:13) ===
+Commit 2 is in. Next: preview, undo and the migration. First the drift baseline, comparing the current schema against the migrated local dev DB (host confirmed as localhost:55432).
+
+  [tool: Bash - Check migration status and baseline schema drift]
+
+=== CLAUDE  (2026-09-19 10:58:36) ===
+The dev DB is fully migrated, so I'll diff it directly against the schema instead of using a shadow DB:
+
+  [tool: Bash - Show baseline drift between dev DB and schema]
+
+=== CLAUDE  (2026-09-19 10:58:45) ===
+The baseline drift is exactly the two known items. Now the schema change:
+
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\prisma\schema.prisma]
+  [tool: Bash - Generate the migration diff including drift]
+
+=== CLAUDE  (2026-09-19 10:59:00) ===
+Writing the migration with only the three EventCorrection statements, leaving the known drift out:
+
+  [tool: Bash - Write migration, apply to local dev DB, recheck drift]
+
+=== CLAUDE  (2026-09-19 10:59:37) ===
+The migration applied locally, and the remaining drift is only the two known items, which stay out of it. Now preview and undo in the service:
+
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-events.service.ts]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-events.service.ts]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-events.service.ts]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-events.service.ts]
+
+=== CLAUDE  (2026-09-19 11:00:01) ===
+Now the controller endpoints: preview (200, writes nothing) and revert (reason required).
+
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-events.controller.ts]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-events.controller.ts]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-events.controller.ts]
+
+=== CLAUDE  (2026-09-19 11:00:13) ===
+The history needs to show which corrections were undone, so the list includes the revert link:
+
+  [tool: Bash - Include revert link in correction lists and type-check]
+
+=== CLAUDE  (2026-09-19 11:00:36) ===
+That script mis-indented one line (121). Fixing it:
+
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-events.service.ts]
+
+=== CLAUDE  (2026-09-19 11:00:46) ===
+Now the e2e tests for preview and undo:
+
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\test\admin-events.e2e-spec.ts]
+  [tool: Bash - Run admin unit and events e2e tests]
+
+=== CLAUDE  (2026-09-19 11:02:07) ===
+Only the 5 pre-existing ingestion-spec failures remain; every events test passes. I'll add a unit check that preview never opens a transaction or writes, then commit.
+
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-events.service.mock.spec.ts]
+  [tool: Bash - Verify and stage preview/undo commit]
+  [tool: Bash - Commit preview and undo]
+
+=== CLAUDE  (2026-09-19 11:03:04) ===
+Commit 3 is in. Next the read endpoints: admin game lookup and full play-by-play with names and roster, plus the history list gaining a game filter, matchup and player names.
+
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-games.service.ts]
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-games.controller.ts]
+
+=== CLAUDE  (2026-09-19 11:03:38) ===
+Registering the new controller and service:
+
+  [tool: Bash - Register admin games controller and service]
+
+=== CLAUDE  (2026-09-19 11:03:53) ===
+Now the corrections list: an optional `gameId` filter, the matchup, and names for any player ids in the old/new values.
+
+  [tool: Read - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-events.service.ts]
+  [tool: Bash - Add game filter, matchup and player names to correction lists]
+
+=== CLAUDE  (2026-09-19 11:04:40) ===
+Adding the `gameId` query to the list's Swagger docs, and checking the Role enum for access tests:
+
+  [tool: Bash - Document gameId filter and check roles]
+
+=== CLAUDE  (2026-09-19 11:04:51) ===
+Roles are PUBLIC/USER/ANALYST/ADMIN. Let me see how admin-auth.e2e-spec tests role denial, so I can cover ANALYST on the new endpoints the same way:
+
+  [tool: Bash - Show admin auth e2e test pattern]
+
+=== CLAUDE  (2026-09-19 11:04:56) ===
+I'll add unauthenticated (401) cases for the new endpoints to admin-auth.e2e-spec, and a new admin-games e2e spec covering lookup, play-by-play and ANALYST denial (403):
+
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\test\admin-auth.e2e-spec.ts]
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\test\admin-games.e2e-spec.ts]
+
+=== CLAUDE  (2026-09-19 11:05:31) ===
+Before running: the 403 tests assume RolesGuard reads the role from the session. Checking that:
+
+  [tool: Bash - Check how RolesGuard resolves the user's role]
+
+=== CLAUDE  (2026-09-19 11:05:38) ===
+It reads the session user's role, so the mocks are valid. Running the new and affected specs:
+
+  [tool: Bash - Run new and affected admin tests]
+
+=== CLAUDE  (2026-09-19 11:06:12) ===
+All 84 pass. Full API suite before committing:
+
+  [tool: Bash - Run full API suite, type-check and lint]
+
+=== CLAUDE  (2026-09-19 11:09:21) ===
+Still only the same 5 pre-existing failures. A quick check of my `INGESTION_MODE` hypothesis, so I can report the cause accurately:
+
+  [tool: Bash - Test ingestion spec with INGESTION_MODE overridden]
+  [tool: Bash - Commit admin read endpoints]
+
+=== CLAUDE  (2026-09-19 11:10:11) ===
+Backend is done: four commits, all green apart from the 5 pre-existing ingestion-spec failures. Now the frontend. First, which query keys other pages use, so I refresh the right ones after a save:
+
+  [tool: Bash - List react-query keys and components]
+
+=== CLAUDE  (2026-09-19 11:10:18) ===
+Next: renderWithProviders (whether a router is included, since I'll use `<Link>`), how tests mock `fetchSeasons`, and TeamBadge's props.
+
+  [tool: Bash - Show test render helper and corrections spec]
+
+=== CLAUDE  (2026-09-19 11:10:25) ===
+The test harness includes a MemoryRouter, so `<Link>` to /datasets works in specs. Writing the clock helpers first (display mm:ss, convert back to ISO):
+
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\lib\gameClock.ts]
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\lib\gameClock.spec.ts]
+
+=== CLAUDE  (2026-09-19 11:10:42) ===
+Now the API client: types and calls for the new endpoints, replacing the old corrections section.
+
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\lib\adminApi.ts]
+  [tool: Bash - Check adminApi spec and toQueryString]
+
+=== CLAUDE  (2026-09-19 11:11:04) ===
+Let me view the adminApi.spec pattern so I can add client tests for the new calls:
+
+  [tool: Bash - Show adminApi spec setup and mutation tests]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\lib\adminApi.spec.ts]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\lib\adminApi.spec.ts]
+  [tool: Bash - Add resolved credit per play to play-by-play response]
+
+=== CLAUDE  (2026-09-19 11:13:04) ===
+The test comment I wrote there is wrong, and the seq-2 update isn't asserted on. Cleaning both up:
+
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\test\admin-games.e2e-spec.ts]
+  [tool: Bash - Rerun admin games e2e tests]
+  [tool: Bash - Commit resolved credit in play-by-play]
+
+=== CLAUDE  (2026-09-19 11:13:41) ===
+Now the frontend proper. Adding `creditPlayerId` to the web type, then a pure helper module for the edit form's logic, kept separate so it's unit-testable:
+
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\lib\adminApi.ts]
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\components\admin\playCorrection.ts]
+
+=== CLAUDE  (2026-09-19 11:14:17) ===
+Two fixes to that module. For a free throw, the fallback `value` should be 0, as real rows carry it, not 1. And an unedited description should pass through byte-for-byte:
+
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\components\admin\playCorrection.ts]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\components\admin\playCorrection.ts]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\components\admin\playCorrection.ts]
+
+=== CLAUDE  (2026-09-19 11:14:59) ===
+Next, moving AdminPage's shared Tailwind class constants into a small module so the new Corrections components use the exact same styling:
+
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\components\admin\adminStyles.ts]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\pages\AdminPage.tsx]
+
+=== CLAUDE  (2026-09-19 11:15:11) ===
+Now a formatting module shared by the preview and the history table (field labels, values shown as names, stat labels):
+
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\components\admin\correctionFormatting.ts]
+
+=== CLAUDE  (2026-09-19 11:15:23) ===
+Next, one helper that refreshes every query a correction, undo or recalculation can affect:
+
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\components\admin\correctionQueries.ts]
+
+=== CLAUDE  (2026-09-19 11:15:32) ===
+Now the game picker (season, team and date filters, results with play counts):
+
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\components\admin\CorrectionGamePicker.tsx]
+
+=== CLAUDE  (2026-09-19 11:15:55) ===
+Now the edit form itself: dropdowns, then preview diff, then confirm.
+
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\components\admin\PlayEditForm.tsx]
+
+=== CLAUDE  (2026-09-19 11:16:35) ===
+The made/missed → success conversion is repeated inline three times. Extracting it into the helper module:
+
+  [tool: Bash - Extract made/missed to success conversion]
+
+=== CLAUDE  (2026-09-19 11:16:53) ===
+Now the selected-game panel: header, Recalculate stats, filters, and the play-by-play table.
+
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\components\admin\GamePlayByPlayPanel.tsx]
+
+=== CLAUDE  (2026-09-19 11:17:27) ===
+When an admin clicks Edit far down the table, the form (above the table) could be off-screen. The form should scroll itself into view, guarded because jsdom has no `scrollIntoView`:
+
+  [tool: Bash - Scroll the edit form into view when opened]
+
+=== CLAUDE  (2026-09-19 11:17:37) ===
+Now the history table (old → new per field, reason, who, when, Undo with a required reason):
+
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\components\admin\CorrectionHistory.tsx]
+
+=== CLAUDE  (2026-09-19 11:18:02) ===
+Now the section that ties it together, plus the saved/stale-releases notice:
+
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\components\admin\AdminCorrectionsSection.tsx]
+
+=== CLAUDE  (2026-09-19 11:18:18) ===
+That stale-text expression is hard to read. Rewriting it as a small function:
+
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\components\admin\AdminCorrectionsSection.tsx]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\components\admin\AdminCorrectionsSection.tsx]
+
+=== CLAUDE  (2026-09-19 11:18:29) ===
+Now wiring AdminPage: shared styles, the new section, the lifted selected-game state, and the Batches "Correct plays" link. The old read-only corrections section goes away.
+
+  [tool: Bash - Wire corrections section into AdminPage and type-check]
+
+=== CLAUDE  (2026-09-19 11:19:02) ===
+No type errors reported, but I should confirm that command actually checked the web sources (a solution-style tsconfig would check nothing):
+
+  [tool: Bash - Check web tsconfig and scripts]
+
+=== CLAUDE  (2026-09-19 11:19:05) ===
+It was a no-op, as suspected. Running the real project check:
+
+  [tool: Bash - Type-check the web app and lint new files]
+
+=== CLAUDE  (2026-09-19 11:19:46) ===
+Only the spec's old fixture fails type-checking, which is expected now that correction rows carry the matchup. Let me see the existing batch fixtures before writing the new AdminPage tests:
+
+  [tool: Bash - Show batch test fixtures and lint new code]
+
+=== CLAUDE  (2026-09-19 11:19:56) ===
+Now the AdminPage spec: register the new API mocks, then replace the Corrections tests with ones for the full workflow.
+
+  [tool: Bash - Register new API mocks in AdminPage spec]
+  [tool: Bash - Start drafting a read-only credit audit script]
+
+=== CLAUDE  (2026-09-19 11:21:24) ===
+A relative import from the scratchpad is messy. I'll put a temporary read-only script inside apps/api (deleted right after) with an explicit local connection URL:
+
+  [tool: Bash - Audit real plays for self or wrong-side credits, then delete script]
+
+=== CLAUDE  (2026-09-19 11:21:44) ===
+Across 2,127 real credited plays there are zero self-credits and zero wrong-side credits, so the rule rejects no real play. The temp script is deleted. Adding the check to `planCorrection`:
+
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-events.service.ts]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-events.service.ts]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-events.service.ts]
+  [tool: Grep - Writes a plan]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-events.service.ts]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-events.service.ts]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\admin-events.service.ts]
+
+=== CLAUDE  (2026-09-19 11:22:17) ===
+Now e2e tests for the new rule:
+
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\test\admin-events.e2e-spec.ts]
+  [tool: Bash - Simplify the new test and run admin tests]
+
+=== CLAUDE  (2026-09-19 11:23:36) ===
+All admin tests pass apart from the 5 pre-existing failures. Committing this backend fix on its own:
+
+  [tool: Bash - Commit resolved-credit validation]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\components\admin\playCorrection.ts]
+  [tool: Bash - Use dropInvalidCredit in the edit form]
+
+=== CLAUDE  (2026-09-19 11:24:25) ===
+`roster` is in scope before `updateForm`. Now unit tests for the form helpers:
+
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\web\src\components\admin\playCorrection.spec.ts]
+  [tool: Bash - Run new web unit tests]
+
+=== CLAUDE  (2026-09-19 11:25:33) ===
+All pass. Now the AdminPage.spec tests for the whole Corrections workflow, replacing the old two-test block:
+
+  [tool: Bash - Replace Corrections tab tests and run AdminPage spec]
+
+=== CLAUDE  (2026-09-19 11:26:36) ===
+The shell heredoc tripped on an apostrophe. I'll write the test block with the file tool instead, then splice it in:
+
+  [tool: Write - C:\Users\shlat\AppData\Local\Temp\claude\c--Users-shlat-Documents-Year-3-SDP-PROJECT-sportsanalytics\d55acf63-0cee-42cd-8a1d-bb4c87ee305b\scratchpad\c]
+  [tool: Bash - Splice in Corrections tests and run AdminPage spec]
+
+=== CLAUDE  (2026-09-19 11:27:58) ===
+All 42 AdminPage tests pass. Full web suite, type-check and lint:
+
+  [tool: Bash - Type-check, lint and run full web test suite]
+  [tool: Bash - Check lint output for new files]
+  [tool: Bash - Audit every real event against validation, then delete script]
+  [tool: Bash - Smoke-test preview on a real game, then delete script]
+  [tool: Bash - Stage web changes and scan for secrets]
+  [tool: Bash - Commit the corrections UI]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\event-correction-rules.spec.ts]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\event-correction-rules.spec.ts]
+  [tool: Bash - Run the vocabulary consistency test]
+
+=== CLAUDE  (2026-09-19 11:31:57) ===
+The guard passes and extracted all 15 Python types. Committing it, then running the web production build and the full API suite together:
+
+  [tool: Bash - Commit vocabulary consistency test]
+  [tool: Bash - Run full API test suite and checks]
+  [tool: Bash - Build the web app for production]
+  [tool: Bash - Run API suite with INGESTION_MODE pinned and show branch state]
+  [tool: Write - C:\Users\shlat\.claude\projects\c--Users-shlat-Documents-Year-3-SDP-PROJECT-sportsanalytics\memory\api-ingestion-spec-env-leak.md]
+  [tool: Bash - Add memory index entry]
+  [tool: Read - C:\Users\shlat\.claude\projects\c--Users-shlat-Documents-Year-3-SDP-PROJECT-sportsanalytics\memory\ingestion-env-overrides-shell.md]
+  [tool: Edit - C:\Users\shlat\.claude\projects\c--Users-shlat-Documents-Year-3-SDP-PROJECT-sportsanalytics\memory\ingestion-env-overrides-shell.md]
+  [tool: Edit - C:\Users\shlat\.claude\projects\c--Users-shlat-Documents-Year-3-SDP-PROJECT-sportsanalytics\memory\ingestion-env-overrides-shell.md]
+  [tool: Bash - Update memory index line for ingestion env]
+
+=== CLAUDE  (2026-09-19 11:39:47) ===
+I've built the Corrections feature on `admin-event-corrections`: 8 commits, not pushed. Tests pass apart from 5 failures that were already there on main. I didn't click through the UI in a browser (no browser here), so the checklist at the end is still to do.
+
+Written for: you (summary and checklist), plus your teammates reviewing on Gitea (the PR description).
+
+## 1. What changed
+
+**Backend (apps/api/src/admin)**
+- **Validation.** A correction is checked as the play it will become and rejected with a 400 naming every broken rule. That covers vocabulary, period 1–10, clock, roster player, home/away team matching the player, made/missed only on shots, and value.
+  - I checked the rules against 28 real games I pulled into your local DB (April 8–10). All 12,630 real plays pass. Only the 56 old `PERIOD_START`/`PERIOD_END` marker rows fail, because they aren't in the vocabulary.
+  - An unchanged player skips the roster check. A real technical foul names a player who didn't play.
+  - Reason is required on correct, preview and undo.
+- **Double-counting fix.** The corrected play's previous player is always recomputed now. The reassignment test seeds real stats and fails without the fix.
+  - Side effect: that player would drop out of the credit roster. I keep them in it for that one recompute, so their assists on *other* plays aren't lost too. Replay is unchanged (PR #181 behaviour kept).
+- **Credits.** `creditPlayerId` rewrites the description's suffix on the server, checks it with `resolveSecondaryPlayer`, and enforces the side rules.
+  - I also added a check you didn't ask for: a correction can't leave a credit on the play's own player or on the wrong team. Making the passer the shooter used to give him an assist on his own shot. None of the 2,127 real credits in the sample fails this.
+- **Transactions.** The "before" row is read inside the transaction, with the game row locked.
+- **New endpoints:**
+  - game lookup (season, team, dates, play counts)
+  - full play-by-play with names, roster and each play's resolved credit
+  - preview, which runs the same planning code as save and writes nothing
+  - undo, which returns 409 if a later correction touched the same fields or the play changed since
+- **Migration.** One nullable unique `revertsCorrectionId`, with the known drift left out. It's already applied to your local dev DB.
+- **Response change.** The correct endpoint now returns `{ correction, changes, statChanges, season, releasesMarkedStale }` instead of the bare row. Nothing used the old shape.
+
+**Frontend (apps/web/src/components/admin, used by AdminPage)**
+- Game picker, then play-by-play with filters and a Recalculate button.
+- Dropdown edit form with a credit picker, m:ss clock and required reason. I added quarter, rebound-type and description-text fields beyond your list.
+- Preview diff, then confirm, then the stale-release notice linking to /datasets.
+- History showing old → new with names, filtered to the selected game, with Undo.
+- A "Correct plays" button on each Batches row.
+
+**Tests**
+- **API:** 866 passed, 5 failed. Those 5 are in `admin-ingestion.service.spec.ts` and fail on a clean main too: the local `INGESTION_MODE` in apps/api/.env leaks into that spec. With `INGESTION_MODE=direct`, all 871 pass.
+- **Web:** 578/578 pass. tsc, eslint, oxlint and `npm run build` are clean.
+- **Real-data check:** a read-only preview on a real game moved exactly one three between two players, changed nobody else, and wrote nothing.
+
+**Known limitations**
+- Two players with the same initial and surname on one team (Jalen/Jaylin Williams) can't be credited. The derivation can't tell them apart, and the API explains that.
+- Replay still doesn't mark releases stale, which is existing behaviour.
+
+## 2. PR
+
+**Title:** `Admin corrections: edit plays with preview, validation and undo`
+
+```markdown
+## What
+The admin Corrections tab now makes corrections, not just lists them. Pick a game, open its full play-by-play, and correct a play with dropdowns: player (this game's roster), team, play type, made/missed, rebound type, assist/block/steal credit, clock, and a required reason. Preview shows every player's stats before → after; confirm saves exactly that. The history shows old → new per field, who, when and why, with Undo. Each Batches row gets a "Correct plays" link.
+
+## Backend
+- **Validation (400):** a correction is checked as the play it becomes. Event type must be in the vocabulary (a spec keeps it equal to `event_validation.py`). Period is 1–10, the clock must be well-formed, a changed player must be in the box score, the team must be home/away and match the player, made/missed only on shots, and value must fit the play. The credit must resolve to someone other than the play's own player, on the correct side. Checked against 12,630 real plays from April 2026: all pass. Only legacy `PERIOD_START/END` markers fail the vocabulary check.
+- **Reason required** on correct, preview and undo.
+- **Double-counting fix:** the play's previous player is always recomputed, and stays resolvable as a credit target, so moving their only play doesn't strip credits they earned elsewhere. Replay unchanged: players with no events keep their stats.
+- **Credits:** `creditPlayerId` rewrites the `(Name N AST|BLK|STL)` suffix server-side and confirms it with `resolveSecondaryPlayer`.
+- **Consistency:** the before-snapshot is read inside the transaction, with the game row locked (`FOR UPDATE`).
+- **New endpoints (ADMIN only):**
+  - `GET /v1/admin/games?season&teamId&fromDate&toDate`
+  - `GET /v1/admin/games/:gameId/events`
+  - `POST /v1/admin/games/:gameId/events/:sequence/preview` (same planning code as save, writes nothing)
+  - `POST /v1/admin/corrections/:id/revert` (new linked correction; 409 if superseded or the play changed)
+  - `?gameId=` on the corrections list
+- **Response change:** `POST .../correct` now returns `{ correction, changes, statChanges, season, releasesMarkedStale }`. Replay also returns `playersChanged`.
+
+## Migration
+`20260919120000_add_event_correction_revert_link`: nullable unique FK `EventCorrection.revertsCorrectionId`. The pre-existing drift reported by `prisma migrate diff` (`IngestionBatch_reviewedById_idx`, `IngestionSchedule.updatedAt` default) is deliberately left out.
+
+## Testing
+- API e2e: every validation 400, required reason, double counting (non-zero seeds; fails without the fix), credit rewrites, preview writing nothing and matching the save, undo with 409s, game lookup/play-by-play, ANALYST 403.
+- Web: AdminPage specs for the whole flow, plus unit tests for the form logic and clock conversion.
+- API 866/871 locally: the 5 `admin-ingestion.service.spec` failures also happen on main (local `INGESTION_MODE` env leak); 871/871 with `INGESTION_MODE=direct`. Web 578/578; build clean.
+
+## Known limitations
+- Players who share a surname and first initial on one team (e.g. Jal./Jay. Williams) can't be credited: the derivation can't tell them apart, and the API says so.
+- Box-score fields (minutes, +/-, ratings) and the final score are never re-derived.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+```
+
+## 3. Local click-through checklist
+
+Setup: Docker up, stop the API, then run `npx prisma generate` in apps/api. The migration is already applied locally. Start the API, then `npm run dev` in apps/web (it must be on port 5173). Sign in as an admin.
+
+1. **Find a game.** Admin → Corrections → Season 2025-26, From 2026-04-08, To 2026-04-10. About 28 games show ~480 plays each; older games say "(markers only)".
+2. **Filter.** Open plays for CHI @ WAS (Apr 9). Filter Q1 + "3-pt shot" and check the plays shown match both filters.
+3. **Move a shot.** Edit an assisted made three, change Player to a teammate, add a reason, then Preview.
+   - Only the two shooters' PTS/FGM/FGA/3PM/3PA should move.
+   - Confirm. The yellow notice should appear with a Datasets link, the row gets tagged "Corrected", and a history row shows Player old → new, your reason, name and time.
+4. **Check public pages.** The game and player pages show the new points.
+5. **Undo.** Undo that history row with a reason. Stats return, the original row says "Undone", and a new "Undo" row appears.
+6. **Credit picker.**
+   - Change "Assisted by" to another teammate; the preview moves AST.
+   - Set Made/missed to Missed; the picker becomes "Blocked by", listing only the other team.
+   - Set Player to the credited passer; the assist resets to None.
+7. **Rebound type.** Change a rebound from Defensive to Offensive; the preview swaps DREB/OREB.
+8. **Clock validation.** A clock of `13:00` shows a form error. Anything the form lets through but the API rejects shows the API's message.
+9. **Undo conflict.** Correct the same play's clock twice, then undo the first one. You should get the "undo that one first" message.
+10. **Recalculate.** On an untouched game, Recalculate stats reports "N players… 0 changed".
+11. **Batches link.** Batches → "Correct plays" opens that game in Corrections.
+12. **Stale releases.** On /datasets, any 2025-26 releases show as stale.
+13. **Access.** An ANALYST account can't reach any of this.
+
+=== USER  (2026-09-19 11:42:51) ===
+What can be done about this limitation
+- Players who share a surname and first initial on one team (e.g. Jal./Jay. Williams) can't be credited: the derivation can't tell them apart, and the API says so.
+
+=== CLAUDE  (2026-09-19 11:43:12) ===
+I'll size the problem on the real data first, then check what NBA's feed provides for disambiguation, so the options rest on facts rather than guesses.
+
+  [tool: Bash - Audit which real credits fail to resolve, then delete script]
+
+=== CLAUDE  (2026-09-19 11:43:39) ===
+The audit found zero suffixes, which contradicts the 2,127 credits found earlier, so my regex construction is wrong. Rewriting it with plain regex literals:
+
+  [tool: Bash - Rerun credit-resolution audit with regex literals]
+  [tool: Bash - Check whether unmatched credited players exist locally]
+  [tool: Bash - Fetch one game's feed to see playerNameI for the Williamses]
+  [tool: Bash - Find where Python derivation gets player names]
+  [tool: Bash - Check whether the feed carries credited players' ids]
+
+=== CLAUDE  (2026-09-19 11:45:47) ===
+There's a safe, fairly small fix: when two players' names match a credit, use the credit's longer name prefix to pick between them. NBA already writes those credits as "Jal. Williams" and "Jay. Williams". The matcher just throws away every letter after the "J".
+
+On your local sample (28 games from April 8–10, 2026), 47 of 2,174 credits (2.2%) don't resolve to anyone:
+- **9 are this case**, all Jalen/Jaylin Williams.
+- **38 are something else:** the credited player was never ingested. More on that below.
+
+I checked NBA's feed directly with two read-only calls:
+- **Both Williamses** have the same short name, "J. Williams". The feed's own name fields can't tell them apart; only the description text ("Jal." vs "Jay.") and their full first names can.
+- **Assists** have no player id in the feed, only the name in the text.
+- **Blocks and steals** do arrive with the defender's player id, but our ingestion drops it when it folds them into the description.
+
+## Options
+
+**1. Use the full prefix to break ties (recommended).** When two or more players still match a credit, keep only the one whose first name starts with the prefix: "jal" → Jalen, "jay" → Jaylin.
+- **No regression risk:** it only acts where the credit is dropped today, so none of the 2,127 credits that currently resolve can change.
+- **API:** the roster already has full first names from the Player table. The correction form would also write longer prefixes ("J.", then "Ja.", then "Jal.") until one resolves, the same way NBA does.
+- **Python:** `ingest.py` already loads first names with the rosters. It would pass a player-id → first-name map into `aggregate_player_game_stats`, so both derivations still match.
+- **Existing games:** stats already stored keep the dropped credits until you click Recalculate stats on the affected games (OKC games) or pull them again.
+
+**2. Store the credited player's id on the play (a new GameEvent column).** Blocks and steals would then need no name matching at all. But assists have no id in the feed, so Option 1 is still needed for them. It also needs a migration, changes to both pipelines and a re-pull, for a partial fix.
+
+**3. Let corrections alone store the credit by id.** Not recommended: an admin's credits would count one way in the API and another in the Python pipeline.
+
+## The bigger gap
+The other 38 unresolved credits name players with no Player row at all (Chandler, Bal, Scott, Whitehead, Okani, Bufkin). They're probably two-way or short-contract players missing from the team rosters we pull. Their own plays are rejected too; some batches rejected 25 to 150 rows as UNKNOWN_PLAYER. Options 1 and 2 don't fix this, and the credit picker can't offer them. Creating unknown players from the play-by-play feed during ingestion would.
+
+I'd do Option 1 on a follow-up branch so the current PR stays as it is, and look at the missing-players gap separately. Want me to start Option 1?
+
+=== USER  (2026-09-19 13:28:16) ===
+1. Assists have no player id in the feed, only the name in the text.
+2. Blocks and steals do arrive with the defender's player id, but our ingestion drops it when it folds them into the description.
+
+What do you mean by these 2 things
+
+=== CLAUDE  (2026-09-19 13:28:32) ===
+Let me pull the actual feed rows so I can show you both cases. One thing to own first: I saw the assist case directly in the feed last time, but the block/steal claim was an inference from `feed_translation.py`'s comments; I never looked at a raw block row's id. I'll check it now (one read-only call to NBA's API):
+
+  [tool: Bash - Show raw feed rows for an assist, block and steal]
+
+=== CLAUDE  (2026-09-19 13:29:09) ===
+The feed confirms both claims. Here are the raw rows NBA sends for one game (0022501163), one example of each kind of credit.
+
+## 1. Assists: the passer exists only as text
+
+```
+#12  Made Shot  personId 1627884 (Jones Jr.)
+     "Jones Jr. 4' Cutting Layup Shot (2 PTS) (Collins 1 AST)"
+```
+
+Each row has one `personId`, and here it's the shooter. The feed has no field like `assistPersonId`. The only mention of the passer is the word "Collins" inside the description. To credit the assist, our code has to guess which "Collins" in this game that means by comparing names. This is where Jalen and Jaylin Williams become impossible to tell apart. It's also why assists can only ever be fixed by better name matching.
+
+## 2. Blocks and steals: the defender has an id, but we throw it away
+
+NBA sends these as two rows that share one play number:
+
+```
+#33  Turnover   personId 1628381 (Collins)    "Collins Bad Pass Turnover (P1.T1)"
+#33  (blank)    personId 1631096 (Holmgren)   "Holmgren STEAL (1 STL)"
+
+#51  Missed Shot personId 201572 (Lopez)      "MISS Lopez 4' Putback Layup"
+#51  (blank)    personId 1628392 (Hartenstein) "Hartenstein BLOCK (1 BLK)"
+```
+
+The second row names the defender by id (Holmgren is 1631096). That's exact, and no name matching would be needed.
+
+Our database stores only one row per play number, and a play has only one player column. So during ingestion, `feed_translation.py` folds the second row into the first. It appends the defender's name to the description and discards the second row, id included. What ends up stored is:
+
+```
+#33  Turnover  player = Collins  "Collins Bad Pass Turnover (P1.T1) (Holmgren 1 STL)"
+```
+
+Later, the stats derivation has to find "Holmgren" by name, even though his exact id arrived with the data and was discarded.
+
+## Why that matters for the options
+
+- **Option 2 (store the credited player's id):** for blocks and steals, this just means keeping the id we currently discard, in a new column. For assists there's no id to keep.
+- **So assists always need name matching.** That's why I recommended Option 1: it improves the name matching, which covers all three kinds of credit, with no new column and no re-pull.
+
+=== USER  (2026-09-19 13:41:06) ===
+If we take option 1, blocks and steals are still derived somehow right? By going with option 1 we lose nothing?
+
+  [tool: Bash - Check the one unresolved Thiero steal]
+
+=== CLAUDE  (2026-09-19 13:41:44) ===
+Yes. With Option 1, blocks and steals are derived exactly as they are today, from the "(Holmgren 1 STL)" text in the description. Option 1 only adds a tie-breaker for when two players match the same name. You lose nothing you have now: every credit that resolves today resolves the same way afterwards.
+
+What you give up is a gain, not something you already have. Option 2 would make blocks and steals exact, with no name matching. On your local sample, 15 blocks/steals don't resolve today:
+
+| Unresolved blocks/steals | Option 1 | Option 2 | Why |
+|---|---|---|---|
+| 2 (Jal. Williams steals) | fixes | fixes | same surname and initial |
+| 1 (Thiero steal) | doesn't fix | fixes | he's in that game's box score, but the steal was his only contribution. Name matching only considers players with a play of their own. |
+| 12 (Bal, Scott, Okani, Chandler, Williamson) | doesn't fix | doesn't fix | these players have no box-score row for the game (most were never ingested at all), so there's no stat row to credit |
+
+So in practice, Option 2 would add one extra steal over Option 1 in this sample. The bigger win is fixing the missing-players gap, which is a separate piece of work.
+
+Choosing Option 1 also doesn't rule out Option 2 later. NBA still sends the defender's id every time, so the id column could be added and filled by re-pulling. It's just not worth its cost (migration, both pipelines, a re-pull) for one steal per ~28 games right now.
+
+=== USER  (2026-09-19 13:43:32) ===
+What is the point of option 2 explain like im 5
+
+=== CLAUDE  (2026-09-19 13:43:39) ===
+Option 2 is about keeping a player's ID number instead of just their name.
+
+Imagine a class with two kids called Jalen Williams and Jaylin Williams. Each kid also has a student number: Jalen is #1631114, Jaylin is #1631119.
+
+When someone steals the ball, NBA writes down two things:
+- a sticky note that says "Williams stole it"
+- the kid's student number
+
+**What we do today:** we keep the sticky note and throw away the number. Later, when we count who stole the ball, we read the note and have to work out which Williams it means. With two kids called Williams, we sometimes can't tell, so nobody gets the point.
+
+**Option 1:** read the note more carefully. The note actually says "Jal. Williams", and "Jal" is the start of Jalen, not Jaylin. That solves this case.
+
+**Option 2:** stop throwing the number away. Then we never have to guess from the note, because the number says exactly which kid it was.
+
+**The catch:** NBA only gives us a number for steals and blocks. For assists there's no number, only the sticky note, so we'd still have to read notes carefully. That's why Option 1 is needed either way. Option 2 would only make steals and blocks a bit more exact, which on our sample fixed just one extra steal.
+
+=== USER  (2026-09-19 13:46:49) ===
+What does implementing option 2 touch?
+
+=== CLAUDE  (2026-09-19 13:46:55) ===
+I'll check where the credit and GameEvent fields are used across the repo, so the list comes from the code rather than memory.
+
+  [tool: Grep - resolveSecondaryPlayer|resolve_secondary_player|_fold_credit_rows|upsert_game_event|aggregate_player_game_stats|deriveGameEventStats|gameEvent\.(findM]
+  [tool: Grep - "subType"|subType:|eventType.*description|GameEvent]
+  [tool: Bash - Find code that reads or writes GameEvent credits]
+
+=== CLAUDE  (2026-09-19 13:47:41) ===
+Two more places could expose the new column: the dataset release CSV and the public games endpoint. Checking both:
+
+  [tool: Bash - Check dataset export and public events use of GameEvent]
+  [tool: Bash - Show public game events queries]
+
+=== CLAUDE  (2026-09-19 13:48:13) ===
+Option 2 touches both pipelines, the database, the correction flow, and every game already stored. By area:
+
+**Database**
+- `schema.prisma` gets a new nullable `GameEvent.creditPlayerId` column, plus a migration. The known schema drift stays out of it again.
+
+**Python ingestion** (where the id is currently thrown away)
+- `feed_translation.py`: when folding a "Holmgren STEAL" row into the turnover, keep its `personId` as well as appending the name.
+- `play_by_play.py`: `upsert_game_event` converts that NBA id to our internal player id and writes the new column. It must also decide what happens when the credited player isn't on our roster (store null and keep the text).
+- `derive_player_game_stats.py`: for a block or steal, use the stored id when present and fall back to name matching when it isn't (old rows, and assists always).
+- Their tests: `test_feed_translation.py`, `test_play_by_play.py`, `test_derive_player_game_stats.py`.
+
+**API** (the TypeScript copy of the derivation has to change the same way)
+- `derive-player-game-stats.ts`: prefer the stored id, with the same fallback.
+- `admin-events.service.ts`:
+  - a block or steal correction writes the column as well as rewriting the text
+  - `creditPlayerId` joins the correctable fields, so history and undo cover it
+  - the new "credit must be on the right side" check reads the id
+- `event-correction-request.ts` / `event-correction-rules.ts`: parse and validate the new field.
+- `admin-games.service.ts`: return the stored id instead of re-resolving the name, when it exists.
+- The admin corrections e2e specs and the derivation spec.
+
+**Web** (small)
+- `correctionFormatting.ts`, plus `attachPlayerNames` on the API side, so the history shows "Credited player: Holmgren → …" with names.
+
+**Public API side effect**
+- `GET /v1/games/:id/events` and the live-events feed return whole rows. The new column would appear in public responses automatically. It's harmless, but it is a contract change.
+
+**Existing data (the costly part)**
+- Old rows keep a null id and fall back to name matching, so nothing breaks, but nothing improves until they're filled in.
+- Re-pulling games to fill them is risky. Ingestion overwrites every field of every play, so a re-pull would **wipe admin corrections** on those games (undo would then refuse with its "play has changed" 409).
+- So you'd want a separate backfill script that re-fetches each game's feed and fills only the new column. That's also one NBA API call per game, across every season you hold.
+- In production, all of this also has to run on the home machine that does pulls.
+
+**Compared with Option 1**
+Option 1 changes one name-matching function in each language, adds one first-name map passed from `ingest.py`, and adds tests. It needs no migration and no backfill; existing games are fixed with the Recalculate stats button.
+
+Option 2 is roughly 10 source files plus tests across both apps, a migration, and a backfill script. On your sample it fixes one steal that Option 1 doesn't.
+
+=== USER  (2026-09-19 13:55:06) ===
+realistically is option 2 worth all the work and worth all the work I cant explain
+
+=== CLAUDE  (2026-09-19 13:55:18) ===
+No. Skip Option 2 and say that plainly.
+
+- **The payoff is tiny.** On your sample it fixes one steal in about 28 games that Option 1 wouldn't. Nobody will notice that in the stats.
+- **The cost is large and risky.** It touches both pipelines, needs a migration, and needs a backfill script across every season you hold. Done carelessly, a re-pull wipes admin corrections.
+- **Code you can't explain is a problem in itself.** In a team project someone will ask "why is there a second way of crediting steals?" If the honest answer is "for one steal per 28 games", it's hard to defend, and harder to maintain when it breaks.
+
+What I'd do instead:
+
+1. **Do Option 1.** It's small, and it's easy to explain in one sentence: "NBA writes 'Jal. Williams' and 'Jay. Williams'; we used to read only the 'J', now we compare the whole 'Jal' against first names." It fixes the limitation you asked about.
+2. **Write Option 2 down as a possible future improvement**, not as work to do. One line in the PR's "Known limitations" is enough: "NBA sends ids for blocks and steals; storing them would remove name matching for those, but assists would still need names."
+3. **If you want to spend more effort, spend it on the missing-players gap.** That's where most unresolved credits actually come from: 38 of 47 in your sample, versus 9 for the Williams case. It's also easy to explain: "some players weren't on the rosters we pulled, so their plays were thrown away."
+
+Want me to do Option 1 on a follow-up branch?
+
+=== USER  (2026-09-19 13:59:04) ===
+Go ahead with option 1
+making sure to follow the team-workflow and coding conventions skill
+
+=== CLAUDE  (2026-09-19 13:59:57) ===
+I'll follow both skills. Per the git workflow I'll ask before any commit, show you the proposed messages, and scan the staged diff for secrets first.
+
+One branching point first. The workflow says to branch off `main`, but part of this fix (how a correction writes "Jal. Williams") lives in code that exists only on `admin-event-corrections`, which isn't merged yet. So I'll work on a new branch, `credit-name-prefix-matching`, created from `admin-event-corrections`. When it's time to commit, you can choose to keep it as a separate follow-up PR or fold it into the corrections branch; the code is the same either way.
+
+  [tool: Bash - Create follow-up branch from the corrections branch]
+
+=== CLAUDE  (2026-09-19 14:00:06) ===
+Now reading the Python side I'll change: the roster/matching code, where `ingest.py` calls it, and the historical-season script.
+
+  [tool: Bash - Show Python roster and credit matching]
+  [tool: Bash - Show where ingest.py derives stats and loads rosters]
+  [tool: Bash - Show rosters module and Python derivation tests]
+  [tool: Bash - List TS derivation spec cases]
+  [tool: Bash - Read the credit-name tests in both languages]
+  [tool: Bash - Record baseline credit resolution for later diff]
+
+=== CLAUDE  (2026-09-19 14:01:32) ===
+The baseline matches the earlier audit: 2,174 credits, 47 unresolved. The script is parked in the scratchpad, outside the repo. Now the TypeScript derivation:
+
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\derive-player-game-stats.ts]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\derive-player-game-stats.ts]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\derive-player-game-stats.ts]
+
+=== CLAUDE  (2026-09-19 14:01:54) ===
+Now the Python mirror, with the same three steps and names in snake_case:
+
+  [tool: Bash - Show Python RosterEntry definition]
+  [tool: Bash - Mirror the prefix tie-break in the Python deriver]
+
+=== CLAUDE  (2026-09-19 14:02:28) ===
+The shell heredoc chokes on apostrophes again. I'll write the edit script with the file tool and run it from there:
+
+  [tool: Write - C:\Users\shlat\AppData\Local\Temp\claude\c--Users-shlat-Documents-Year-3-SDP-PROJECT-sportsanalytics\d55acf63-0cee-42cd-8a1d-bb4c87ee305b\scratchpad\e]
+  [tool: Bash - Apply the Python deriver edit and check it imports]
+
+=== CLAUDE  (2026-09-19 14:03:03) ===
+Now the read that feeds first names in. It's a Read in CRUD terms, so it sits next to `upsert_players` (the Player write) in `rosters.py`:
+
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\ingestion\rosters.py]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\ingestion\rosters.py]
+  [tool: Bash - Show imports in both ingestion entry points]
+
+=== CLAUDE  (2026-09-19 14:03:16) ===
+Wiring it into both call sites:
+
+  [tool: Bash - Pass roster first names into both derivation call sites]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\event-correction-rules.ts]
+  [tool: Grep - F\. Surname|can't be named unambiguously|a bare surname, or]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\event-correction-rules.ts]
+  [tool: Bash - Type-check the API]
+
+=== CLAUDE  (2026-09-19 14:04:32) ===
+The API type-checks. Now tests, mirrored in both languages. First the existing fixtures I need to match:
+
+  [tool: Bash - Show test fixtures in both derivation specs]
+
+=== CLAUDE  (2026-09-19 14:04:37) ===
+Updating the TypeScript derivation spec: the roster now carries `firstName`, plus new cases for the tie-break.
+
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\derive-player-game-stats.spec.ts]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\derive-player-game-stats.spec.ts]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\derive-player-game-stats.spec.ts]
+
+=== CLAUDE  (2026-09-19 14:04:53) ===
+Now the Python mirrors of the same cases, plus one Python-only case: a missing first name must keep the credit unresolved rather than guess.
+
+  [tool: Bash - Show end of Python derive tests and FakeCursor pattern]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\ingestion\test_derive_player_game_stats.py]
+  [tool: Write - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\ingestion\test_rosters.py]
+  [tool: Bash - Run the full Python ingestion test suite]
+
+=== CLAUDE  (2026-09-19 14:05:34) ===
+Python: 148 passed, 5 skipped. Checking what the skips are, so I don't wave past anything:
+
+  [tool: Bash - Show reasons for skipped Python tests]
+  [tool: Bash - Show the rewrite tests to update]
+  [tool: Bash - Show the ambiguous-name rewrite test]
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\src\admin\event-correction-rules.spec.ts]
+
+=== CLAUDE  (2026-09-19 14:06:12) ===
+Adding an end-to-end check that a correction can now credit Jalen through the real API:
+
+  [tool: Edit - C:\Users\shlat\Documents\Year_3\SDP\PROJECT\sportsanalytics\apps\api\test\admin-events.e2e-spec.ts]
+  [tool: Bash - Run admin unit and e2e tests, type-check and lint]
+
+=== CLAUDE  (2026-09-19 14:08:51) ===
+Five failures again. Let me confirm they're the same pre-existing ingestion-spec ones by pinning `INGESTION_MODE`:
+
+  [tool: Bash - Run full API suite with INGESTION_MODE pinned]
+  [tool: Bash - Diff real credit resolution before and after the change]
+  [tool: Bash - Show who each newly resolved credit went to]
+  [tool: Bash - Scan the pending change for secrets and summarise it]
+
+=== CLAUDE  (2026-09-19 14:13:04) ===
+Option 1 works, and nothing is committed yet: the team workflow says to ask before committing.
+
+**What changed:** when a credit like "(Jal. Williams 1 AST)" still fits more than one player after the team check, the stats code now keeps only the player whose first name starts with the whole prefix ("Jal" → Jalen). It only runs where a credit would otherwise be thrown away, so no credit that counts today can change.
+- **API side:** the stats code now uses players' full first names, which it already had from the Player table.
+- **Python side:** NBA's feed gives both Williamses the same short name ("J. Williams"). Ingestion now reads first names from the Player table and passes them in, through a new read function in `rosters.py`.
+- **Corrections:** the credit picker now writes "Jal. Williams" or "Jay. Williams" the way NBA does. Names that can't be told apart at any length ("Chris" vs "Christian") are still refused with a message.
+
+**Checked on your local data:**
+
+| | Before | After |
+|---|---|---|
+| Credits in sample | 2,174 | 2,174 |
+| Unresolved | 47 | 38 |
+| Previously counted credits that changed | — | 0 |
+| Newly counted | — | 9, all to the right Williams |
+
+The 38 still unresolved are the missing-players problem, which this doesn't touch.
+
+**Tests:**
+- **API:** 876/876 pass with `INGESTION_MODE=direct`. Without it, the same 5 pre-existing ingestion-spec failures appear.
+- **Python:** 148 passed. The 5 skipped are pull-worker database tests that need `INGESTION_TEST_DATABASE_URL`; they're unrelated.
+- **Web:** unchanged, so not re-run.
+
+**Secret scan:** nothing found.
+
+**Proposed commits**, each with the Co-Authored-By line and each passing its tests on its own:
+
+1. `fix: tell apart teammates who share a surname and initial in credits`. This covers both stats derivations, the first-name read in `rosters.py` (plus `test_rosters.py`), both ingest scripts, and their tests. The body explains the prefix rule and the before/after numbers above.
+2. `fix: let corrections credit a player by the prefix NBA would write`. This covers `event-correction-rules.ts`, its spec, and the new end-to-end test crediting Jaylin.
+
+  [tool: AskUserQuestion]
+
+=== CLAUDE  (2026-09-19 14:25:47) ===
+Approved: two commits on `credit-name-prefix-matching`. Staging commit 1 and re-scanning exactly what's staged:
+
+  [tool: Bash - Stage commit 1 and scan the staged diff]
+
+=== CLAUDE  (2026-09-19 14:25:59) ===
+Before committing, I'll confirm commit 1 passes on its own, with commit 2's changes set aside:
+
+  [tool: Bash - Test commit 1 alone, then restore commit 2 changes]
+
+=== CLAUDE  (2026-09-19 14:27:20) ===
+Commit 1 passes on its own. The only failing file is the pre-existing `admin-ingestion.service.spec.ts`; its FAIL lines were the only ones filtered out. Commit 2's changes are restored. Committing:
+
+  [tool: Bash - Make commit 1]
+
+=== CLAUDE  (2026-09-19 14:27:29) ===
+Now commit 2: stage, scan, commit.
+
+  [tool: Bash - Stage, scan and make commit 2]
+
+=== CLAUDE  (2026-09-19 14:27:52) ===
+Option 1 is done: two commits on `credit-name-prefix-matching`, not pushed.
+
+Written for: you (summary), and your teammates reviewing on Gitea (the PR text).
+
+```
+1cbbcd5 fix: let corrections credit a player by the prefix NBA would write
+bfc6838 fix: tell apart teammates who share a surname and initial in credits
+```
+
+This branch is built on `admin-event-corrections`, so open its PR after the corrections PR merges, as you chose. Until then its diff would also show all the corrections commits.
+
+**What it does:** OKC's Jalen and Jaylin Williams now get their assists and steals. A correction can credit either of them, and the game text reads "Jal. Williams" / "Jay. Williams" the way NBA writes it.
+
+**Games already in the database won't pick this up by themselves.** A game's stats only change when they're recomputed. For each OKC game, either click Recalculate stats in the Corrections tab or pull it again. On the deployed site, new pulls use this only once the updated Python code is on the home machine that runs them.
+
+**Tests:**
+- **API:** 876/876 pass with `INGESTION_MODE=direct`. Without it, only the 5 ingestion-spec failures that were already there appear.
+- **Python:** 148 passed. 5 skipped: pull-worker database tests that need `INGESTION_TEST_DATABASE_URL`, unrelated.
+- **Each commit:** passes its tests on its own.
+- **Web:** unchanged and not re-run.
+- **Real data:** 9 credits now count, all to the right player (8 to Jalen, 1 to Jaylin); none of the other 2,127 changed.
+
+**PR title:** `Credit teammates who share a surname and initial (Jal./Jay. Williams)`
+
+```markdown
+## What
+NBA credits OKC's Jalen and Jaylin Williams as "Jal. Williams" and "Jay. Williams", but our credit matching compared only the first letter, so their assists/steals/blocks were dropped. When a credit still fits more than one player after the team check, both stats derivations (API and Python) now keep only the player whose first name starts with the credit's full prefix. It only runs where a credit would otherwise be dropped, so no existing credit can change.
+
+- API: `derive-player-game-stats.ts` uses first names from the Player table.
+- Python: the feed's `playerNameI` is "J. Williams" for both, so `ingest.py` / `ingest_historical_season.py` read first names with the new `rosters.select_first_names_by_nba_id` and pass them to `aggregate_player_game_stats`.
+- Corrections: the credit rewrite tries "J.", "Ja.", "Jal."… and writes the first that resolves to the chosen player, as NBA does. Names no prefix separates (Chris vs Christian) are still refused with a message.
+
+Depends on the admin corrections PR; merge that first.
+
+## Evidence
+Local April 8–10 2026 sample (28 games, 2,174 credits): 9 credits now resolve, all to the right player; 0 of the 2,127 existing credits change. 38 remain unresolved: those are credited players the pipeline never ingested, a separate issue.
+
+## After merging
+Stored stats for games already ingested only change when recomputed: use Recalculate stats on affected (OKC) games, or re-pull them.
+
+## Testing
+Mirrored tests in both languages (Jal./Jay., St. Curry vs Seth, Chris vs Christian, unknown first name stays unresolved), `test_rosters.py`, and an e2e test crediting Jaylin through a correction. API 876/876 (with `INGESTION_MODE=direct`; the 5 `admin-ingestion.service.spec` failures happen on main too), Python 148 passed / 5 DB-only skips.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+```
+
+**Local check:** open an OKC game from the April window in Admin → Corrections and click Recalculate stats; it should report a few players changed. Then edit an OKC made shot, set "Assisted by" to Jaylin Williams, preview, and save. The play's text should read "(Jay. Williams 1 AST)" and his assists should go up by one.
+
+=== USER  (2026-09-20 15:22:01) ===
+Is this ready for a pr
+
+=== CLAUDE  (2026-09-20 15:22:19) ===
+Let me verify the actual state rather than assume: working tree, branch contents, and a full re-run of every suite on the branch tip.
+
+  [tool: Bash - Check branch state, commits and Docker]
+
+=== CLAUDE  (2026-09-20 15:22:31) ===
+Working tree is clean apart from the four files you asked me to leave alone. Docker isn't running (new day, machine restarted), and the API e2e tests need it. Starting it, and running the suites that don't need a database meanwhile:
+
+  [tool: PowerShell - Start Docker Desktop]
+  [tool: Bash - Run the Python ingestion test suite]
+  [tool: Bash - Run web tests, type-check and lint]
+  [tool: Bash - Wait for Docker and show containers]
+  [tool: Bash - Run full API suite, type-check and lint]
+
+=== CLAUDE  (2026-09-20 15:33:04) ===
+Everything is green on the branch tip:
+
+| Suite | Result |
+|---|---|
+| API | 876/876 (with `INGESTION_MODE=direct`; the 5 pre-existing failures otherwise) |
+| Web | 578/578, tsc clean, 0 lint findings in the new files |
+| Python | 148 passed, 5 skipped (DB-only, need `INGESTION_TEST_DATABASE_URL`) |
+
+One last sanity check that the right files actually landed in the commits:
+
+  [tool: Bash - Verify commit contents and check for stray files]
+
+=== CLAUDE  (2026-09-20 15:33:25) ===
+Yes, code-wise it's ready. Two things are outstanding before you can actually open one.
+
+**1. Nothing is pushed.** Neither branch has an upstream, because you told me not to push. A PR needs the branch on Gitea first. Want me to push both now?
+
+**2. I never clicked through the UI in a browser.** The corrections screens are covered by 42 AdminPage tests and the API is verified against real ingested games, but no human (or browser) has used the actual page. That's the one gap I'd flag to reviewers, and the click-through checklist from earlier is still worth running before merge.
+
+**Open them in this order**, since the second is built on the first:
+
+1. `admin-event-corrections` → `main` (8 commits): the Corrections feature.
+2. `credit-name-prefix-matching` → `main` (2 commits), **after** the first merges. Until then its diff against main also shows the first branch's commits, which makes it confusing to review.
+
+Both PR descriptions are in my earlier messages, ready to paste.
+
+**Worth telling reviewers:**
+- The first PR has a **database migration**. Whoever deploys runs `prisma migrate deploy`, and anyone pulling the branch runs `prisma generate`.
+- The second PR changes **Python ingestion**, so it only affects new pulls once that code is on the machine that runs them. <cc-memory filenames="prod-data-loading-is-manual.md">Production pulls are manual and need a teammate on a home machine.</cc-memory>
+- Games already stored keep their old credits until someone hits Recalculate stats or re-pulls them.
+- If anyone runs the API suite locally and sees 5 failures in `admin-ingestion.service.spec.ts`, those are pre-existing and caused by `INGESTION_MODE` in their local apps/api/.env, not by these branches.
+
+Per your team workflow, don't merge either one until the team has reviewed and agreed it's done.
+
+=== USER  (2026-09-20 15:38:09) ===
+Give me a local testing plan
+
+=== CLAUDE  (2026-09-20 15:38:27) ===
+Let me ground the plan in what's actually in your local database right now, so the steps have real games and expected numbers.
+
+  [tool: Bash - Gather local data for the test plan]
+
+=== CLAUDE  (2026-09-20 15:39:34) ===
+Your local setup is ready for this: 28 games pulled, 1 admin user, 0 corrections so far (clean slate), and the migration already applied.
+
+# Local testing plan
+
+## Setup
+
+1. Start Docker Desktop and confirm both containers are up: `docker ps` shows `nba-analytics-postgres` (55432) and `nba-analytics-postgres-test` (55433).
+2. In `apps/api`: `npx prisma generate` (do this with the dev server stopped, Windows locks the engine DLL). The migration is already applied to your dev DB; `npx prisma migrate status` should say up to date.
+3. Start the API: `npm run dev` in `apps/api` → http://localhost:4000
+4. Start the web app: `npm run dev` in `apps/web` → http://localhost:5173. If Vite says 5174, an old Vite is still running; kill it, or the API proxy won't work.
+5. Sign in with your admin account (you have exactly one ADMIN user locally) and go to **Admin → Corrections**.
+
+Handy verification query, used throughout:
+
+```bash
+docker exec -it nba-analytics-postgres psql -U postgres -d nba_analytics -c "<SQL>"
+```
+
+## The two games you'll use
+
+| Game | Why |
+|---|---|
+| **CHI @ WAS, Apr 9** (501 plays) | the main correction flow |
+| **OKC @ LAC, Apr 8** | the Jalen/Jaylin Williams fix; both currently show **0 assists, 0 steals** |
+
+## 1. Find a game
+- Filter: Season `2025-26`, From `2026-04-08`, To `2026-04-10`.
+- ✅ ~28 games, each ~480–500 plays. Older games (no filters) show "(markers only)".
+- Click **Open plays** on CHI @ WAS.
+
+## 2. Play-by-play and filters
+- ✅ Plays are in order with quarter, an `m:ss` clock (not `PT11M30.00S`), team, player, play type, made/missed.
+- Filter by quarter, then a player, then a play type.
+- ✅ "Showing N of 501 plays" tracks each filter.
+
+## 3. Preview writes nothing
+- Filter to 3-pt shots, find a made three whose description ends in an assist, e.g. `(Miller 1 AST)`. Click **Edit**.
+- Change **Player** to another player on the same team, type a reason, click **Preview changes**.
+- ✅ Preview lists the field change and two players' stats: the old shooter's PTS/FGM/FGA/3PM/3PA drop, the new one's rise. Nobody else appears.
+- Click **Cancel**, then check nothing was written:
+
+```sql
+SELECT count(*) FROM "EventCorrection";   -- still 0
+```
+
+## 4. Save a correction
+- Reopen the same play, make the same change, Preview, then **Confirm and save**.
+- ✅ The stat changes match the preview exactly.
+- ✅ A yellow notice appears with a link to **Datasets**.
+- ✅ The play's row gets a "Corrected" tag.
+- ✅ A history row shows the matchup, `Player: <old> → <new>`, your reason, your name and the time.
+
+## 5. It reached the rest of the site
+- Open that game's public page and the two players' pages.
+- ✅ Points moved. (Minutes, +/- and the final score must be unchanged; those are never re-derived.)
+
+## 6. Undo
+- In the history, click **Undo**, enter a reason, confirm.
+- ✅ Stats return to their original values, the original row reads "Undone", and a new row tagged "Undo" appears. Nothing is deleted:
+
+```sql
+SELECT count(*) FROM "EventCorrection";   -- 2
+```
+
+## 7. Undo conflict (409)
+- Correct one play's clock, then correct the same play's clock again.
+- Undo the **first** one.
+- ✅ Refused with "a later correction changed the same fields… undo that one first". Undoing the second works.
+
+## 8. Validation
+Each should be refused with a readable message, and nothing should change:
+
+| Try | Expect |
+|---|---|
+| Clock `13:00` | form error about `m:ss`, at most 12:00 |
+| Reason left empty | "Give a reason for this correction." |
+| Play type → Rebound on a made shot | rejected: success only applies to shots |
+| Player → the player its assist credits | the assist picker resets to "None" first |
+
+## 9. Credit picker
+- On an assisted made shot: change **Assisted by** to another teammate → preview moves 1 AST between them.
+- Change **Made / missed** to Missed → the picker becomes **Blocked by**, listing only the opposing team.
+- ✅ Saving rewrites the description's `(Name N AST)` suffix.
+
+## 10. Rebound type
+- Edit a rebound, switch Defensive ↔ Offensive.
+- ✅ Preview swaps DREB/OREB, total REB unchanged.
+
+## 11. Recalculate stats, and the Williams fix
+This is the check for the follow-up branch.
+
+- Open **OKC @ LAC, Apr 8**. Before anything, confirm the starting point:
+
+```sql
+SELECT p."firstName", s.assists, s.steals FROM "PlayerGameStat" s
+JOIN "Player" p ON p.id = s."playerId" JOIN "Game" g ON g.id = s."gameId"
+WHERE g."nbaGameId" = '0022501163' AND p."lastName" = 'Williams';
+-- Jalen 0 / 0, Jaylin 0 / 0
+```
+
+- Click **Recalculate stats**.
+- ✅ It reports how many players were recomputed and changed.
+- ✅ Re-run the query: **Jalen 6 assists, 2 steals; Jaylin 1 assist**. Those are the 9 credits NBA wrote as "Jal./Jay. Williams" that used to be thrown away.
+- ✅ Edit one of that game's made shots and open **Assisted by**: both Williamses are listed. Credit Jaylin and save → the description reads `(Jay. Williams 1 AST)`.
+
+## 12. Batches link
+- **Admin → Batches**, click **Correct plays** on any row.
+- ✅ Jumps to Corrections with that game already open.
+
+## 13. Datasets
+- If you have a published 2025-26 release, open **/datasets** after a correction.
+- ✅ It shows as stale. If you have none, the notice says so instead.
+
+## 14. Access control
+- Sign in as a USER (or switch a test account to ANALYST).
+- ✅ No Admin page, and `curl http://localhost:4000/v1/admin/games` without an admin session returns 401/403.
+
+## Cleanup
+
+Everything above writes only to your local DB. To get back to a clean slate, either **Undo** each correction from the history, or wipe and re-pull:
+
+```bash
+# destructive: wipes local dev data, then re-pull (takes a while; rosters + bios)
+cd apps/api && npx prisma migrate reset
+cd ../ingestion && ./.venv/Scripts/python.exe ingest.py --season 2025-26 --from-date 2026-04-08 --to-date 2026-04-10
+```
+
+<cc-memory filenames="ingestion-env-overrides-shell.md">Before any re-pull, check the active `DATABASE_URL` in apps/ingestion/.env is localhost — `db.py` loads that file with `override=True`, so setting the variable in your shell won't redirect it.</cc-memory> It was local yesterday.
+
+Want me to save this as `docs/testing-admin-corrections.md` so your teammates can follow it during review?
+
+=== USER  (2026-09-20 15:52:52) ===
+What do you mean public page?
+It reached the rest of the site
+Open that game's public page and the two players' pages. WHere is it
+
+=== CLAUDE  (2026-09-20 15:53:04) ===
+Good question — I named routes without saying how to reach them. Let me check what those pages actually show, so the step is worth doing.
+
+  [tool: Bash - Find the game detail route, page and links to it]
+  [tool: Bash - Check what the game and player pages display]
+
+=== CLAUDE  (2026-09-20 15:53:22) ===
+I was wrong in step 5, and it's worth correcting: `/games/:gameId` is the **predictions** page (predicted scorers), not a box score. It won't show a corrected stat. Let me confirm where a corrected number actually surfaces:
+
+  [tool: Bash - Check the player page's game log rendering]
+  [tool: Bash - Check the player stats response shape]
+  [tool: Bash - Locate the player stats game log shape]
+
+=== CLAUDE  (2026-09-20 15:53:58) ===
+You're right to push back — my step 5 was wrong, and here's the correction.
+
+**There is no public box-score page for a game.** `/games/:gameId` is the *predictions* page (predicted scorers for a matchup), so a correction won't visibly change it. Nothing on the site lists a game's final per-player box score.
+
+Where a corrected number **does** show up:
+
+**1. The player's profile page** — the real check.
+- Navigate: top nav **Players** → search the surname → click the player.
+- URL: `http://localhost:5173/players/<playerId>`
+- What moves there:
+  - the **points trend chart**, which has one dot per game (points only),
+  - **season averages** (PPG, RPG, APG, FG%…),
+  - the **career season breakdown** table.
+- Note: if you corrected an *assist*, the trend chart won't change, because its game log carries only points. Check **APG** in the season averages instead.
+
+**2. The API through the dev proxy** — the most direct proof, and it also shows the cache was cleared. While signed in, open in the browser:
+```
+http://localhost:5173/api/v1/players/<playerId>/stats
+```
+You get `seasonAverages` plus `gameLog` entries of `{ gameId, gameDate, points, season }`. Find the Apr 9 entry and check its `points` against what the preview promised.
+
+**Getting the playerId:** it's in the correction preview (each row is a player), or:
+
+```bash
+docker exec -it nba-analytics-postgres psql -U postgres -d nba_analytics -c \
+"SELECT id, \"firstName\", \"lastName\" FROM \"Player\" WHERE \"lastName\" = 'Williams';"
+```
+
+**Replace step 5 of the plan with:**
+
+> ## 5. It reached the rest of the site
+> - Open the corrected player's page at `/players/<playerId>` (Players → search → click).
+> - ✅ Their Apr 9 dot on the points trend has moved, and PPG has shifted slightly.
+> - ✅ Same numbers at `http://localhost:5173/api/v1/players/<playerId>/stats` in the `gameLog` entry for that game — which also proves the API's cache was invalidated.
+> - For an assist correction, check APG rather than the trend chart.
+
+Two things worth noting from this: the admin play-by-play view I added is the only place in the app that shows a game's plays, and there's no public box score to check against. If you want one, that's a separate piece of work.
+
+=== USER  (2026-09-20 15:55:28) ===
+How much work would it be to add a box scores view for all the ingested games on prod. DOnt do it just estimate for me
+
+=== CLAUDE  (2026-09-20 15:55:42) ===
+Let me check what's already there, so the estimate is grounded rather than a guess.
+
+  [tool: Bash - Check existing game endpoints for box score data]
+
+=== CLAUDE  (2026-09-20 15:56:05) ===
+No box-score endpoint exists today (`game-detail.service.ts` reads `PlayerGameStat` only for predicted scorers' points). One data check before estimating:
+
+  [tool: Bash - Check box-score data completeness locally]
+
+=== CLAUDE  (2026-09-20 15:56:44) ===
+Cheap, because the data is already there. `PlayerGameStat` holds minutes, points, FG/3P/FT, O/D rebounds, assists, steals, blocks, turnovers, +/- and the advanced figures. Nothing to ingest, no migration, no backfill. It's a read endpoint plus a table.
+
+## Estimate
+
+| Scope | What | Effort |
+|---|---|---|
+| **A. Box score on the existing game page** | `GET /v1/games/:id/boxscore` (service + route + cache + e2e), a two-team table component, wired into GameDetailPage, specs | **~0.5–1 day** |
+| **B. A way to browse games** | A public Games page with season/team/date filters and pagination. Today a game is only reachable from Home and Predictions | **+0.5 day** |
+| **C. Polish** | Column sorting, advanced columns (usage, ratings, TS%), per-game CSV, links to player profiles, DNP handling, mobile column strategy | **+0.5–1 day** |
+
+Realistically: **1 day** for A alone, **~2 days** for A+B with tests and review, **~3 days** with the polish.
+
+## Why it's on the cheap end here
+
+- No schema change, no ingestion change, no re-pull.
+- Corrections already invalidate the `games` cache prefix, so if the endpoint uses a `games:` cache key, a corrected stat appears on the box score immediately. No extra wiring.
+- Patterns exist to copy: paginated read endpoints, the admin play-by-play table for layout, GameDetailPage for the header.
+
+## What to plan for
+
+- **Not every game has one.** Locally, 12 of 78 games have no stat rows at all (unplayed/upcoming), and the ones that do average 18 players. It needs a real empty state, and prod's share will differ.
+- **Nullable fields must render "—", not 0.** Usage is null on ~19% of local rows; a zero there would be a wrong measurement, which the schema is explicit about.
+- **Mobile.** A full box score is 15+ columns, so it needs a reduced set at small breakpoints, like the other tables do.
+- **Team totals won't always match the final score**, because team-level plays exist and the score is box-score-sourced. Say so in the UI or leave totals out.
+- **It's a public API change**, so `openapi-contract.e2e-spec.ts` gets a new entry, which reviewers will see deliberately.
+- **Prod deploy is just a release** — no data work. Though older games ingested before roster gaps were understood may show fewer players than actually played.
+
+One extra benefit: it would give the corrections feature a natural verification page, which is exactly what you found missing when testing.
+
+=== USER  (2026-09-20 15:58:17) ===
+We will defer this
+
+=== CLAUDE  (2026-09-20 15:58:25) ===
+Noted — deferring it. I'll record that so a future session doesn't re-litigate it or wonder why there's no box-score page.
+
+  [tool: Write - C:\Users\shlat\.claude\projects\c--Users-shlat-Documents-Year-3-SDP-PROJECT-sportsanalytics\memory\public-box-score-view-deferred.md]
+  [tool: Bash - Add memory index entry for the deferred box score]
+
+=== CLAUDE  (2026-09-20 15:58:50) ===
+Recorded, so it reads as a deliberate decision rather than an oversight.
+
+Where things stand:
+
+- **Two branches, both green, neither pushed.** `admin-event-corrections` (8 commits) and `credit-name-prefix-matching` (2 commits, built on it).
+- **Open question from earlier:** want me to push them so you can open the PRs? That's the only thing blocking PR #1.
+- **Testing plan** is in the message above, with step 5 corrected to use the player profile page and the API, since no box-score page exists.
+
+I can also drop the testing plan into `docs/testing-admin-corrections.md` for your reviewers if that's useful.
+
+=== USER  (2026-09-20 15:58:54) ===
+create a commit plan. And how do i break up the pull requests
+
+=== CLAUDE  (2026-09-20 15:59:18) ===
+Let me get real numbers per commit first, so the split is based on actual review size.
+
+  [tool: Bash - Show per-commit size across both branches]
+  [tool: Bash - Split each proposed PR into source vs test lines]
+
+=== CLAUDE  (2026-09-20 16:00:22) ===
+Here's what exists and how I'd split it. The commits are already written as reviewable units; the question is only how to group them into PRs.
+
+## Commit plan (what's on the branches now)
+
+| # | Commit | Size | Purpose |
+|---|---|---|---|
+| 1 | `6cbd4d2` validate event corrections and require a reason | +1660 −500 | Rules + request parsing modules, service restructured around one plan step, before-snapshot moved into the transaction, credit rewriting. The big one: it also rewrites the e2e spec and renames a spec file. |
+| 2 | `8c2aa3d` recompute the player a corrected play was moved away from | +141 −5 | The double-counting fix, with a test that fails without it |
+| 3 | `6b628be` add correction preview and undo | +339 −2 | Preview + revert endpoints, and the migration |
+| 4 | `a863a01` add admin game lookup and play-by-play endpoints | +576 −18 | The read side |
+| 5 | `ff297f6` return each play's resolved credit | +20 −2 | So the form's credit picker starts from the truth |
+| 6 | `7c3a4eb` reject a correction that leaves a credit on the wrong player | +77 −1 | Validation gap found while writing the UI |
+| 7 | `0dc04c4` build the corrections workflow in the admin page | +2126 −110 | All the UI |
+| 8 | `80646d8` keep the correction vocabulary in step with ingestion | +16 | Guard test against TS/Python drift |
+| 9 | `bfc6838` tell apart teammates who share a surname and initial | +321 −26 | Both derivations + ingestion wiring |
+| 10 | `1cbbcd5` let corrections credit a player by the prefix NBA would write | +65 −7 | The correction-side half |
+
+## How to break up the PRs
+
+**Recommended: three PRs.** The natural seam is API vs UI. Nothing in commits 1–6 and 8 refers to the UI, so the API can be reviewed and even merged on its own; the new endpoints simply go unused until the UI lands.
+
+| PR | Contains | Size | Base |
+|---|---|---|---|
+| **1. Corrections API** | commits 1–6, 8 | source +1,532 / tests +1,259 | `main` |
+| **2. Corrections UI** | commit 7 | source +1,536 / tests +590 | PR 1's branch → `main` once merged |
+| **3. Credit name matching** | commits 9–10 | source +150 / tests +236 | PR 1's branch (independent of the UI) |
+
+Roughly half of each PR is tests, which is worth saying in the description so the line count doesn't scare anyone.
+
+```bash
+# PR 1: API only
+git switch -c corrections-api main
+git cherry-pick 6cbd4d2 8c2aa3d 6b628be a863a01 ff297f6 7c3a4eb 80646d8
+
+# PR 2: the UI on top
+git switch -c corrections-ui corrections-api
+git cherry-pick 0dc04c4
+
+# PR 3: credit matching, also on top of the API
+git switch -c credit-name-matching corrections-api
+git cherry-pick bfc6838 1cbbcd5
+```
+
+Then re-run the suites on each branch before opening it, since cherry-picking makes new commits:
+- `corrections-api`: `INGESTION_MODE=direct npx vitest run` in apps/api
+- `corrections-ui`: the API suite plus `npm test` in apps/web
+- `credit-name-matching`: the API suite plus `pytest -q` in apps/ingestion
+
+**Merge order:** PR 1 first. After it lands, retarget PRs 2 and 3 at `main` (Gitea lets you change a PR's target branch). 2 and 3 don't depend on each other, so they can be reviewed in parallel.
+
+**Lower-effort alternative:** keep the two branches you already have — one PR for the whole corrections feature (~4.9k lines) and one for the credit fix. No history surgery, and both are already tested exactly as they stand. I'd only pick this if the team would rather review one big PR than juggle three.
+
+**Two notes for reviewers either way:**
+- Commit 1 is the hardest to read. Point people at the new pure modules first (`event-correction-rules.ts`, `event-correction-request.ts`, `plan-stat-recompute.ts`, `game-snapshot.ts`), then at how the service uses them.
+- Don't squash if you want that per-commit story preserved; if your team does squash, paste the commit bodies into the PR description.
+
+Want me to create the three branches and verify each one? Nothing is pushed yet either, so say the word on that too.
+
+=== USER  (2026-09-20 16:01:52) ===
+one pr per branch
+
+=== CLAUDE  (2026-09-20 16:02:15) ===
+Two PRs then, one per branch, no history surgery.
+
+| PR | Branch | Contains | Size |
+|---|---|---|---|
+| **A** | `admin-event-corrections` (tip `80646d8`) | 8 commits: the whole Corrections feature | source +1,532 / tests +1,259 API, plus source +1,536 / tests +590 web |
+| **B** | `credit-name-prefix-matching` (tip `1cbbcd5`) | 2 commits: same-initial credit matching | source +150 / tests +236 |
+
+**Order and base:** B sits on top of A, so open A against `main` first. For B, either wait until A merges and target `main`, or open it now with `admin-event-corrections` as the base branch and retarget to `main` after A lands. If you point B at `main` while A is unmerged, its diff will also show all of A's commits.
+
+**Worth putting in both descriptions:** roughly half of each diff is tests, and the 5 `admin-ingestion.service.spec.ts` failures a reviewer may see locally are pre-existing (`INGESTION_MODE` in their own apps/api/.env), not from these branches.
+
+**PR A extras:** it carries the migration, so reviewers run `npx prisma migrate deploy` and `npx prisma generate`. Its "Known limitations" section mentions the same-initial credit problem; PR B is what removes it, so you can link B from that line.
+
+**PR B extras:** it changes Python ingestion, so it only affects new pulls once that code is on the machine that runs them, and already-stored games need Recalculate stats (or a re-pull) to pick up the recovered credits.
+
+Both full descriptions are ready to paste from my earlier messages: PR A's under "PR title: Admin corrections…", PR B's under "Credit teammates who share a surname and initial".
+
+Nothing is pushed yet, and neither branch has an upstream. Want me to push both now? I'll stop there and leave opening the PRs to you.
+
+=== USER  (2026-09-20 16:05:03) ===
+Push then write me the pr descriptions I will open them
+
+=== CLAUDE  (2026-09-20 16:05:06) ===
+Pushing both branches now.
+
+  [tool: Bash - Push the corrections branch]
+  [tool: Bash - Push the credit-matching branch and confirm tracking]
+
+=== CLAUDE  (2026-09-20 16:05:56) ===
+Both branches are pushed and tracking. `main` is untouched.
+
+Written for: your teammates reviewing on Gitea.
+
+---
+
+## PR A — open first
+
+**Branch:** `admin-event-corrections` → `main`
+**Title:** `Admin corrections: edit plays with preview, validation and undo`
+
+```markdown
+## What
+The admin Corrections tab now makes corrections, not just lists them. Pick a game, open its full play-by-play, and correct a play with dropdowns: player (this game's roster), team, play type, made/missed, rebound type, assist/block/steal credit, clock, and a required reason. Preview shows every player's stats before → after; confirm saves exactly that. The history shows old → new per field, who, when and why, with Undo. Each Batches row gets a "Correct plays" link.
+
+Plays can be edited but never added or deleted. Box-score-sourced fields (minutes, +/-, usage, ratings) and the final score are never re-derived.
+
+## Backend
+- **Validation (400):** a correction is checked as the play it becomes. Event type must be in the platform vocabulary (a spec keeps it equal to `event_validation.py`). Period is 1–10, the clock must be well-formed, a changed player must have a box-score row for the game, the team must be home/away and match the player, made/missed is set only on shots, and value must fit the play. The credit must resolve to someone other than the play's own player, on the correct side.
+- **Reason required** on correct, preview and undo.
+- **Double-counting fix:** a correction only recomputed players who still acted afterwards, so moving a player's only play left them holding its points while the new player also got them. The previous player is now always recomputed, and stays resolvable as a credit target so the correction doesn't also strip credits they earned on other plays. Replay is unchanged: players who never act keep their stats, so marker-only games are still never zeroed (PR #181).
+- **Credits:** `creditPlayerId` rewrites the `(Name N AST|BLK|STL)` suffix server-side and confirms with `resolveSecondaryPlayer` that it resolves to the chosen player.
+- **Consistency:** the before-snapshot is read inside the transaction, with the game row locked (`FOR UPDATE`).
+- **New endpoints (ADMIN only):**
+  - `GET /v1/admin/games?season&teamId&fromDate&toDate` — game lookup with event and correction counts
+  - `GET /v1/admin/games/:gameId/events` — header, all events with names and resolved credits, roster, vocabulary
+  - `POST /v1/admin/games/:gameId/events/:sequence/preview` — same planning code as save, writes nothing
+  - `POST /v1/admin/corrections/:id/revert` — undo as a new linked correction; 409 if superseded or the play changed since
+  - `?gameId=` on the corrections list
+- **Response change:** `POST .../correct` now returns `{ correction, changes, statChanges, season, releasesMarkedStale }`. Replay also returns `playersChanged`.
+
+## Migration
+`20260919120000_add_event_correction_revert_link` adds a nullable unique FK `EventCorrection.revertsCorrectionId` linking an undo to what it reverts. It deliberately contains only that: the pre-existing drift `prisma migrate diff` reports (`IngestionBatch_reviewedById_idx`, `IngestionSchedule.updatedAt` default) is left out.
+
+Run `npx prisma migrate deploy` and `npx prisma generate` after checking out.
+
+## Testing
+8 commits, each passing its own tests. Roughly half the diff is tests.
+- API e2e: every validation 400, required reason, double counting (non-zero seeds — it fails without the fix), credit rewrites, preview writing nothing and matching the save, undo including both 409s, game lookup and play-by-play, 403 for an analyst.
+- Web: AdminPage specs across the whole flow, plus unit tests for the form logic and clock conversion.
+- Verified against 28 real games pulled locally (April 2026): all 12,630 real plays pass validation unchanged, and a preview on a real game moved exactly one made three between two players and touched nobody else.
+- Locally: API 876/876, web 578/578. If you see 5 failures in `admin-ingestion.service.spec.ts`, those are pre-existing and come from `INGESTION_MODE` in your own apps/api/.env — run with `INGESTION_MODE=direct`.
+- Not done: no one has click-tested the UI in a browser yet.
+
+## Known limitations
+- Two players sharing a surname **and** first initial on one team (Jal./Jay. Williams) can't be credited: the derivation can't tell them apart. Fixed by the follow-up PR, `credit-name-prefix-matching`.
+- Some credited players were never ingested (two-way/short-contract signings missing from pulled rosters), so they can't be credited either. Separate issue.
+- Legacy `PERIOD_START`/`PERIOD_END` marker rows aren't in the vocabulary, so editing one means first choosing a real play type.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+```
+
+---
+
+## PR B — open after A merges (or base it on `admin-event-corrections`)
+
+**Branch:** `credit-name-prefix-matching` → `main`
+**Title:** `Credit teammates who share a surname and initial (Jal./Jay. Williams)`
+
+```markdown
+## What
+NBA credits OKC's Jalen and Jaylin Williams as "Jal. Williams" and "Jay. Williams", but our credit matching compared only the first letter, so their assists, steals and blocks were dropped. When a credit still fits more than one player after the team check, both stats derivations now keep only the player whose first name starts with the credit's full prefix. It runs only where a credit would otherwise be dropped, so no credit that resolves today can change.
+
+- **API:** `derive-player-game-stats.ts` uses first names, which it already had from the Player table.
+- **Python:** the feed can't help — its `playerNameI` is "J. Williams" for both — so `ingest.py` and `ingest_historical_season.py` read first names via the new `rosters.select_first_names_by_nba_id` and pass them to `aggregate_player_game_stats`.
+- **Corrections:** the credit rewrite now tries "J.", "Ja.", "Jal." … and writes the first that resolves to the chosen player, the same shortest-distinguishing-prefix convention NBA uses. Names no prefix can separate (every prefix of "Chris" is also a prefix of "Christian") are still refused with a clear message.
+
+Depends on `admin-event-corrections`; merge that first.
+
+## Evidence
+Against 28 real games pulled locally (April 8–10 2026, 2,174 credit suffixes): 9 credits now resolve, all to the right player (8 Jalen, 1 Jaylin), and **none of the 2,127 credits that already resolved changed**. 38 remain unresolved — those name players the pipeline never ingested, which is a separate issue.
+
+## After merging
+Stored stats only change when they're recomputed. For games already in the database, use Recalculate stats on the affected (OKC) games or re-pull them. On production this reaches new pulls only once the Python change is on the machine that runs them.
+
+## Testing
+Mirrored tests in both languages: Jal./Jay., "St. Curry" versus Seth, Chris versus Christian, and an unknown first name staying unresolved rather than guessing. Plus `test_rosters.py` for the new read, and an e2e test crediting Jaylin through a real correction.
+
+API 876/876 (with `INGESTION_MODE=direct`; the 5 `admin-ingestion.service.spec` failures happen on main too), Python 148 passed with 5 DB-only skips.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+```
+
+---
+
+Two things to carry into review: nobody has used the UI in a browser yet, and per your team workflow neither should merge to `main` until the team has reviewed and agreed it's done.
