@@ -247,7 +247,7 @@ This table traces every piece of significant client feedback to the concrete act
 | 18 Aug | Project diagrams needed | Architecture, ERD, wireframes created | [Architecture](design/architecture.md) |
 | 18 Aug | Project board needed | Gitea Projects board set up | [Project board](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/projects/8) |
 | 21 Aug | Hosting topology pinger needed | Pinger service implemented | [Architecture](design/architecture.md) |
-| 21 Aug | Signup must integrate with DB | BetterAuth + Prisma sign-up/reset/delete | Sprint 2 deliverables |
+| 21 Aug | Signup must integrate with DB | BetterAuth + Prisma sign-up/delete delivered — **reset was not**, and still isn't as of 2026-09-23; see the 07 Sep row below and [ADR-002](decisions/adr-002-auth.md) | Sprint 2 deliverables |
 | 21 Aug | Swagger for API docs | `@nestjs/swagger` setup planned | [API Reference](api-reference.md) |
 | 21 Aug | ML target: 75–80% accuracy | Four Factors + Elo model in development | [Predictions](https://sportsanalytics.pages.dev/predictions) |
 | 21 Aug | Review RaceIQ reference project | Team reviewed for UX inspiration | — |
@@ -267,7 +267,8 @@ This table traces every piece of significant client feedback to the concrete act
 |---|---|---|
 | Sprint 1 (4–25 Aug) | 3 client meetings + 2 internal scrums | In-person at Tue/Fri labs + WhatsApp coordination |
 | Sprint 2 (26 Aug – 15 Sep) | Weekly client meetings + weekly scrums | Same format; meetings documented as they occur |
+| Sprint 3 (16 Sep – 29 Sep) | ⚠️ Not documented here as of 2026-09-23 | [Client meetings](meetings/client/index.md) run to 2026-09-07, [Scrum meetings](meetings/scrum/index.md) to 2026-09-10 — both before Sprint 3 even started, so nothing from this sprint's roughly 35-PR week of admin-corrections/dataset-release/API-key work (see [Sprint Log](sprint-log.md)) has a logged meeting behind it yet. This table specifically hasn't been extended to reflect that either row exists |
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude-Code[Claude Sonnet 5] (2026-09-23: corrected a false "password reset delivered" claim, added the Sprint 3 meeting-cadence gap)*

@@ -1,0 +1,72 @@
+Date: 2026-09-16
+Author: Daniel Passos
+Tool: OpenAI Codex
+Model: Not specified in transcript
+Purpose: Reviewed the requirements-status file, selected quick remaining requirements for separate PRs, implemented API contract testing for requirement #37, and prepared an API deprecation-path implementation for requirement #36.
+
+Transcript
+==========
+
+USER:
+requirements-status.md
+
+okay i want to work through the easiest remaining requirements from this requirements status file and make useful small PRs today. make sure `team-git-workflow`, `code-cleanup` and `coding-conventions` are active. open the requiements md file, you can see which reuirements are needed to be done. pick the quickest and easiest ones and do them. rmbr each requirement is a new PR and new branch so rmbr that. make sure not to break anything else and make sure whatever u do passes tests etc. there will be a lot of commits from me cause tehre are quite a few requirements needed to be done. pick easiest and quickest rank and tell me what u plan to do
+
+ASSISTANT:
+First PR is ready on `test-api-contracts`.
+
+It adds OpenAPI contract checks for the stable public endpoints and fixes the test glob so root-level API e2e tests are discovered. Staged changes passed the sensitive-data review.
+
+Validated:
+
+- API lint: passed
+- API production build: passed
+- Changed test/config ESLint: passed
+- Full e2e run remains blocked locally: disposable Postgres/Docker is unavailable.
+
+Proposed commit:
+
+`test: add public API contract checks`
+
+May I commit it?
+
+Edited 3 files +66 -6
+
+- `apps/api/test/openapi-contract.e2e-spec.ts`
+- `apps/api/test/openapi-contract.spec.ts`
+- `apps/api/vitest.config.ts`
+
+USER:
+make the pr, my teammates review and commit before merging to main
+
+ASSISTANT:
+A PR needs at least one commit first. Shall I commit, push, and open this PR—then leave review and merging to your teammates?
+
+USER:
+yes
+
+ASSISTANT:
+PR created: #144 — `test: add public API contract checks`
+
+It is unmerged and ready for teammate review.
+
+USER:
+ok idk whjich requirement u did but we need to all of them so go to do next one just do them in order of quickness
+
+ASSISTANT:
+Requirement #36 is staged on `api-deprecation-path`.
+
+It adds a tested, reusable deprecation-header mechanism and transitions `/health` to `/v1/health` with a documented sunset. Sensitive-data review is clear.
+
+Proposed commit:
+
+`feat: add API deprecation path`
+
+May I commit, push, and open its separate PR?
+
+Edited 6 files +129 -11
+
+- `apps/api/src/app.module.ts`
+- `apps/api/src/common/deprecated-endpoint.decorator.ts`
+- `apps/api/src/common/deprecation.interceptor.spec.ts`
+- plus 3 additional related files

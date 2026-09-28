@@ -1,7 +1,7 @@
 # Roadmap
 
-!!! success "Unblocked"
-    Same source as [Feature Tiers](feature-tiers.md) — the team's plain-English answer on what the ML component does. This maps those tiers onto the brief's actual sprint dates.
+!!! note "Updated 2026-09-23"
+    See [Feature Tiers](feature-tiers.md) for the current, brief-grounded tier breakdown (rewritten 2026-09-23 — the version this page originally pointed to described a different, ML-first framing that predates most of what's actually been built). The ML-quality goals below are real, live planning from actual client meetings and are kept as written; this page's Sprint 3 section adds what was actually delivered, which turned out to be mostly the event-sourcing/submission/dataset-release work instead.
 
 ## Sprint 1 — infra & foundation (due 2026-08-25) — COMPLETE
 
@@ -63,6 +63,8 @@ See the [Sprint Log](../sprint-log.md) for the complete task-by-task record.
 - Refine prediction model beyond Elo + Four Factors as real data accumulates
 - ✅ **Become Pro** (PR #192, merged and deployed; production model trained 2026-09-27) — a user logs their own games and gets a projected NBA draft pick, a rookie-scale value and the NBA rookies their line most resembles, private to each user. Not in the original Sprint 3 plan. It adds a trained model (`apps/valuation`) that records its own fit statistics on every model row (in-sample MAE 10.9 picks, rank correlation 0.54), in the same spirit as the prediction model's published accuracy. See [Become Pro](../become-pro/index.md) and [Valuation Model](../become-pro/valuation-model.md)
 
+**What actually landed this sprint (as of 2026-09-23), separate from the ML goals above:** the platform's core event-sourcing/submission requirements — an admin event-corrections workflow with preview/apply/undo, a queued ingestion pull worker, versioned dataset releases with reproducible checksums and a diff/changes feed, mandatory API keys with rate limits and quotas, analyst-defined custom statistics, point-in-time queries, and an API deprecation path with a contract test (roughly 35 PRs, see [Sprint Log](../sprint-log.md#week-of-15-sep-intermediate-advanced-tier-event-sourcing-sprint-3)). Two real bugs were found and fixed auditing this work against the brief (review not gating publication; a batch-resume durability gap) — both sitting in open PRs, not yet merged. Player-level ML predictions and the 75–80% accuracy target above are still open and should stay a priority for whatever's left of this sprint.
+
 ## Submission (due 2026-10-11)
 
 - **Advanced-tier** recommendation layer, if time allows — this is explicitly the highest-risk, most-optional item; the client's own guidance ("last two weeks are mostly touch-ups if ML isn't ready") suggests treating this as a stretch goal, not a commitment
@@ -76,4 +78,4 @@ See the [Sprint Log](../sprint-log.md) for the complete task-by-task record.
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Opus 5.5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5], Claude-Code[Claude Opus 5.5]*

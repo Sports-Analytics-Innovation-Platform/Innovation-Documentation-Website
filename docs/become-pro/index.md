@@ -239,7 +239,7 @@ Spec-by-spec detail is on [Testing](../testing.md).
 | Web types | The Become Pro section of `apps/web/src/types/nba.ts` (`ProspectSeason`, `ProspectGame`, `ProspectValuation`, `MyBecomePro`, `MyBecomeProSummary`, `TraitsComparisonEntry` and others) |
 | Test fixtures | `apps/web/src/test/becomeProFixtures.ts` |
 | API | `apps/api/src/become-pro/`, plus `apps/api/src/players/season-averages.ts` |
-| Schema | `apps/api/prisma/schema.prisma`, migration `20260923000000_add_become_pro` (see [ERD](../design/erd.md#become-pro-entities)) |
+| Schema | `apps/api/prisma/schema.prisma`, migration `20260923000000_add_become_pro` (see [ERD](../design/erd.md#become-pro)) |
 | Model training | `apps/valuation/` (see [Valuation Model](valuation-model.md)) |
 | Routes | [API Reference — Become Pro](../api-reference.md#become-pro) |
 
