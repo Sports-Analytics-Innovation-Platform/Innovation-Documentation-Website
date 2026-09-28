@@ -1,10 +1,10 @@
 # ADR-001: Database
 
 - **Status:** Accepted. In use since the project was first set up on 2026-08-06.
-- **Last updated:** 2026-09-14
+- **Last updated:** 2026-09-28
 
-!!! warning "Structural details below are stale — checked 2026-09-23"
-    The schema has grown to **31 models and 6 enums** (from the 20/3 this page describes), across many more migrations than the 13 listed in "Schema change history" below. The eleven design rules below are still real architectural principles and (as far as checked) still hold for the newer tables too — they just aren't individually catalogued here. What's missing entirely: the submission/review layer (`IngestionBatch`, `EventCorrection`), the external API-consumer layer (`ApiConsumer`, `ApiKey`, `ApiUsageLog`), versioned dataset releases (`DatasetRelease`), analyst-defined statistics (`CustomStatistic`), a queued ingestion job (`IngestionRequest`, `IngestionWorker`), and market odds (`GameMarketOdds`). See `apps/api/prisma/schema.prisma` directly for the current ground truth, and [Feature Tiers](../design/feature-tiers.md) for what these tables back.
+!!! info "Updated for Sprint 3 (15–27 September 2026)"
+    The table groups, enums and schema change history below were checked against `schema.prisma` and the migration files on 2026-09-28. Sprint 3 added design rules 12 to 16. The four player archetype tables are on branch `player-archetypes`, which is in review; everything else described here is on `main`.
 
 ## Summary
 
@@ -68,25 +68,33 @@ The hosting providers considered (Azure Database for PostgreSQL, Neon, Railway a
 
 ## How the data is organised
 
-The schema contains **20 tables** (Prisma calls them *models*) and **3 enums** (fixed lists of allowed values). The [ERD](../design/erd.md) lists every column.
+On `main`, the schema contains **35 tables** (Prisma calls them *models*) and **7 enums** (fixed lists of allowed values). Branch `player-archetypes`, in review, adds 4 more tables. The [ERD](../design/erd.md) lists every column.
 
-The tables fall into five groups. Each group has exactly one part of the system that is allowed to write to it, which keeps responsibility for each kind of data clear.
+The tables fall into nine groups. Most groups have a single part of the system that writes to them, which keeps responsibility for each kind of data clear. Where a group has more than one writer, the table says so, and the exceptions are deliberate.
 
 | Group | What it holds | Tables | Written by |
 |---|---|---|---|
-| NBA data | Teams, players, games, play-by-play events and per-game player statistics | `Team`, `Player`, `Game`, `GameEvent`, `PlayerGameStat` | Ingestion scripts only |
-| Game predictions | Each game's predicted winner and score margin, plus a history of past predictions | `GamePrediction`, `GamePredictionRun` | Predictor only |
+| NBA data | Teams, players, games, play-by-play events and per-game player statistics | `Team`, `Player`, `Game`, `GameEvent`, `PlayerGameStat` | Ingestion scripts; also admin corrections through the API (rule 12) |
+| Ingestion and review | A record of every ingestion run and every correction, queued data pulls, pull workers and the automatic-pull schedule | `IngestionBatch`, `EventCorrection`, `IngestionRequest`, `IngestionWorker`, `IngestionSchedule` | Ingestion scripts and the pull worker; admins through the API |
+| Game predictions | Each game's predicted winner and score margin, a history of past predictions, and the betting market's view | `GamePrediction`, `GamePredictionRun`, `GameMarketOdds` | Predictor; the market-odds script writes `GameMarketOdds` |
 | Fantasy lineups | Predicted fantasy points for each player, and suggested lineups | `PlayerPrediction`, `Lineup`, `LineupSlot` | Optimizer only |
+| Player archetypes (in review) | Playing-style groups, each player's place among them, and similar players | `Archetype`, `PlayerArchetype`, `PlayerArchetypeMembership`, `PlayerSimilarity` | Similarity script only |
 | Accounts | Users, sign-in sessions and linked Google accounts | `User`, `Session`, `Account`, `Verification` | BetterAuth (the authentication library) |
 | Personal data | Players a user follows, the games they have called, and comparisons and lineups they saved | `UserFollowedPlayer`, `GamePick`, `SavedComparison`, `SavedComparisonPlayer`, `SavedLineup`, `SavedLineupSlot` | The API, when a signed-in user saves something |
+| Publishing and API access | Dataset releases, analyst-defined statistics, and API consumers with their keys and usage | `DatasetRelease`, `CustomStatistic`, `ApiConsumer`, `ApiKey`, `ApiUsageLog` | The API |
+| Become Pro | A user's own seasons, games and projected value, and the trained valuation model | `ProspectSeason`, `ProspectGame`, `ProspectValuation`, `ProspectValuationModel` | The API; the valuation script writes the model |
 
-The API reads from every group but writes only to the last two. It never edits NBA data or the models' output.
+The API reads from every group. It never writes the models' output: predictions, lineups, archetypes or the valuation model. Its only writes to NBA data are admin corrections (rule 12).
 
 | Enum | Allowed values | Used for |
 |---|---|---|
 | `Role` | `PUBLIC`, `USER`, `ANALYST`, `ADMIN` | A user's permission level |
 | `SeasonType` | `REGULAR`, `PLAY_IN`, `PLAYOFFS`, `FINALS` | Which part of the season a game belongs to |
 | `PickOutcome` | `CORRECT`, `MISSED` | Whether a user's call on a game was right |
+| `IngestionBatchStatus` | `RUNNING`, `COMPLETED`, `FAILED`, `PENDING_REVIEW`, `REJECTED` | Where an ingestion run stands, including review |
+| `IngestionRequestStatus` | `QUEUED`, `RUNNING`, `SUCCEEDED`, `FAILED`, `CANCELLED` | Where a queued data pull stands |
+| `IngestionFrequency` | `NEVER`, `HOURLY`, `DAILY`, `WEEKLY` | How often data is pulled automatically |
+| `CompetitionLevel` | `NCAA_D1`, `NCAA_D2`, `NCAA_D3`, `NAIA`, `JUCO`, `INTERNATIONAL_PRO`, `SEMI_PRO`, `HIGH_SCHOOL`, `REC` | Where a Become Pro season was played |
 
 ## Design rules in the schema
 
@@ -141,6 +149,7 @@ Each relationship has a deletion rule that matches what the data means:
 | A player or game | Users' follows, calls and saved items that refer to it are deleted too | Otherwise a single saved item could stop the ingestion scripts from replacing out-of-date NBA data. |
 | A team | Users who chose it as their favourite team are left with no favourite | Having a favourite team is optional. |
 | A player or game that has statistics or predictions | The deletion is refused | Statistics and predictions must not lose the records they were calculated from. |
+| An admin's account | Their batch reviews, corrections, dataset releases and queued pulls are kept; only the link to the admin is cleared | The history of changes to the data must outlive the person who made them (rule 12). |
 
 ### 9. Each fact is stored in one place
 
@@ -166,9 +175,38 @@ Earlier indexes cover each game's season type, the order of events within a game
 - A user's `role` (their permission level) defaults to a normal user. The authentication library is configured so that neither signing up nor a Google profile update can change it; only a direct change to the database can.
 - Profile pictures are kept in a private file-storage bucket, not in the database. The database stores only each file's location. When a profile is viewed, the API creates a temporary link to the picture, so no permanent public link to it ever exists ([ADR-003](adr-003-hosting-topology.md#profile-picture-storage)).
 
+### 12. Statistics trace back to their submission, and corrections leave a history
+
+Each ingestion run for a game is an `IngestionBatch` row, and each play records the run that wrote it. Runs are added rather than overwritten, so past rejections stay visible.
+
+An admin correction is the only way the API changes NBA data, and the one deliberate exception to "each group has one writer". In a single transaction, a correction:
+
+1. updates the play;
+2. re-derives the statistics of only the players the play affects;
+3. marks the season's dataset releases as stale;
+4. records the old and new values, who made the change and why in `EventCorrection`.
+
+Corrections are only ever added. An undo is a new correction that restores the old values, linked to the one it reverts, so the history is never lost.
+
+### 13. Nothing is published before it is reviewed
+
+A game is left out of every public read while any of its ingestion batches that hasn't been removed is pending review, running, failed or rejected. As with rule 4, the rule lives in the database query (`PUBLISHED_GAME_FILTER`) rather than in each page, so no screen can forget to apply it.
+
+### 14. Published releases never change
+
+A dataset release stores its CSV and checksum when it is published. A later correction marks the release as stale instead of rewriting it, so a download always matches what was released. Before the CSV was stored (18 September 2026), releases were rebuilt from live data when downloaded; a stale release of that kind refuses to download rather than serve corrected data under its old version.
+
+### 15. Keys are stored only as hashes
+
+An API key is shown once, when it is created. Only its SHA-256 hash is stored, so a copy of the database contains no usable keys.
+
+### 16. Storage has a budget
+
+The production database runs on Supabase's free plan, which is limited to 500 MB, and one season of play-by-play takes about 320 MB of it. Play-by-play is therefore stored for 2025-26 only, and older seasons are kept as box scores ([ADR-005](adr-005-play-by-play-storage.md)). Tables that grow without limit, such as `ApiUsageLog`, count against the same budget.
+
 ## Schema change history
 
-All 13 migrations are in `apps/api/prisma/migrations/` and are applied in date order.
+All migrations are in `apps/api/prisma/migrations/` and are applied in date order. There are 25 on `main`; branch `player-archetypes` adds a 26th.
 
 | Date | Migration | Change |
 |---|---|---|
@@ -185,6 +223,19 @@ All 13 migrations are in `apps/api/prisma/migrations/` and are applied in date o
 | 2026-09-12 | `drop_superseded_follow_tables` | Removed the duplicate follow tables (rule 9) |
 | 2026-09-13 | `add_query_indexes` | Indexes for common queries (rule 10) |
 | 2026-09-13 | `game_prediction_versioning` | Model version on predictions, and the prediction history table (rule 7) |
+| 2026-09-15 | `add_game_market_odds` | Table for the betting market's pre-game win probability, from The Odds API |
+| 2026-09-16 | `derive_stats_from_game_events` | Real play-by-play: five new `GameEvent` columns, a unique key on game and sequence, and the ingestion-run table `IngestionBatch` (rule 12). Deleted the placeholder rows that were all `GameEvent` had held until then. |
+| 2026-09-16 | `intermediate_brief_features` | Review states for ingestion runs (rule 13), the corrections history `EventCorrection` (rule 12), API consumers, keys and usage log (rule 15), and dataset releases (rule 14) |
+| 2026-09-16 | `ingestion_schedule_and_batch_delete` | The automatic-pull schedule, and soft delete for ingestion runs |
+| 2026-09-16 | `mark_stale_dataset_releases` | A stale flag on dataset releases (rule 14) |
+| 2026-09-16 | `add_ingestion_resume_checkpoint` | A checkpoint on ingestion runs, so a failed run resumes instead of restarting |
+| 2026-09-16 | `add_custom_statistics` | Analyst-defined statistics |
+| 2026-09-17 | `add_user_api_keys` | A link from API consumers to users, so signed-in users can create their own keys |
+| 2026-09-18 | `store_dataset_release_csv` | Each release's CSV stored when it is published (rule 14) |
+| 2026-09-18 | `add_ingestion_request_queue` | The queue of data pulls and the pull-worker table ([ADR-003](adr-003-hosting-topology.md)) |
+| 2026-09-19 | `add_event_correction_revert_link` | A link from an undo to the correction it reverts (rule 12) |
+| 2026-09-22 | `add_player_archetypes` | *In review, on branch `player-archetypes`.* The four player archetype tables ([Player Archetypes](../player-archetypes/index.md)) |
+| 2026-09-23 | `add_become_pro` | The four Become Pro tables ([Become Pro](../become-pro/index.md)) |
 
 ## Consequences
 
@@ -207,13 +258,15 @@ All 13 migrations are in `apps/api/prisma/migrations/` and are applied in date o
 - **Applied migrations can't be edited.** Prisma records a fingerprint of each migration it applies and refuses to continue if one has changed. Mistakes must be corrected with a new migration, as the 2026-09-12 migration did.
 - **Deploying code doesn't load data.** A new column reaches production automatically, but it stays empty until someone runs the matching data script ([ADR-003](adr-003-hosting-topology.md#loading-production-data)).
 - **The sample-data script erases real data.** `prisma/seed.ts` deletes all games and statistics before inserting sample data, so it must never be run against the production database.
+- **The free plan's size limit decides what can be stored.** With one season of play-by-play taking about 320 MB of the 500 MB limit, the older seasons are box scores only and can't be corrected, and a decision is needed before the next season's play-by-play is loaded ([ADR-005](adr-005-play-by-play-storage.md)).
+- **Generated migrations need reading before they are committed.** The schema file and the database differ in two small, harmless ways (listed on the [ERD](../design/erd.md#known-differences-between-the-schema-and-the-database)), and `prisma migrate dev` adds changes to "fix" both to the next migration it generates.
 
 ## Sources
 
 - `apps/api/prisma/schema.prisma` and `apps/api/prisma/migrations/` in the source repository.
 - Transcripts in the source repository's `docs/transcripts/` folder: `2026-08-14-adrian-claude-doc-website.txt` (Firebase) and `OwenPace_01.txt` (Prisma or Drizzle).
-- [ADR-002: Auth](adr-002-auth.md), [ADR-003: Hosting Topology](adr-003-hosting-topology.md) and the [ERD](../design/erd.md).
+- [ADR-002: Auth](adr-002-auth.md), [ADR-003: Hosting Topology](adr-003-hosting-topology.md), [ADR-005: Play-by-play storage](adr-005-play-by-play-storage.md) and the [ERD](../design/erd.md).
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5] (2026-09-23: flagged the table/enum counts and migration history as stale, not rewritten in full)*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5] (2026-09-23: flagged the table/enum counts and migration history as stale, not rewritten in full), Claude-Code[Claude Opus 5.5] (2026-09-28: updated for Sprint 3)*
