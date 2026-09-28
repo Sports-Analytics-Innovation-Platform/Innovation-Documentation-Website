@@ -363,6 +363,113 @@ GET /v1/players/compare?ids=a1b2c3d4-e5f6-7890-abcd-ef1234567890,f0e9d8c7-b6a5-4
 
 ---
 
+### Archetypes
+
+!!! warning "In review, not yet merged"
+    These three routes are on branch `player-archetypes` and are not live yet. See [Player Archetypes](player-archetypes/index.md).
+
+Playing-style archetypes and similar players, precomputed by `apps/similarity` (see [Archetype Model](player-archetypes/model.md)). The same access rules apply as for the player endpoints. Every route takes an optional `season`; without it, the most recently fitted season is used.
+
+**Query parameters (all three routes):**
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `season` | string | No | Most recently fitted season | Season to read, e.g. `2025-26` |
+
+#### `GET /v1/players/:id/archetype`
+
+A player's archetypes (up to three, strongest first), their five most similar players, and the values behind the profile's style map.
+
+**Path parameters:**
+
+| Parameter | Type | Description |
+|---|---|---|
+| `id` | string (UUID) | Player ID |
+
+**Response `200`:**
+
+```json
+{
+  "playerId": "uuid",
+  "season": "2025-26",
+  "archetype": {
+    "playerId": "uuid",
+    "season": "2025-26",
+    "archetypes": [
+      { "label": "Stretch big", "clusterId": 6, "rank": 1, "weight": 0.46 },
+      { "label": "Traditional big", "clusterId": 5, "rank": 2, "weight": 0.21 }
+    ],
+    "similarPlayers": [
+      { "player": { "id": "uuid", "firstName": "...", "lastName": "...", "team": { "...": "..." } }, "rank": 1, "similarityScore": 71.3 }
+    ],
+    "featureVector": [0.84, 0.51, 1.12, "... 15 values in all"],
+    "distanceToCentroid": 2.37,
+    "plot": { "x": 1.92, "y": 0.44 }
+  }
+}
+```
+
+- **`archetype` is `null` when the player exists but wasn't placed**, because they played too few minutes or a value was missing. This is a normal state, not an error.
+- **`season` and `archetype` are both `null`** when no season has been fitted yet.
+- **`weight`** is how close the player is to that archetype relative to the others, not a probability. **`similarityScore`** (0–100) is similarity of style, never of quality.
+- **`clusterId`** survives a rename but not a re-fit, so it is safer than `label` for colours or links within one fit.
+- **`featureVector`** holds the player's 15 standardised feature values, in the model's fixed order ([The 15 features](player-archetypes/model.md#the-15-features)).
+
+**Response `404`:**
+
+```json
+{ "error": { "code": "NOT_FOUND", "message": "Player not found" } }
+```
+
+---
+
+#### `GET /v1/archetypes`
+
+The season's archetypes and how many players each holds, largest first.
+
+**Response `200`:**
+
+```json
+{
+  "season": "2025-26",
+  "archetypes": [
+    { "clusterId": 4, "label": "Scoring wing", "memberCount": 66 }
+  ]
+}
+```
+
+When no season has been fitted: `{ "season": null, "archetypes": [] }`.
+
+---
+
+#### `GET /v1/archetypes/map`
+
+Every placed player's point on the style map, plus the archetype list for the legend. Not paginated: the map shows the whole league at once, and each row is small.
+
+**Response `200`:**
+
+```json
+{
+  "season": "2025-26",
+  "players": [
+    { "playerId": "uuid", "firstName": "...", "lastName": "...", "clusterId": 4, "plotX": -1.2, "plotY": 0.8 }
+  ],
+  "archetypes": [
+    { "clusterId": 4, "label": "Scoring wing", "memberCount": 66 }
+  ]
+}
+```
+
+`clusterId` is the player's main (rank 1) archetype. `plotX` and `plotY` are principal-component scores; only their positions relative to each other mean anything.
+
+**Response `404`:** no season has been fitted yet.
+
+```json
+{ "error": { "code": "NOT_FOUND", "message": "No season has a fitted archetype model" } }
+```
+
+---
+
 ### Teams
 
 All team endpoints are **public** — no authentication required.
