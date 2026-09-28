@@ -3,18 +3,20 @@
 This page describes every table in the platform's PostgreSQL database: what each one holds, what its columns mean, and how the tables relate to each other. The reasons behind the design are explained in [ADR-001: Database](../decisions/adr-001-database.md), and where the database runs in [ADR-003: Hosting Topology](../decisions/adr-003-hosting-topology.md).
 
 !!! success "Checked against the schema"
-    Every table, column, constraint and index on this page was checked against `apps/api/prisma/schema.prisma` in the source repository, as of its most recent migration, `20260913140000_game_prediction_versioning` (13 September 2026).
+    Every table, column, constraint and index on this page was checked against `apps/api/prisma/schema.prisma` and the migration files in the source repository on 28 September 2026. On `main`, the newest migration is `20260923000000_add_become_pro` and the schema has **35 tables and 7 enums**. The four [Player archetypes](#player-archetypes) tables come from migration `20260922200000_add_player_archetypes`, which is on branch `player-archetypes` and not yet merged. With them, the total is **39 tables**.
 
-!!! warning "Stale as of 2026-09-23 — schema has grown from 20 to 31 models"
-    A large batch of work since 13 September added tables this page doesn't cover: `IngestionBatch` and `EventCorrection` (the submission-review/correction workflow — see the "still open" note below, which is now wrong), `ApiConsumer`/`ApiKey`/`ApiUsageLog` (external API key issuance and rate limiting), `DatasetRelease` (versioned, checksummed dataset snapshots), `CustomStatistic` (analyst-defined statistics), `IngestionRequest`/`IngestionWorker` (a queued ingestion job), and `GameMarketOdds` (the second external API integration). Not rewritten in full here given the size of this page — see `apps/api/prisma/schema.prisma` directly, or [ADR-001](../decisions/adr-001-database.md)'s matching currency note, or [Feature Tiers](feature-tiers.md) for what these tables back.
+!!! info "What changed in Sprint 3 (15–27 September 2026)"
+    - **Real play-by-play.** `GameEvent` gained five columns and a unique key, and `PlayerGameStat`'s counting statistics are now derived from it. Play-by-play is stored for 2025-26 only, because of the database's size limit ([ADR-005](../decisions/adr-005-play-by-play-storage.md)).
+    - **19 new tables:** the ingestion and review workflow (5), market odds (1), dataset releases, custom statistics and API keys (5), Become Pro (4) and, still in review, player archetypes (4).
+    - **The API now edits NBA data**, but only through the admin correction tools, and every correction is logged in `EventCorrection`.
 
-    Since then, Become Pro (PR #192) has added four more tables, bringing the schema to 35 models. Unlike the ones above, those four are documented on this page, under [Become Pro](#become-pro), checked against `schema.prisma` on 2026-09-27.
+    Every migration is listed in [ADR-001's schema change history](../decisions/adr-001-database.md#schema-change-history).
 
 ## Diagram
 
 ![Database ERD](diagrams/database-erd.svg)
 
-Click the diagram to enlarge it. The diagram's source file is `docs/diagrams/database-erd.puml` in the source repository.
+Click the diagram to enlarge it. The diagram's source file is `docs/diagrams/database-erd.puml` in the source repository. **It shows the 20 tables that existed before Sprint 3.** The 19 tables added since then are described on this page but not yet drawn.
 
 **How to read it**
 
@@ -25,18 +27,21 @@ Click the diagram to enlarge it. The diagram's source file is `docs/diagrams/dat
 
 ## Overview
 
-This page documents **24 tables** and **4 enums** (fixed lists of allowed values), in six groups. Each group is written by exactly one part of the system, except Become Pro, where the API and the valuation script each write their own tables.
+This page documents **39 tables** and **7 enums** (fixed lists of allowed values), in nine groups. Most groups are written by a single part of the system; where more than one part writes to a group, the table says which writes what.
 
 | Group | Tables | Written by |
 |---|---|---|
-| [NBA data](#nba-data) | `Team`, `Player`, `Game`, `GameEvent`, `PlayerGameStat` | The ingestion scripts (`apps/ingestion`), which download data from stats.nba.com |
-| [Game predictions](#game-predictions) | `GamePrediction`, `GamePredictionRun` | The predictor script (`apps/predictor`) |
+| [NBA data](#nba-data) | `Team`, `Player`, `Game`, `GameEvent`, `PlayerGameStat` | The ingestion scripts (`apps/ingestion`), which download data from stats.nba.com. The API's admin correction tools also edit `GameEvent` and `PlayerGameStat`. |
+| [Ingestion and review](#ingestion-and-review) | `IngestionBatch`, `EventCorrection`, `IngestionRequest`, `IngestionWorker`, `IngestionSchedule` | The ingestion scripts create batches, and admins review or remove them through the API. The API writes corrections, the schedule and queued pulls; the pull worker (`apps/ingestion/pull_worker.py`) claims queued pulls and records itself in `IngestionWorker`. |
+| [Game predictions](#game-predictions) | `GamePrediction`, `GamePredictionRun`, `GameMarketOdds` | The predictor script (`apps/predictor`); market odds by `apps/ingestion/fetch_market_odds.py` |
 | [Fantasy lineups](#fantasy-lineups) | `PlayerPrediction`, `Lineup`, `LineupSlot` | The optimizer script (`apps/optimizer`) |
+| [Player archetypes](#player-archetypes) (in review) | `Archetype`, `PlayerArchetype`, `PlayerArchetypeMembership`, `PlayerSimilarity` | The similarity script (`apps/similarity`) |
 | [Accounts](#accounts) | `User`, `Session`, `Account`, `Verification` | BetterAuth, the authentication library |
 | [Personal data](#personal-data) | `UserFollowedPlayer`, `GamePick`, `SavedComparison`, `SavedComparisonPlayer`, `SavedLineup`, `SavedLineupSlot` | The API, when a signed-in user saves something |
+| [Publishing and API access](#publishing-and-api-access) | `DatasetRelease`, `CustomStatistic`, `ApiConsumer`, `ApiKey`, `ApiUsageLog` | The API: admins publish releases and create external API consumers, analysts define statistics, users create their own API keys, and every request made with a key is logged |
 | [Become Pro](#become-pro) | `ProspectSeason`, `ProspectGame`, `ProspectValuation`, `ProspectValuationModel` | The API writes seasons, games and valuations when a user logs their own games; the valuation script (`apps/valuation`) writes the trained model |
 
-The API reads every group, but never writes to the NBA data, game prediction or fantasy lineup tables, or to `ProspectValuationModel`.
+The API reads every group. It never writes to the game prediction, fantasy lineup or player archetype tables, or to `ProspectValuationModel`. Its only writes to NBA data come from the admin correction tools. A correction updates one `GameEvent` row, re-derives the `PlayerGameStat` rows of the players that play affects, and records the change in `EventCorrection`, all in one transaction. "Recalculate stats" re-derives a game's `PlayerGameStat` rows from its plays without changing any play.
 
 Unless stated otherwise, every table's primary key is `id`, a generated UUID.
 
@@ -88,22 +93,34 @@ One row per game.
 
 ### GameEvent
 
-Raw play-by-play: one row per event in a game, such as a shot or a foul. This is the underlying event record that the brief asks statistics to be traced back to.
+Play-by-play: one row per action in a game, such as a shot, rebound or foul, from the NBA's `PlayByPlayV3` feed. This is the underlying event record that the brief asks statistics to be traced back to. Every action is checked against the platform's event schema (`apps/ingestion/event_validation.py`) before it is stored. Rejected actions aren't stored; they are counted, by reason, on the game's [`IngestionBatch`](#ingestionbatch).
+
+!!! note "Stored for 2025-26 only"
+    One season of play-by-play takes about 320 MB of the free plan's 500 MB, so it is stored for 2025-26 only. 2023-24 and 2024-25 have box scores but no `GameEvent` rows, which also means their plays can't be corrected. See [ADR-005: Play-by-play storage](../decisions/adr-005-play-by-play-storage.md).
 
 | Column | Type | Notes |
 |---|---|---|
 | `gameId` | → `Game` | |
-| `sequence`, `period` | int | The event's position in the game and the quarter it happened in |
-| `clock` | string | Game clock at the time of the event |
-| `eventType`, `description` | string | |
-| `playerId` | string, optional | Stored as plain text, not a link to `Player` |
+| `sequence` | int | The NBA's own number for the action, increasing through the game |
+| `period` | int | The period the action happened in |
+| `clock` | string | Game clock at the time of the action |
+| `eventType` | string | The kind of action, for example `2pt`, `rebound` or `turnover` |
+| `subType` | string, optional | More detail where the action has it, for example `offensive` or `defensive` on a rebound |
+| `playerId` | string, optional | The player's internal id, stored as plain text rather than as a link to `Player`. Empty for team actions such as a team rebound. |
+| `teamId` | → `Team`, optional | The team the action belongs to. Empty for actions that belong to neither team. |
+| `success` | boolean, optional | Made or missed, for shots and free throws only. Empty for every other action, rather than `false`. |
+| `value` | int, optional | Points for a shot or free throw (1, 2 or 3); empty otherwise |
+| `description` | string | The NBA's text for the play |
+| `batchId` | → `IngestionBatch`, optional | The ingestion run that last wrote this row |
 | `createdAt` | datetime | |
 
-**Index:** `(gameId, sequence)`, for reading a game's events in order.
+**Unique:** `(gameId, sequence)`. Re-ingesting a game updates its plays in place instead of adding duplicates. This replaced a plain index on the same columns on 16 September 2026 (migration `derive_stats_from_game_events`). That migration also deleted every existing row: until then the table held only two placeholder "period start/end" rows per game, and re-runs had been duplicating them.
 
 ### PlayerGameStat
 
 One player's box score for one game. Season averages, true shooting percentage, effective field-goal percentage and assist-to-turnover ratio are calculated from these rows each time they are requested (by the API's `/v1/players/:id/stats` route); there is no table of stored averages. Those calculations were checked against the NBA's own published figures and matched to three decimal places.
+
+**Where the figures come from.** For games with play-by-play (2025-26), the counting statistics and the offensive/defensive rebound split are derived from the game's `GameEvent` rows (`apps/ingestion/derive_player_game_stats.py`), falling back to the NBA's official box score for a player who appears in no play. Minutes and plus-minus always come from the official box score, because working out time on court from the plays would mean replaying every substitution. For 2023-24 and 2024-25, which have no play-by-play, the whole row comes from the official box score. When an admin corrects a play, the API re-derives the counting statistics of the players that play affects.
 
 | Column | Type | Notes |
 |---|---|---|
@@ -114,14 +131,91 @@ One player's box score for one game. Season averages, true shooting percentage, 
 | `fieldGoalsMade`, `fieldGoalsAttempted` | int | |
 | `threesMade`, `threesAttempted` | int | |
 | `freeThrowsMade`, `freeThrowsAttempted` | int | |
-| `offensiveRebounds`, `defensiveRebounds` | int, optional | |
+| `offensiveRebounds`, `defensiveRebounds` | int, optional | Derived from play-by-play rebound actions, so recorded for 2025-26 games only |
 | `plusMinus` | int, optional | Points scored minus points conceded while the player was on court |
 | `usagePercentage` | float, optional | Share of the team's plays used by the player while on court |
 | `offensiveRating`, `defensiveRating` | float, optional | Points produced and allowed per 100 possessions, as published by the NBA |
 
-The optional statistics columns are empty for rows loaded before those columns existed, or where the NBA's data didn't include them. Empty means "not recorded", which is different from zero; the website shows "—".
+The optional statistics columns are empty for rows loaded before those columns existed, or where the NBA's data didn't include them. In practice that covers all of 2023-24 and 2024-25: none of those seasons' 49,409 rows has the rebound split or plus-minus, and usage and the two ratings are only loaded for the current season. Empty means "not recorded", which is different from zero; the website shows "—".
 
 **Unique:** `(playerId, gameId)`, so a player has at most one row per game. **Index:** `gameId`, for loading a game's box score.
+
+## Ingestion and review
+
+The records behind getting NBA data in and keeping it correct: one row per ingestion run for a game, one per admin correction, the queue of data pulls waiting for a machine that can reach stats.nba.com, and the automatic-pull schedule. All five were added in Sprint 3.
+
+### IngestionBatch
+
+One ingestion run for one game: the pipeline's own "submission", which a published statistic can be traced back to. Every run opens a new row, so earlier runs and their rejections are kept. The one exception is a run that failed: the next run for that game reopens it and continues from its checkpoint.
+
+| Column | Type | Notes |
+|---|---|---|
+| `gameId` | → `Game` | |
+| `source` | string | Where the data came from: `nba_api:playbyplayv3` for a real ingestion run, or `backfill:pre-batch-tracking` for a placeholder batch created for a game loaded before batches existed |
+| `status` | `IngestionBatchStatus`, default `RUNNING` | `RUNNING`, then `COMPLETED` or `FAILED`. A run started with `--review` finishes as `PENDING_REVIEW` instead, until an admin approves it (`COMPLETED`) or rejects it (`REJECTED`). |
+| `startedAt` | datetime | |
+| `completedAt` | datetime, optional | |
+| `eventsAccepted`, `eventsRejected` | int, default 0 | How many actions were stored and how many were turned away |
+| `rejectionSummary` | JSON, optional | How many actions were rejected for each reason, for example `{"UNKNOWN_ACTION_TYPE": 2}`, so a rejection explains itself instead of failing silently |
+| `resumeAfterSequence` | int, optional | Checkpoint: the last play written. A failed run resumes after it instead of starting again. |
+| `reviewedById` | → `User`, optional | The admin who reviewed the batch. Empty means nobody has reviewed it yet. |
+| `reviewedAt`, `reviewNotes` | datetime, string, optional | |
+| `deletedAt`, `deletedById` | datetime, → `User`, optional | Soft delete: an admin can remove a batch without deleting the game or its statistics |
+
+**Indexes:** `gameId`; `status`.
+
+**Review gates publication.** A game is left out of every public read while any of its batches that hasn't been removed is `PENDING_REVIEW`, `RUNNING`, `FAILED` or `REJECTED` (`PUBLISHED_GAME_FILTER` in `apps/api/src/common/game-visibility.ts`). A game with no batch at all is unaffected. Games loaded before batches existed either have none, or a `COMPLETED` placeholder batch added by `apps/ingestion/backfill_batches.py`.
+
+### EventCorrection
+
+One change an admin made to one play, recording the old and new values, who made it and why. The table is only ever added to: undoing a correction adds a new correction that puts the old values back.
+
+| Column | Type | Notes |
+|---|---|---|
+| `gameId` | → `Game` | |
+| `sequence` | int | Which play was corrected. Together with `gameId` it identifies the `GameEvent` row. |
+| `previousValues`, `newValues` | JSON | Only the fields that changed, before and after |
+| `correctedById` | → `User`, optional | The admin who made the correction |
+| `reason` | string, optional | Why it was made. The admin tools require one. |
+| `correctedAt` | datetime | |
+| `revertsCorrectionId` | → `EventCorrection`, optional, unique | Set on an undo: the correction it reverts. Unique, so a correction can only be undone once. |
+
+**Indexes:** `(gameId, sequence)`, for a play's history; `correctedAt`, for the history in date order.
+
+Saving a correction also marks every published [dataset release](#datasetrelease) for that season as stale, in the same transaction. Only 2025-26 games have plays to correct ([ADR-005](../decisions/adr-005-play-by-play-storage.md)).
+
+### IngestionRequest
+
+A data pull the deployed API can't run itself. stats.nba.com blocks requests from cloud providers' networks, so the API on Render records the request here, and a pull worker (`apps/ingestion/pull_worker.py`) on a team member's computer claims it and runs `ingest.py`. When the API runs locally, it runs `ingest.py` directly and never writes here. See [ADR-003](../decisions/adr-003-hosting-topology.md).
+
+| Column | Type | Notes |
+|---|---|---|
+| `status` | `IngestionRequestStatus`, default `QUEUED` | |
+| `season`, `fromDate`, `toDate` | string, optional | Passed to `ingest.py` as `--season`, `--from-date` and `--to-date`. Empty means the script's default. |
+| `scheduled` | boolean, default `false` | `true` when the automatic schedule queued the pull rather than an admin |
+| `requestedById` | → `User`, optional | |
+| `requestedAt` | datetime | |
+| `claimedBy` | string, optional | The name of the worker that took the pull |
+| `claimedAt`, `finishedAt` | datetime, optional | |
+| `message` | string, optional | Why the pull failed, or the end of `ingest.py`'s output if it succeeded |
+
+**Index:** `(status, requestedAt)`, for finding the oldest queued pull.
+
+### IngestionWorker
+
+One row per pull worker, updated every time the worker checks in and while it runs a pull. This lets the admin page tell "queued, and a worker will pick it up" apart from "queued, but no worker is running", which otherwise look the same. The primary key is the worker's `name` rather than a generated id; the only other column is `lastSeenAt`.
+
+### IngestionSchedule
+
+How often new NBA data is pulled automatically. There is only ever one row, with the id `singleton`, which the API enforces.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | string, default `singleton` | |
+| `frequency` | `IngestionFrequency`, default `NEVER` | |
+| `lastRunAt` | datetime, optional | When the last automatic pull ran, so the scheduler can tell when the next one is due |
+| `updatedById` | → `User`, optional, unique | Who last changed the schedule |
+| `updatedAt` | datetime | |
 
 ## Game predictions
 
@@ -152,6 +246,20 @@ A permanent history of predictions: one row per game per model version. Older pr
 | `createdAt` | datetime | |
 
 **Unique:** `(gameId, modelVersion)`. Re-running the same model version updates its row instead of adding another. **Index:** `gameId`.
+
+### GameMarketOdds
+
+What the betting market expected before a game, from The Odds API: the project's second external data source. It is a demanding baseline for the model's own prediction, because a bookmaker's line reflects real money rather than only past box scores. Written by `apps/ingestion/fetch_market_odds.py`; added on 15 September 2026.
+
+| Column | Type | Notes |
+|---|---|---|
+| `gameId` | → `Game`, unique | |
+| `homeWinProbability` | float | The home team's chance of winning implied by the bookmakers' odds, with the bookmakers' margin removed, averaged across every US bookmaker the API returned |
+| `bookmakerCount` | int | How many bookmakers the average covers, so a reader can judge how stable it is |
+| `source` | string, default `the-odds-api` | Which provider the figure came from |
+| `fetchedAt` | datetime | When the odds were taken |
+
+The row is only written or refreshed while the game is still to be played. The Odds API's free plan doesn't provide historical closing odds, so after tip-off the last snapshot is kept rather than replaced. It is a separate table from `GamePrediction`, even though both describe the same game, because two unrelated scripts write them: an outage at the odds provider must never stop predictions being written, or the other way round. **Index:** `gameId`, in addition to the unique constraint on the same column.
 
 ## Fantasy lineups
 
@@ -188,6 +296,80 @@ One player in a `Lineup`.
 | `playerId` | → `Player` |
 
 **Unique:** `(lineupId, playerId)`, so a player can't appear twice in one lineup.
+
+## Player archetypes
+
+!!! warning "In review, not yet merged"
+    These four tables come from migration `20260922200000_add_player_archetypes` on branch `player-archetypes`. They are not in the production database yet.
+
+The tables behind [Player Archetypes](../player-archetypes/index.md): each season's playing-style groups, every placed player's position among them, and each player's most similar players. They are written only by `apps/similarity/build_archetypes.py` and only read by the API. Each season is fitted separately, and re-fitting a season replaces all of its rows in one transaction.
+
+### Archetype
+
+One playing-style group from one season's fit.
+
+| Column | Type | Notes |
+|---|---|---|
+| `season` | string | |
+| `label` | string | The name users see, for example "Stretch big". Names are assigned by hand and can be edited in place, because nothing is derived from the text. |
+| `clusterId` | int | The group's number in the fit that produced it. The numbering changes on every re-fit, so it is used for tracing a row back to its fit, never for matching. |
+| `referenceCentroid` | JSON | The centre of the group in real units (points per 36 minutes, inches and so on), in the model's feature order. Real units let a name follow its group from one fit to the next. |
+| `memberCount` | int | How many players have this as their main archetype. Stored because the archetype list and the map legend need it on every request. Every fit rewrites it, so it can't drift. |
+| `modelVersion` | string, default `unversioned` | Which fit produced the row, for example `kmeans-gmm-k9` |
+| `computedAt` | datetime | |
+
+**Unique:** `(season, clusterId)`, which also stops a re-run from doubling the list. **Index:** `season`.
+
+### PlayerArchetype
+
+One player's position in one season's style space.
+
+| Column | Type | Notes |
+|---|---|---|
+| `playerId` | → `Player` | |
+| `season` | string | |
+| `featureVector` | JSON | The player's 15 standardised feature values, in the model's feature order |
+| `distanceToCentroid` | float | How far the player sits from the centre of their main archetype. Small means a textbook example; large means the name fits them poorly. |
+| `plotX`, `plotY` | float | The player's position on the style map, calculated once by the script rather than in the browser |
+| `modelVersion` | string, default `unversioned` | |
+| `computedAt` | datetime | |
+
+**Unique:** `(playerId, season)`. **Index:** `season`.
+
+There is deliberately no "main archetype" column. A player's main archetype is their rank 1 row in `PlayerArchetypeMembership`, and storing it twice would create a second copy that could disagree with the first.
+
+### PlayerArchetypeMembership
+
+How strongly one player belongs to one archetype. Each player has up to three rows.
+
+| Column | Type | Notes |
+|---|---|---|
+| `playerArchetypeId` | → `PlayerArchetype` | |
+| `archetypeId` | → `Archetype` | |
+| `rank` | int | 1 is the player's strongest archetype |
+| `weight` | float, 0 to 1 | How close the player is to this archetype compared with the others. It is not a probability, which is why the website shows it as a bar. |
+
+**Unique:** `(playerArchetypeId, archetypeId)`. **Indexes:** `(playerArchetypeId, rank)`; `archetypeId`.
+
+Memberships are rows that point to an archetype by id, not text stored on the player. Renaming an archetype therefore changes one `Archetype` row and nothing else.
+
+### PlayerSimilarity
+
+One of a player's five most similar players in a season.
+
+| Column | Type | Notes |
+|---|---|---|
+| `playerId` | → `Player` | The player |
+| `similarPlayerId` | → `Player` | One of the players most like them |
+| `season` | string | |
+| `rank` | int | 1 is the most similar |
+| `similarityScore` | float, 0 to 100 | Similarity of playing style, never of quality |
+| `modelVersion` | string, default `unversioned` | |
+| `computedAt` | datetime | |
+
+**Unique:** `(playerId, similarPlayerId, season)`. **Index:** `(playerId, season, rank)`, for reading a player's list in order.
+
+Similar players are found independently of the groups, by distance between players in the same feature space. See [Archetype Model](../player-archetypes/model.md#similar-players).
 
 ## Accounts
 
@@ -329,6 +511,83 @@ One player in a `SavedLineup`.
 
 Saved lineups copy their figures for the same reason as `GamePick`: the optimizer keeps producing new predictions, so figures looked up later would no longer match what the user saved. The saved figures are also what lets the home page show how a lineup's predictions have changed since it was saved.
 
+## Publishing and API access
+
+The tables behind the brief's intermediate and advanced tiers: versioned dataset releases, analyst-defined statistics, and API keys held to rate limits and quotas ([Feature Tiers](feature-tiers.md)). All five are written by the API and were added in Sprint 3.
+
+### DatasetRelease
+
+A published, versioned snapshot of one season's data. It comes with a checksum, so a download can be verified, and a description of every column, so an analysis run against one release can be repeated against the next.
+
+| Column | Type | Notes |
+|---|---|---|
+| `version` | string, unique | For example `2025-26.1` |
+| `description` | string | Release notes |
+| `season` | string | |
+| `checksum` | string | SHA-256 of the CSV |
+| `gamesCount`, `playersCount`, `eventsCount` | int | Row counts in the release |
+| `fieldSchema` | JSON | A description of every column in the CSV |
+| `publishedById` | → `User`, optional | |
+| `publishedAt` | datetime | |
+| `isStale` | boolean, default `false` | Set when a correction changes data the release covers. The release stays downloadable, unchanged, until an admin publishes a replacement version. |
+| `csv` | string, optional | The exact CSV, stored when the release was published, so a download always matches the release. About 90 KB per release. Empty for releases published before 18 September 2026, which are rebuilt from live data when downloaded. A stale release with no stored CSV refuses to download rather than serve corrected data under the old version. |
+
+**Index:** `season`.
+
+### CustomStatistic
+
+A statistic an analyst defines as a formula over per-game statistics. Only users with the `ANALYST` or `ADMIN` role can create one.
+
+| Column | Type | Notes |
+|---|---|---|
+| `name` | string | |
+| `expression` | string | The formula. The API checks it with its own parser, never `eval`, before saving. |
+| `version` | int, default 1 | Increases with every edit |
+| `authorId` | → `User` | |
+| `createdAt`, `updatedAt` | datetime | |
+
+**Unique:** `(authorId, name)`, so one analyst can't have two statistics with the same name.
+
+### ApiConsumer
+
+Someone who uses the API with a key. It is either an external organisation an admin created, or a signed-in user's own consumer, created automatically the first time they make a key. Each consumer has its own rate limit and daily quota, so one consumer can't use up the platform for everyone else.
+
+| Column | Type | Notes |
+|---|---|---|
+| `name` | string | For example "Third-party analytics app" |
+| `contactEmail` | string, optional | |
+| `rateLimit` | int, default 100 | Requests per minute |
+| `dailyQuota` | int, default 10000 | Requests per day |
+| `isActive` | boolean, default `true` | |
+| `userId` | → `User`, optional, unique | Set for a user's own consumer, shown as `USER` in the admin list; empty for an external one, shown as `EXTERNAL`. A user has at most one. |
+| `createdAt` | datetime | |
+
+### ApiKey
+
+One key belonging to a consumer.
+
+| Column | Type | Notes |
+|---|---|---|
+| `consumerId` | → `ApiConsumer` | |
+| `keyHash` | string, unique | The SHA-256 hash of the key. The key itself is shown once, when it is created, and never stored, so a leaked database contains no usable keys. |
+| `label` | string, optional | For example "Production key" |
+| `isActive` | boolean, default `true` | |
+| `lastUsedAt` | datetime, optional | |
+| `createdAt` | datetime | |
+
+### ApiUsageLog
+
+One row per request made with a key, used to enforce the rate limit and the daily quota.
+
+| Column | Type | Notes |
+|---|---|---|
+| `consumerId` | → `ApiConsumer` | |
+| `endpoint` | string | For example `GET /v1/players` |
+| `statusCode` | int | |
+| `calledAt` | datetime | |
+
+**Index:** `(consumerId, calledAt)`, so counting a consumer's recent requests reads only the index. Nothing deletes old rows yet, so this table grows with every request made with a key. That growth counts towards the database's [500 MB limit](../decisions/adr-005-play-by-play-storage.md).
+
 ## Become Pro
 
 The tables behind [Become Pro](../become-pro/index.md): a user's own seasons and self-reported box scores, what each season is projected to be worth, and the trained model that projection comes from. Added by migration `20260923000000_add_become_pro` (PR #192). Nothing about the NBA data tables changed to make room for them. They are private to their owner; no other user ever reads them. The diagram above predates them.
@@ -409,6 +668,9 @@ The split is deliberate. Training needs the whole NBA rookie dataset and only ha
 | `Role` | `PUBLIC`, `USER`, `ANALYST`, `ADMIN` | `User.role` |
 | `SeasonType` | `REGULAR`, `PLAY_IN`, `PLAYOFFS`, `FINALS` | `Game.seasonType` |
 | `PickOutcome` | `CORRECT`, `MISSED` | `GamePick.outcome` |
+| `IngestionBatchStatus` | `RUNNING`, `COMPLETED`, `FAILED`, `PENDING_REVIEW`, `REJECTED` | `IngestionBatch.status`. Every status except `COMPLETED` keeps the game out of public reads (see [IngestionBatch](#ingestionbatch)). |
+| `IngestionRequestStatus` | `QUEUED`, `RUNNING`, `SUCCEEDED`, `FAILED`, `CANCELLED` | `IngestionRequest.status` |
+| `IngestionFrequency` | `NEVER`, `HOURLY`, `DAILY`, `WEEKLY` | `IngestionSchedule.frequency` |
 | `CompetitionLevel` | `NCAA_D1`, `NCAA_D2`, `NCAA_D3`, `NAIA`, `JUCO`, `INTERNATIONAL_PRO`, `SEMI_PRO`, `HIGH_SCHOOL`, `REC` | `ProspectSeason.competitionLevel`. The API's validation list is built from this enum, so the two can't drift apart. |
 
 ## Indexes for common queries
@@ -433,14 +695,35 @@ Team (1) ──────< (many) Game                [as home team]
 Team (1) ──────< (many) Game                [as away team]
 Team (1) ──────< (many) PlayerGameStat      [team in that game, optional]
 Team (1) ──────< (many) User                [favourite team, optional]
+Team (1) ──────< (many) GameEvent           [team the play belongs to, optional]
 Game (1) ──────< (many) GameEvent
 Game (1) ──────< (many) PlayerGameStat
 Game (1) ────── (0..1) GamePrediction
 Game (1) ──────< (many) GamePredictionRun
+Game (1) ────── (0..1) GameMarketOdds
 Player (1) ────< (many) PlayerGameStat
 Player (1) ────< (many) PlayerPrediction
 Player (1) ────< (many) LineupSlot
 Lineup (1) ────< (many) LineupSlot
+
+Game (1) ──────< (many) IngestionBatch
+IngestionBatch (1) ──< (many) GameEvent     [run that wrote the play, optional]
+Game (1) ──────< (many) EventCorrection
+EventCorrection (1) ── (0..1) EventCorrection   [an undo and what it reverts]
+User (1) ──────< (many) IngestionBatch      [as reviewer, and as remover, optional]
+User (1) ──────< (many) EventCorrection     [who corrected, optional]
+User (1) ──────< (many) IngestionRequest    [who requested, optional]
+User (1) ────── (0..1) IngestionSchedule    [who last changed it, optional]
+
+Player (1) ────< (many) PlayerArchetype
+PlayerArchetype (1) ─< (many) PlayerArchetypeMembership >─ (1) Archetype
+Player (1) ────< (many) PlayerSimilarity    [as the player, and as the similar player]
+
+User (1) ──────< (many) DatasetRelease      [who published, optional]
+User (1) ──────< (many) CustomStatistic
+User (1) ────── (0..1) ApiConsumer          [the user's own consumer, optional]
+ApiConsumer (1) ─< (many) ApiKey
+ApiConsumer (1) ─< (many) ApiUsageLog
 
 User (1) ──────< (many) Session
 User (1) ──────< (many) Account
@@ -461,20 +744,35 @@ ProspectSeason (1) ──< (many) ProspectValuation >── (0..1) ProspectValua
 
 | Deleting | Effect on related rows |
 |---|---|
-| A user | Their sessions, linked accounts, followed players, game calls, saved comparisons, saved lineups and Become Pro seasons are all deleted |
+| A user | Their sessions, linked accounts, followed players, game calls, saved comparisons, saved lineups, Become Pro seasons and custom statistics are all deleted, along with their own API consumer and its keys and usage log. Records of admin work they did are kept, with the link to them cleared: batch reviews and removals, corrections, dataset releases, queued pulls and schedule changes. |
+| An API consumer | Its keys and usage log are deleted |
+| An ingestion batch | Its plays are kept; only their link to the batch is cleared. (Admins remove batches with a soft delete, so rows are not normally deleted.) |
+| A correction | An undo that points to it keeps its values; only the link is cleared. (Corrections are never deleted in normal use.) |
+| A season's archetype model, when it is re-fitted | `build_archetypes.py` deletes that season's similarity, placement and archetype rows before writing the new ones; memberships are deleted along with their placement or archetype |
 | A Become Pro season | Its games and valuations are deleted |
 | A trained valuation model | Valuations made with it keep their figures; only their link to the model is cleared, so pruning old models never deletes a user's history |
 | A saved comparison or saved lineup | Its player rows are deleted |
 | An optimizer lineup | Its player rows are deleted |
 | A player or game | Users' follows, calls and saved items that refer to it are deleted |
-| A team | Users with it as their favourite team are left with no favourite; per-game rows that recorded it keep their other data |
-| A team, player or game that NBA statistics, events or predictions depend on | Refused, so those records never lose what they were calculated from |
+| A team | Users with it as their favourite team are left with no favourite; per-game statistics and plays that recorded it keep their other data |
+| A player or game that other records depend on (statistics, plays, predictions, market odds, ingestion batches, corrections or archetype rows), or a team that games refer to | Refused, so those records never lose what they were calculated from |
 
 ## Still open
 
-- ~~Submitting and reviewing statistics.~~ — **built, checked 2026-09-23.** `IngestionBatch` (a submission record — accepted/rejected event counts, `PENDING_REVIEW`/`COMPLETED`/`REJECTED` status, reviewer, notes) and `EventCorrection` (an append-only audit trail of individual event edits, with `revertsCorrectionId` linking an undo back to what it reverted) now implement exactly this. Not documented on this page yet — see [ADR-001](../decisions/adr-001-database.md)'s currency note above and `apps/api/prisma/schema.prisma` directly for the real column list.
+- ~~Submitting and reviewing statistics.~~ Built, and documented under [Ingestion and review](#ingestion-and-review) since 2026-09-28.
 - **Multi-human-submitter approval**, specifically — still genuinely not built, and deliberately so per the schema's own doc comment: this project has one automated "submitter" (the ingestion pipeline itself, source-tagged per batch), not many competing human ones. Don't confuse this with the line above, which is a different and now-closed gap.
+- **The diagram** still shows only the 20 tables that existed before Sprint 3.
+- **Play-by-play for the next season.** 2026-27's play-by-play won't fit alongside 2025-26's within the 500 MB limit. A decision is needed before it is loaded ([ADR-005](../decisions/adr-005-play-by-play-storage.md#the-next-season)).
+
+## Known differences between the schema and the database
+
+Two small differences exist between `schema.prisma` and the database the migrations build, in production and locally alike. Both are harmless. Migration `20260919120000_add_event_correction_revert_link` records them and deliberately leaves them alone:
+
+- The database has an index on `IngestionBatch.reviewedById`, created by migration `20260916140000_intermediate_brief_features`, which `schema.prisma` doesn't declare.
+- `IngestionSchedule.updatedAt` has a database default (the current time) that `schema.prisma` doesn't declare.
+
+The next migration generated with `prisma migrate dev` will try to "fix" both, by dropping the index and the default. Remove those lines from the generated file unless the change is intended.
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5] (2026-09-23: flagged staleness, corrected the "submission/review not built" claim — it is), Claude-Code[Claude Opus 5.5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5] (2026-09-23: flagged staleness, corrected the "submission/review not built" claim — it is), Claude-Code[Claude Opus 5.5] (2026-09-28: documented the Sprint 3 tables)*
