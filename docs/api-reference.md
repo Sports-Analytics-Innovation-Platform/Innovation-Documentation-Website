@@ -1017,6 +1017,8 @@ Everything under `/v1/admin/*` requires a session with the `ADMIN` role (`Sessio
 
 #### Game lookup & corrections — `/v1/admin/games`, `/v1/admin/events`
 
+Only games with stored play-by-play can be corrected, and that means 2025-26 games only. Older games are listed with an event count of 0. See [ADR-005: Play-by-play storage](decisions/adr-005-play-by-play-storage.md).
+
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/v1/admin/games` | Games filtered by season/team/date window, with event and correction counts |

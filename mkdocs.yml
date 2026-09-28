@@ -105,6 +105,7 @@ nav:
       - "ADR-002: Auth": decisions/adr-002-auth.md
       - "ADR-003: Hosting Topology": decisions/adr-003-hosting-topology.md
       - "ADR-004: Caching Strategy": decisions/adr-004-caching-strategy.md
+      - "ADR-005: Play-by-play Storage": decisions/adr-005-play-by-play-storage.md
   - Tech Stack: tech-stack.md
   - Security: security.md
   - Meetings:

@@ -7,3 +7,4 @@ New ADR → copy the format of an existing one, number it sequentially, link it 
 - [ADR-002: Auth](adr-002-auth.md)
 - [ADR-003: Hosting Topology](adr-003-hosting-topology.md)
 - [ADR-004: Caching Strategy](adr-004-caching-strategy.md)
+- [ADR-005: Play-by-play storage](adr-005-play-by-play-storage.md)

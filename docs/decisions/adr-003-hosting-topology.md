@@ -1,7 +1,7 @@
 # ADR-003: Hosting topology
 
 - **Status:** Accepted. Implemented on 2026-08-19.
-- **Last updated:** 2026-09-14
+- **Last updated:** 2026-09-28
 
 ## Summary
 
@@ -20,6 +20,7 @@ This document explains how these parts connect, how the database is deployed and
 
 | Date | Change |
 |---|---|
+| 2026-09-28 | Added the database's size against the free plan's 500 MB limit, and linked [ADR-005](adr-005-play-by-play-storage.md), which limits stored play-by-play to one season because of it. |
 | 2026-09-23 | Documented the queued ingestion pull (`IngestionRequest`/`pull_worker.py`), added alongside the original direct-script method — an admin can now trigger a pull from the web UI, though a human-run worker on a home connection still has to claim it. |
 | 2026-09-14 | Updated to match the live deployment. Schema changes are now applied automatically when the API starts, the API uses two database connection strings, Supabase file storage is used for profile pictures, the data scripts run on a team member's computer, and the database has no automatic backups. Added the [Database deployment](#database-deployment) section. |
 | 2026-08-24 | A *pinger* (a service that sends the API a request at regular intervals) now stops it from going to sleep, removing the start-up delay described under [Render's free plan](#renders-free-plan). |
@@ -180,7 +181,7 @@ The brief bans services that *generate API endpoints*. Here, Supabase Storage is
     - the *structure*, fully, by re-running the migrations;
     - the *NBA data*, by re-running ingestion (about 25–35 minutes, plus the backfill scripts);
     - but **not user data**. Accounts, followed players, calls and saved lineups and comparisons exist only in production.
-- **Free-plan limits.** Supabase's free plan limits the database's size and pauses projects that have been inactive for a while. The pinger doesn't prevent this: it calls the API's `/health` route, which doesn't query the database. Only real use of the website keeps the database active.
+- **Free-plan limits.** Supabase's free plan limits the database to 500 MB and pauses projects that have been inactive for a while. The pinger doesn't prevent pausing: it calls the API's `/health` route, which doesn't query the database. Only real use of the website keeps the database active. On 2026-09-27 the database was at 392 MB, 323 MB of it one season of play-by-play. That is why play-by-play is stored for 2025-26 only; see [ADR-005: Play-by-play storage](adr-005-play-by-play-storage.md).
 
 ## Alternatives considered
 
@@ -271,4 +272,4 @@ External:
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder[Qoder Lite], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5] (2026-09-23: documented the queued ingestion pull)*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder[Qoder Lite], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5] (2026-09-23: documented the queued ingestion pull), Claude-Code[Claude Opus 5.5] (2026-09-28: database size and ADR-005)*
