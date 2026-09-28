@@ -165,7 +165,8 @@
 
 ---
 
-## Sprint 3 — Event Sourcing & Become Pro
+
+## Sprint 3 — Event Sourcing, Become Pro & User Feedback Round 2
 
 ### Week of 15 Sep — Intermediate & Advanced tier event-sourcing (Sprint 3)
 
@@ -205,6 +206,8 @@ The largest batch of work in the project so far — roughly 35 merged PRs, mostl
 | Fix bugs found in the 65-check live browser run: a rookie scale 11% high and a year stale, an unclamped value range, repeated value-history points, a duplicated level sentence, and a phone layout that buried the value card | `fix` | Kiran Soodyall |
 | Train the production valuation model (140 rookie seasons from the 2023–2025 draft classes, MAE 10.9 picks, rank correlation 0.54) | `chore` | Kiran Soodyall |
 | Document Become Pro on the docs site and log the AI transcript | `docs` | Kiran Soodyall |
+| Extend the Sprint 2 user feedback survey analysis to the full 11 responses (the form stayed open past the deadline and collected 4 more), recompute the quantitative findings, and extend the feedback-to-action traceability table (F16–F19) | `docs` | Adrian Draxl |
+| Conduct the first Sprint 3 follow-up interview — a hands-on walkthrough of the live app with a survey volunteer — and publish the session findings and twelve new feedback items (F20–F31) on the docs site | `docs` | Adrian Draxl |
 
 ---
 

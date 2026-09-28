@@ -52,22 +52,23 @@ The full survey instrument with all questions is on the [User Feedback Survey](f
 - **Survey drafted**: early September 2026 (25 questions + screenshot placeholders)
 - **Google Form built**: mid-September 2026
 - **Distributed via WhatsApp**: final week of Sprint 2 (2026-09-08 to 2026-09-14)
-- **Responses collected**: 7 responses by 2026-09-14 (Sprint 2 deadline)
+- **Responses collected**: 11 responses by 2026-09-15 — 7 by the Sprint 2 deadline (2026-09-14), 4 more the next day while the form stayed open
 - **Form remains open**: for a second wave in Sprint 3 after improvements
+- **First follow-up interview**: 2026-09-27 — hands-on session with one of the survey volunteers ([User Interviews](user-interviews.md))
 
 ### Response Count
 
-**7 responses** were collected against a target of ~12. The shortfall is acknowledged as a limitation (see below).
+**11 responses** were collected against a target of ~12 — 7 by the Sprint 2 deadline, 4 more the following day while the form stayed open. The target is effectively met; the analysis below covers the full set.
 
 ### Respondent Profile
 
 | Measure | Result |
 |---|---|
-| Basketball familiarity | Not at all familiar — 5 · Casual fan — 1 · Regular fan — 1 |
-| Fantasy basketball experience | Never — 6 · Played a few seasons — 1 |
-| Device | Phone — 5 · Desktop — 2 |
+| Basketball familiarity | Not at all familiar — 7 · Casual fan — 1 · Regular fan — 2 · Hardcore fan — 1 |
+| Fantasy basketball experience | Never — 8 · Played a few seasons — 3 |
+| Device | Phone — 9 · Desktop — 2 |
 
-The sample skews heavily toward **basketball novices on mobile** — not the hardcore fantasy players the tool ultimately targets. This is a stated limitation, but a useful one: it stress-tested the novice experience, and several of the sharpest findings came from exactly that group.
+The sample still skews toward **basketball novices on mobile**, but the four late responses include the tool's first hardcore daily follower with fantasy experience — the target persona — plus a second regular fan. The set now brackets the audience: the novice experience was stress-tested *and* at least one insider's read was captured.
 
 ---
 
@@ -75,30 +76,31 @@ The sample skews heavily toward **basketball novices on mobile** — not the har
 
 ### Quantitative Highlights
 
-| Measure | Average (n=7) |
+| Measure | Average (n=11) |
 |---|---|
-| Landing page visual appeal | **4.86** / 5 |
-| Personalised dashboard usefulness | **4.57** / 5 |
-| Overall satisfaction | **4.43** / 5 |
-| Fantasy optimiser usefulness | **4.00** / 5 |
-| Optimiser output clarity | **4.00** / 5 |
-| "Beat the Model" engagement | **3.86** / 5 |
-| **Confidence in predictions** | **3.71** / 5 (lowest) |
-| Likelihood to use again | **3.57** / 5 |
+| Landing page visual appeal | **4.73** / 5 |
+| Personalised dashboard usefulness | **4.64** / 5 |
+| Overall satisfaction | **4.55** / 5 |
+| Ease of browsing teams | **4.36** / 5 |
+| Fantasy optimiser usefulness | **4.18** / 5 |
+| Optimiser output clarity | **4.18** / 5 |
+| "Beat the Model" engagement | **4.09** / 5 |
+| Likelihood to use again | **3.91** / 5 |
+| **Confidence in predictions** | **3.73** / 5 (lowest) |
 
 ### What Worked Well
 
-1. **The landing page sells the product** — all 7 respondents correctly inferred what the tool does; visual appeal averaged 4.86/5
-2. **The optimiser is the headline feature** — won the most-useful-feature vote (3 of 7); every respondent chose an improvement they'd like (100% answer rate on Q17)
-3. **Zero reported bugs** — 7 of 7 encountered no bugs, errors, or confusing elements
-4. **Personalisation lands** — the dashboard (watchlist, followed teams, Beat the Model) averaged 4.57/5 usefulness
+1. **The landing page sells the product** — all 11 respondents correctly inferred what the tool does; visual appeal averaged 4.73/5
+2. **The optimiser ties for the headline feature** — shares the most-useful-feature vote with player browsing (4 votes each of 11), including the hardcore fantasy player's vote; all 11 respondents chose an improvement they'd like (100% answer rate on Q17)
+3. **Zero reported bugs** — 11 of 11 encountered no bugs, errors, or confusing elements (the first hands-on interview later surfaced two real bugs the screenshot-based survey could not — see [User Interviews](user-interviews.md))
+4. **Personalisation lands** — the dashboard (watchlist, followed teams, Beat the Model) averaged 4.64/5 usefulness
 
 ### What Needs Work
 
-1. **Prediction trust is the biggest gap** — confidence in using predictions for fantasy decisions is the lowest-rated measure (3.71/5); respondents want evidence (historical accuracy, methodology, comparison to other sources)
+1. **Prediction trust is the biggest gap** — confidence in using predictions for fantasy decisions is the lowest-rated measure (3.73/5, ten of eleven at 4 or below); respondents want evidence (historical accuracy, methodology, comparison to other sources, player-level detail)
 2. **Novices can't read the stats** — unexplained stat abbreviations (RPG, APG, TS%), labels unreadable without zooming, "wordy… LLM-esque language"
-3. **Retention tracks audience fit, not product quality** — satisfaction 4.43 but likelihood-to-return only 3.57; one respondent rated satisfaction 5/5 and return-likelihood 1/5 (not a basketball person)
-4. **Beat the Model engagement is middling** — 3.86/5; all three 3s came from respondents not at all familiar with basketball
+3. **Retention tracks audience fit, not product quality** — satisfaction 4.55 but likelihood-to-return only 3.91; one respondent rated satisfaction 5/5 and return-likelihood 1/5 (not a basketball person)
+4. **Beat the Model is polarised** — 4.09/5 with five 5s and four 3s; the 3s no longer come only from novices (the hardcore fantasy player also rated it 3), and the first interview found the name itself opaque until explained
 
 The full quantitative analysis, categorical breakdowns, and qualitative themes are on the [Survey Results and Analysis](feedback-survey.md#survey-results-and-analysis) section.
 
@@ -126,9 +128,17 @@ Every distinct piece of feedback was mapped to an action: what was already shipp
 | F12 | Show player position in player stats | Verify if surfaced; file if missing | Verify |
 | F13 | More team details (recent games with outcomes) | Team profile pages shipped (PR #123); extend if needed | **Shipped** |
 | F14 | Beat the Model: random daily/weekly games | Evaluate for Sprint 3 | Backlog |
-| F15 | Two respondents left contact details for interviews | 1:1 follow-up interviews in Sprint 3 | **Planned** |
+| F15 | Three respondents left contact details for interviews | 1:1 follow-up interviews in Sprint 3 — first session conducted 2026-09-27 | **In progress** |
+| F16 | Injuries and expected return dates | Evaluate adding an injury data source | Backlog |
+| F17 | Player-level predictions, not just game-level | Matchup projections already exist (PR #105); surface them next to game predictions | Partially shipped |
+| F18 | Some pages carry too much information | Progressive-disclosure pass alongside F7–F9 | Backlog |
+| F19 | Player height | Verify the bio fields render on the profile page; file if missing | Verify |
 
 The full traceability table with sources, categories, and detailed actions is on the [Survey Results and Analysis](feedback-survey.md#feedback-to-action-traceability) page.
+
+### Follow-up interviews
+
+The first 1:1 follow-up interview — a hands-on walkthrough of the live app with one of the three volunteers — was conducted on **2026-09-27**. It confirmed the survey's novice-onboarding and readability findings, surfaced two bugs a screenshot-based survey could not, and produced twelve new feedback items (F20–F31). Session notes: [User Interviews](user-interviews.md).
 
 ### Integration Process
 
@@ -137,32 +147,35 @@ Per the [Testing — How feedback is integrated](testing.md#how-feedback-is-inte
 1. ✅ Feedback collected via the survey during the testing window
 2. ✅ Responses reviewed by the team and categorised (trust/ML, feature, UX/accessibility, UX/copy, UX/docs, data/feature, process)
 3. 🔶 Actionable items to be converted into Gitea issues and prioritised in the sprint backlog (pending)
-4. ✅ Changes made in response to feedback documented in the [Sprint Log](sprint-log.md) with links back to originating feedback (F1–F15)
+4. ✅ Changes made in response to feedback documented in the [Sprint Log](sprint-log.md) with links back to originating feedback (F1–F31)
 5. ✅ Full feedback methodology, questions asked, distribution plan, findings, and integration actions documented on this page and the [User Feedback Survey](feedback-survey.md) page
 
 ---
 
 ## Limitations
 
-- **Sample size**: 7 responses against a ~12 target; the form remains open for a second wave
-- **Sample profile**: 5 of 7 respondents are not at all familiar with basketball; the sample does not represent the target audience (fantasy players)
+- **Sample size**: 11 responses against a ~12 target (7 by the Sprint 2 deadline, 4 more on 2026-09-15 while the form stayed open); the form remains open for a second wave
+- **Sample profile**: 7 of 11 respondents are not at all familiar with basketball; the sample still under-represents the target audience (fantasy players), though it now includes one hardcore fantasy player and two regular fans
 - **Not hands-on**: respondents answered while viewing the landing page and app screens (screenshots or live site); several requests concern features completed in the same final-week window as the survey (PR #94, #95, #111, #123), so whether each respondent actually saw them is uncertain
-- **Screenshot-based**: the survey was not a hands-on testing session; Sprint 3 adds interviews and hands-on sessions to close this gap
+- **Screenshot-based**: the survey was not a hands-on testing session — the first hands-on session (the 2026-09-27 interview) has started closing this gap; more are planned in Sprint 3
 
 ---
 
 ## Next Steps (Sprint 3)
 
-1. **File the backlog items** (F3–F14) as Gitea issues and prioritise them in the sprint backlog
-2. **Interview the two follow-up volunteers** — disambiguate the discoverability questions raised above
-3. **Run hands-on testing sessions** on the live app rather than screenshots
-4. **Re-run the survey** after the Sprint 3 model and readability work — a before/after comparison of these scores doubles as evidence for the Milestone 3 *Improvement* criterion (5% weight)
+1. **File the backlog items** (F3–F14, F16, F18, plus the interview items F20–F31) as Gitea issues and prioritise them in the sprint backlog
+2. **Interview the three follow-up volunteers** — first session conducted 2026-09-27 ([User Interviews](user-interviews.md)); two remain
+3. **Run hands-on testing sessions** on the live app rather than screenshots — the first was combined with the 2026-09-27 interview
+4. **Re-run the survey** after the Sprint 3 model and readability work — a before/after comparison against the n=11 baseline doubles as evidence for the Milestone 3 *Improvement* criterion (5% weight)
 
 ---
 
 ## Raw Data
 
-The raw response export (with respondent emails redacted) is archived at [docs/assets/survey-responses/user-feedback-survey-responses-2026-09-14.csv](assets/survey-responses/user-feedback-survey-responses-2026-09-14.csv).
+Two artifacts capture the raw responses:
+
+- **Live Google Sheets response sheet** — [NBA Analytics Tool: User Feedback Survey (Responses)](https://docs.google.com/spreadsheets/d/1LTA5ckTegY2CqBV-1OsBeTl-OzeHkn6OoSdLVkws8X8/edit?usp=sharing) — the form's native destination; the email column is redacted in the shared copy
+- **Archived CSV export** (with respondent emails redacted) — [docs/assets/survey-responses/user-feedback-survey-responses-2026-09-14.csv](assets/survey-responses/user-feedback-survey-responses-2026-09-14.csv) — a version-controlled snapshot of the same 11 responses
 
 ---
 

@@ -390,15 +390,15 @@ The full run is recorded in the [Become Pro transcript](transcripts/ai_transcrip
 
 ## User feedback process
 
-Beyond automated testing, the project runs a **formal user feedback process**. The rubric's "extensive user testing" bar needs evidence of both collection *and* integration — the survey was fielded in the final week of Sprint 2 and collected **7 responses (2026-09-14)**; the full methodology, distribution plan, findings, and feedback-to-action traceability table are published on the [User Feedback Methodology](user-feedback-methodology.md) page.
+Beyond automated testing, the project runs a **formal user feedback process**. The rubric's "extensive user testing" bar needs evidence of both collection *and* integration — the survey was fielded in the final week of Sprint 2 and collected **11 responses (2026-09-14 – 2026-09-15)**; the full methodology, distribution plan, findings, and feedback-to-action traceability table are published on the [User Feedback Methodology](user-feedback-methodology.md) page, with the first follow-up interview documented on the [User Interviews](user-interviews.md) page.
 
 ### Feedback collection methods
 
 | Method | Tool | Status |
 |---|---|---|
-| **Structured survey** | Google Forms distributed via WhatsApp | **Collected — 7 responses (2026-09-14)**, findings documented — see [User Feedback Methodology](user-feedback-methodology.md) |
-| **Follow-up interviews** | 1:1 sessions with survey volunteers | Planned for Sprint 3 — two respondents left contact details |
-| **Hands-on testing sessions** | Respondents using the live app rather than screenshots | Planned for Sprint 3 |
+| **Structured survey** | Google Forms distributed via WhatsApp | **Collected — 11 responses (2026-09-14 – 2026-09-15)**, findings documented — see [User Feedback Methodology](user-feedback-methodology.md) |
+| **Follow-up interviews** | 1:1 sessions with survey volunteers | **Under way — first session 2026-09-27** (hands-on walkthrough, findings documented — see [User Interviews](user-interviews.md)); two volunteers remain |
+| **Hands-on testing sessions** | Respondents using the live app rather than screenshots | **Started — first session combined with the 2026-09-27 interview**; more planned |
 | **Client meeting notes** | Meeting minutes with action items | Ongoing — see [Meetings](meetings/index.md) |
 
 ### How feedback is integrated
