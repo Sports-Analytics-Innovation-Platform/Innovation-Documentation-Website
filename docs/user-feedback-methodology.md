@@ -166,7 +166,7 @@ Per the [Testing — How feedback is integrated](testing.md#how-feedback-is-inte
 1. **File the backlog items** (F3–F14, F16, F18, plus the interview items F20–F31) as Gitea issues and prioritise them in the sprint backlog
 2. **Interview the three follow-up volunteers** — first session conducted 2026-09-27 ([User Interviews](user-interviews.md)); two remain
 3. **Run hands-on testing sessions** on the live app rather than screenshots — the first was combined with the 2026-09-27 interview
-4. **Re-run the survey** after the Sprint 3 model and readability work — a before/after comparison against the n=11 baseline doubles as evidence for the Milestone 3 *Improvement* criterion (5% weight)
+4. **Re-run the survey** after the Sprint 3 model and readability work — a before/after comparison against the n=11 baseline doubles as evidence for the Milestone 3 *Improvement* criterion (5% weight). See [Improvements Made](improvements.md) for the shipped before/after comparisons.
 
 ---
 

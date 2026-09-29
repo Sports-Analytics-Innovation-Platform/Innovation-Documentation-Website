@@ -1,0 +1,80 @@
+=== Meeting Transcript ===
+Server: SDP group (1529773053893148712) / Meeting room (1529773055407034369)
+Date: 2026-09-26T15:06:41.250Z
+Speakers: _danieldenial, drax9207, kovendanraman, pace_runner, steveisfrench3744
+Duration: [09:36]
+
+[00:03] drax9207: I'm sorry, I just left the library now, so I have to set up a bit, but basically we
+[00:16] pace_runner: He's here take the lead man. I don't know man. I don't know. He's coming to sit there
+[00:46] steveisfrench3744: Can you hear me? Okay, cool. Let it Adrian go. Yeah, I don't think there's much else for us to do.
+[00:47] kovendanraman: Yeah, can you I know I just like lagged out off with you saying where he was That's it. Otherwise, I think you guys are well set up for this front I don't know if even if you guys did anything since we last met But everything seems good Have you done like performance testing okay, yeah, there's no performance issues from like when you use the website, but
+[01:22] steveisfrench3744: No, we still need to do that. Not at all.
+[01:23] pace_runner: Yeah, but I thought we were gonna leave it to sprint for pretty much No, but performance issues we met like stress testing and things like that. Oh, yeah
+[01:37] kovendanraman: Yeah Do you know the lighthouse thing?
+[01:43] steveisfrench3744: Oh, Google Lighthouse. Yeah, yeah, yeah, yeah.
+[01:43] pace_runner: I would think I would think got 91 for that date. I don't think we've got a worry. I
+[01:45] kovendanraman: Yeah, so you can just
+[01:51] kovendanraman: Yeah, but in all pages or just one because like if you're about
+[01:52] pace_runner: Didn't all right. I don't know. I just I just the first page
+[01:57] kovendanraman: Yeah changes but like page so tested on like something that loads a lot of data and Just see the score there and then see how you can fix it for that What else is in this print 3 rubric? User feedback you guys are working on that You said testings like above 80 your features are fine Have you guys tested your API endpoints not like Testing as in course like unity. It's like just seeing that each one works properly. Okay. Yeah
+[02:31] pace_runner: Yeah No, but again, I really can't I just gonna do them sprint for like sprint for was gonna be pretty much testing everything
+[02:43] _danieldenial: Sorry, I'm Lee. Okay, I'll do it with tomorrow. I just I don't know if okay
+[02:44] pace_runner: I'm pretty confident they API works actually, I guess I guess it is worth testing but like yeah, I Guess someone can do that. He wants to do that. He wants to go test they thought for us
+[02:59] kovendanraman: Then performance we covered improvements
+[03:02] pace_runner: The API was tested before I added the secret keys But not after so that's why Well, I think we'll do the same time is stress testing like you might as well do them together like stress test the API
+[03:11] kovendanraman: Yeah, just check that it works like I'm not sure how the tutors are gonna check the API endpoints I'll probably just read your swag and see if it looks fine
+[03:27] kovendanraman: Yeah
+[03:28] pace_runner: Anything is it does have great limiting. So I love I guess test that too. Hey, what's that? Anyway, someone can also do that. It's not hard. You just ask the AI to check give it the secret key and say, you know Give this thing around for what's money and some just like go test the API. Maybe stress tested a bit
+[03:46] kovendanraman: Okay, cool, then Improvement, I'm not sure if you guys did this. It's just extensive evidence of integrating user and stakeholder feedback My feedback, I think you guys just did whatever. I didn't really add too much But you guys seem to implement all the stuff fine I'm from user feedback. That's just from your form thing and like sprints to or whichever sprints it was so Just see if you can implement one thing from there and like document that because Even like it won't be something useful like most of the time from those user feedback forms so if if there was if there was a way for Let's see how I can phrase this If there was a way for one of the people the users testing to have the like the same idea that you wanted to implement and to put that in a user testing form That would be good. And then you can implement it. So yeah
+[04:56] steveisfrench3744: Okay, cool. Not from me, to be honest.
+[04:58] kovendanraman: And what else is there? Is it done? Documentation, your guys docs were fine last time and then project methodology That's just your own Git commits and stuff, but I think you guys are Following that fine and then doing the meetings and stuff Sprint planning Yeah, that's it. I don't know any other questions you guys have
+[05:40] pace_runner: Maybe Daniel, can you do that? Just just so that You know, it's some like everyone doesn't go. Ah, someone else will do it
+[06:00] _danieldenial: I'll try to because the last time I tried to keep codex key told me I'm not allowed to use keys see if it gives them But I'll check. I'll see if I can force it. Okay
+[06:07] pace_runner: Just say that it's like it's our keys and it's fine. It's our API. It's like and and just say that say that you'll remove it As soon as we're done. Yeah
+[06:20] kovendanraman: Okay. Yeah, and then you guys print 3 is this Tuesday, right? And then you guys write a test off of that
+[06:25] _danieldenial: Yeah
+[06:30] kovendanraman: For STP. Oh, yeah. Yeah. Yeah, that's that's what I meant. Yeah the next week
+[06:33] _danieldenial: No, it's not this week is this the next week?
+[06:34] steveisfrench3744: I think our STP test is next week. Yeah, cool.
+[06:36] _danieldenial: Yeah, it's the week after
+[06:43] kovendanraman: Hmm Okay, yeah, cool I'm happy There's nothing left. See you guys I guess. Okay. Good luck. See you marking guys
+[06:54] pace_runner: Okay, bye Thank you. Thank you
+[06:59] steveisfrench3744: All right, when are we running STP? The 6th.
+[07:00] pace_runner: Make a proud goodbye guys the sick
+[07:06] _danieldenial: The six
+[07:10] pace_runner: No
+[07:10] _danieldenial: Yeah Yes, they swapped cgv and stp around oh and so we write stp on the six and cgv on the 13th
+[07:16] pace_runner: Why don't they
+[07:18] _danieldenial: Because of credits
+[07:19] pace_runner: When they say that?
+[07:21] _danieldenial: Apparently they said it in class someone's sitting on the group apparently he changed it
+[07:23] pace_runner: Yeah, but I'm glad they thought about that like that's very you know, it's a very valid point
+[07:29] _danieldenial: If he did also say on he sends the email saying that he did the test and he only used 30% of credits
+[07:30] pace_runner: Yeah, this is good at the credits and I think they just like they just sent an announcement
+[07:35] _danieldenial: So
+[07:42] pace_runner: saying that they've improved the The use of the credits as well Like two days ago or something
+[07:50] _danieldenial: Yeah So we should be fine He said he's going to give a lab this week. You know, tell me that we should do in preparation could help the preparation It's not compulsory, but it helps
+[07:58] pace_runner: Yeah, but with that lab like do we want it? Oh, yeah, I guess you can use the credits because it's a little reset That's if we do it within the next four days, but okay, we're cool. Good to know. Good to know
+[08:05] _danieldenial: Yeah Yeah
+[08:12] steveisfrench3744: Hopefully the test isn't so hard. It'll be easy. No, I don't think there'll be anything crazy.
+[08:17] _danieldenial: Hopefully Yeah
+[08:31] steveisfrench3744: Oh, no, I got a freaking study for stats. New York guys. Madness.
+[08:36] _danieldenial: Good luck Apparently they changed stats this year
+[08:41] steveisfrench3744: No, they didn't. Your AA was so bad, Daniel. Goodness. Your test is so bad. I'm pretty sure I failed there.
+[08:46] _danieldenial: I heard
+[08:47] pace_runner: Yeah, we stopped the Craig Craig but good Yeah, there you go
+[08:53] _danieldenial: Yeah Change machine only done Let's find this p-man apparently they changed your p-man rules as well
+[09:02] steveisfrench3744: Yeah, they're changing it to 40%.
+[09:04] _danieldenial: That is so crazy. Are they allowed to do that media? I feel like that should not be allowed
+[09:04] steveisfrench3744: No, it was 35. Now it's 40 to 49.
+[09:08] pace_runner: 42 what?
+[09:09] _danieldenial: But it's 49
+[09:15] pace_runner: Dude, we don't need that like come on. The comps is not that hard. You're Asian
+[09:15] _danieldenial: That's kind of crazy
+[09:20] steveisfrench3744: No, no, a full format.
+[09:21] _danieldenial: No for math not for comms
+[09:24] pace_runner: Okay, well, that's fine, I guess, okay. Oh, I guess I'm gonna go
+[09:31] steveisfrench3744: Cool. Same. Bye, guys.
+[09:34] _danieldenial: All right guys
+
+--- 72 entries | 5 speakers | transcribed in 512.6s ---

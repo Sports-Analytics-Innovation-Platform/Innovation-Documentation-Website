@@ -5,6 +5,49 @@ hide:
 
 # Client Meetings
 
+??? note "2026-09-27 — Client meeting"
+
+    **Attendees:** Adrian, Owen, Josh, Daniel, Kovendan Raman (client)
+
+    ## Agenda
+
+    - Sprint 3 progress and rubric compliance review
+    - Performance testing and Lighthouse audit
+    - API endpoint testing status
+    - User feedback and improvement evidence
+    - Remaining Sprint 3 deliverables
+
+    ## Decisions
+
+    - **Performance testing**: client recommended using Chrome Lighthouse (right-click → Inspect → Lighthouse) on data-heavy pages. Josh already scored 91 on the landing page — client said "I don't think we've got a worry."
+    - **API testing**: team needs to verify all API endpoints work (not just unit tests — manual verification that each endpoint returns correct data). Client said tutors will likely read the Swagger docs and spot-check endpoints.
+    - **Improvement criterion** (5%): client advised implementing at least one thing from the user feedback form and documenting it. Suggested: "If there was a way for one of the people testing to have the same idea that you wanted to implement and to put that in a user testing form, that would be good."
+    - **Stress testing**: combine API endpoint verification with load testing — run them together since both test the API under pressure.
+    - **Documentation**: docs site was fine from last review. No changes needed.
+    - **Project methodology**: Git commits and meeting cadence are being followed properly.
+
+    ## Actions
+
+    | Action | Owner | Due |
+    |---|---|---|
+    | Run Chrome Lighthouse audit on data-heavy pages (not just landing page) | Josh | Sprint 3 |
+    | Test all API endpoints manually (verify Swagger matches reality) | Daniel | Sprint 3 |
+    | Document at least one user-feedback-driven improvement with before/after evidence | Adrian / Team | Sprint 3 |
+    | Stress test the API (combine with endpoint testing) | Daniel | Sprint 3 |
+    | Verify API rate limiting works correctly | Owen | Sprint 3 |
+
+    ## Notes
+
+    - Client was satisfied with the team's Sprint 3 progress — "everything seems good."
+    - The team discussed the Improvement criterion specifically. Client emphasized documenting the integration of user feedback, not just collecting it. The abbreviation explainer (F7) and Model Accuracy Ledger (F1) are exactly the kind of evidence needed.
+    - Owen mentioned the API was tested before adding secret keys but not after. Client said to test it again now that auth is mandatory.
+    - The team asked about the STP test date — client confirmed it was swapped to 2026-10-06 (moved earlier due to credit adjustments).
+    - Client was happy overall: "I'm happy. There's nothing left. See you guys."
+
+    ??? note "Raw transcript (Craig)"
+        [2026-09-27-client.txt](../../transcripts/meeting-transcripts/2026-09-27-client.txt)
+
+
 ??? note "2026-09-07 — Client meeting"
 
     **Attendees:** Adrian, Owen, Josh, Kiran, Daniel, Sanele, Kovendan Raman (client)

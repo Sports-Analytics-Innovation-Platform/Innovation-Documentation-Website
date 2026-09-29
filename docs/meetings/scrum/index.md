@@ -42,6 +42,54 @@ hide:
     - **Josh** is planning to enable RLS on the database. Accidentally added player profile types in a recent change — needs review and merge to main.
     - **Sanele** updated all documentation. Remaining work: diagrams and final meeting notes.
 
+??? note "2026-09-14 — Scrum"
+
+    **Attendees:** Owen, Kiran, Josh, Daniel, Sanele, Adrian
+
+    ## Agenda
+
+    - Sprint 2 submission review and rubric compliance check
+    - Supabase egress limit crisis (278% over the 5 GB free tier)
+    - Database caching and query optimization strategy
+    - Individual sprint contributions review
+    - Survey distribution and response tracking
+    - Bug tracker usage and Gitea issue management
+    - UI animation inconsistencies across devices
+    - Password reset approach discussion
+
+    ## Decisions
+
+    - **Supabase egress** is 278% over the 5 GB free tier (13.88 GB used). Team agreed to implement caching and query optimization in Sprint 3 rather than upgrading the plan — the project only needs one more month of hosting.
+    - **Caching strategy**: implement backend response caching (recalculate stats hourly instead of on every page load) and add React Query `staleTime` to stop refetching all 41 queries on every mount/tab switch.
+    - **Password reset** deferred — the effort (email verification flow, new database fields) is too high for the remaining time. Team will ask the client if it's a hard requirement given Google OAuth is the only sign-in method.
+    - **Bug tracker**: team needs to file real bugs on Gitea — the tracker exists but had minimal active usage. Each member to file issues for known problems.
+    - **UI animations** not rendering on Owen's device only — works on all other team members' devices and phones. Accepted as a device-specific issue, not a code bug.
+    - **Sprint 2 is essentially complete** — focus shifts to documentation, survey distribution, and Sprint 3 planning.
+
+    ## Actions
+
+    | Action | Owner | Due |
+    |---|---|---|
+    | Implement backend caching layer (response cache, staleTime, query consolidation) | Kiran | Sprint 3 |
+    | Ask client whether password reset is a hard requirement | Owen | Next class |
+    | File known bugs as Gitea issues | All | Sprint 3 |
+    | Distribute survey via WhatsApp status and share with contacts | All | Ongoing |
+    | Update individual Gitea project board cards (move to Done, assign owners) | All | ASAP |
+    | Update documentation site with user feedback findings | Adrian | Sprint 3 |
+
+    ## Notes
+
+    - The team walked through the live app together: home dashboard with Beat the Model, player profiles with animations, team pages, admin page, and predictions page. UI looks significantly improved from Sprint 1.
+    - Owen flagged the Supabase egress crisis — the database is at 13.88 GB of 5 GB allowed. Root cause: every page load refetches all data from scratch with no caching, and some queries pull excessive data due to missing primary keys.
+    - Kiran proposed the caching approach: recalculate stats on an hourly interval rather than per-request, and add React Query `staleTime` on the frontend. Team agreed this should bring usage within limits.
+    - Individual contributions review: Josh did the prediction model overhaul, landing page redesign, predictions page, profile page, and all UI implementation from Kiran's designs. Kiran built the home dashboard, Beat the Model game, personalization layer, and caching. Owen built the admin page, Compare/Teams restyle, and fixed login. Daniel fixed auth flows and added accessibility tests. Sanele added advanced stats, bug tracker, and postseason data. Adrian built the documentation site, survey instrument, and Swagger docs.
+    - The team reviewed the survey responses (3 so far) and discussed distributing more widely. Owen and Kiran will share on their WhatsApp statuses.
+    - Josh noted the Supabase egress might reset at the end of the month — team will monitor.
+
+    ??? note "Raw transcript (Craig)"
+        [2026-09-14-team-meeting-6.txt](../../transcripts/meeting-transcripts/2026-09-14-team-meeting-6.txt)
+
+
 ??? note "2026-09-10 — Scrum"
 
     **Attendees:** Owen, Kiran, Josh, Daniel, Sanele

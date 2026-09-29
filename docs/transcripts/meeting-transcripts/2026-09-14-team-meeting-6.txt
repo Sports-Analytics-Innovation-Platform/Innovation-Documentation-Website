@@ -1,0 +1,461 @@
+=== Meeting Transcript ===
+Server: SDP group (1529773053893148712) / Meeting room (1529773055407034369)
+Date: 2026-09-14T11:08:38.589Z
+Speakers: _danieldenial, drax9207, pace_runner, sanele_h_62233, soody_03, steveisfrench3744
+Duration: [55:06]
+
+[00:00] drax9207: Yeah. And then I think I did send all four. So let's just choose one. Once I'm done pushing.
+[00:03] _danieldenial: Yeah, I updated it with my transcripts already, so it should be fine.
+[00:11] drax9207: I don't send the end view files. So, like, what are we talking about? Yeah, yeah, I'll do it.
+[00:18] pace_runner: Okay, Adrian, if you could update the documentation website with the user feedback thing, and then other than that, I'm pretty sure the documentation site is up to date.
+[00:33] drax9207: Okay. You're muted.
+[00:50] pace_runner: Okay, then, yeah, you don't have to do every transcript.
+[00:50] drax9207: I need to add some more transcripts as well.
+[00:56] steveisfrench3744: Yeah i also do but i'm i'm kind of i'm kind of fucked at this point because i was using coda.
+[00:56] drax9207: I think he should just make the transcripts to be honest.
+[01:02] steveisfrench3744: Then i save the transcripts to a branch and then i merge that branch with main and now the transcripts are gone because it didn't save the transcripts within the merge. So i'm gonna try i'm gonna try to get them back but yeah it might be fucked because i did i did so much over the past three days. Yeah yeah i did all of this guys by the way just letting you know.
+[01:22] pace_runner: So just so you guys know, like, okay, what we did this sprint, we updated this page.
+[01:23] drax9207: Yeah, we updated that.
+[01:27] pace_runner: Cool. And then, so when you click on the player that's updated. All right, wait, sorry. Same with this one. And the teams.
+[01:49] steveisfrench3744: Yeah i can hear you cooked on the on the ui design dude why doesn't your thing like have all the animations it's so weird.
+[01:54] pace_runner: And yeah, then we pretty much had to optimize in the prediction stuff, but you know, like the UI looks way better. And then if you're an admin, you have this admin additional admin tab. So admins can do everything you can and then those just have this admin tab here. And they can like edit the teams stuff, the players stuff, and then they can make and delete or make users admins and leads users. Cool. And then I want to add changing games as well at some point, but for now, it's fine. And yeah, that's, yeah, looks way better than it did before. I don't know, dude. What is it supposed to have?
+[02:49] steveisfrench3744: Like there's none of the animations are there like that page is completely empty go down the pages why is it completely empty.
+[02:58] pace_runner: Weird.
+[02:58] steveisfrench3744: Like a whole bunch of graphs and that thing's not spending why is that the case.
+[03:02] pace_runner: I don't think it's the animations default.
+[03:06] drax9207: Yeah, the animations are turned off. Very weird. Can you just inspect?
+[03:21] steveisfrench3744: Okay well that's a problem we should probably ask for to fix that like this on everyone else's devices are the animations there yeah that is super weird like basically half the page isn't there if you go down.
+[03:25] pace_runner: I don't know. It might be my thing, but even when I bring it up on edge, which I have like never edited, like, or changed the settings of or used, it still doesn't really show. So, you know, I don't think so.
+[03:39] drax9207: Yeah, on mine there.
+[03:42] _danieldenial: Yeah, I see the animations.
+[03:43] drax9207: Can you just do the inspect tool and see if there's an error or something?
+[03:45] _danieldenial: I think it's just Owen.
+[03:56] drax9207: Okay, well, fine.
+[04:05] pace_runner: It's like, it's not going to be displayed on mine. Mine seems like the exception, not the average case. So it's whatever. I guess, let me, I can try it, but I don't like my phone or something.
+[04:13] steveisfrench3744: Just very weird i don't even know how that happens like it might be to setting on your computer like energy saving or something i don't even know.
+[04:20] pace_runner: Possibly. But I don't have really energy saving on my computer because, you know, that's kind of useless.
+[04:32] steveisfrench3744: Yeah it's a freaking PC as well yeah i don't know anyways there's a whole bunch of animations on there and then there's also like a whole bunch of quality of life stuff that i want to improve next sprint but i mean for the most part everything is done.
+[04:45] pace_runner: Yeah, it works fine on my phone. So I don't know why what's up with my computer, but whatever. It doesn't really matter too much.
+[04:52] drax9207: Yeah.
+[04:53] pace_runner: It still looks good, even, even so, but I'm pretty sure it'll work on every other device pretty much.
+[04:59] steveisfrench3744: Guys the main thing we need to fix is this database issue i won't even lie like i have my to stop working one day so we need to figure out.
+[05:04] drax9207: What are our options for that?
+[05:08] pace_runner: Yeah, but then I'll pay.
+[05:08] steveisfrench3744: So basically our egress limit is over right so i think it means we're making too many requests but like we're requesting too much data right so like when everything loads it it's talking to the API too much and we're loading too much shit.
+[05:09] pace_runner: It's fine. Yeah, but the thing is like, look at all this shit. Like the best solution is the cash. I agree. But like, we kind of like, we load all the information from the, for the graphs, like creating one graph. Great. Like needs a whole bunch of points and like all the stats need like all the points. You see what I'm saying. So just just create using the prediction model. It has to pull basically every point.
+[05:44] steveisfrench3744: Yeah i don't understand why you're yours is so fucked up like you're even go up is a whole bunch of shit missing.
+[05:46] pace_runner: But then what?
+[05:52] steveisfrench3744: Like this should be stuff in the your matchups thing that should be players in there but that's that that.
+[05:52] drax9207: It's fine. So we need to normalize the database next sprint.
+[05:58] pace_runner: Well, it might just be because I haven't added players.
+[06:01] steveisfrench3744: Oh yeah fair enough okay yeah yeah i think we can also be we can be clever about our queries right so like i think that like we're using i was asking claude the other day and apparently like.
+[06:08] pace_runner: Yeah. Anyway, so, yeah, so I don't know this much you can do. Like, yes, we can have a cash, but the cash is actually just going to contain all the data. And at that point is really a cash.
+[06:29] steveisfrench3744: There's a problem with one of the tables we don't have a primary key so like it's like it's pulling a whole bunch of shit that it shouldn't be pulling and it's like doing a really big request.
+[06:38] pace_runner: Okay.
+[06:39] steveisfrench3744: So i think we can like try just optimize the database just a little bit next sprint.
+[06:42] pace_runner: Let me just ask my chat right here. I mean, surely it made it normalize the database when it made it.
+[06:49] steveisfrench3744: And it's like that's also why it's kind of slow sometimes is because like we're doing like there's there was a big problem in the database i remember asking it and it was like this is going to be a huge huge thing to do. I wouldn't recommend doing it now but maybe next print you should do it so i don't know.
+[07:16] steveisfrench3744: No it did i think it's because a whole bunch of us are doing a whole bunch of random shit so like whenever like.
+[07:17] pace_runner: Let's see.
+[07:22] steveisfrench3744: I would do something and then let's say kieran would do something it would like try to fix my mistake so like kieran's claude would fix a mistake that i made for example. In the tables and then try to add shit and then like i think a whole bunch of the tables just became a little bit messed up that's my theory.
+[07:38] pace_runner: Let's see what chat has to say.
+[07:50] steveisfrench3744: Just say i'll egress limit is over.
+[07:52] pace_runner: I did. I said our usage limit is over for super base. I'm sure it can put the pieces together.
+[08:03] drax9207: Do you have a big adapter?
+[08:10] steveisfrench3744: We have you'll be even more over now it's just gotten worse.
+[08:13] drax9207: Yes.
+[08:21] pace_runner: The thing is, I don't think we can exactly reset it. I mean, but I'm saying like, we can't exactly reset that limit.
+[08:25] steveisfrench3744: No i don't think it's a matter of resetting it but dude we're 278 percent overall egress limit. Yeah i don't do this to okay okay well if we upgrade to the next year which is $25 a month we get 250 gigs of egress which is a lot better.
+[08:32] pace_runner: We've used it already. Like, you know, it's not the average case. So there's still no way for us to go back, even if we are over now, we can't undo it. Yeah. But we're only needed for one month. So, yeah, I do think it's recalculating all the stats, which it might be the
+[08:56] steveisfrench3744: Yeah i know exactly well i think we wait till october and then maybe.
+[08:59] drax9207: Really? How many gigs are you using right now? Oh my God.
+[09:02] steveisfrench3744: We're using 13 and we have a limit of 5. Almost 14 actually 13.88 we're 278 percent over yeah i also have a feeling it's that.
+[09:12] drax9207: How? We should have used Azure because we have like... I think it's because every time you switch pages, it refreshes the entire pool. We're using the real eventlessness, right? Okay. I think we need to change that first.
+[09:30] steveisfrench3744: Do you know i think we could we could also do is i made it so that you can check like the previous seasons like you can check 2023 like all the way up to 2023.
+[09:31] drax9207: Yeah, it does make sense.
+[09:38] steveisfrench3744: I think maybe we should just remove that option and just make it seem like see past two seasons.
+[09:43] drax9207: No, but that's just a look up, right? That's fine.
+[09:49] steveisfrench3744: Yeah no yeah you're right yeah yeah it is a little bit of a problem.
+[09:50] drax9207: The main problem is every time you load a page, we're fetching the data, right? Every time you go back and forth between a page, it reloads all the data and we fetch it. That's the problem. And it's probably recalculating as well. Yeah, it's too late, bro.
+[10:18] pace_runner: problem. So maybe we can create a cache for the stats because, you know, the whole reason it's using so much data is because it has to recalculate the stats every time. But what if we just recalculate the stats every day or hour even? You know what I mean? Instead of every single time that we load in. Okay.
+[10:41] steveisfrench3744: Yeah i don't know how we're gonna yeah i think that's a good fix but i mean we need to just i need to just bring it down at least.
+[10:51] steveisfrench3744: Whoa i'm echoing like crazy yeah it's a weird one but okay well i think that's the just the biggest thing we need to fix now there's also like a whole bunch of you i stuff that i kind of want to fix. A little bit i'll ask you if we can get it down to five gigs or less than five gigs.
+[11:08] pace_runner: It says that there is real room here. A mix of a few. Okay. Just read it. Not just your turning.
+[11:27] steveisfrench3744: No it's not it's not it's not it's not no but it says if we bring it down we don't have to pay.
+[11:27] drax9207: We're on 14 gigs. How do we go back?
+[11:35] pace_runner: Yeah.
+[11:36] steveisfrench3744: It says if you plan to maintain this level of usage update your plan to avoid any restrictions.
+[11:36] pace_runner: It might reset at the end of the month.
+[11:42] steveisfrench3744: We have a grace period until the 14th to fix it pretty much.
+[11:46] drax9207: I think it's sent to two people by Google for using one of their APIs. And I really had to beg them through email to not make me pay it. And they were kind enough not to make me pay that. How would I calculate that?
+[11:59] steveisfrench3744: Yeah so i mean if we can just if we can just sort this out it will be fine. I'll ask it if we can get it below five gigs i have no idea but i mean it should be able to know.
+[12:20] drax9207: Sorry. How are you doing? Good and you, man. I'm sorry.
+[12:26] steveisfrench3744: Yeah guys it's it's uh there's stuff that i i sent you a whole long list no oh and yeah just reload it.
+[12:27] drax9207: So good. My chart is a bit fat. That's why it gets back. Ooh. Ooh. So the main thing you need to do for the hackathon today is get all four of these done and start doing the signs. Yeah.
+[13:00] pace_runner: Okay. And then we're pretty much done. So I don't know what we're really going to be doing next sprint.
+[13:05] drax9207: We are pretty much...
+[13:07] pace_runner: It's like small improvements. Yeah, but not, I don't know. It doesn't look too much.
+[13:12] drax9207: Wait, who's screen sharing?
+[13:13] pace_runner: Yeah.
+[13:14] drax9207: Owen. Can you go back to the websites? And then switch. Just go to any tab and then back to the homepage. What about... Why? I just want to see something. So my worry is that each of those reloads was fetching something. Yeah.
+[13:43] pace_runner: That, that's exactly the problem.
+[13:43] drax9207: I think I may have said it to 15 minutes.
+[13:46] pace_runner: It's like, we should only need to update like the cache every maybe hour instead of every time it's reloaded. And then instead when it's reloaded, it just takes it from cash.
+[13:57] drax9207: But I think I said it to 15 minutes, but it's individual, like, on individual machines.
+[13:57] pace_runner: I mean, yeah, that could be, yeah, like, yeah, like a live one.
+[14:06] drax9207: There are ways maybe we could do it on a database, Ron.
+[14:13] pace_runner: That's a good question.
+[14:14] drax9207: Yeah.
+[14:15] pace_runner: I don't know. No, it wouldn't be a database.
+[14:19] drax9207: Maybe we set up a second database.
+[14:22] pace_runner: I would say that you would do it in the backend because the cash is saved in the
+[14:25] drax9207: Actually, that's a bad idea.
+[14:28] pace_runner: backend files. It doesn't, it's not really, I mean, I don't know.
+[14:30] drax9207: We could set up a second database just for cache data that we just...
+[14:33] pace_runner: Actually, yeah, it might be database. I don't know. Okay.
+[14:44] drax9207: That's like, you know, the 15th that even an interval data that we store.
+[14:48] pace_runner: So right now it, it's going to basically implement more caching. There is already some in place and it's going to fix some queries because some queries are putting more data than they need. Yeah.
+[15:03] drax9207: What are you using in your code base? Oh, is that Claude? Okay.
+[15:09] steveisfrench3744: Guys coders low-key fire won't even lie. Yeah i was using it yesterday i was using on the day before yesterday coda and claude coda like it was cooking i won't even lie.
+[15:22] drax9207: Can I say one thing about Claude? It actually does good front-end design.
+[15:26] steveisfrench3744: Dude that's what i'm i was doing front end with coda and i was like dude like you're doing such a good job like i. I was like sending it mock-ups like i would literally draw on a piece of paper and send it to coda and they would like give me exactly what i wanted.
+[15:40] drax9207: Yeah, I noticed that when we were doing that lab and people were making those to do lists, it was actually really nice. The designs that I saw.
+[15:51] steveisfrench3744: Yeah coda mine wasn't.
+[15:51] drax9207: Yeah.
+[15:52] pace_runner: But it was like, everyone's was the same though.
+[15:55] drax9207: Really. I could mine special things.
+[15:58] steveisfrench3744: Same i also did no yes that's so funny that's so funny it's so funny.
+[15:59] drax9207: Do you know what Yaoi is? So it's like gay men in Japanese. Mine was themed after that. So it would pull images from the internet of very popular Yaoi couples. And then it would have them as characters being like, oh, today you have to do this. Start working. I think for another lab we had to do, I put a jumpscare every two minutes. So it would be like a FNAF character, like a gif with something, and then the like scream audio would play when that happens. Yeah.
+[16:54] steveisfrench3744: We've only had two labs for sd right sdp okay cool i'm just making sure i haven't missed anything.
+[17:04] drax9207: Like 30 minutes, like the same one. Like I saw an email like first of all, it's like shit. Right now.
+[17:16] pace_runner: I think it's Claude doesn't do a bad job. It's just like, it's very bad at doing an excellent job. Yeah, it kind of was.
+[17:22] steveisfrench3744: Dude i was garbage before i won't even lie.
+[17:25] drax9207: It all looks the same.
+[17:26] pace_runner: But I'm saying like backend wise, it's done everything we've wanted.
+[17:27] drax9207: With Claude.
+[17:28] steveisfrench3744: Dude it was like it was it scaled badly as well like dude it would like take up.
+[17:34] pace_runner: No problem.
+[17:35] drax9207: Oh no, back-end it's amazing.
+[17:35] pace_runner: I would never use Gemini for coding, dude.
+[17:37] steveisfrench3744: Yeah claude is awesome dude it just really.
+[17:37] drax9207: I'd say Germanized better back-end, to be honest. From my experience, like German is so shit on VS Code. Oh my god. It's in your time.
+[17:51] pace_runner: I swear Gemini is kind of retarded. Like I use it for some general questions because like I get unlimited or whatnot. But like, dude, like this thing uses Gemini, right? Like the, whatever, like Gemini notebook, dude, like the amount of context I have to give this thing for each question is insane. It's, it's like it forgets everything about the conversation.
+[18:14] drax9207: It's also got a really small context. I know. It's very forgetful, and I don't understand why. I use it for all my deep research.
+[18:26] pace_runner: I use it for like basic questions that I don't, I don't really just, yeah. Like it's, it's a, yeah, basically. Like anything technical, I would suggest a different model.
+[18:39] drax9207: I use it for deep researches. That's pretty much it. We should all submit to that form that Adrian posted, even though it would be faking the data. Just get enough responses. Just all respond to the survey. I feel like more than 10 is good. More than 20 would be amazing, but more than 10 is good enough. I think there's six of us. That's what I'm saying, more than 10 would be nice. So like six plus four. We could do twice as well. That's separate emails.
+[19:37] pace_runner: I mean, I can, I can ask some people to do it, I guess. How long is it?
+[19:43] drax9207: How long?
+[19:43] pace_runner: I don't even look actually. Okay.
+[19:47] drax9207: It's five pages. It's like seven minutes of survey. Quite a few written questions, but you don't have to submit them. That's purely optional. Do you know his brother? No. His brother is so funny. Josh. Another Josh.
+[20:16] pace_runner: Yeah, this Josh is not funny, dude.
+[20:16] drax9207: They are twins.
+[20:18] pace_runner: I feel like we need to give it a little bit more volume.
+[20:19] steveisfrench3744: Fuck you okay this print basically what i did was i made i'd redesigned the landing page.
+[20:19] drax9207: They are like complete opposite personalities. Oh, I know. I know this guy. He's kind of evil. I see him post on Instagram. He's so red. He's so strange. I actually have met him before. He always be talking about points. Points? Yeah. Is he black hole? I don't know. I have never spoken to him besides on Instagram. And I was in his year as well. Yeah. I don't know if he's doing on us now or something. I haven't seen him for a while. I don't think so. Are we done at the meeting now? I don't know what else to talk about. Was Craig even here? Craig is here. Craig is listening. Well, we did everything in sprint one,
+[21:20] pace_runner: Like we haven't talked about anything.
+[21:27] drax9207: sprint two. Josh basically did many things.
+[21:31] pace_runner: Yeah. Yeah. But like just so Craig has something to actually like summarize.
+[21:34] drax9207: I forgot to do the
+[21:37] _danieldenial: No, I think Craig is fine. He'll see that we're finding how to make a database loader thing.
+[21:38] drax9207: player profile. Player profile? Let's say I'm a basketball player.
+[21:45] _danieldenial: Dear God, I need to check my transcripts of whatever I did.
+[21:46] pace_runner: Okay.
+[21:47] drax9207: I want to see if I can possibly
+[21:47] pace_runner: Who, who did what this sprint? Let's start there.
+[21:51] drax9207: do the graduation or FBA draw. Yeah. I'll do it.
+[21:59] steveisfrench3744: I took care and okay no it does.
+[21:59] _danieldenial: Wait, Owen, can you test something for me? Sorry, sorry, sorry, sorry.
+[22:05] pace_runner: Okay.
+[22:05] _danieldenial: Just sign out of your account quickly on the website. And then just like, I know, can I don't sign in? Just refresh the page.
+[22:13] drax9207: Yeah. We also need to do something about that percentage.
+[22:20] _danieldenial: I want to see if this is working and then click home. Okay, yeah, I'm going to go to work again. Can I continue, Josh, sorry.
+[22:28] pace_runner: Don't we want them to be able to go to home without signing in?
+[22:29] _danieldenial: No, because the home is personalized to whoever signed in, so I just changed it.
+[22:33] pace_runner: Okay. Yeah, I see. Okay.
+[22:35] _danieldenial: It should. I fixed this like three times, but I don't know why it's still not working.
+[22:37] pace_runner: Fair enough. Let's see if this works actually, like from here instead of the top.
+[22:43] _danieldenial: God, and I, yeah.
+[22:44] pace_runner: Dude, fixing the fricking login was kind of a headache.
+[22:48] drax9207: I also added some tests.
+[22:49] pace_runner: I won't even lie. Like the reason it wasn't working was for, okay, there was a bunch of reasons,
+[22:52] _danieldenial: Oh, I did that. I did it, but I think maybe I did it locally instead of on my thing.
+[22:55] pace_runner: but like in render or something, like there was an added URL, URL as an environment variable, which I needed to like remove. And yeah, that anyway, I guess like for this sprint,
+[23:14] _danieldenial: Kind of wasted a year.
+[23:15] pace_runner: I mean Josh did like most of the UI, but I did the compare ones and the team ones like these two.
+[23:22] steveisfrench3744: Oh and i won't even lie i did all of this again like your design was completely different to this.
+[23:22] pace_runner: Wow.
+[23:28] steveisfrench3744: And there were lots of problems with it i'm not even gonna i spent a lot of time on them as well.
+[23:28] pace_runner: And then I did the admin one and I fixed the login. And I think I added like a bunch of tests like to get it up to 80 again.
+[23:42] _danieldenial: Oh, I also did something with the testing. I need a strong or something.
+[23:43] pace_runner: Where can I see that model game thing?
+[23:46] _danieldenial: I will not be code excitable. No, I think we all said everything.
+[23:50] drax9207: For this sprint, I did the home page. I was spending most of the time on doing the beat the model game, making the leaderboard for it, displaying all our prediction data in the match history.
+[24:08] pace_runner: Where's that?
+[24:09] steveisfrench3744: It's on the front on home basically you go on the thing there the new york sat on turn your thing
+[24:09] pace_runner: Oh, that's cool.
+[24:10] drax9207: Oh, click on it. You take a guess which one you think is going to win.
+[24:20] steveisfrench3744: you can click which team you think is going to win it's basically just to see that like
+[24:25] drax9207: And then on the top right, you can see a leaderboard.
+[24:28] pace_runner: Like who's been guessing the most accurately.
+[24:32] drax9207: Yeah.
+[24:32] pace_runner: You cut out.
+[24:33] steveisfrench3744: how good our model is like you know if you do that yeah well this print what i did was i updated the
+[24:35] drax9207: It's a proof of constant. So once you guessed five times, this is sometimes the problem. See, it's showing the same one again.
+[24:49] pace_runner: Hello. Yeah.
+[24:51] drax9207: I don't know why. Sometimes it doesn't and sometimes it does.
+[24:55] pace_runner: But it doesn't even bring up a new one.
+[24:56] drax9207: That's why. But then sometimes it does. I don't know why. I think it's because that's the only new match that's happened or something like that. But I don't know why. Normally it does work.
+[25:15] pace_runner: Well, I mean, okay, maybe we'll fix that a little bit in sprint three, but anyway, okay, who's next?
+[25:21] drax9207: See now on my side, I've got a completely different one. I've got New York versus Cleveland. And then mine refreshed to a new one, but yours didn't. That's why I'm saying I don't understand why. Mine refreshed to Oklahoma versus San Antonio. It's fine. I'll fix it and figure out why it's showing the same ones. Yeah. Okay.
+[26:03] pace_runner: Okay.
+[26:05] steveisfrench3744: prediction model and i added back tests and permutation tests to the model to like just make sure it's there and that it's tested and whatever i redesigned the landing page. I did the prediction page i redesigned it and like i added more stats and the user personalized features actually on the prediction page and i just added a few more like actual algorithms to like see okay how many players will this player score in this particular game. I added all the user functionality so that people can like actually add profile pictures and have user data in the database so i basically edited the entire database to like actually get the user functionality to work. What else oh and i also implemented all of Kirin's designs for the UI and i got them all functional and all connected to the back end. I also added like a whole bunch of animations in the app i fixed all like the loading states because a lot of them were fucked up and i also like fixed all the little bugs were like a little pop-up would show up and it would be the old UIs pop-up so i just redesigned all the pop-ups. We also added the profile
+[27:08] drax9207: So I just redesigned all the props. Also out of the profile page,
+[27:14] steveisfrench3744: page and what else i also fixed stuff in render because we needed to update render because our
+[27:14] drax9207: I also fixed up in RENDA, the unit of the RENDA,
+[27:21] steveisfrench3744: environment variables were wrong because since we didn't have user data i had to like go in there
+[27:22] drax9207: because I will provide an invariable word, because it's simply because I have used the data.
+[27:27] steveisfrench3744: and kind of fix where everything was pointing and that's pretty much it what we do robot you
+[27:31] pace_runner: So basically Josh did everything.
+[27:32] drax9207: Okay.
+[27:33] pace_runner: Yeah. Anyone else? Hello. I did some of the documentation.
+[27:43] drax9207: No, I didn't say mine.
+[27:44] _danieldenial: Okay, go, go, go.
+[27:46] drax9207: I said the initial briefs for the extra pages on the doc website and I set up the survey. And that's, yeah, that's it. And I'll do the user feedback. Yeah.
+[27:57] pace_runner: But yeah, like the survey was like, I don't know,
+[27:59] drax9207: Yeah.
+[28:00] pace_runner: like one of the main things we had to do this sprint, like that in the bug thing.
+[28:04] drax9207: Yeah.
+[28:06] pace_runner: It's like everything else, like don't get me wrong, we made huge improvements, but like it was kind of the things that we hadn't implemented yet.
+[28:16] drax9207: I don't know even when to start the survey because changes were happening so much, especially for the UI, but yeah, I did it yesterday. So, yeah, it's basically it. Yeah. And Owen touched up the docs as well a few days ago to make sure they were, like, relevant. Oh, okay. Wait, why is it not showing?
+[28:37] pace_runner: I mean, I did it again yesterday because after just made a bunch of changes. And I added a bit of like stuff for the bug tester yesterday. I just didn't have the user thing, you know, so I couldn't update that one. I just want to, I'm like thinking, should we make it a little bit more clear about like, I mean, it does say what we do, but like maybe about how we do it.
+[29:09] steveisfrench3744: don't have like you don't have the whole model thing that's for the next page the page
+[29:11] pace_runner: Okay.
+[29:14] steveisfrench3744: underneath that one that's where it shows the model and everything i don't know
+[29:18] drax9207: It's his product.
+[29:19] pace_runner: Fair enough.
+[29:21] steveisfrench3744: Owen's computer is just fucked there's like a whole bunch of graphs and stuff on that page
+[29:21] drax9207: It's his device only.
+[29:22] pace_runner: Yeah.
+[29:23] drax9207: Oh, yeah. What? Our devices work.
+[29:27] pace_runner: I don't know. It works on pretty much up analysis.
+[29:29] drax9207: Yeah.
+[29:29] pace_runner: I wouldn't worry too much about it.
+[29:36] drax9207: Yeah, it does show.
+[29:38] steveisfrench3744: that like show you how we predict and whatever oh guys we also need to make the database
+[29:42] drax9207: Yeah, I got it on my side. It's showing properly. Yeah, we are not at 69%.
+[29:53] pace_runner: 69% what?
+[29:53] drax9207: Yeah, let's just do that.
+[29:54] pace_runner: Should we go through the brief to see if we have everything? Okay.
+[30:00] drax9207: Yeah. Do you see your children? Yeah, we have three now.
+[30:10] pace_runner: So core features.
+[30:10] drax9207: Yeah, we have three now.
+[30:12] pace_runner: Yeah. Also, I think I updated the API, but you know, automated testing. Yeah. Stakeholder reviews. We have two correct.
+[30:25] drax9207: But wait, stick hold of reviews. What does it mean? We just met with this client.
+[30:31] pace_runner: We spoke to our client.
+[30:32] drax9207: Oh, yeah.
+[30:33] pace_runner: Okay.
+[30:34] drax9207: Okay.
+[30:36] pace_runner: API. I'm pretty sure API is pretty well set up.
+[30:38] drax9207: Oh, you just need to do a type check.
+[30:40] pace_runner: Oh, by the way, I just made the commit, by the way, guys, for the improved. Oh, man. Okay. Hold on. Okay.
+[30:52] drax9207: So,
+[31:10] pace_runner: And then actually let's just check what are where, let's check where our API is at.
+[31:18] drax9207: just get it.
+[31:19] pace_runner: Okay.
+[31:20] drax9207: It's going to follow the points on every finger. One, two, three. One, two, three. And then the hand as well. And then the face. No, that's part of the thing about our project is that it doesn't record your face and doesn't identify who you are. That's part of puppy. Well, it doesn't have to identify, but
+[31:44] pace_runner: So what our API does is everyone listening,
+[31:44] drax9207: I think
+[31:46] pace_runner: because it's kind of important. Okay. So based on what I've seen exploring this code base,
+[31:48] drax9207: maybe
+[31:51] pace_runner: API, app such API is the next, a next JS plus principal first post Chris and super base. Oh, hosted back end. Okay. That's fine. Right. For the NBA sports analytics survey, teams and players. So you can get that. You can get games. You can get predictions. Fantasy lineup optimizer. Okay. I think it's basically just a way to access the app. Basically everything that app does, except you can access it by code. I think that's pretty much what it does.
+[32:27] drax9207: do you think people maybe we just spend
+[32:31] steveisfrench3744: secure we need to add the RLS stuff well i can do that but basically our database isn't very secure right now but i remember when i when we did this last in SD it literally just fucked up the whole project but just like just remember that we need to just do the RLS stuff it shouldn't
+[32:49] drax9207: one of us just spends the entire sprint three doing that.
+[32:54] steveisfrench3744: be too hard though i mean it's just like you click a little button and you just you just get new
+[32:54] drax9207: So I go to check the API.
+[32:58] steveisfrench3744: variables and stuff but i just remember when we were doing it in stp like it it fucked everything up like kona had to keep changing i forgot what it was but there were a whole bunch of things that were just making the app go crazy yeah one of the how do you see them yeah has anyone actually
+[33:14] pace_runner: Okay. I pushed the most hopefully fixed version for the making things cheaper, whatever. And yeah, as far as the API goes, your next API talks to the advice, Prisma database. I just want to make sure that we're hosting the API.
+[33:40] drax9207: Adrian is the other guy we're working with
+[33:43] pace_runner: Like I'm pretty sure we are, but you know,
+[33:50] drax9207: for the hackathon. I know Jonathan. Okay. They went to their laptops. And it's broken. It's
+[34:02] pace_runner: where do we see all the responses to the forms? Okay. So it's our own API.
+[34:08] drax9207: through Adrian's account.
+[34:08] pace_runner: I pushed the thing. Hopefully if that passes. Yeah.
+[34:11] drax9207: Yeah, I think right now I'm the one that can see it.
+[34:15] pace_runner: That's fine.
+[34:15] drax9207: Do you want me to
+[34:16] pace_runner: Can you just like screen share so that I can see like, all the responses quick.
+[34:19] drax9207: Yeah.
+[34:20] pace_runner: Yeah.
+[34:22] drax9207: We've only got three, you said. Okay. Okay. Oh my gosh. Can you guys see it? These are all the responses.
+[35:00] _danieldenial: Yeah, I need to go and update mine because I did do some from today.
+[35:02] pace_runner: Oh, very cool. What do you mean?
+[35:05] drax9207: Like individually.
+[35:14] pace_runner: How do you see it's very nice.
+[35:15] drax9207: Do you want to see the individual responses?
+[35:18] steveisfrench3744: has anyone filled it in yes it's literally like littered all over the app the historical
+[35:20] drax9207: Yeah, we've got three responses so far. Two of them were random people from our status. And then one of them with me. I'm going to add it to my status as well. Yeah, you should
+[35:29] pace_runner: We wait.
+[35:31] drax9207: you guys just add it to your status. It's a little weirdy in some places and uses some LMS language which kind of distracts the point of the text. Who said that?
+[35:46] pace_runner: Why do we have this?
+[35:46] drax9207: Oh no.
+[35:47] pace_runner: What would make the predictions more trustworthy? Show historical accuracy. Don't we have this? Yeah.
+[35:55] drax9207: Sorry. What do you mean, what are you talking about?
+[35:59] steveisfrench3744: accuracy yeah you can literally go look at different seasons on the predictions page
+[35:59] pace_runner: But then why is this like a question? Cause it's there. You know what I mean? Anyway, it's fine. Whatever. Sports betting.
+[36:08] steveisfrench3744: bro like the first thing you see on the home page is how accurate the model is
+[36:09] drax9207: You're not going to lie. I didn't fill out any of the like written answers. I just did the multiple choice ones. Yeah.
+[36:25] pace_runner: There's a little bit of a thingy here, Adrian. It's not the end of the world, but like, I don't know that it's
+[36:31] drax9207: Let me see what you're talking about.
+[36:32] pace_runner: like a typo. It's not that deep.
+[36:37] drax9207: Where?
+[36:39] pace_runner: It's fine.
+[36:40] drax9207: Yeah, I saw that. Oh yeah.
+[36:44] pace_runner: I don't think it matters. I don't even know what this like,
+[36:46] drax9207: Mine is 10 bucks. Mine is 10 bucks. Can we go back to the rubric? Because this is fine, right? Yeah, sure.
+[36:55] pace_runner: I really don't know how the optimizer works all too well. Like, I don't like, well, I understand what it does.
+[37:00] drax9207: Let me find the rubric.
+[37:01] pace_runner: It just doesn't see how it's very useful. Like, I get that it's.
+[37:03] steveisfrench3744: it's like if you're building a fantasy team right you need to put like big players based
+[37:07] pace_runner: Yeah. I kind of get that, but is there actually like an NBA team thing
+[37:09] steveisfrench3744: on a specific salary range you can't like just like get all the fucking best players in the league and put them in yes there is yeah there is a fantasy league yeah i can hear you
+[37:18] pace_runner: or whatever you call it?
+[37:18] drax9207: Why don't you
+[37:21] pace_runner: I did not know that.
+[37:22] drax9207: go silent?
+[37:22] pace_runner: I understand the optimal output.
+[37:26] drax9207: Yeah. I low key can't spare. Because my laptop dies really quickly. Don't worry bro. I'll use your laptop instead. Okay.
+[37:39] pace_runner: Why is it? I think they should maybe be like an option for like no improvements, you know, but anyway, like custom constraints, show alternative lineups. I guess that one's not bad. Like this, this one here though should have like an, like no improvements option maybe. But yeah, I don't know.
+[38:05] drax9207: Yeah.
+[38:07] pace_runner: I guess that's what the others for.
+[38:07] drax9207: I'm going to
+[38:10] pace_runner: It's fine.
+[38:10] drax9207: go.
+[38:10] soody_03: you can unmute yourself. Yeah,
+[38:13] pace_runner: Dude, this is taking long.
+[38:15] soody_03: did fix it. What do you fix?
+[38:17] pace_runner: Bro, there's so many questions.
+[38:30] soody_03: The app it was. I didn't. I forgot to update my security rules. That's why it wasn't working.
+[38:42] pace_runner: I would like, okay.
+[38:45] soody_03: That's what I said Adrian. I think the multiple choice are fine.
+[38:50] pace_runner: Yeah.
+[38:50] soody_03: Just the written questions a bit much.
+[38:51] pace_runner: I mean, the more questions, the better, I guess, and then they can't say that we did a shitty job.
+[38:57] soody_03: True, more questions does mean more efforts.
+[38:59] drax9207: My bad guy.
+[38:59] pace_runner: And now I'm like going to 25, it's like, damn.
+[38:59] soody_03: My bad guy. Yeah, no, it's like all the way at the end.
+[39:02] pace_runner: And I don't see a done button.
+[39:08] soody_03: It's at the end and it's literally 25 questions. And then the last section is just thank you. And then you're done.
+[39:20] pace_runner: No. Okay. Yeah. Okay. Well, I mean, I'm pretty much happy. I don't really know what else to go through. Did everyone say like what they did? The sprints that the Craig bot could summarize. I realized that we kind of need to update this thing,
+[39:38] soody_03: Vanilla hasn't gone. Welcome to. Yeah, just talking to my laptop. Can you can you guys him my girlfriend made it for me? Hello? OK, so this friend I did the.
+[40:03] steveisfrench3744: hello no you'd like like making an arm move like putting like uh
+[40:08] soody_03: The bug tracker and the custom form for submitting bugs. I did the updated the player profile with some. Advanced stats, usage, cost minus, offensive rating and defensive rating.
+[40:31] pace_runner: the branch, like the issues, the table thing.
+[40:34] soody_03: Oh, the Kanban. Oh, yeah, yeah, yeah, guys, I did add three of my own. I literally just need to move it to done.
+[40:43] pace_runner: Yeah, but like, okay.
+[40:44] soody_03: Yeah, same. Yeah.
+[40:45] pace_runner: Well, last time there was some of them where, yeah, like here it has like a checklist of five things. So you have to make sure that you checked all five and we meet all five. If you don't, but you're still happy just to leave that, the ones that you don't meet. And this one has seven. Anyway, and then like, yeah, we kind of have to move all of them. And then you have to assign the person who did it and everything like that. So yeah.
+[41:05] soody_03: Yeah, I did do that for mine.
+[41:09] pace_runner: Okay. Yeah.
+[41:11] soody_03: Yeah.
+[41:11] pace_runner: Okay. Should everyone just do their own or does like one person want to do it for everyone? Because it's not hard.
+[41:16] soody_03: Let's just do our own.
+[41:16] pace_runner: Like you can see who did it. But first on it, you can see like clearly it was Kiran who did this because it's like, you know, it's, you can see the pushes and it's Kiran, Kiran.
+[41:25] soody_03: No, bro, let's just do our own, bro.
+[41:28] pace_runner: Okay.
+[41:28] soody_03: Let's just do our own. Yeah, we should just yeah, guys, just do your own ones so that we don't get confused with whatever's being done, whatever's being done.
+[41:41] pace_runner: I had crowd endpoints for player and team stat management. I have no idea if we've done that. It looks like Adrian did that, but I'm not sure.
+[41:50] soody_03: This is what we want to be proud of, OK?
+[41:52] _danieldenial: I just need to move.
+[41:54] pace_runner: Had user customization preferences, updates,
+[41:54] soody_03: Yeah, one of the highlights, bro. Yeah, go see what you're doing right now.
+[42:05] pace_runner: assign roles to users. I think I did that.
+[42:14] soody_03: Like the logo? Yeah, I do. Did you design this? I designed it. I like that friend actually made it. Yeah, she actually made it. She noticed. Yeah, she said, yeah, how to game design and animation and animation. I know a few people from that degree. I'm sure that they probably are so I'm copying them. We need to do it. Oh, no, but we're using OpenGL. They're using they're using Blender Blender. Like, OK, we don't even have to use Blender. You could technically do all of what we're doing in OpenGL. Yeah, very hard to make the graphics.
+[42:52] pace_runner: I'm using Belinda. It sucks, but there's an API for it.
+[42:54] soody_03: I'm just saying, by the way. Fuck Blender. There's like a billion controls.
+[42:59] pace_runner: I just let chat use it.
+[43:01] soody_03: There is there is a connector. Like even Claude is so bad at rigging, like it's good at making static objects, but the moment you want to make something move in a certain way, it sucks. It's terrible.
+[43:16] pace_runner: Again, I just, I just still chat to do it. So like moving objects.
+[43:21] soody_03: So you did you did rigging using AI
+[43:26] pace_runner: Yeah.
+[43:28] soody_03: or making the objects moving.
+[43:31] steveisfrench3744: points on an arm like flex points or whatever they're called what does it say
+[43:35] soody_03: Yeah, well, it's good.
+[43:36] pace_runner: We haven't really done that. You know, I always doesn't do that.
+[43:39] soody_03: Do you know how difficult it was for me to even try to get like the hand to grip onto a flashlight so make two models interact with each other? That was crazy. It never worked.
+[43:49] pace_runner: Like the hand doesn't go onto the flashlight.
+[43:50] soody_03: It doesn't. I never worked.
+[43:52] pace_runner: It just shows like a flashlight, which is fine.
+[43:54] soody_03: No, that was me being like, oh, this is optimization, not really optimization. I just couldn't figure out how to get it working.
+[44:02] pace_runner: Yeah, that's fine. Like I have no problem with how it works.
+[44:04] soody_03: Yeah, but I spent like a solid three days trying.
+[44:05] pace_runner: I'm just saying like the hand doesn't do that. Does anyone know who did this?
+[44:10] soody_03: No, I know I spent like a solid three days trying to get it to work, but it didn't.
+[44:18] pace_runner: I think maybe Adrian based on the push.
+[44:21] soody_03: Good work. What did I do?
+[44:24] pace_runner: Add swagger, open API documentation to, oh, it's documentation.
+[44:28] soody_03: Yeah, that was me.
+[44:28] steveisfrench3744: it was adrian no we can do it don't think it's that bad dude you can make two options where
+[44:29] pace_runner: Okay.
+[44:29] soody_03: I forgot to say that was me as well. So I added that in the beginning of the sprint as well. And then I updated it last night, I think.
+[44:38] pace_runner: Stick all the interactions. You can say that probably Adrian writes. Yeah.
+[44:45] soody_03: Yeah. This is still coming. I don't know ultra code. That's why.
+[44:56] pace_runner: Okay.
+[44:57] soody_03: For instance, when you say, you don't use the one bug,
+[44:57] pace_runner: Maintain active bug tracker usage. Can I delete that? Cause we did not do that, but we have it. But none of us have used it.
+[45:05] soody_03: you don't use it.
+[45:06] pace_runner: So I'm going to delete it. Cool. I'm still leaving it.
+[45:08] soody_03: The scenario is that he submitted one bug. So maybe we can, like, fabricate bugs.
+[45:17] pace_runner: I don't think it's a requirement.
+[45:18] soody_03: Wait, guys, that's not a bug.
+[45:19] pace_runner: And yeah, to have a bug tracker, but to use it is different.
+[45:21] soody_03: It is a requirement. It's a literal requirement of a bug tracker. No, that's no, it is.
+[45:29] pace_runner: And continuous use of bug tracker.
+[45:29] soody_03: So we said that GitHub, not actions.
+[45:31] pace_runner: Okay. I see. Okay.
+[45:35] soody_03: Yeah, GitHub actions. That's the shit what we're using as a bug tracker.
+[45:38] pace_runner: Well, then someone wants to submit some bugs here because.
+[45:39] soody_03: That's what we're using. And the Kanban, that's what we're using as a bug tracker.
+[45:41] pace_runner: Okay.
+[45:43] soody_03: What, just the projects? Just to get a part of it.
+[45:46] pace_runner: Guys, we need to make some, okay.
+[45:47] soody_03: And yeah.
+[45:48] pace_runner: Someone submit that bug with the, the game thing. Okay.
+[45:55] soody_03: Submit the bug with anything for us. That's supposed to mean, where do we submit the bugs?
+[46:09] soody_03: You guys have told us there's a lot of bugs right now. That was the different types of issues you made. Well, I was wondering if you could just ask. Yeah. The Wi-Fi is so bad. Holy fad, holy roll. Well, it's literally, you know, the guy who made part of a second dude for 23 launches. Let's see. It's literally the same thing as you. No, I think I saw the spirits different. This one is just showing you all the places. I gave him a fine line. It was like Tinder. Yeah, that's when, hey, that's kind of the ideas because there are things like this already. 500 plus downloads. I still need to work on it. Got five stars.
+[47:14] soody_03: All right, I just want to call. Let's see. Is this new? New. Let's see this. We've got new issues and new issues. Oh, bug report. OK, so what is it? Can I type it in? There is a bit too many questions. It says too many questions. But it's fine. I don't know what it is.
+[47:57] pace_runner: What are we doing about the reset password thing? We're just not going to do that. I think we just don't do it. Like looking at the amount of work to do it is just stupid. Dude. But we, we sign in with Google. What we're going to have to do is like it.
+[48:18] steveisfrench3744: you sign in with google and you you don't have to you just have to add an email address
+[48:20] pace_runner: Yeah. But if you add the email address, you have to verify the email address. So then we have to like send an email to say, please verify. And then. Yeah. I guess we can do it, but it's like, yeah. It's quite a lot. Do you see what I'm saying?
+[48:39] steveisfrench3744: okay yeah but we need to make sure that that's not actually a requirement that we need
+[48:40] pace_runner: Because now we have to add that like new things to the database. We have to figure out how you like send emails, verify the emails, then send like back to the database, whether the email has been verified or not verified. And then if it has been verified, then we're allowed to use the log in. You know what I mean? And this is all just for resetting a password. Yeah.
+[49:05] steveisfrench3744: because maybe they want that because low key low key i want a hundred for this project i
+[49:06] pace_runner: Yeah. We kind of need to ask that. Wait, you guys are at the labs. Why don't you just go ask quick anyone?
+[49:14] steveisfrench3744: weren't live putting too much work for not to get hundreds i'm gonna lab today bye everybody bye everybody
+[49:15] pace_runner: Anyone want to go ask quick Brendan if we need to do the reset password requirement at the lab today.
+[49:21] soody_03: Awesome. What can we find? Is it still using that office? Yeah, we can go to it.
+[49:28] pace_runner: Well, he's going to come to the lab today.
+[49:32] soody_03: No, there's no labs anymore.
+[49:34] pace_runner: No. Today's.
+[49:36] soody_03: He said that there's no more AAA labs.
+[49:36] pace_runner: Oh yeah. You're right. Okay. I can send him a message on discord, I guess.
+[49:40] soody_03: Because no one would go to this.
+[49:44] pace_runner: Let me ask.
+[49:44] soody_03: Oh, you're back.
+[49:45] pace_runner: Let me ask him on discord.
+[49:45] soody_03: I was looking for those. Hi, guys. I'm so happy you're back. Still in our FSTP meeting. Wish me luck. But how are you? It's awesome. We've been working on this. Getting brilliant. I mean, like. Oh, I was calling you here. You can see this. Like, it's good that you do this. And you don't feel like you know, that's kind of a lot. Let me just shut the bar. So it looks like CSB is very interesting for me. I want to thank you. Why? Ben, we are now at CSB. Do you have one, too, or something? But how many of you guys have a group? I actually don't say that. I love one, too, because of CSB. I don't know. Today just doesn't feel good. Where is it? The sunny day. Today's not the day. How long is it? I don't feel hard. I don't know. It's just fine, dude. OK. Good. What? I don't know. I think it's the one guy, particularly my survey link. Are we still in the meeting? You don't know, right? Oh, this fellow Craig. I don't know what it is. We had a fun and I'm going to do that. I'll just check all of these. Like, is there a number? People just listen to me. And then I'm going to sign. I'll go fix this when I go today. Don't you just press, man? I'm feeling kind of... Did you select the trials? So they can make yours. No. What did you say?
+[51:28] _danieldenial: Okay, so what are we, what are we waiting for?
+[51:30] soody_03: I think we're done.
+[51:32] _danieldenial: Yeah, something with them.
+[51:34] pace_runner: Yeah. Just make sure that you guys update the thing about like what you did and
+[51:38] soody_03: Guarantee the meeting.
+[51:39] pace_runner: stuff.
+[51:42] soody_03: It doesn't break me.
+[51:43] _danieldenial: Thank you guys.
+[51:43] soody_03: It just doesn't work. Bye.
+[51:59] soody_03: Life is so slow, so this thing was taking forever to do.
+[52:07] soody_03: So I did P2, just the model. OK. I'll go P3. OK. Then, literally, I think we all just do like 10 signs. 10 signs each. Each.
+[52:21] soody_03: I was thinking we do 10 multiple times. OK. It was finish the issues and that. You know what I mean? Yeah, I get it, I get it. OK. There it is. There it is. Oh, it's tracking. OK. It was it. That was it. It's tracking. It was self-testing. All right, good. OK. Like a moving object through a camera. But isn't it working? Isn't that working? That's the last one. It's P1. That's P1. Or is it P2? No, this is just purely the model. OK, hopefully they don't interact with each other. But we don't interact with each other. That was the idea. Often, yeah. Yeah, and to that. So we can do it in the way that we do. Purely in the way that we do. Just in case of the initial one and your P1. What are the signs that we're doing? Which is the minimum here. Are doing the letters of the alphabet. Are we doing just phrases? Letters of the alphabet is fine. We can be there. I think phrases is better. Phrases is more free. We choose the department that we want, like the sector that we want this to actually work in as a proof of concept. Service. Yeah, so like a service provider. So like a government service provider. And then we sell it off as like, oh, this could be used by the government in their department buildings. So that like someone who doesn't know sign language can actually send you to someone with sign language and help or service them. True. Yeah, so it didn't work. But if you guys have ideas. Or like you can't move them. It's not a bad idea. Hospitals or if you just have them. Is there a web app? Web app, yeah. I can do it. Don't make it a mobile app. It's a whole other thing. Technically, I have a Google developer account, and we could deploy a mobile app. But mobile app development takes very long. Yeah, I don't know. I'd say it's twice as long as web app development. I'd give you enough time. We could say that has like, oh, like in our future plan section of our presentation. A mobile app so that everyone can check. And it's all offline. And also it's like a whole other thing. We could make it offline if it was a mobile app. Yeah. That would help. It would be nice. It would be easy. So then when you download it. Wouldn't it be like a one gig? As a bandit. Oh, no, it didn't work. OK, maybe we can make it offline. Yeah, you have to be a cloud server. Yeah, no, because we're going to host all the videos. No, we won't host the videos. We just hold the model. We just host the neural network, that's all. That actually is doable locally then. Oh, yeah, that's kind of fired. I don't know what to do. Then you're done. Don't know what to do, guys. Maybe when you're done, you're done.
+
+--- 453 entries | 6 speakers | transcribed in 2058.7s ---
