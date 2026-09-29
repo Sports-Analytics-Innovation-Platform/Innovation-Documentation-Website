@@ -195,6 +195,8 @@ This proves the NestJS backend is live and reachable. The API is hand-written (n
 | `GET /v1/players/:id` | No | Player detail |
 | `GET /v1/players/:id/stats` | No | Player season stats for one segment (`?seasonType=`, `?asOf=` for a point-in-time cutoff) |
 | `GET /v1/players/:id/stats/splits` | No | The same stats for every segment at once |
+| `GET /v1/players/:id/stats/career` | No | Career totals, averages, and per-season breakdown |
+| `GET /v1/players/:id/matchup-projection` | No | Opponent splits and upcoming-game scoring projections |
 | `GET /v1/players/leaders` | No | Season leaders by category |
 | `GET /v1/players/league-averages` | No | Competition-wide averages |
 | `GET /v1/players/aggregates` | No | Group-by aggregate (team/position) over a chosen metric |
@@ -202,16 +204,37 @@ This proves the NestJS backend is live and reachable. The API is hand-written (n
 | `GET /v1/players/export` | No | Filtered player slice as CSV |
 | `GET /v1/teams` | No | Paginated team list |
 | `GET /v1/teams/:id` | No | Team detail with roster |
+| `GET /v1/teams/elo-ratings` | No | Current Elo ratings for all teams |
+| `GET /v1/teams/records` | No | Every team's win/loss record and recent form |
+| `GET /v1/teams/:id/suggested-players` | No | A team's roster ranked by usage percentage |
 | `GET /v1/games` | No | Game list with predictions joined in (`?seasonType=` to filter) |
 | `GET /v1/games/:id` | No | Single game detail |
 | `GET /v1/games/:id/events` | No | Paginated raw play-by-play for one game |
 | `GET /v1/games/:id/prediction` | No | Win probability + predicted margin |
+| `GET /v1/games/:id/prediction/history` | No | Every model version's prediction for this game |
+| `GET /v1/games/:id/live` | No | Poll newly received events for an in-progress fixture |
+| `GET /v1/games/seasons` | No | List of available seasons |
 | `GET /v1/games/export` | No | Filtered game slice as CSV |
 | `GET /v1/datasets` | No | Paginated dataset releases |
 | `GET /v1/datasets/:version` | No | One release's schema/metadata/checksum |
 | `GET /v1/datasets/:version/download` | No | The release's CSV |
 | `GET /v1/datasets/diff`, `/changes` | No | Diff/changes-since between releases |
 | `GET /v1/optimizer/lineup` | Session required (no API-key path) | Latest MILP-solved fantasy lineup |
+| `GET /v1/optimizer/predictions` | No | Every player's latest fantasy-point prediction |
+| `GET /v1/optimizer/predictions/:playerId` | No | One player's latest prediction |
+| `GET /v1/analytics/model-accuracy` | No | Model accuracy metrics |
+| `GET /v1/analytics/leaderboard` | No | Prediction accuracy leaderboard |
+| `GET /v1/me` | Session required | Current user's profile |
+| `PATCH /v1/me` | Session required | Update username and/or favorite team |
+| `POST /v1/me/avatar` | Session required | Upload a new avatar image |
+| `PUT/DELETE /v1/me/followed-players/:playerId` | Session required | Follow/unfollow a player |
+| `GET/POST/DELETE /v1/me/lineups` | Session required | Saved fantasy lineups |
+| `GET /v1/me/watchlist` | Session required | User's watchlist |
+| `GET /v1/me/picks/record` | Session required | Beat the Model pick record |
+| `POST /v1/me/picks` | Session required | Submit a Beat the Model pick |
+| `GET/POST/DELETE /v1/me/saved/comparisons` | Session required | Saved player comparisons |
+| `GET /v1/me/teams/results` | Session required | Results for followed teams |
+| `GET /v1/me/challenge/next` | Session required | Next challenge for the user |
 | `GET/POST/PUT /v1/custom-statistics` | `ANALYST`/`ADMIN` role | Define/evaluate a custom statistic |
 | `GET/POST/DELETE /v1/me/api-keys` | Session required | Self-service API key management |
 | `/v1/admin/*` | `ADMIN` role | Batch review, event corrections, consumer management — see step 9e |
@@ -244,4 +267,4 @@ Full API documentation: [API Design](design/api-design.md) and the live Swagger 
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5] (2026-09-23: added Datasets/API-keys/Admin coverage, corrected the endpoint auth table, added Sprint 3 rubric rows), Claude-Code[Claude Opus 5.5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5] (2026-09-23: added Datasets/API-keys/Admin coverage, corrected the endpoint auth table, added Sprint 3 rubric rows; 2026-09-29: expanded endpoint table to match live API — added career stats, matchup projections, live feed, saved lineups, watchlist, Beat the Model picks, analytics endpoints, and full /v1/me/* coverage), Claude-Code[Claude Opus 5.5]*
