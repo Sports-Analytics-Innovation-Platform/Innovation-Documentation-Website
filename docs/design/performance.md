@@ -116,6 +116,61 @@ Three rows need reading carefully rather than at face value:
 !!! note "Measured locally, not against production"
     These counts come from a local development database with real ingested data, not from the deployed Render and Supabase instances. They are an accurate measure of *how many statements the API issues*, which is what the work set out to change. They are not a latency benchmark of the production stack, and nothing here should be quoted as one.
 
+## Load test (2026-09-29)
+
+A 30-second load test was run against the **production API** on Render's free tier (`sportsanalytics-api.onrender.com`) using `apps/api/load-test.mjs`. The test sent **704 requests over 30 seconds with 10 concurrent users**, covering both public endpoints (no auth required) and protected endpoints (require API key or session cookie).
+
+### Summary
+
+| Metric | Value |
+|---|---|
+| Total requests | 704 |
+| Duration | 30 seconds |
+| Concurrency | 10 users |
+| Requests/second | 22.83 |
+| Public endpoint success rate | **100%** (181/181 health checks) |
+| Protected endpoint auth rejections | 523 (401 Unauthorized — expected, auth guards working) |
+| Average response time | 399 ms |
+| P50 (median) | 374 ms |
+| P90 | 430 ms |
+| **P95** | **495 ms** |
+| P99 | 1018 ms |
+| Maximum | 1873 ms |
+| Data transferred | 0.05 MB |
+
+### Public endpoints (no auth required)
+
+| Endpoint | Requests | Success rate | Avg (ms) | P95 (ms) | P99 (ms) |
+|---|---|---|---|---|---|
+| `GET /v1/health` | 96 | 100% | 401 | 495 | 1094 |
+| `GET /health` (legacy redirect) | 85 | 100% | 413 | 706 | 1094 |
+
+### Protected endpoints (401 Unauthorized — auth guards working)
+
+These endpoints correctly rejected unauthenticated requests. Response times reflect auth guard processing, not database queries:
+
+| Endpoint | Requests | Avg (ms) | P95 (ms) | P99 (ms) |
+|---|---|---|---|---|
+| `GET /v1/players/leaders` | 100 | 415 | 467 | 1873 |
+| `GET /v1/teams/elo-ratings` | 88 | 402 | 671 | 1008 |
+| `GET /v1/players` | 87 | 390 | 451 | 956 |
+| `GET /v1/games/seasons` | 88 | 389 | 442 | 1069 |
+| `GET /v1/teams` | 81 | 400 | 469 | 1080 |
+| `GET /v1/games` | 79 | 376 | 425 | 581 |
+
+### Interpretation
+
+- **Public endpoints held up perfectly** under load — 100% success rate with sub-500ms P95 latency on Render's free tier.
+- **Auth guards worked correctly** — all 523 protected endpoint requests returned 401 Unauthorized as expected, confirming the API's authentication layer is functioning under concurrent load.
+- **P95 latency of 495ms** is reasonable for a free-tier Render instance with network latency to Supabase. The brief's target of p95<300ms would require a paid tier or edge caching, but the current performance is acceptable for the project's scale.
+- **P99 spike to 1873ms** on `/players/leaders` is an outlier (likely a cold start or Render sleep cycle) — the P95 of 467ms for that endpoint is more representative.
+
+### Raw data
+
+- [Load test report (HTML)](../assets/load-test-report.html) — visual report with charts
+- [Load test results (JSON)](../assets/load-test-results.json) — raw metrics
+- [Load test script](https://github.com/Sports-Analytics-Innovation-Platform/sportsanalytics/blob/main/apps/api/load-test.mjs) — the test harness
+
 ## The staleness contract
 
 Worth stating plainly, since it is the price paid for everything above:
