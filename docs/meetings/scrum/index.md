@@ -4,6 +4,44 @@ hide:
 ---
 # Scrum Meetings
 
+??? note "2026-09-28 — Scrum"
+
+    **Attendees:** Kiran, Owen, Daniel, Josh, Sanele
+    **Absent:** Adrian
+
+    ## Agenda
+
+    - Become Pro valuation model and NBA rookie comparison
+    - Rubric compliance review and fixes
+    - API testing and POPIA implementation timing
+    - Database RLS (Row Level Security) planning
+    - Documentation status and remaining updates
+
+    ## Decisions
+
+    - **Become Pro valuation** uses the same system as the training model — needs a minimum of 10 games to determine a user's value in R and dollars. No extra backend work required.
+    - **POPIA compliance** deferred to Sprint 4 — Daniel investigated but team agreed to implement it next sprint to avoid breaking existing database connections or services.
+    - **RLS (Row Level Security)** Josh planning to enable on the database.
+    - **Player profile types** accidentally added by Josh — needs to be checked and merged into main.
+
+    ## Actions
+
+    | Action | Owner | Due |
+    |---|---|---|
+    | Enable RLS on database | Josh | Sprint 4 |
+    | Check and merge player profile types into main | Josh | ASAP |
+    | Implement POPIA compliance | Daniel | Sprint 4 |
+    | Update diagrams | Sanele | Ongoing |
+    | Finalize meeting notes | Sanele | Ongoing |
+
+    ## Notes
+
+    - **Kiran** completed the NBA rookies comparison for Become Pro — the valuation model trains on rookie seasons and prices users against the published rookie scale.
+    - **Owen** reviewed the full rubric and made fixes to address any shortfalls — several pushes landed to ensure all requirements are met.
+    - **Daniel** conducted API testing and investigated POPIA requirements. Team decided to defer POPIA implementation to avoid disrupting current database/service connections.
+    - **Josh** is planning to enable RLS on the database. Accidentally added player profile types in a recent change — needs review and merge to main.
+    - **Sanele** updated all documentation. Remaining work: diagrams and final meeting notes.
+
 ??? note "2026-09-10 — Scrum"
 
     **Attendees:** Owen, Kiran, Josh, Daniel, Sanele
