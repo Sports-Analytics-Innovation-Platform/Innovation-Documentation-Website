@@ -149,6 +149,24 @@ The projection is computed by `GET /v1/players/:id/matchup-projection`, which bl
 
 ---
 
+### F9 — Beginner's Guide → Player Archetypes & Style Map (Pending Merge)
+
+**Feedback:** "Beginner's guide — 'what am I looking at and how to use the tool'" — Q23/Q21 (1 respondent); "The novice-onboarding gap (F8/F9) is real and page-specific" — Interview 1 (2026-09-27)
+
+**Before:** Player profiles showed raw stats with no context about *what kind of player* this is. Novices couldn't tell if a player was a scorer, playmaker, defender, or role player — just numbers without meaning.
+
+**After:** The **Style & Similar Players** section on the player profile page shows:
+- **Playing Style archetypes** — e.g., "Scoring guard 69%, Point forward 14%" — plain-English labels describing how the player plays
+- **Style Map** — a scatter plot placing every NBA player in a 2D space (off-ball role vs. on-ball creation, perimeter shooting) so you can see where this player sits relative to the league
+- **Tooltip explainer** — an "i" icon that opens a panel explaining: how archetypes are computed (shot diet, playmaking load, rebounding, size — not by position), that position is not part of it, how similar players are found (closest in that space), and the model's limitations (box-score data only, can't see defence beyond steals/blocks)
+- **Similar players** — listed by proximity in the style space, so you can find comparable players at a glance
+
+**Where:** `player-archetypes` branch (not yet merged to `main` as of 2026-09-29)
+
+**Impact:** Directly addresses the novice-onboarding gap (F9). Instead of a separate "beginner's guide" page, the explanation is embedded right where the user needs it — on the player profile, next to the chart. The tooltip pattern is the same approach the interview praised for the abbreviation explainer (F7): explain inline, don't make users go find a glossary.
+
+---
+
 ## Summary Table
 
 | Feedback ID | What was requested | What shipped | PR | Status |
@@ -160,6 +178,7 @@ The projection is computed by `GET /v1/players/:id/matchup-projection`, which bl
 | F13 | More team details (recent games, records) | Team profile pages with record, Elo, recent form, roster | #123 | **Shipped** |
 | F17 | Player-level predictions, not just game-level | Matchup projections per player on profile page | #105 | **Shipped** |
 | F15 | Follow-up interviews with survey volunteers | First hands-on interview conducted 2026-09-27, 12 new feedback items (F20–F31) | — | **In progress** (1 of 3 done) |
+| F9 | Beginner's guide — "what am I looking at" | Player Archetypes & Style Map with tooltip explainer on player profile | — | **Pending merge** (`player-archetypes` branch) |
 
 ---
 
@@ -172,7 +191,6 @@ The following feedback items have **not yet been addressed** and remain in the b
 - **F6**: Optimizer: show alternative lineups (not just the best)
 - **F7 (remaining)**: Extend abbreviation explainer to stat tiles on player profile (PPG, RPG, etc.) — the radar covers the advanced stats, but the basic tiles still lack tooltips
 - **F8**: Landing-page copy is "wordy" with "LLM-esque language" — copy-simplification pass
-- **F9**: Beginner's guide — "what am I looking at and how to use the tool"
 - **F10**: Tolerant player search ("manon" should find "Chris Mañón")
 - **F11**: All-time NBA stat leaders (requires historical data beyond 3 seasons)
 - **F12**: Show player position in player stats (verify if surfaced; file if missing)
