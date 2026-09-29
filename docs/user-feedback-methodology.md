@@ -120,17 +120,17 @@ Every distinct piece of feedback was mapped to an action: what was already shipp
 | F4 | Optimiser: allow custom constraints ("must include LeBron") | Add hard constraints to MILP solver | Backlog |
 | F5 | Optimiser: show projected points per player | Per-slot predictions shipped (PR #111); verify + extend | **Shipped** |
 | F6 | Optimiser: show alternative lineups | "Next-best 3 lineups" from solver | Backlog |
-| F7 | Stat abbreviations unexplained; labels unreadable | Hover-over tooltips + minimum font size | Backlog |
+| F7 | Stat abbreviations unexplained; labels unreadable | Hover-over tooltips + minimum font size. Partial fix shipped: abbreviation explainer in Player Traits Radar | **Shipped** (partial) |
 | F8 | Landing-page copy is "wordy" with "LLM-esque language" | Copy-simplification pass | Backlog |
-| F9 | Beginner's guide — "what am I looking at" | In-app guide or glossary page | Backlog |
+| F9 | Beginner's guide — "what am I looking at" | In-app guide or glossary page. Player Archetypes & Style Map with tooltip explainer addresses this on player profiles | Pending merge |
 | F10 | Tolerant player search ("manon" → "Chris Mañón") | Fuzzy/diacritic-insensitive matching | Backlog |
 | F11 | All-time NBA stat leaders | Evaluate against Sprint 3 scope | Backlog |
 | F12 | Show player position in player stats | Verify if surfaced; file if missing | Verify |
 | F13 | More team details (recent games with outcomes) | Team profile pages shipped (PR #123); extend if needed | **Shipped** |
 | F14 | Beat the Model: random daily/weekly games | Evaluate for Sprint 3 | Backlog |
-| F15 | Three respondents left contact details for interviews | 1:1 follow-up interviews in Sprint 3 — first session conducted 2026-09-27 | **In progress** |
+| F15 | One respondent left contact details for interview | 1:1 follow-up interview in Sprint 3 — session conducted 2026-09-27 | **Complete** |
 | F16 | Injuries and expected return dates | Evaluate adding an injury data source | Backlog |
-| F17 | Player-level predictions, not just game-level | Matchup projections already exist (PR #105); surface them next to game predictions | Partially shipped |
+| F17 | Player-level predictions, not just game-level | Matchup projections already exist (PR #105); surface them next to game predictions | Shipped |
 | F18 | Some pages carry too much information | Progressive-disclosure pass alongside F7–F9 | Backlog |
 | F19 | Player height | Verify the bio fields render on the profile page; file if missing | Verify |
 
@@ -138,7 +138,7 @@ The full traceability table with sources, categories, and detailed actions is on
 
 ### Follow-up interviews
 
-The first 1:1 follow-up interview — a hands-on walkthrough of the live app with one of the three volunteers — was conducted on **2026-09-27**. It confirmed the survey's novice-onboarding and readability findings, surfaced two bugs a screenshot-based survey could not, and produced twelve new feedback items (F20–F31). Session notes: [User Interviews](user-interviews.md).
+The first 1:1 follow-up interview — a hands-on walkthrough of the live app with the one volunteer — was conducted on **2026-09-27**. It confirmed the survey's novice-onboarding and readability findings, surfaced two bugs a screenshot-based survey could not, and produced twelve new feedback items (F20–F31). Session notes: [User Interviews](user-interviews.md).
 
 ### Integration Process
 
@@ -164,9 +164,8 @@ Per the [Testing — How feedback is integrated](testing.md#how-feedback-is-inte
 ## Next Steps (Sprint 3)
 
 1. **File the backlog items** (F3–F14, F16, F18, plus the interview items F20–F31) as Gitea issues and prioritise them in the sprint backlog
-2. **Interview the three follow-up volunteers** — first session conducted 2026-09-27 ([User Interviews](user-interviews.md)); two remain
-3. **Run hands-on testing sessions** on the live app rather than screenshots — the first was combined with the 2026-09-27 interview
-4. **Re-run the survey** after the Sprint 3 model and readability work — a before/after comparison against the n=11 baseline doubles as evidence for the Milestone 3 *Improvement* criterion (5% weight). See [Improvements Made](improvements.md) for the shipped before/after comparisons.
+2. **Run hands-on testing sessions** on the live app rather than screenshots — the first was combined with the 2026-09-27 interview; more are planned
+3. **Re-run the survey** after the Sprint 3 model and readability work — a before/after comparison against the n=11 baseline doubles as evidence for the Milestone 3 *Improvement* criterion (5% weight). See [Improvements Made](improvements.md) for the shipped before/after comparisons. The follow-up interview is complete; additional sessions are contingent on more volunteers coming forward
 
 ---
 

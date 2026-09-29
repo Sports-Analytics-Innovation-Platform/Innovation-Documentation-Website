@@ -397,7 +397,7 @@ Beyond automated testing, the project runs a **formal user feedback process**. T
 | Method | Tool | Status |
 |---|---|---|
 | **Structured survey** | Google Forms distributed via WhatsApp | **Collected — 11 responses (2026-09-14 – 2026-09-15)**, findings documented — see [User Feedback Methodology](user-feedback-methodology.md) |
-| **Follow-up interviews** | 1:1 sessions with survey volunteers | **Under way — first session 2026-09-27** (hands-on walkthrough, findings documented — see [User Interviews](user-interviews.md)); two volunteers remain |
+| **Follow-up interview** | 1:1 session with survey volunteer | **Complete** — hands-on walkthrough 2026-09-27, findings documented (see [User Interviews](user-interviews.md)) |
 | **Hands-on testing sessions** | Respondents using the live app rather than screenshots | **Started — first session combined with the 2026-09-27 interview**; more planned |
 | **Client meeting notes** | Meeting minutes with action items | Ongoing — see [Meetings](meetings/index.md) |
 

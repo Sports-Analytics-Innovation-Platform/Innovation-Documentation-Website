@@ -73,7 +73,7 @@ Categorical picks:
 
 - **Sample size and profile.** 11 responses against a ~12 target (7 by the Sprint 2 deadline, 4 more on 2026-09-15 while the form stayed open), and 7 of 11 respondents are not at all familiar with basketball. The form remains open, and a second wave follows the Sprint 3 improvements.
 - **Not hands-on.** Respondents answered while viewing the landing page and app screens; several requests concern features completed in the same final-week window as the survey (PR #94, #95, #111, #123), so whether each respondent actually saw them is uncertain. The first hands-on session (the 2026-09-27 interview) has since started closing this gap and confirmed several findings — see [User Interviews](user-interviews.md).
-- **Contactable respondents.** Three respondents left contact details for follow-up interviews (addresses removed from the published export and withheld from this page). The first interview was conducted 2026-09-27.
+- **Contactable respondents.** One respondent left contact details for a follow-up interview (address removed from the published export and withheld from this page). The interview was conducted 2026-09-27.
 
 ### Feedback-to-action traceability
 
@@ -87,26 +87,25 @@ Every distinct piece of feedback, mapped to what happened or will happen with it
 | F4 | Optimiser: allow custom constraints, e.g. "must include LeBron" (Q17: 3) | Feature | Add hard constraints to the MILP solver (must-include / must-exclude players) | Backlog — file as Gitea issue |
 | F5 | Optimiser: show projected points per player (Q17: 3) | Feature | Per-slot predictions already render on the optimizer board and are snapshotted into saved lineups (PR #111); verify visibility and consider explicit fantasy-points projections | Shipped (PR #111) — verify + extend |
 | F6 | Optimiser: show alternative lineups, not just the best (Q17: 3) | Feature | e.g. "next-best 3 lineups" from the solver | Backlog — file as Gitea issue |
-| F7 | Stat abbreviations unexplained; labels unreadable without zooming (Q9/Q21: 1) | UX / Accessibility | Hover-over tooltips or a glossary for stat abbreviations (RPG, APG, TS%, eFG%…) plus a minimum label font size; extends the existing axe-core accessibility checks | Backlog — file as Gitea issue |
+| F7 | Stat abbreviations unexplained; labels unreadable without zooming (Q9/Q21: 1) | UX / Accessibility | Hover-over tooltips or a glossary for stat abbreviations (RPG, APG, TS%, eFG%…) plus a minimum label font size; extends the existing axe-core accessibility checks. Partial fix shipped: abbreviation explainer in Player Traits Radar (click any trait axis) | Shipped (partial) — radar explainer done, stat tiles still need tooltips |
 | F8 | Landing-page copy is "wordy" with "LLM-esque language" (Q6: 1) | UX / Copy | Copy-simplification pass on landing page and in-app text | Backlog — file as Gitea issue |
-| F9 | Beginner's guide — "what am I looking at and how to use the tool" (Q23/Q21: 1) | UX / Docs | In-app beginner's guide or glossary page; directly serves the novice segment that dominated this sample | Backlog — file as Gitea issue |
+| F9 | Beginner's guide — "what am I looking at and how to use the tool" (Q23/Q21: 1) | UX / Docs | In-app beginner's guide or glossary page; directly serves the novice segment that dominated this sample. Player Archetypes & Style Map with tooltip explainer addresses this on player profiles | Pending merge (`player-archetypes` branch) |
 | F10 | Tolerant player search — "manon" should find "Chris Mañón" (Q24: 1) | Feature | Fuzzy/diacritic-insensitive matching on the search endpoints | Backlog — file as Gitea issue |
 | F11 | All-time NBA stat leaders (Q9: 1) | Data / Feature | Requires historical data beyond the three ingested seasons — evaluate against Sprint 3 scope | Backlog — evaluate |
 | F12 | Show player position in player stats (Q21: 1) | Feature | Position is available from the CommonPlayerInfo endpoint the bio fields already come from — verify it is surfaced on the profile page; file if missing | Verify, then file if needed |
 | F13 | More team details — recent games with outcomes (Q11: 3 yes + 6 maybe) | Feature | Team profile pages with records and recent form landed in PR #123 in the final Sprint 2 week; confirm discoverability and consider a standings view | Shipped (PR #123) — extend if needed |
 | F14 | Beat the Model: random daily/weekly games (Q23: 1) | Feature / Engagement | Idea for lifting the game's polarised engagement score (five 5s, four 3s) — evaluate for Sprint 3 | Backlog — evaluate |
-| F15 | Three respondents left contact details for interviews | Process | 1:1 follow-up interviews in Sprint 3 for deeper qualitative feedback — first session conducted 2026-09-27, findings on the [User Interviews](user-interviews.md) page | In progress — 1 of 3 done |
+| F15 | One respondent left contact details for interview | Process | 1:1 follow-up interview in Sprint 3 — session conducted 2026-09-27, findings on the [User Interviews](user-interviews.md) page | **Complete** |
 | F16 | Injuries and expected return dates for players (Q9: 1) | Data / Feature | Injury data is not part of the ingested NBA dataset — evaluate adding an injury source in Sprint 3 | Backlog — evaluate |
-| F17 | Player-level predictions, not just game-level (Q13: 1 — the hardcore-fantasy respondent) | Trust / Feature | Per-player matchup projections already exist (`GET /v1/players/:id/matchup-projection`, PR #105); surface player-level predictions alongside the game-level ones | Partially shipped (PR #105) — surface + extend |
+| F17 | Player-level predictions, not just game-level (Q13: 1 — the hardcore-fantasy respondent) | Trust / Feature | Per-player matchup projections already exist (`GET /v1/players/:id/matchup-projection`, PR #105); surface player-level predictions alongside the game-level ones | Shipped (PR #105) — surface + extend |
 | F18 | Some pages carry too much information (Q21: 1) | UX / Copy | Progressive-disclosure pass — lead with the headline numbers and keep depth one click away; serves this and the novice-guidance asks (F7–F9) together | Backlog — file as Gitea issue |
 | F19 | Player height (Q9: 1) | Data | Height and weight already come from the CommonPlayerInfo bio fields; verify they render on the player profile page | Verify, then file if needed |
 
 ### Next steps (Sprint 3)
 
 1. **File the backlog items** (F3–F14, F16, F18 and the interview items F20–F31) as Gitea issues and prioritise them in the sprint backlog, per the [integration process](testing.md#how-feedback-is-integrated)
-2. **Interview the three follow-up volunteers** — the first session (2026-09-27) is documented on the [User Interviews](user-interviews.md) page; two volunteers remain
-3. **Run hands-on testing sessions** on the live app rather than screenshots — the first was combined with the 2026-09-27 interview; more are planned
-4. **Re-run the survey** after the Sprint 3 model and readability work — a before/after comparison against this n=11 baseline doubles as evidence for the Milestone 3 *Improvement* criterion
+2. **Run hands-on testing sessions** on the live app rather than screenshots — the first was combined with the 2026-09-27 interview; more are planned
+3. **Re-run the survey** after Sprint 4 improvements — compare against the n=11 baseline (2026-09-14/15) to measure the before/after delta. The follow-up interview is complete; additional sessions are contingent on more volunteers coming forward
 
 ---
 

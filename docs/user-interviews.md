@@ -8,7 +8,7 @@ One-on-one follow-up interviews with [survey](feedback-survey.md) respondents wh
 
 | | |
 |---|---|
-| **Participant** | One of the three survey respondents who volunteered for a follow-up (novice segment — mirrors the survey's dominant profile) |
+| **Participant** | The survey respondent who volunteered for a follow-up (novice segment — mirrors the survey's dominant profile) |
 | **Format** | Hands-on walkthrough of the live app at [sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/), participant narrating first impressions page by page |
 | **Method** | Think-aloud — the participant said what they expected each page to do before and while using it |
 | **Evidence** | Two session photographs — see [Session evidence](#session-evidence) below |

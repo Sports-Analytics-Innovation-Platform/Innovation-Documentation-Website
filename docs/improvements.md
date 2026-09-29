@@ -1,6 +1,8 @@
 # Improvements Made Based on User Feedback
 
-This page documents the improvements shipped in response to user feedback from the [Sprint 2 survey](feedback-survey.md) and [follow-up interviews](user-interviews.md). Each improvement is mapped to the originating feedback item (F1–F31) and shows the before/after state — the evidence required for the Milestone 3 **Improvement** criterion (5% weight).
+This page documents the improvements shipped based on user feedback from the [Sprint 2 survey](feedback-survey.md) and [follow-up interviews](user-interviews.md). Each improvement is mapped to the originating feedback item (F1–F31) and shows the before/after state — the evidence required for the Milestone 3 **Improvement** criterion (5% weight).
+
+**Note on causality:** F1, F2, F5, and F13 were already in development or landed during the survey window (PRs #94, #95, #111, #123). The survey confirmed the need for these changes rather than originating them. F7 (partial) and F17 were shipped after the survey. F15 (interviews) and F9 (pending merge) are direct responses to survey and interview feedback. No interview-sourced changes have shipped yet.
 
 ---
 
@@ -133,7 +135,7 @@ The projection is computed by `GET /v1/players/:id/matchup-projection`, which bl
 
 ### F15 — Follow-Up Interviews → First Hands-On Session Conducted
 
-**Feedback:** "Three respondents left contact details for interviews" — Q25 (3 respondents)
+**Feedback:** "One respondent left contact details for a follow-up interview" — Q25 (1 respondent)
 
 **Before:** Survey was screenshot-based (not hands-on). Respondents answered while viewing static screenshots, not using the live app.
 
@@ -177,7 +179,7 @@ The projection is computed by `GET /v1/players/:id/matchup-projection`, which bl
 | F7 (partial) | Stat abbreviations unexplained | Abbreviation explainer in Player Traits Radar (click any trait axis) | — | **Shipped** (pattern praised in interview) |
 | F13 | More team details (recent games, records) | Team profile pages with record, Elo, recent form, roster | #123 | **Shipped** |
 | F17 | Player-level predictions, not just game-level | Matchup projections per player on profile page | #105 | **Shipped** |
-| F15 | Follow-up interviews with survey volunteers | First hands-on interview conducted 2026-09-27, 12 new feedback items (F20–F31) | — | **In progress** (1 of 3 done) |
+| F15 | Follow-up interview with survey volunteer | Hands-on interview conducted 2026-09-27, 12 new feedback items (F20–F31) | — | **Complete** |
 | F9 | Beginner's guide — "what am I looking at" | Player Archetypes & Style Map with tooltip explainer on player profile | — | **Pending merge** (`player-archetypes` branch) |
 
 ---
@@ -204,10 +206,9 @@ The following feedback items have **not yet been addressed** and remain in the b
 
 ## Next Steps
 
-1. **Re-run the survey** after Sprint 4 improvements — compare against the n=11 baseline (2026-09-14/15) to measure the before/after delta. This is the Milestone 3 Improvement criterion evidence.
-2. **Conduct the remaining two follow-up interviews** (2 of 3 volunteers still pending)
-3. **File the backlog items** (F3–F14, F16, F18, F20–F31) as Gitea issues and prioritize them in the Sprint 4 backlog
-4. **Extend the abbreviation explainer pattern** (F7 remaining) to the stat tiles on the player profile page — the interview confirmed this is the right approach
+1. **Re-run the survey** after Sprint 4 improvements — compare against the n=11 baseline (2026-09-14/15) to measure the before/after delta. This is the Milestone 3 Improvement criterion evidence. The follow-up interview is complete; additional sessions are contingent on more volunteers coming forward
+2. **File the backlog items** (F3–F14, F16, F18, F20–F31) as Gitea issues and prioritize them in the Sprint 4 backlog
+3. **Extend the abbreviation explainer pattern** (F7 remaining) to the stat tiles on the player profile page — the interview confirmed this is the right approach
 
 ---
 
