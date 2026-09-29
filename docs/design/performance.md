@@ -171,6 +171,62 @@ These endpoints correctly rejected unauthenticated requests. Response times refl
 - [Load test results (JSON)](../assets/load-test-results.json) — raw metrics
 - [Load test script](https://github.com/Sports-Analytics-Innovation-Platform/sportsanalytics/blob/main/apps/api/load-test.mjs) — the test harness
 
+## Lighthouse scores (2026-09-29)
+
+Google PageSpeed Insights was run against four key pages of the production webapp on **2026-09-29**, testing **Mobile** performance. All scores are in the green (90–100) or high-orange (88) range, with perfect 100s for Accessibility and Best Practices across every page.
+
+### Summary
+
+| Page | Performance | Accessibility | Best Practices | SEO |
+|---|---|---|---|---|
+| [Home](https://sportsanalytics.pages.dev/) | **93** | 100 | 100 | 92 |
+| [Teams](https://sportsanalytics.pages.dev/teams) | **95** | 100 | 100 | 92 |
+| [Players](https://sportsanalytics.pages.dev/players) | **88** | 100 | 100 | 92 |
+| [Admin](https://sportsanalytics.pages.dev/admin) | **95** | 100 | 100 | 92 |
+
+### Per-page results
+
+#### Home — Performance 93
+
+![Lighthouse: Home (Mobile)](../assets/lighthouse/homepage-mobile.jpg)
+
+The landing page scores 93/100 on Mobile. The hero section loads quickly, and the React app hydrates without blocking the main thread for long. The 7-point gap from perfect is typical for a client-side React app with dynamic data fetching.
+
+#### Teams — Performance 95
+
+![Lighthouse: Teams (Mobile)](../assets/lighthouse/teams-mobile.jpg)
+
+The teams listing page scores 95/100. The table is lightweight, and the cached API response means the page renders almost immediately after hydration.
+
+#### Players — Performance 88
+
+![Lighthouse: Players (Mobile)](../assets/lighthouse/players-mobile.jpg)
+
+The players page scores 88/100 — the lowest of the four, but still in the high-orange range. This page carries more content: player cards with images, stat tiles, and the leaders section. The additional DOM nodes and image assets account for the slightly lower score.
+
+#### Admin — Performance 95
+
+![Lighthouse: Admin (Mobile)](../assets/lighthouse/admin-mobile.jpg)
+
+The admin page scores 95/100. It shows a sign-in gate for unauthenticated users, so the initial render is minimal. Authenticated users see the full admin dashboard, which remains fast due to the same caching and query consolidation applied to all routes.
+
+### Interpretation
+
+- **Accessibility: 100 across all pages.** The app uses semantic HTML, proper heading hierarchy, ARIA labels where needed, and sufficient color contrast.
+- **Best Practices: 100 across all pages.** No console errors, no deprecated APIs, HTTPS enforced, no vulnerable libraries.
+- **SEO: 92 across all pages.** The 8-point gap from perfect is consistent and likely reflects the SPA nature of the app — some meta tags and structured data could be enhanced, but the core content is crawlable.
+- **Performance: 88–95 on Mobile.** These scores are strong for a client-side React app with real-time data fetching. The Cloudflare Pages CDN serves the static shell instantly, and the API caching ensures data loads are fast.
+
+### Why this matters for the brief
+
+The brief's Performance criterion asks for evidence that the platform "achieves a stated response time through schema/indexing rather than by chance." The Lighthouse scores complement the load test and query-count evidence:
+
+- **Load test** proves the API handles concurrent load (P95 495ms under 10 concurrent users)
+- **Query counts** prove the caching and consolidation work (most endpoints drop to 0 queries on repeat)
+- **Lighthouse** proves the end-user experience is fast (88–95 on Mobile, 93–95 on three of four pages)
+
+Together, these three forms of evidence cover the full stack: database → API → network → browser.
+
 ## The staleness contract
 
 Worth stating plainly, since it is the price paid for everything above:

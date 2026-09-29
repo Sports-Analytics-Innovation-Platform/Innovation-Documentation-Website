@@ -145,7 +145,7 @@ Service health check. No authentication required. Used by the topology pinger to
 
 ### Players
 
-All player endpoints are **public** — no authentication required.
+All player endpoints are **public** — a session cookie or API key is required (see [Authentication](#authentication)).
 
 #### `GET /v1/players`
 
@@ -225,13 +225,15 @@ Season averages and per-game scoring log for a player, both derived at request t
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `seasonType` | string | No | `REGULAR` | Season segment (`REGULAR`, `PLAY_IN`, `PLAYOFFS`, `FINALS`) |
+| `asOf` | string (ISO-8601) | No | — | Only games completed at or before this instant contribute. Invalid timestamps → `400`. Not cached |
 
-**Response `200`:** the response echoes back the resolved `seasonType` so a caller can't mislabel a chart it already rendered.
+**Response `200`:** the response echoes back the resolved `seasonType` so a caller can't mislabel a chart it already rendered. When `asOf` is provided, it is echoed back as well.
 
 ```json
 {
   "playerId": "uuid",
   "seasonType": "REGULAR",
+  "asOf": "2026-02-15T12:00:00.000Z",
   "seasonAverages": {
     "gamesPlayed": 71,
     "minutesPerGame": 35.2,
@@ -303,6 +305,130 @@ The same derived season line as `/:id/stats` above, but for every season segment
 ```
 
 Each value under `splits` has the same `DerivedSeasonAverages` shape as `seasonAverages` above. A segment the player never played in still gets an entry — with zeroed/null stats — rather than being omitted, so the frontend can render every segment tab without a presence check.
+
+**Response `404`:**
+
+```json
+{ "error": { "code": "NOT_FOUND", "message": "Player not found" } }
+```
+
+---
+
+#### `GET /v1/players/leaders`
+
+Season leaders across key stat categories. Each category returns the top player (by that metric) who meets the minimum-games threshold, or `null` when nobody qualifies.
+
+**Query parameters:**
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `seasonType` | string | No | `REGULAR` | Season segment (`REGULAR`, `PLAY_IN`, `PLAYOFFS`, `FINALS`) |
+| `minGames` | integer | No | `15` (regular) / `4` (postseason) | Minimum games played to qualify |
+
+**Response `200`:**
+
+```json
+{
+  "seasonType": "REGULAR",
+  "minGames": 15,
+  "leaders": {
+    "ppg":   { "player": { "id": "uuid", "firstName": "...", "lastName": "...", "team": { "...": "..." } }, "value": 28.3, "gamesPlayed": 72 },
+    "rpg":   { "player": { "...": "..." }, "value": 11.2, "gamesPlayed": 70 },
+    "apg":   { "player": { "...": "..." }, "value": 9.1,  "gamesPlayed": 68 },
+    "tsPct": { "player": { "...": "..." }, "value": 65.4, "gamesPlayed": 72 }
+  }
+}
+```
+
+Each category is `SeasonLeader | null`.
+
+---
+
+#### `GET /v1/players/aggregates`
+
+Aggregate player stats grouped by team or position.
+
+**Query parameters:**
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `metric` | string | Yes | — | One of: `pointsPerGame`, `reboundsPerGame`, `assistsPerGame` |
+| `groupBy` | string | No | `team` | `team` or `position` |
+| `seasonType` | string | No | `REGULAR` | Season segment |
+
+**Response `200`:**
+
+```json
+{
+  "metric": "pointsPerGame",
+  "groupBy": "team",
+  "seasonType": "REGULAR",
+  "groups": [
+    { "group": "BOS", "playerCount": 14, "average": 22.3 },
+    { "group": "GSW", "playerCount": 15, "average": 21.1 }
+  ]
+}
+```
+
+---
+
+#### `GET /v1/players/export`
+
+Export a filtered slice of players as a CSV file. Max 5,000 rows.
+
+**Query parameters:**
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `teamId` | string | No | — | Filter by team UUID |
+| `position` | string | No | — | Filter by position (`PG`, `SG`, `SF`, `PF`, `C`) |
+| `search` | string | No | — | Search by player name |
+
+**Response `200`:** `text/csv` file download (`attachment; filename="players.csv"`). Columns: `id`, `nbaPlayerId`, `firstName`, `lastName`, `position`, `jerseyNumber`, `heightInches`, `weightLbs`, `teamAbbreviation`, `teamCity`, `teamName`.
+
+---
+
+#### `GET /v1/players/:id/matchup-projection`
+
+Per-opponent matchup projection for a player's next game. Blends recent form with the player's overall season rate, adjusted for the upcoming opponent. Shipped in PR #105.
+
+**Path parameters:**
+
+| Parameter | Type | Description |
+|---|---|---|
+| `id` | string (UUID) | Player ID |
+
+**Query parameters:**
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `seasonType` | string | No | `REGULAR` | Season segment |
+
+**Response `200`:**
+
+```json
+{
+  "playerId": "uuid",
+  "seasonType": "REGULAR",
+  "overallPointsPerGame": 24.5,
+  "splits": [
+    {
+      "opponent": { "id": "uuid", "name": "Lakers", "abbreviation": "LAL" },
+      "gamesPlayed": 3,
+      "pointsPerGame": 28.0
+    }
+  ],
+  "upcomingGames": [
+    {
+      "gameId": "uuid",
+      "gameDate": "2026-04-01T00:00:00.000Z",
+      "opponent": { "id": "uuid", "name": "Celtics", "abbreviation": "BOS" },
+      "isHome": true,
+      "projectedPoints": 22.3
+    }
+  ]
+}
+```
 
 **Response `404`:**
 
@@ -472,7 +598,7 @@ Every placed player's point on the style map, plus the archetype list for the le
 
 ### Teams
 
-All team endpoints are **public** — no authentication required.
+All team endpoints are **public** — a session cookie or API key is required (see [Authentication](#authentication)).
 
 #### `GET /v1/teams`
 
@@ -530,9 +656,28 @@ Single team by UUID.
 
 ---
 
+#### `GET /v1/teams/elo-ratings`
+
+All teams' current Elo ratings, sorted highest first. Teams with no predicted game are absent (not reported with a default 1500).
+
+**Response `200`:**
+
+```json
+[
+  {
+    "team": { "id": "uuid", "nbaTeamId": 1610612747, "name": "Los Angeles Lakers", "abbreviation": "LAL", "city": "Los Angeles", "conference": "West", "division": "Pacific", "logoUrl": "..." },
+    "elo": 1623.4,
+    "asOfGameId": "uuid",
+    "asOfGameDate": "2026-03-15T00:00:00.000Z"
+  }
+]
+```
+
+---
+
 ### Games
 
-All game endpoints require **authentication** via a BetterAuth session cookie (`better-auth.session_token`).
+Game endpoints are **public** — a session cookie or API key is required (see [Authentication](#authentication)).
 
 #### `GET /v1/games`
 
@@ -585,6 +730,18 @@ Postseason games are excluded from the prediction and optimizer models regardles
 
 ---
 
+#### `GET /v1/games/seasons`
+
+List of seasons available in the database, most recent first.
+
+**Response `200`:**
+
+```json
+["2025-26", "2024-25", "2023-24"]
+```
+
+---
+
 #### `GET /v1/games/:id`
 
 Full game detail including win probability, predicted margin, and predicted top scorers from both rosters. Everything the game detail page needs in one request.
@@ -627,6 +784,73 @@ The `predictedScorers` array contains the top 5 predicted scorers per team (up t
 ```json
 { "error": { "code": "NOT_FOUND", "message": "Game not found" } }
 ```
+
+---
+
+#### `GET /v1/games/:id/events`
+
+Play-by-play events for a game, ordered by sequence ascending. Only 2025-26 games have stored play-by-play; older games return an empty page (not a 404).
+
+**Path parameters:**
+
+| Parameter | Type | Description |
+|---|---|---|
+| `id` | string (UUID) | Game ID |
+
+**Query parameters:**
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `page` | integer | No | `1` | Page number |
+| `pageSize` | integer | No | `25` | Items per page (1–100) |
+
+**Response `200`** — `PagedResult<GameEvent>`:
+
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "gameId": "uuid",
+      "sequence": 1,
+      "period": 1,
+      "clock": "PT12M00.00S",
+      "eventType": "2pt",
+      "subType": null,
+      "playerId": "uuid",
+      "teamId": "uuid",
+      "success": true,
+      "value": 2,
+      "description": "LeBron makes two-point shot"
+    }
+  ],
+  "page": 1,
+  "pageSize": 25,
+  "total": 342
+}
+```
+
+**Response `404`:**
+
+```json
+{ "error": { "code": "NOT_FOUND", "message": "Game not found" } }
+```
+
+---
+
+#### `GET /v1/games/export`
+
+Export a filtered slice of games as a CSV file. Max 5,000 rows.
+
+**Query parameters:**
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `status` | string | No | `all` | `all`, `upcoming`, `completed` |
+| `season` | string | No | — | Filter by season, e.g. `2025-26` |
+| `seasonType` | string | No | — | Filter by season segment (`REGULAR`, `PLAY_IN`, `PLAYOFFS`, `FINALS`) |
+
+**Response `200`:** `text/csv` file download (`attachment; filename="games.csv"`). Columns: `id`, `nbaGameId`, `gameDate`, `season`, `seasonType`, `homeTeam`, `awayTeam`, `homeScore`, `awayScore`.
 
 ---
 

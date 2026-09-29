@@ -179,7 +179,7 @@ The projection is computed by `GET /v1/players/:id/matchup-projection`, which bl
 | F7 (partial) | Stat abbreviations unexplained | Abbreviation explainer in Player Traits Radar (click any trait axis) | — | **Shipped** (pattern praised in interview) |
 | F13 | More team details (recent games, records) | Team profile pages with record, Elo, recent form, roster | #123 | **Shipped** |
 | F17 | Player-level predictions, not just game-level | Matchup projections per player on profile page | #105 | **Shipped** |
-| F15 | Follow-up interview with survey volunteer | Hands-on interview conducted 2026-09-27, 12 new feedback items (F20–F31) | — | **Complete** |
+| F15 | Follow-up interviews with survey volunteers | First hands-on interview conducted 2026-09-27, 12 new feedback items (F20–F31) | — | **In progress** (1 of 3 done) |
 | F9 | Beginner's guide — "what am I looking at" | Player Archetypes & Style Map with tooltip explainer on player profile | — | **Pending merge** (`player-archetypes` branch) |
 
 ---

@@ -8,7 +8,7 @@ We follow a **dynamic Scrum adaptation across three sprints**, agreed at the fir
 - **Extreme Programming (XP)** practices like pair programming and test-driven development are heavier than a six-person, part-time, three-sprint student project can sustain alongside the rest of the coursework. We adopt some XP-adjacent habits (small commits, code review as a gate) without adopting the full XP process.
 - **Scrum**, adapted down from its usual weekly/two-weekly sprint cadence to match the course's three milestone windows, gives us sprint planning, a working increment at the end of each sprint, and a retrospective to actually adjust before the next one — which is what the milestone-based rubric rewards.
 
-Reference: [Scrum Guide (scrumguides.org)](https://scrumguides.org) — our ceremonies below are a lightweight adaptation of the roles/events it defines, not a literal implementation (we don't run a dedicated Scrum Master role, and sprint length is set by the course rather than chosen by the team).
+Reference: [Scrum Guide (scrumguides.org)](https://scrumguides.org) — our ceremonies below are a lightweight adaptation of the roles/events it defines, not a literal implementation (sprint length is set by the course rather than chosen by the team). We do have a dedicated Scrum Master (see [Sprint Log](sprint-log.md#team)), though the role is lighter than the guide's full description since this is a student project.
 
 ## Ceremonies
 

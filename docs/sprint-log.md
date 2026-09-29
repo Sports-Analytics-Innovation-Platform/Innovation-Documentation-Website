@@ -161,7 +161,7 @@
 | Fix onboarding follow/unfollow persistence, block finishing onboarding while a preference save is still pending, add error feedback for failed writes, and refresh profile/watchlist/favourite-team locker data after changes (PR #125, closes #67) | `fix` | Daniel Passos |
 | Build an admin page (Teams/Players editing, user role management and deletion) behind the RBAC guard infrastructure (`RolesGuard`, `@Roles()`, the `ADMIN` role) that already existed in the schema but had no endpoint using it — the API's first write access to `Team`/`Player` rows (PR #120, open) | `feat` | Owen Pace |
 | Add model versioning to `GamePrediction` — a `modelVersion` column plus an append-only `GamePredictionRun` history table, so a prediction stays reproducible after the Elo/Four Factors model changes instead of being silently overwritten; first step of a series closing rubric gaps identified in the predictions feature (PR #126, open) | `feat` | Owen Pace |
-| Field the Sprint 2 user feedback survey (Google Forms via WhatsApp), collect 7 responses, and publish the findings, quantitative analysis, and feedback-to-action traceability table on the docs site; raw responses archived with emails redacted | `docs` | Adrian Draxl |
+| Field the Sprint 2 user feedback survey (Google Forms via WhatsApp), collect 11 responses (7 by the Sprint 2 deadline, 4 more the next day while the form stayed open), and publish the findings, quantitative analysis, and feedback-to-action traceability table on the docs site; raw responses archived with emails redacted | `docs` | Adrian Draxl |
 
 ---
 
@@ -192,7 +192,7 @@ The largest batch of work in the project so far — roughly 35 merged PRs, mostl
 | Fix play-by-play action-type drift after the vocabulary changed again; disable pull scheduling where ingestion is unavailable (PR #181) | `fix` | Sanele H. |
 | **Admin event-corrections workflow**: game lookup + resolved-credit play-by-play, a preview/apply/undo flow with validation, incremental per-player stat recompute after a correction (PR #182) | `feat` | Sanele H. |
 | Fix teammate-credit resolution: disambiguate teammates sharing a surname/initial, match the name prefix NBA's own feed writes (PR #183) | `fix` | Sanele H. |
-| Audited this week's work against the brief and found two real bugs: review didn't actually gate publication (a `PENDING_REVIEW` batch's data was already live), and a batch's resume mechanism could be silently defeated by a crash mid-phase. Fixed both, added a load-test script against a stated performance target (not yet run at scale), backfilled the AI usage ledger and this log, and corrected a week of stale documentation across the docs site. Not yet merged to `main` as of this entry | `fix`/`docs` | Owen Pace |
+| Audited this week's work against the brief and found two real bugs: review didn't actually gate publication (a `PENDING_REVIEW` batch's data was already live), and a batch's resume mechanism could be silently defeated by a crash mid-phase. Fixed both (PRs #184, #186, merged to `main` on 2026-09-23), added a load-test script against a stated performance target (not yet run at scale), backfilled the AI usage ledger and this log, and corrected a week of stale documentation across the docs site | `fix`/`docs` | Owen Pace |
 
 ### Week of 22 Sep
 
