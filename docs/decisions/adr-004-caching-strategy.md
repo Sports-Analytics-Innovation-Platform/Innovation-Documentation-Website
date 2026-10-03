@@ -1,34 +1,35 @@
 # ADR-004: Caching Strategy
 
-**Status:** Accepted — implemented on branch `DBCallRate` (PR #124), 13 September 2026
+**Status:** Accepted, in use since 13 Sep (PR #124).
 
 ## Decision
 
-Cache public API reads in an **in-process, in-memory cache inside the NestJS API**, with short TTLs, rather than adding Redis or any hosted cache service. Separately, enable **BetterAuth's session cookie cache** (5 minutes) so signed-in requests stop re-reading the `Session` and `User` tables on every request.
+Cache public API reads **in memory, inside the NestJS API**, with short lifetimes, instead of adding Redis or a hosted cache. Separately, let **BetterAuth trust its session cookie for 5 minutes**, so signed-in requests stop re-reading the `Session` and `User` tables.
 
-Per-user data is explicitly excluded: nothing under `/v1/me` is cached.
+Nothing under `/v1/me` is cached.
 
 ## Context
 
-- The API runs as a **single Render free-tier instance** and reaches Supabase Postgres through the transaction pooler. Each round trip pays real latency, and large row pulls consume Supabase compute and egress on a free plan.
-- Before this work, **nothing was cached anywhere** — every page view, tab refocus and signed-in request reached Postgres. See [Performance](../design/performance.md) for the full audit and the measured before/after.
-- The NBA data is **almost read-only**: games, stats, predictions and lineups change only when the Python batch jobs run. Between runs the same query returns the same answer, which is what makes a short TTL free in correctness terms.
-- The free instance has roughly 512 MB of memory and spins down when idle, so any in-process cache has to be bounded and has to tolerate being emptied without warning.
+- The API is **one Render free-plan instance** reaching Supabase through a connection pooler, so every database round trip is slow, and large reads use up a free plan's compute.
+- Before this, **nothing was cached**: every page view, tab switch and signed-in request reached Postgres ([Performance](../design/performance.md#what-the-audit-found)).
+- The NBA data is **almost read-only.** It changes only when the Python jobs run, so a short cache lifetime costs nothing in correctness.
+- The instance has about 512 MB of memory and sleeps when idle, so the cache must be bounded and must cope with being emptied.
 
 ## Alternatives considered
 
-**Redis or Upstash** was the one alternative genuinely weighed, and it was rejected. A network-attached cache solves the problem of sharing cached state *across processes*, and there is only one API process. Adding it would put a network hop in front of every cache read and introduce a service to run, monitor and pay for, in exchange for a guarantee this deployment does not need. The fact that the cache empties when the free instance spins down is acceptable: the first request after a cold start repopulates it, and that request was going to hit Postgres under the old behaviour anyway.
-
-**Other options were not formally compared.** HTTP-level caching (`Cache-Control` headers with a CDN in front of the API) and materialised views in Postgres would both be reasonable things to evaluate, and neither was. If this ADR needs to demonstrate a weighed comparison rather than a reasoned default, that evaluation still has to happen — it is recorded here as not done rather than implied.
+| Option | Why not |
+|---|---|
+| **Redis or Upstash** | A shared cache solves sharing between processes, and there is only one. It would add a network hop to every cache read and another service to run. Losing the cache on a cold start is fine: the first request refills it. |
+| **HTTP caching through a CDN, or Postgres materialised views** | Reasonable, but not evaluated. |
 
 ## Consequences
 
-- **A staleness contract now exists, and it is documented rather than incidental.** Public NBA data can be up to 5 minutes stale after an ingestion or predictor run (1 hour for teams and seasons). Nothing a user owns is ever stale, and a new pick invalidates the leaderboard immediately.
-- **⚠️ A revoked session stays valid for up to 5 minutes.** This is the real cost of the cookie cache: a session revoked from another device, or a role changed directly in the database, does not take effect until the cookie is re-verified. Sign-out and account deletion clear the cookie immediately, so the common paths are unaffected — but "sign out of all devices", if it is ever built, will not be instant without also shortening or bypassing this window. Flagged in [Security](../security.md#session-cookie-cache) as well, because it is a security property and not only a performance one.
-- **The cache must stay off in tests.** The e2e suite truncates and reseeds one shared database, so a cache surviving between specs would serve a previous test's data. It disables itself under Vitest rather than relying on every spec to remember.
-- **Cached values are shared references.** Callers must treat them as read-only; a caller that mutated one would corrupt every later reader. Every current caller builds new objects instead, and the service carries a comment saying so.
-- **This decision is scoped to a single instance and does not survive scaling.** If the API is ever run with more than one replica, the cache becomes per-replica: two users can sit in different TTL windows and see different data for the same public request, and a targeted invalidation (a pick clearing the leaderboard) would only clear the replica that served it. That is the point at which the Redis option above should be reconsidered rather than assumed still-rejected.
+- **Public data can be up to 5 minutes old** after a data job (1 hour for teams and seasons). Nothing a user owns is ever stale, and a new pick clears the leaderboard at once.
+- **A revoked session can last up to 5 minutes.** A session revoked from another device, or a role changed in the database, takes effect when the cookie is next checked. Sign-out and account deletion are immediate ([Security](../security.md#session-cookie-cache)).
+- **The cache is off in tests,** because the end-to-end suite reseeds one shared database between specs.
+- **Cached values are shared,** so callers must not modify them.
+- **It only works for one instance.** With several, each would have its own cache, users could see different data, and clearing the leaderboard would clear only one. That is when to reconsider Redis.
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Code[Claude Opus 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Code[Claude Opus 5], Claude-Code[Claude Opus 5.5]*
