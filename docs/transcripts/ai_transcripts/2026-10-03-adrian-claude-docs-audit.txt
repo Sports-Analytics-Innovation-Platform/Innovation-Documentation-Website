@@ -814,5 +814,206 @@ While the push waits, I'm drafting the backlog items. First a quick check of two
 ASSISTANT:
 It's only a warm-up ping that ignores the reply, so your instinct on item 20 was right. I'll write that up. Now building the backlog page.
 
-    [tool calls: Bash x4, Write, Artifact, PowerShell]
+    [tool calls: Bash x5, Write, Artifact, PowerShell]
+
+ASSISTANT:
+I've finished all your answers on `docs-site-cleanup`, except two things that need you: picking your GitHub account so `gh-pages` gets deleted, and three questions at the end. The strict build is clean, and nothing has been pushed to `main` or deployed.
+
+**Needs you right now:** Git Credential Manager has a "Select an account" window open. Pick your GitHub account and `gh-pages` is deleted on GitHub and locally. I checked first that it's unused: the site deploys from the Actions build, and the live `/become-pro/` page doesn't exist on `gh-pages`. If the window has closed, run `git push origin --delete gh-pages` and then `git branch -D gh-pages`.
+
+## Done since your answers (8 commits, 31 on the branch)
+- **Warning and note boxes are gone.** Each is now a plain sentence or deleted. The only collapsible boxes left are the dated meeting minutes.
+- **Player Archetypes is written as merged:** 106 API operations, 39 tables, 26 migrations, and its tests are on the Testing page.
+- **Performance now opens with your four Lighthouse screenshots.** The load test is removed everywhere.
+- **Your other answers are on the pages:** no retrospectives, one interview, no second survey, Brendan's "not needed" on password reset and the cross-group API, and Milestone 4 as the period after Sprint 3. The Owner column is gone from Requirements.
+- **Six of your screenshots are on UI Overview:** Home, Compare, Predictions, Optimizer, Become Pro and Profile. I cropped them and blanked your username in the header. There's no Snipping Tool popup and no email in them.
+- **AI Ledger:** I added a row for this session under your name, with a transcript exported from the Claude Code log. It has your prompts word for word (including "you cutie", so edit it if you like), every reply, and one line per batch of tool calls.
+- **Housekeeping:** your `site/` changes are stashed as `stash@{0}`. They're old build output, so `git stash drop` is fine. `main` is pulled, and `site/` is no longer tracked.
+- **Backlog items:** [Backlog issues](https://claude.ai/artifact/7fr5Fo4auZryNPReMAmTVz) has the 22 open feedback items plus one code fix. Each has a copy button for the title and the body, its labels, and a "Filed" tick box.
+
+## Answers to your questions
+- **4, GitHub links:** the mirror works, but the app repo on GitHub is private. The 7 source-file links on Improvements Made work for you because you're signed in, but a tutor gets a 404. I'd point them at Gitea, since the tutor has a Wits login.
+- **16, Lighthouse files:** I didn't commit them. They're a local run of Home that scored **59** for performance, and Lighthouse itself warned that your CPU was slower than it expects. The site quotes PageSpeed's **93** for the same page, so committing them would put a contradicting number next to it. You can delete them.
+- **20, `/health`:** you're right. It's only a warm-up ping that wakes Render and ignores the reply, so nothing breaks when `/health` retires on 31 Mar 2027. It's in the backlog as low priority, together with the cron-job.org pinger, which uses the same route.
+- **14, runner:** removing it doesn't need Docker. Someone with admin rights opens Gitea → Settings → Actions → Runners → `kiran-backup` → Delete, and the leaked token stops working. Tell me when it's done and I'll update Security.
+- **12, test suites:** these are the app's automated tests. The Testing page is accurate as it stands, because its counts are dated 27 Sep. To refresh them:
+  1. Start Docker Desktop.
+  2. In `sportsanalytics`, run `git pull`.
+  3. Start the test database with the `docker run` command on the Testing page.
+  4. In `apps/api`, run `npm ci`, then `cp .env.test.example .env.test`, then `npm run test`.
+  5. In `apps/web`, run `npm ci`, then `npm run test`.
+  6. Send me the "Tests … passed" line from each.
+
+## Before you push
+- **Merge the Player Archetypes PR (#195) first,** because the docs now describe it as live. After merging, someone has to run `python build_archetypes.py --season 2025-26 --apply` against production. Until then, profiles say "No season has been analysed".
+- **To review:** `git log --oneline origin/main..docs-site-cleanup`. The branch is already in your repo.
+- Two backlog items may already be covered on the live site: Beat the Model (F20) now has an explainer, and Become Pro (F29) has an intro. Each item says what to check before you file it.
+
+## Still need from you
+1. Should I switch the 7 GitHub links to Gitea?
+2. Should I delete the Requirements page? I'd say yes. The rubric only points to it next to Feature Tiers, which covers the same requirements with their status.
+3. Send your other AI usages: transcripts or share links, with the date, tool, model and what each was for. I'll add a ledger row for each.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+`gh-pages` is deleted, both on GitHub and locally. Its last commit was fadc26f, from 6 Aug, in case it's ever needed. The live docs site still loads after the deletion, including the Become Pro page.
+
+My last message is otherwise unchanged. Three things still need your answer: whether to switch the 7 GitHub links to Gitea, whether to delete the Requirements page, and your other AI usages for the ledger.
+
+------------------------------------------------------------------------
+USER (2026-10-03 15:00 UTC)
+------------------------------------------------------------------------
+1. yes switch the links to gitea
+2. well if it is no longer in the rubric then yes delet it. we have already been marked for each sprint. the submission is all that is left right?
+3. okay linking them here: can't seem to copy since it is .jsonl but I can just put it in a folder for you to discern. putting it in temp folder once done intergrating from the temp folder into the doc site you can delete the temp folder. okay go
+
+[1 screenshots of the live app attached]
+
+ASSISTANT:
+Starting with the AI usages, since they're the biggest job: I need to find the folder you put them in.
+
+    [tool calls: Bash x2]
+
+ASSISTANT:
+Found 11 conversations in `temp`, which look like Qoder logs. Checking their format.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+Each line is a `role` plus a `message`. Next I'll compare them with the existing Qoder transcripts in the docs and pull each conversation's prompts.
+
+    [tool calls: Bash x4]
+
+ASSISTANT:
+The script broke on a backslash escape. I'll use `chr(92)` instead.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+About 276,000 characters in total. Before I read them in full, I'll scan for emails, keys, tokens, connection strings, phone numbers and the username.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+The scan found survey respondents' emails and student numbers in task-903, which will be redacted. The local Postgres URL uses only local dev defaults. Now reading each export in date order.
+
+    [tool calls: Read x2]
+
+ASSISTANT:
+task-3cc (7 Sep) added the Testing, Stakeholder Interactions and API Reference pages, audited the Tech Stack page and updated the rubric links. Nothing private in it. Next is task-2e7.
+
+    [tool calls: Read x2, Bash]
+
+ASSISTANT:
+task-7d6 (14 Sep) analysed the first 7 survey responses and added the feedback methodology page. Next is task-903, which has the survey responses and emails to redact.
+
+    [tool calls: Read x5, Bash x3]
+
+ASSISTANT:
+Reading done for all 11 Qoder logs. Now I'm writing the scrubbed transcripts and ledger rows into the branch.
+
+    [tool calls: Bash x6]
+
+ASSISTANT:
+Found a privacy issue to check: the response sheet link. Looking at it now.
+
+    [tool calls: Bash x3]
+
+ASSISTANT:
+Sheet is still redacted (only `<redacted>@…` domains), so the link is safe. Adding the 10 ledger rows now.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+Understood. I'll keep this short: build and commit the Qoder work, then delete temp.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+Committed. Now the Gitea links and the Requirements check, in one pass.
+
+    [tool calls: Bash x2]
+
+ASSISTANT:
+Only Milestone 2 (already marked) links Requirements, so I'm deleting it. All 7 app paths exist on Gitea main.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+The temp folder is this session's working directory, so the safety check blocked deleting it. The whole command was blocked, so I'm re-running it without the delete.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+One inbound link in `ci-cd.md` got missed. Fixing it:
+
+    [tool calls: Bash x4]
+
+ASSISTANT:
+All three are done on `docs-site-cleanup` and the strict build is clean. The branch is 34 commits ahead of main and not pushed. The one thing left for you is deleting the temp folder.
+
+1. **Gitea links:** all 7 source links on the Improvements page now point to `sdp.ms.wits.ac.za/innovation/sportsanalytics/src/branch/main/...`. I checked that every file exists on the app repo's main. They were the only GitHub app links on the site.
+2. **Requirements page:** deleted. Only the Milestone 2 row linked to it, and that sprint is already marked. I also removed its nav entry and the leftover links in Rubric Quick Links and CI/CD.
+   - **Is the submission all that's left?** Yes. Rubric Quick Links only has Milestone 4, the Project Submission, due 11 Oct.
+3. **Qoder logs:** I added 10 transcripts to `ai_transcripts/` and 10 rows to the AI Usage Ledger, covering 2 Sep to 3 Oct. They're in date order with model "Qoder Auto or Qoder Efficient" and dates from your screenshot.
+   - The chat about how Swagger works is filed inside the 7–13 Sep transcript.
+   - Every email address is replaced with `[redacted]`.
+   - Some transcripts mention the survey response sheet. I checked it's still public with only `<redacted>@…` addresses showing, so those mentions are safe.
+
+**For you to do:**
+- **Delete the temp folder yourself:** `C:\Users\adria\MyGit\InnovationUni\temp`. A Claude Code safety check stopped me because it's this session's working folder. Everything in it is now on the branch.
+- **Before you push the docs branch:**
+  - merge archetypes PR #195;
+  - run `build_archetypes.py --season 2025-26 --apply` on production;
+  - remove the `kiran-backup` runner in Gitea.
+
+To save usage, I didn't re-export this Claude session's transcript, so the copy on the branch stops before today's last few steps. I can refresh it next session.
+
+------------------------------------------------------------------------
+USER (2026-10-03 15:17 UTC)
+------------------------------------------------------------------------
+sure now what were those other things you wanted me to do earlier? list them for me nicely so I can  do them proper.
+
+ASSISTANT:
+Here's what's left, in the order to do them. I can't do any of these for you.
+
+**1. Delete the temp folder**
+- Delete `C:\Users\adria\MyGit\InnovationUni\temp` in Explorer.
+- Everything in it is already on the docs branch, so nothing is lost.
+
+**2. Merge the Player Archetypes PR (#195) in Gitea**
+- The docs branch already describes Player Archetypes as live. Merge the PR first so the docs aren't ahead of the app.
+- After it deploys, run this once against the production database so the archetype data exists:
+  ```
+  python build_archetypes.py --season 2025-26 --apply
+  ```
+- Then check that a player profile shows the archetype card and the style map.
+
+**3. Remove the `kiran-backup` runner in Gitea**
+- In the app repo's Gitea, open **Settings → Actions → Runners**, find `kiran-backup` and delete it. It's a leftover, and the shared runners handle CI now.
+
+**4. Review and push the docs branch**
+- The branch is `docs-site-cleanup` in `Innovation-Documentation-Website`. It's 34 commits ahead of main and not pushed.
+- Look it over locally if you want: `git log main..docs-site-cleanup --oneline`, or `mkdocs serve` on the branch.
+- When you're happy, merge it into main and push. GitHub Actions builds and deploys the site on its own.
+- After it deploys, open the live site and click a few pages: Rubric Quick Links, Improvements and the AI Usage Ledger.
+
+**5. Old `site/` folder changes (optional)**
+- Your main docs repo has stashed changes to the `site/` build output (`stash@{0}`). They're old local build files that don't affect the live site, so you can drop them with `git stash drop`.
+
+**6. Submit the project by 11 Oct**
+- That's Milestone 4 and the only thing left to be marked.
+
+**My leftover task:** next session I'll refresh this chat's transcript on the branch. The copy there stops before today's last few steps. If you'd rather push first, that's fine; it would be one small extra commit.
+
+------------------------------------------------------------------------
+USER (2026-10-03 15:19 UTC)
+------------------------------------------------------------------------
+add this convo to the AI usage ledger.
+
+ASSISTANT:
+This session already has a ledger row (2026-10-03, Claude Code) and a transcript, so I'll refresh the transcript to cover everything up to now and widen the row to include today's later work.
+
+    [tool calls: Bash]
 
