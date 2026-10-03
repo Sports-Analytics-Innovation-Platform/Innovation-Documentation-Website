@@ -6,7 +6,7 @@ How the platform protects accounts, user data and secrets, and the risks that re
 
 Sign-in is **BetterAuth** with **Google OAuth** ([ADR-002](decisions/adr-002-auth.md)), an established library as the brief requires (§2.1). It replaced the starter code's hand-written Passport and bcrypt login.
 
-- **No passwords are stored.** Google holds the credential, so a user resets their password with Google. The brief asks for password reset (§2.1); how the Google-only design meets it is recorded in [ADR-002](decisions/adr-002-auth.md).
+- **No passwords are stored.** Google holds the credential, so a user resets their password with Google. The brief asks for password reset (§2.1); Brendan said it isn't needed ([ADR-002](decisions/adr-002-auth.md)).
 - **Account deletion is real deletion.** Deleting an account removes the user's sessions, linked accounts and all their data, not just a flag (§2.1).
 - **The session cookie is first-party.** The browser reaches the API through the site's own domain ([ADR-003](decisions/adr-003-hosting-topology.md#how-the-browser-reaches-the-api)), which fixed sign-in on Safari, Firefox and Brave.
 - **Sign-in can expire on a cold start.** BetterAuth's sign-in state expires after 10 minutes, a fixed library value. If the free API host is asleep, waking it uses part of that window, so every page pings the API when it loads to wake it early.
@@ -56,8 +56,9 @@ The headers were checked on the live API on 3 Oct.
 - **A leaked secret is rotated,** not just deleted, because it stays in git history.
 - **Scripts can't hit production by accident.** The repo's root `.env` points at production, so the valuation job reads only its own `.env` and fails if it is missing.
 
-!!! danger "Incident, 11 Sep: a runner token on a branch"
-    A Gitea runner registration file (`ci-runner/data/.runner`, runner `kiran-backup`) was committed on the `LandingPageUpdates` branch. Review caught it and it never reached `main`, but the token remains in that branch's history on the Gitea server, so the runner registration must be reset.
+### Incident, 11 Sep: a runner token on a branch
+
+A Gitea runner registration file (`ci-runner/data/.runner`, runner `kiran-backup`) was committed on the `LandingPageUpdates` branch. Review caught it and it never reached `main`, but the token is still in that branch's history on the Gitea server. The runner hasn't been removed from Gitea yet; removing it there makes the token useless.
 
 ## Third-party data
 

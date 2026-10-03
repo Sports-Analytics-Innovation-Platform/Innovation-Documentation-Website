@@ -4,8 +4,8 @@ How the team collected user feedback, what users said, and what was done about i
 
 | Method | When | Result |
 |---|---|---|
-| Survey (Google Forms, shared on WhatsApp) | 8–15 Sep 2026 | 11 responses, findings F1–F19 |
-| Hands-on interview with a survey volunteer | 27 Sep 2026 | Two bugs and 12 more findings, F20–F31 |
+| One survey (Google Forms, shared on WhatsApp) | 8–15 Sep 2026 | 11 responses, findings F1–F19 |
+| A hands-on interview with the one survey volunteer who replied | 27 Sep 2026 | Two bugs and 12 more findings, F20–F31 |
 | Client meetings | Every sprint | Recorded on [Stakeholder Interactions](stakeholder-interactions.md) |
 
 ## How feedback is integrated

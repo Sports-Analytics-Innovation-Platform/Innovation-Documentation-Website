@@ -34,7 +34,7 @@ No other library was formally compared.
 
 - **Nobody's password is stored.** A database leak exposes no passwords.
 - **Every user needs a Google account.**
-- **Password reset is not built.** The brief asks that users can "reset their passwords" (§2.1). With Google-only sign-in, the password is Google's to reset. The client estimated about 80% for the authentication criterion without it (7 Sep), and the team deferred an email-and-password option on 14 Sep because of the effort ([Stakeholder log](../stakeholder-interactions.md)).
+- **Password reset is not built.** The brief asks that users can "reset their passwords" (§2.1). With Google-only sign-in, the password is Google's to reset. The client estimated about 80% for the authentication criterion without it (7 Sep), and the team deferred an email-and-password option on 14 Sep because of the effort. Brendan later said password reset isn't needed ([Stakeholder log](../stakeholder-interactions.md)).
 - **A revoked session can last up to 5 minutes** because of the cookie cache ([Security](../security.md#session-cookie-cache)).
 
 ---

@@ -1,10 +1,10 @@
 # User Interviews
 
-One-on-one follow-up interviews with [survey](feedback-survey.md) respondents who volunteered their contact details (Q25) — the qualitative second half of the [user feedback process](feedback-survey.md#how-feedback-is-integrated). Sessions are hands-on: the participant drives the live app while thinking aloud, which catches the comprehension and discoverability problems a screenshot-based survey structurally cannot.
+A hands-on follow-up to the [survey](feedback-survey.md), and the second half of the [user feedback process](feedback-survey.md#how-feedback-is-integrated). Respondents who left an email (Q25) were invited, and one replied, so there was one interview. The participant drove the live app and thought aloud, which catches comprehension and discoverability problems a screenshot-based survey can't.
 
 ---
 
-## Interview 1 — 2026-09-27
+## The interview, 27 Sep 2026
 
 | | |
 |---|---|

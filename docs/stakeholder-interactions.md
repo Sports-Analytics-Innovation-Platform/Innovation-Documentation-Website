@@ -39,8 +39,8 @@ What the client asked for at each meeting and what the team did about it. The fu
 | 21 Aug | Look at the client's reference project, RaceIQ | Reviewed for UX ideas | — |
 | 7 Sep | 60% accuracy is acceptable if the model is deployed | Model live on the Predictions page | [Predictions](https://sportsanalytics.pages.dev/predictions) |
 | 7 Sep | Measure performance with Lighthouse, aiming for 80+ | See 27 Sep | [Performance](design/performance.md#lighthouse-scores-2026-09-29) |
-| 7 Sep | Use another group's API, or have one use ours | *To confirm* | — |
-| 7 Sep | Password reset is missing (about 80% for authentication without it); ask Brendan | Not built. Outcome of asking Brendan: *to confirm* | [ADR-002](decisions/adr-002-auth.md) |
+| 7 Sep | Use another group's API, or have one use ours | Not done: later confirmed as not needed, because it isn't in the rubric | — |
+| 7 Sep | Password reset is missing (about 80% for authentication without it); ask Brendan | Not built: Brendan said it isn't needed | [ADR-002](decisions/adr-002-auth.md) |
 | 7 Sep | Send a simple user survey with a link to the web app | Google Forms survey, 8–15 Sep, 11 responses | [User Feedback Survey](feedback-survey.md) |
 | 7 Sep | Deriving last-five-games stats from event data is acceptable | Kept that approach on player profiles | — |
 | 7 Sep | The bug tracker can be simple | Gitea issues with a bug-report form and labels | [Testing](testing.md#bug-tracking) |
