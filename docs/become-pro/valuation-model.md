@@ -48,7 +48,7 @@ An MAE of 10.9 picks means that, on the 140 rookie seasons it was fitted to, the
 - **Published games only.** Become Pro follows the same visibility rule as every public figure (`apps/api/src/common/game-visibility.ts`).
 - **`db.py` reads only `apps/valuation/.env`.** The root `.env` points at production, and a bare `load_dotenv()` would walk up the directory tree and find it.
 
-**Stack:** Python with `psycopg2-binary`, `numpy`, `python-dotenv` and `pytest` (see [Tech Stack](../tech-stack.md#valuation-appsvaluation)).
+**Stack:** Python with `psycopg2-binary`, `numpy`, `python-dotenv` and `pytest` (see [Tech Stack](../tech-stack.md#python-services)).
 
 **Files:** `apps/valuation/train_valuation_model.py` (entry point), `draft_slot_model.py` (fit, Spearman, slot bounds, interval settings), `rookie_scale.py`, `level_factors.py`, `db.py`, `test_valuation.py`, `README.md`
 

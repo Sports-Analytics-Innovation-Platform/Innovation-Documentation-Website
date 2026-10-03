@@ -1,182 +1,79 @@
 # Tech Stack
 
-Every component below is listed with why it was chosen, not just what it is — this doc exists specifically to score the brief's "Tech Stack" criterion (motivated stack, not just named). Every runtime dependency in `apps/api/package.json`, `apps/web/package.json`, and the four Python services' `requirements.txt` is accounted for here.
+Every runtime dependency in the app repo, with why it was chosen. Versions are from `apps/api/package.json`, `apps/web/package.json` and each Python service's `requirements.txt` on `main`.
 
-## Backend (apps/api)
+## Backend (`apps/api`)
 
-### Framework
+| Choice | Version | Why |
+|---|---|---|
+| **NestJS** | 10 | Modules, controllers, services and guards give six people one shape for the hand-written API the brief requires (§2.1). The API started as plain Express and moved to NestJS on 6 Aug. |
+| **Express** | 5 | The HTTP server under NestJS. Version 5 is needed for the `*splat` wildcard routes (`/auth/*splat` and the 404 catch-all). |
+| **TypeScript** | 5.9 | Type checks against Prisma's generated client; NestJS's decorators need it. |
+| **reflect-metadata**, **RxJS** | –, 7 | Required by NestJS's dependency injection and interceptors. Not used directly. |
+| **Prisma** | 5.22 | One schema file (35 tables, 7 enums), generated TypeScript types, and migrations as reviewable SQL. See [ADR-001](decisions/adr-001-database.md). |
+| **PostgreSQL** | 16 locally | NBA data is relational (players, teams, games, plays), and season stats are aggregates, which SQL does well. Hosted on Supabase. |
+| **BetterAuth** | 1.3 | An established auth library, as the brief requires (§2.1). Google sign-in, with sessions in Postgres through its Prisma adapter; mounted at `/auth/*`. See [ADR-002](decisions/adr-002-auth.md). |
+| **Zod** | 4 | Validates every write route's request body and returns a readable reason when it rejects one. |
+| **Helmet** | 8 | Standard security headers in one line. |
+| **cors** | – | Allows only the site's own origins. In production the browser reaches the API through the same-origin proxy ([ADR-003](decisions/adr-003-hosting-topology.md#how-the-browser-reaches-the-api)), so this mainly covers local development. |
+| **@nestjs/swagger** | 7 | Generates the OpenAPI spec and the live Swagger UI at `/api/docs` from the controllers ([API Reference](api-reference.md)). |
+| **@nestjs/schedule** | 4 | Checks the pull schedule every hour ([Data Ingestion](design/ingestion.md)). |
+| **@supabase/supabase-js** + **ws** | 2 | Stores profile pictures in a private Supabase bucket. Only the API uses it, with a server-side key. `ws` is passed to it because its constructor needs a WebSocket on Node versions before 22. |
+| **multer** | 2 | Receives the profile-picture upload (`POST /v1/me/avatar`). |
+| **dotenv** | 17 | Reads `.env` into the environment, so no setting is hard-coded. |
 
-| Choice | Why |
-|---|---|
-| **NestJS 10** (TypeScript) | Started as a plain Express + Prisma API, migrated to NestJS on 2026-08-06 for its structured module/controller/service pattern, built-in dependency injection, guards for auth, and a global exception filter — this gives a consistent shape to the hand-written API the brief requires, rather than routes accumulating ad hoc across an Express app as the team grows to six people working in parallel. |
-| **Express 5** | Underlying HTTP framework that NestJS runs on via `@nestjs/platform-express`. The API uses Express 5 directly (not Nest's bundled Express 4) for the `ExpressAdapter` in `main.ts` — this matters specifically because the `NotFoundController` catch-all route uses Express 5's `*splat` wildcard syntax, which silently fails under Express 4. |
-| **TypeScript 5.9** | Type-safe JavaScript — every backend source file is `.ts`, compiled to `.js` via `tsc`. Required for Prisma's generated client types and NestJS's decorator metadata. |
-| **reflect-metadata** | Required by NestJS for decorator-based dependency injection and route metadata. Peer dependency of the NestJS decorator system. |
-| **RxJS 7** | Required by NestJS for its reactive internals (interceptors, guards, pipes return `Observable`). Not used directly in application code beyond what Nest wraps. |
+**Development:** nodemon (restart on change), tsx (runs `prisma/seed.ts`), Supertest (end-to-end HTTP tests), ESLint 10 with `typescript-eslint` 8, and Vitest 4 with `@vitest/coverage-v8`. See [Testing](testing.md) and [CI/CD](ci-cd.md).
 
-### Database
+## Frontend (`apps/web`)
 
-| Choice | Why |
-|---|---|
-| **Prisma 5.22** (ORM) | Type-safe query builder and migration tool over Postgres. Keeps the schema in one place (`schema.prisma`), generates TypeScript types automatically, and makes migrations reviewable in PRs rather than hand-written SQL drifting from the actual DB state. Confirmed as the team's choice — `schema.prisma` has grown to 31 models and 6 enums (checked 2026-09-23) across dozens of migrations. |
-| **PostgreSQL** (via Supabase) | Relational DB, matches the naturally relational shape of NBA data (players, teams, games, events, predictions) and is well-supported by Prisma and Supabase's managed hosting. |
+| Choice | Version | Why |
+|---|---|---|
+| **React** | 19 | The team knew it, and a single-page app talks to the API only over HTTP, which keeps the front end separate from the back end. |
+| **Vite** | 8 | Fast dev server and build with little configuration. In development it forwards `/api` to the local API. |
+| **TypeScript** | 6 | Catches wrong props and API response shapes at build time. |
+| **React Router** | 7 | Client-side page routes ([UI Overview](design/wireframes.md)). |
+| **TanStack Query** | 5 | Caching, loading states and refetching for API calls, instead of hand-written `useEffect` fetching. |
+| **BetterAuth client** | 1.6 | Sign-in, sign-out and the current session, matching the API's auth library. |
+| **Tailwind CSS** | 4 | Utility classes keep six people's pages consistent without a stylesheet per component. Theme colours are CSS variables. |
+| **shadcn/ui** (with Radix Slot, class-variance-authority, clsx, tailwind-merge) | – | Accessible components copied into the repo, so they can be changed freely. The helper libraries handle variants and merging class names. |
+| **Lucide** | 1 | Consistent SVG icons; only the ones used are bundled. |
+| **Recharts** | 3 | The trait radars, points trend and landing-page charts, styled with the same theme variables. |
 
-### Authentication
-
-| Choice | Why |
-|---|---|
-| **BetterAuth** | Established authentication library, satisfying the brief's ban on hand-rolled auth (§2.1). Replaces the initial scaffold's Passport.js local-strategy. BetterAuth mounts its own route set at `/api/auth/*` and manages sessions via cookies. See [ADR-002](decisions/adr-002-auth.md) for the full history. |
-
-### Security & HTTP
-
-| Choice | Why |
-|---|---|
-| **Helmet** | Sets security-related HTTP response headers (`X-Content-Type-Options`, `X-Frame-Options`, `Strict-Transport-Security`, etc.) — one-line middleware import that hardens the API against common web vulnerabilities without manual header configuration. |
-| **CORS** (`cors` package) | Cross-origin resource sharing middleware — required because the frontend (Cloudflare Pages) and API (Render) are on different domains in production. Configured in `main.ts` with an explicit allowlist of origins from `auth.config.ts`. |
-
-### Validation
-
-| Choice | Why |
-|---|---|
-| **Zod** | Schema validation for incoming request bodies. Provides runtime type-checking with descriptive rejection errors. Confirmed built — a shared `parseBody` helper runs a Zod schema over every request body on the write routes added in PR #94. |
-
-### API documentation
-
-| Choice | Why |
-|---|---|
-| **@nestjs/swagger** | Auto-generates an OpenAPI 3.0 spec and Swagger UI from controller/DTO decorators. **Live**, not just set up — `/api/docs` on the deployed API. See [API Reference](api-reference.md). |
-
-### Environment
-
-| Choice | Why |
-|---|---|
-| **dotenv** | Loads environment variables from `.env` files into `process.env` at startup. Used in `main.ts` (`import "dotenv/config"`) so the API reads `DATABASE_URL`, `BETTER_AUTH_SECRET`, `PORT`, etc. from the environment rather than hardcoding configuration. |
-
-### Development tools
-
-| Choice | Why |
-|---|---|
-| **nodemon** | Hot-reload during development — watches `src/` for changes and auto-rebuilds/restarts the API. Used by the `dev` script: `nodemon --watch src --ext ts --exec "npm run build && node dist/main.js"`. |
-| **tsx** | TypeScript execution for scripts that don't go through the Nest build pipeline — specifically `prisma/seed.ts` for database seeding. Runs TS directly via `node --loader tsx` without a separate compile step. |
-| **Supertest** | HTTP assertion library for E2E tests — makes real HTTP requests against the test NestJS application and asserts on status codes, response bodies, and headers. Used in every `test/**/*.e2e-spec.ts` file. |
-| **ESLint 10** + **typescript-eslint 8.66** | Linting for the API. Flat config in ESM (`eslint.config.js`) composing `@eslint/js` + `typescript-eslint` recommended. Enforced in CI — a lint error fails the build. See [CI/CD Pipeline](ci-cd.md). |
-| **Vitest 4** + **@vitest/coverage-v8** | Test runner and coverage. v8 provider instruments at the V8 level for accurate coverage without Babel overhead. See [Testing](testing.md). |
-
-## Frontend (apps/web)
-
-### Framework
-
-| Choice | Why |
-|---|---|
-| **React 19** | Team familiarity, large ecosystem, straightforward to keep the frontend fully decoupled from the backend (non-monolithic requirement) since it only talks to the API over HTTP. |
-| **Vite 8** | Fast dev server and build tool, minimal config compared to older bundlers. Uses `@vitejs/plugin-react` for Fast Refresh in development and optimised production builds. |
-| **TypeScript 6** | Type-safe JavaScript for the frontend — catches prop-type mismatches, missing route params, and API response shape errors at compile time rather than in the browser. |
-| **React Router 7** (`react-router-dom`) | Client-side routing, grown to fifteen page routes: `/`, `/home`, `/onboarding`, `/profile`, `/players`, `/players/:playerId`, `/compare`, `/teams`, `/teams/:teamId`, `/datasets`, `/become-pro`, `/predictions`, `/optimizer`, `/games/:gameId`, `/admin` (plus `/api-keys` as a redirect to `/profile`, where that feature now lives). |
-
-### Styling & UI
-
-| Choice | Why |
-|---|---|
-| **Tailwind CSS 4** (`@tailwindcss/vite`) | Utility-first styling — quick to build consistent, responsive layouts without hand-writing a separate stylesheet per component, which matters given six people are touching the frontend. v4 uses the Vite plugin directly (no `tailwind.config.js` needed) with `@theme` custom properties. |
-| **shadcn/ui** | Component library, paired with Tailwind. Confirmed built — used for Teams pages, general UI components, and the court view. Components are copied into the repo (not installed as a package), so they're fully customisable. Configured via `components.json` with the `base-nova` style and neutral base colour. |
-| **Radix UI** (`@radix-ui/react-slot`) | Headless UI primitives that shadcn/ui builds on. `react-slot` specifically lets components compose their props onto a single DOM element — used by shadcn's `Button`, `Card`, and other polymorphic components. |
-| **Lucide React** (`lucide-react`) | Icon library — consistent, tree-shakeable SVG icons used across the UI (navigation, stat cards, error states). Chosen over Heroicons/Feather for better coverage of sports-relevant icons and a cleaner visual weight at small sizes. |
-| **class-variance-authority** (`cva`) | Component variant system — defines typed variant props for shadcn components (e.g. `Button` with `variant="default" | "outline" | "ghost"` and `size="sm" | "md" | "lg"`). Keeps variant logic co-located with the component instead of scattered across className strings. |
-| **clsx** + **tailwind-merge** | Conditional class name utilities. `clsx` conditionally joins class strings; `tailwind-merge` resolves Tailwind class conflicts (e.g. `px-4 px-6` → `px-6`). Used together in the `cn()` helper that every shadcn component calls. |
-| **Recharts 3** | Charting library used for the player-profile radar and points-trend charts — themed against the same CSS custom properties as the rest of the UI rather than hardcoded colours. |
-
-### Data fetching
-
-| Choice | Why |
-|---|---|
-| **TanStack Query 5** (`@tanstack/react-query`) | Data-fetching/caching against the API. Handles loading states, background refetching, cache invalidation, and optimistic updates. Confirmed built — added as part of the frontend foundations work. |
-| **BetterAuth** (client SDK) | Frontend auth client — manages session state, provides `signIn`, `signOut`, `getSession` helpers. The session cookie is sent automatically with `credentials: "include"` on every `fetch` call. |
-
-### Testing
-
-| Choice | Why |
-|---|---|
-| **Vitest 4** + **@vitest/coverage-v8** | Test runner and coverage for the frontend — same tooling as the API for consistency. |
-| **React Testing Library** (`@testing-library/react`) | Component testing — tests components the way users interact with them (by role, label, text) rather than implementation details. Used in every `src/**/*.spec.tsx` file. |
-| **@testing-library/user-event** | Simulates real user interactions (click, type, tab) in component tests — more realistic than `fireEvent` because it fires the full sequence of browser events a real user would trigger. |
-| **@testing-library/jest-dom** | Custom DOM matchers (`toBeInTheDocument()`, `toHaveTextContent()`, `toBeVisible()`) — makes test assertions readable and specific to DOM elements. |
-| **jsdom** | In-browser DOM environment for Vitest — provides `document`, `window`, and DOM APIs without a real browser, so component tests can render and query React trees. |
-| **oxlint** | Linting for the frontend — dramatically faster than ESLint on large React codebases (written in Rust). Configured via `.oxlintrc.json`. Enforced in CI. |
+**Testing:** Vitest 4 with coverage, React Testing Library (tests by role and label, as a user would), `user-event`, `jest-dom`, jsdom, and axe-core for automated accessibility checks. **Linting:** oxlint, which is much faster than ESLint on a React codebase.
 
 ## Python services
 
-### Data ingestion (apps/ingestion)
+The Python jobs write to the same Postgres database as the API, so the two languages need no bridge between them. They run on a team member's computer, because stats.nba.com blocks cloud networks ([ADR-003](decisions/adr-003-hosting-topology.md)).
 
-| Choice | Why |
-|---|---|
-| **`nba_api` 1.11** | Free, MIT-licensed Python client for stats.nba.com. Covers historical seasons, the current season, and a live in-progress-game endpoint — broader and more current than the StatsBomb EPL data the team originally considered (limited to two dated seasons). See [NBA vs EPL pitch](decisions/index.md) for the full comparison. |
-| **`psycopg2-binary`** | PostgreSQL adapter for Python — the ingestion service writes directly to the same Supabase database that the NestJS API reads from. Binary wheel avoids needing a C compiler on the deployment target. |
-| **`python-dotenv`** | Loads `.env` files for the ingestion scripts — reads `DATABASE_URL` and other config from the environment, matching the API's `dotenv` convention. |
+| Service | Libraries | Why |
+|---|---|---|
+| **Ingestion** (`apps/ingestion`) | `nba_api` 1.11, `requests` 2.32 | `nba_api` is a free, MIT-licensed client for stats.nba.com covering past and current seasons, which was broader than the football data first considered ([pitch](decisions/index.md)). `requests` fetches betting-market odds. |
+| **Predictor** (`apps/predictor`) | NumPy 2.1 | Elo ratings and the Four Factors model for game predictions. |
+| **Optimizer** (`apps/optimizer`) | PuLP 2.9 | Solves the fantasy lineup as an integer program: most projected points under the salary cap. Simpler to install than OR-Tools. |
+| **Valuation** (`apps/valuation`) | NumPy 2.1 | Least-squares fit for the [Become Pro](become-pro/valuation-model.md) draft-slot model. About 140 training rows support little more, and every coefficient stays readable. The API applies the model itself in TypeScript. |
+| All four | `psycopg2-binary` 2.9, `python-dotenv` 1.0, `pytest` 8.3 | Direct Postgres access, settings from `.env`, and unit tests. |
 
-### Prediction (apps/predictor)
-
-| Choice | Why |
-|---|---|
-| **NumPy 2** | Numerical computation for the Elo rating system and Four Factors analysis — vectorised array operations for calculating rolling averages, exponential decay weighting, and regression coefficients. Used in `elo.py` and `four_factors.py`. |
-| **`psycopg2-binary`** | Same as ingestion — reads game data from Postgres to compute predictions, writes results back to the `GamePrediction` table. |
-| **`python-dotenv`** | Environment variable loading, same convention as other services. |
-| **pytest** | Unit tests for the prediction logic — `test_four_factors.py` validates the Four Factors weight calculations and edge cases. |
-
-### Optimisation (apps/optimizer)
-
-| Choice | Why |
-|---|---|
-| **PuLP 2.9** | Python linear programming library — solves the MILP (Mixed Integer Linear Program) for the fantasy lineup optimiser. Given player salary costs and predicted fantasy points, PuLP finds the lineup that maximises total predicted points under a salary cap. Chosen over OR-Tools for a simpler API and pure-Python installation. |
-| **`psycopg2-binary`** | Reads player predictions from Postgres, writes the optimised lineup back to the `Lineup` and `LineupSlot` tables. |
-| **`python-dotenv`** | Environment variable loading, same convention as other services. |
-
-### Valuation (apps/valuation)
-
-Trains the draft-slot model behind [Become Pro](become-pro/index.md) — see [Valuation Model](become-pro/valuation-model.md). No LLM is involved anywhere.
-
-| Choice | Why |
-|---|---|
-| **NumPy 2.1** | `numpy.linalg.lstsq` fits the ordinary least-squares model (four features → draft pick) and computes its MAE and Spearman rank correlation. OLS was chosen over anything heavier because about 140 training rows support little more, and a linear model keeps every coefficient inspectable in the stored model row. |
-| **`psycopg2-binary` 2.9** | Reads NBA rookie seasons from Postgres, writes the trained model as one `ProspectValuationModel` row. |
-| **`python-dotenv` 1.0** | Environment variable loading. `db.py` deliberately loads only `apps/valuation/.env`: the root `.env` points at production, and a bare `load_dotenv()` walks up the directory tree and finds it. |
-| **pytest 8.3** | 24 unit tests in `test_valuation.py` (the rookie scale, level factors, true shooting, rookie-season arithmetic, the fit, and what the stored model bundle carries), none needing a database. |
-
-The API has no Python on Render, so this service runs from a developer machine like the predictor and optimizer. The API applies the trained model itself, in TypeScript: applying a linear model is a dot product, and it has to happen the moment a user logs a game.
-
-### Python services: shared architecture
-
-`nba_api` is a Python package, and the backend is NestJS/TypeScript. This is resolved by running `nba_api` as a separate Python ingestion service (`apps/ingestion`) that writes directly to Postgres — NestJS then reads from the same database. The two languages coexist without needing an inter-process bridge because Postgres is the shared data layer. See [Architecture](design/architecture.md) for the full diagram.
-
-Per the brief's requirement that statistics be derived from individual event records rather than stored totals, `nba_api`'s precomputed advanced stats (offensive rating, PIE, usage%) are used only for **verification** — the team calculates these itself from event-level data.
+Box-score totals are derived from the stored play-by-play. Plus-minus, usage and ratings are stored as the NBA publishes them, because they need data the platform doesn't hold ([ADR-001](decisions/adr-001-database.md#design-rules-in-the-schema), rule 2).
 
 ## Infrastructure
 
 | Choice | Why |
 |---|---|
-| **Docker Compose** | Runs Postgres locally with one command, so every team member's dev environment matches without a manual install. |
-| **Gitea** | Version control, hosted per the university's own requirement to use university-provided infrastructure — see [Git Methodology](git-methodology.md). |
-| **Gitea Actions** (CI) | Pipeline defined in `.gitea/workflows/ci.yml`, running lint → typecheck → test as three parallel jobs (`api`, `web`, `coverage`) on every push and PR, pinned to Node 24. Confirmed built. Chosen simply because it's built into the Gitea instance already hosting the code — no second platform to register runners with. See [CI/CD Pipeline](ci-cd.md). |
-| **MkDocs Material + GitHub Pages** | Documentation site. MkDocs Material was chosen over Docusaurus/mdBook for a lower setup cost with strong out-of-the-box search, admonitions, and theming; GitHub Pages is used specifically for the docs site's static hosting (separate from Gitea, which hosts the actual codebase). |
-| **Cloudflare Pages** | Static CDN hosting for the frontend SPA (`apps/web` build output). Global edge network, managed TLS, auto-deploy from GitHub mirror. Per [ADR-003](decisions/adr-003-hosting-topology.md). |
-| **Render** | NestJS API hosting (Node.js web service, free tier). Auto-deploy from GitHub mirror. A pinger service keeps the instance warm to avoid cold-start delays. Per [ADR-003](decisions/adr-003-hosting-topology.md). |
-| **Supabase** | Managed PostgreSQL hosting with built-in connection pooling and a free tier. Supabase's auto REST/Auth/Storage APIs are deliberately unused — the NestJS API stays the only HTTP path to the data. Per [ADR-003](decisions/adr-003-hosting-topology.md). |
+| **Gitea** and **Gitea Actions** | The university's required Git host; its built-in CI runs lint, typecheck and tests on every push ([CI/CD](ci-cd.md)). |
+| **Cloudflare Pages** | Free static hosting for the web app; its Functions proxy `/api` and `/auth` to the API. |
+| **Render** | Free hosting for a long-running Node server. |
+| **Supabase** | Free managed Postgres with a connection pooler, used only as a database and a private file bucket. |
+| **Docker Compose** | One command starts the local and test databases. |
+| **MkDocs Material** on **GitHub Pages** | This site: search, admonitions and theming with little setup. |
 
-## Planned / not yet adopted
+Hosting choices and alternatives are in [ADR-003](decisions/adr-003-hosting-topology.md).
 
-These were confirmed as team decisions but are not yet in the codebase:
+## Considered and not used
 
-| Choice | Why | Status |
-|---|---|---|
-| **Redis + BullMQ** | Batch submission/ingestion processing and incremental recomputation jobs. | **The need was real and got built — without Redis/BullMQ.** A Postgres-backed `IngestionRequest`/`IngestionWorker` queue (`pull_worker.py`) handles scheduled/async ingestion pulls, and incremental stat recompute after a correction (`plan-stat-recompute.ts`) is a plain, targeted Prisma write. No queueing library was needed at this scale — revisit only if a real throughput problem shows up. |
-| **Redis** (cache / rate limiting) | **Evaluated for caching and rejected** — the API runs as a single Render instance, so an in-process cache does the same job with no network hop and no extra service to run or pay for. See [ADR-004](decisions/adr-004-caching-strategy.md), which also records when this should be revisited: if the API is ever scaled past one replica. Still the natural choice for a rate-limit store, which remains unbuilt (see [Security](security.md)). | Decided against for caching; still open for rate limiting |
-| **S3-compatible storage** (MinIO for self-hosted/course use) | For any exported/versioned data artifacts. | Not needed as built — dataset releases store their CSV directly on the `DatasetRelease` row in Postgres rather than object storage, which was simpler at the current data volume |
-
-!!! success "CI/CD host confirmed: Gitea + GitHub mirror"
-    CI runs on Gitea Actions, matching everywhere else the repo is described. CD is now live: the Gitea repo is mirrored to GitHub, which triggers auto-deploys to Cloudflare Pages (frontend) and Render (API). The docs site deploys separately via GitHub Pages from the docs repo.
-
-## Confirmed: local dev proxy
-
-`vite.config.ts` proxies `/api/*` to `http://localhost:4000` (with the `/api` prefix stripped before forwarding), so `apiClient.ts`'s relative `/api/v1/...` calls do reach the NestJS backend in dev. In production, `VITE_API_BASE_URL` points at the Render API URL directly.
+- **Redis** for caching: the API is a single instance, so an in-process cache does the same job ([ADR-004](decisions/adr-004-caching-strategy.md)).
+- **Redis and BullMQ** for job queues: queued pulls are rows in Postgres, claimed by the pull worker.
+- **Object storage** for dataset releases: each release stores its CSV in its database row.
+- **Firebase**: banned by the brief, and a poor fit for relational data ([ADR-001](decisions/adr-001-database.md#alternatives-considered)).
 
 ---
 

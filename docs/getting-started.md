@@ -33,7 +33,7 @@ Fill in the values `.env.example` documents. The required variables are:
 | `BETTER_AUTH_URL` | API origin (default: `http://localhost:4000`) |
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID — create at [Google Cloud Console](https://console.cloud.google.com/apis/credentials) |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
-| `VITE_API_BASE_URL` | (frontend, if needed) API base URL for production builds |
+| `VITE_API_BASE_URL` | Optional (web app). Overrides the API address; leave unset so requests go to `/api`, which Vite forwards locally and the Cloudflare proxy forwards in production |
 | `PRISMA_LOG_QUERIES` | Optional. `true` logs every SQL statement the API issues — used to count queries before and after a change ([Performance](design/performance.md)) |
 | `API_CACHE_DISABLED` | Optional. `true` turns off the in-process response cache, to confirm a result is genuinely cached rather than coincidentally fast |
 | `INGESTION_MODE` | Optional. Set to `"queue"` to force ingestion pulls through the queue/worker flow locally instead of running `ingest.py` directly |
