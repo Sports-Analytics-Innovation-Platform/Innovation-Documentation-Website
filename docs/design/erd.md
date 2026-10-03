@@ -3,20 +3,44 @@
 This page describes every table in the platform's PostgreSQL database: what each one holds, what its columns mean, and how the tables relate to each other. The reasons behind the design are explained in [ADR-001: Database](../decisions/adr-001-database.md), and where the database runs in [ADR-003: Hosting Topology](../decisions/adr-003-hosting-topology.md).
 
 !!! success "Checked against the schema"
-    Every table, column, constraint and index on this page was checked against `apps/api/prisma/schema.prisma` and the migration files in the source repository on 28 September 2026. On `main`, the newest migration is `20260923000000_add_become_pro` and the schema has **35 tables and 7 enums**. The four [Player archetypes](#player-archetypes) tables come from migration `20260922200000_add_player_archetypes`, which is on branch `player-archetypes` and not yet merged. With them, the total is **39 tables**.
+    Every table, column, constraint and index on this page was checked against `apps/api/prisma/schema.prisma` and the migration files in the source repository, most recently on 2026-10-03. On `main`, the newest migration is `20261001111830_add_archetype_and_similarity` and the schema has **39 tables and 7 enums** — the four [Player archetypes](#player-archetypes) tables are merged to `main`, but see the schema-mismatch warning in that section: they didn't arrive via the still-unmerged `player-archetypes` branch and don't match its constraints exactly.
 
 !!! info "What changed in Sprint 3 (15–27 September 2026)"
     - **Real play-by-play.** `GameEvent` gained five columns and a unique key, and `PlayerGameStat`'s counting statistics are now derived from it. Play-by-play is stored for 2025-26 only, because of the database's size limit ([ADR-005](../decisions/adr-005-play-by-play-storage.md)).
-    - **19 new tables:** the ingestion and review workflow (5), market odds (1), dataset releases, custom statistics and API keys (5), Become Pro (4) and, still in review, player archetypes (4).
+    - **19 new tables:** the ingestion and review workflow (5), market odds (1), dataset releases, custom statistics and API keys (5), Become Pro (4) and player archetypes (4, in review at the time — merged since, see [below](#player-archetypes)).
     - **The API now edits NBA data**, but only through the admin correction tools, and every correction is logged in `EventCorrection`.
 
     Every migration is listed in [ADR-001's schema change history](../decisions/adr-001-database.md#schema-change-history).
 
 ## Diagram
 
+!!! success "Regenerated against the current schema — 2026-10-03"
+    The three diagrams below were rebuilt from `apps/api/prisma/schema.prisma` directly (including the Player Archetypes tables, merged to `main` since the note above was written) and checked against a disposable local Postgres instance to confirm every migration applies cleanly. They replace the single pre-Sprint-3 ERD, which is kept at the bottom of this page for history.
+
+### Core NBA data
+
 ![Database ERD](diagrams/database-erd.svg)
 
-Click the diagram to enlarge it. The diagram's source file is `docs/diagrams/database-erd.puml` in the source repository. **It shows the 20 tables that existed before Sprint 3.** The 19 tables added since then are described on this page but not yet drawn.
+`Team`, `Player`, `Game`, `GameEvent`, `IngestionBatch`, `PlayerGameStat`, game predictions, fantasy lineups, and the Player Archetypes/similarity tables.
+
+### User state
+
+![User state ERD](diagrams/database-erd-user.svg)
+
+Accounts (`User`, `Session`, `Account`, `Verification`) and personal data: follows, picks, saved comparisons, saved lineups, and a user's own `ApiConsumer`.
+
+### Operations and Become Pro
+
+![Operations and Become Pro ERD](diagrams/database-erd-operations.svg)
+
+Ingestion/review (`EventCorrection`, `IngestionRequest`, `IngestionWorker`, `IngestionSchedule`), publishing and API access (`DatasetRelease`, `ApiKey`, `ApiUsageLog`), and Become Pro.
+
+Click any diagram to enlarge it. Source files are `docs/diagrams/database-erd.puml`, `docs/diagrams/database-erd-user.puml` and `docs/diagrams/database-erd-operations.puml` in the source repository.
+
+??? note "Superseded: the original pre-Sprint-3 diagram"
+    Kept for history. Showed the 20 tables that existed before Sprint 3, with the field-list style the three diagrams above have since moved to.
+
+    ![Database ERD (superseded)](diagrams/database-erd-pre-sprint3-superseded.svg)
 
 **How to read it**
 
@@ -35,7 +59,7 @@ This page documents **39 tables** and **7 enums** (fixed lists of allowed values
 | [Ingestion and review](#ingestion-and-review) | `IngestionBatch`, `EventCorrection`, `IngestionRequest`, `IngestionWorker`, `IngestionSchedule` | The ingestion scripts create batches, and admins review or remove them through the API. The API writes corrections, the schedule and queued pulls; the pull worker (`apps/ingestion/pull_worker.py`) claims queued pulls and records itself in `IngestionWorker`. |
 | [Game predictions](#game-predictions) | `GamePrediction`, `GamePredictionRun`, `GameMarketOdds` | The predictor script (`apps/predictor`); market odds by `apps/ingestion/fetch_market_odds.py` |
 | [Fantasy lineups](#fantasy-lineups) | `PlayerPrediction`, `Lineup`, `LineupSlot` | The optimizer script (`apps/optimizer`) |
-| [Player archetypes](#player-archetypes) (in review) | `Archetype`, `PlayerArchetype`, `PlayerArchetypeMembership`, `PlayerSimilarity` | The similarity script (`apps/similarity`) |
+| [Player archetypes](#player-archetypes) | `Archetype`, `PlayerArchetype`, `PlayerArchetypeMembership`, `PlayerSimilarity` | Intended to be the similarity script (`apps/similarity`), per the still-unmerged `player-archetypes` branch — but see that section's schema-mismatch warning: what's live doesn't exactly match that branch |
 | [Accounts](#accounts) | `User`, `Session`, `Account`, `Verification` | BetterAuth, the authentication library |
 | [Personal data](#personal-data) | `UserFollowedPlayer`, `GamePick`, `SavedComparison`, `SavedComparisonPlayer`, `SavedLineup`, `SavedLineupSlot` | The API, when a signed-in user saves something |
 | [Publishing and API access](#publishing-and-api-access) | `DatasetRelease`, `CustomStatistic`, `ApiConsumer`, `ApiKey`, `ApiUsageLog` | The API: admins publish releases and create external API consumers, analysts define statistics, users create their own API keys, and every request made with a key is logged |
@@ -299,10 +323,15 @@ One player in a `Lineup`.
 
 ## Player archetypes
 
-!!! warning "In review, not yet merged"
-    These four tables come from migration `20260922200000_add_player_archetypes` on branch `player-archetypes`. They are not in the production database yet.
+!!! danger "Schema mismatch: these tables are already live, but not via the branch below"
+    As of 2026-10-03, `Archetype`, `PlayerArchetype`, `PlayerArchetypeMembership` and `PlayerSimilarity` **already exist in the production Supabase database**, added to `apps/api/prisma/schema.prisma` on `main` via migration `20261001111830_add_archetype_and_similarity`. Columns match the `player-archetypes` branch's `20260922200000_add_player_archetypes` migration described below, but two things don't:
 
-The tables behind [Player Archetypes](../player-archetypes/index.md): each season's playing-style groups, every placed player's position among them, and each player's most similar players. They are written only by `apps/similarity/build_archetypes.py` and only read by the API. Each season is fitted separately, and re-fitting a season replaces all of its rows in one transaction.
+    - **Missing unique constraints.** The live tables have no `(season, clusterId)` unique on `Archetype` and no `(playerId, season)` unique on `PlayerArchetype` — both present on the `player-archetypes` branch.
+    - **Different delete behaviour.** `PlayerArchetypeMembership`'s two foreign keys are `RESTRICT` live, versus `CASCADE` on the branch.
+
+    This means the tables were created against an earlier or different version of this migration, not the one still sitting unmerged on `player-archetypes`, and whatever process created them didn't go through a normal `prisma migrate deploy` against that branch. Reconcile before merging `player-archetypes` — merging as-is will likely conflict with or silently diverge from what's already live. The table/column descriptions below describe what the branch intends; the constraints noted under each table are what's **actually live today**.
+
+The tables behind [Player Archetypes](../player-archetypes/index.md): each season's playing-style groups, every placed player's position among them, and each player's most similar players. Column-wise they match what `apps/similarity/build_archetypes.py` (on the `player-archetypes` branch) would write, but nothing has confirmed that script is what populated the live rows — see the warning above. Each season is intended to be fitted separately, with a re-fit replacing all of that season's rows in one transaction.
 
 ### Archetype
 
@@ -318,7 +347,7 @@ One playing-style group from one season's fit.
 | `modelVersion` | string, default `unversioned` | Which fit produced the row, for example `kmeans-gmm-k9` |
 | `computedAt` | datetime | |
 
-**Unique:** `(season, clusterId)`, which also stops a re-run from doubling the list. **Index:** `season`.
+**Branch intends:** unique `(season, clusterId)`, which would also stop a re-run from doubling the list. **Live today: no such constraint** — see the schema-mismatch warning above.
 
 ### PlayerArchetype
 
@@ -334,7 +363,7 @@ One player's position in one season's style space.
 | `modelVersion` | string, default `unversioned` | |
 | `computedAt` | datetime | |
 
-**Unique:** `(playerId, season)`. **Index:** `season`.
+**Branch intends:** unique `(playerId, season)`. **Live today: no such constraint** — see the schema-mismatch warning above.
 
 There is deliberately no "main archetype" column. A player's main archetype is their rank 1 row in `PlayerArchetypeMembership`, and storing it twice would create a second copy that could disagree with the first.
 
@@ -761,7 +790,7 @@ ProspectSeason (1) ──< (many) ProspectValuation >── (0..1) ProspectValua
 
 - ~~Submitting and reviewing statistics.~~ Built, and documented under [Ingestion and review](#ingestion-and-review) since 2026-09-28.
 - **Multi-human-submitter approval**, specifically — still genuinely not built, and deliberately so per the schema's own doc comment: this project has one automated "submitter" (the ingestion pipeline itself, source-tagged per batch), not many competing human ones. Don't confuse this with the line above, which is a different and now-closed gap.
-- **The diagram** still shows only the 20 tables that existed before Sprint 3.
+- ~~The diagram still shows only the 20 tables that existed before Sprint 3.~~ Regenerated 2026-10-03 as three diagrams covering all tables — see [Diagram](#diagram) above.
 - **Play-by-play for the next season.** 2026-27's play-by-play won't fit alongside 2025-26's within the 500 MB limit. A decision is needed before it is loaded ([ADR-005](../decisions/adr-005-play-by-play-storage.md#the-next-season)).
 
 ## Known differences between the schema and the database
@@ -773,6 +802,8 @@ Two small differences exist between `schema.prisma` and the database the migrati
 
 The next migration generated with `prisma migrate dev` will try to "fix" both, by dropping the index and the default. Remove those lines from the generated file unless the change is intended.
 
+A third, **not harmless**, difference was found on 2026-10-03: the live `Archetype`/`PlayerArchetype`/`PlayerArchetypeMembership` tables are missing two unique constraints and use different foreign-key delete behaviour than the still-unmerged `player-archetypes` branch defines for the same tables. See the warning under [Player archetypes](#player-archetypes) — this one needs a team decision, not just a generated-migration cleanup.
+
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5] (2026-09-23: flagged staleness, corrected the "submission/review not built" claim — it is), Claude-Code[Claude Opus 5.5] (2026-09-28: documented the Sprint 3 tables)*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5] (2026-09-23: flagged staleness, corrected the "submission/review not built" claim — it is), Claude-Code[Claude Opus 5.5] (2026-09-28: documented the Sprint 3 tables), Claude-Code[Claude Sonnet 5] (2026-10-03: regenerated the core/user/operations ERDs against the current schema, flagged the player-archetypes constraint mismatch)*

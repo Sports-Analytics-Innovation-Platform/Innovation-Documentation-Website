@@ -4,30 +4,47 @@
 
 This satisfies the brief's non-monolithic requirement (§2.1): `apps/web` and `apps/api` are separate, independently deployed applications that only communicate over HTTP — confirmed directly from the code (`apiClient.ts` calls `fetch` against `VITE_API_BASE_URL`, nothing shares in-process state). The Python services (`ingestion`, `predictor`, `optimizer`, and since PR #192 `valuation`) write directly to Postgres as separate processes, never through the API.
 
+!!! success "Regenerated against the current source — 2026-10-03"
+    The deployment, class and sequence diagrams below were rebuilt from the current `apps/api`/`apps/web` source (three parallel research passes over the module structure, the Python pipelines, and the actual guard/request flow). Each replaces an older diagram that had drifted from the code; the old versions are kept further down this page for history.
+
 ![Deployment diagram](diagrams/deployment.svg)
 
-Generated from [ADR-003](../decisions/adr-003-hosting-topology.md) and the current `apps/api`/`apps/web` source (PlantUML source in the main app repo's `docs/diagrams/deployment.puml`). Shows the full production path (Cloudflare Pages → Render → Supabase), the OAuth and unofficial `stats.nba.com` dependencies, local dev as a separate parallel path, and CI. As of this diagram, the Python batch jobs (`ingestion`/`predictor`/`optimizer`) are still run manually from a developer machine — `render.yaml` only declares the API web service, not the Cron Jobs/Background Workers this page's table below still lists as "planned."
+PlantUML source in the main app repo's `docs/diagrams/deployment.puml`. Shows the full production path (Cloudflare Pages → Pages Functions proxy → Render → Supabase), the OAuth and unofficial `stats.nba.com` dependencies, local dev as a separate parallel path, and CI. The Pages Functions proxy is drawn as its own node because it does real work: it strips the `/api` prefix and injects a first-party `X-API-Key` so a signed-out browser can still reach public read routes. Ingestion (`ingest.py`) is the only Python job with any automated trigger — spawned directly by the API in local dev, or queued as an `IngestionRequest` for `pull_worker.py` when deployed (stats.nba.com blocks Render's IPs). `predictor`/`optimizer`/`valuation` have no scheduler or queue at all; they're run manually, on whatever machine an operator chooses, whenever the underlying game data changes.
 
 ### Class diagram
 
 ![Backend class diagram](diagrams/class-diagram.svg)
 
-The `apps/api` controller/service/guard structure: each feature module's controller depends on its own service(s), every service goes through the single `PrismaService`, and `SessionAuthGuard`/`RolesGuard` sit in front of the auth-gated controllers (Games, Optimizer). `RolesGuard` is wired up and tested but not yet used by any route — no endpoint currently requires a role above the default `USER`.
+The real module list (15 feature modules under `apps/api/src/`, not the earlier diagram's invented groupings): each controller's actual guard combination is labelled — `SessionAuthGuard` alone for signed-in-only routes, `OptionalSessionGuard` + `ApiKeyGuard` for public reads (session or API key, never a bare 401 for an anonymous request), `SessionAuthGuard` + `RolesGuard` for the nine `/v1/admin/*` controllers. `RolesGuard` is in active use — every admin controller requires `Role.ADMIN`, and `CustomStatisticsController` requires `ANALYST` or `ADMIN`. Also shows real cross-module reuse that isn't obvious from the folder layout: `TeamsModule` injects `PlayersService`/`StatsService` directly rather than importing `PlayersModule`, and both import `GamesModule` for `GamesService`.
 
 ### Database ERD
 
 ![Database ERD](diagrams/database-erd.svg)
 
-!!! warning "Diagram not regenerated — schema has grown substantially since"
-    The schema is now 31 models and 6 enums (`schema.prisma`, checked 2026-09-23), not the 20 tables/3 enums this diagram and its caption originally described. The image above has not been regenerated against the current schema and should not be trusted for exact table names/relationships until it is — see [ERD](erd.md) and `apps/api/prisma/schema.prisma` directly in the meantime.
-
-Grouped by which part of the system writes to them: user accounts (`User`, `Session`, `Account`, `Verification`), NBA data written by the ingestion scripts (`Team`, `Player`, `Game`, `GameEvent`, `PlayerGameStat`), the submission/review layer (`IngestionBatch`, `EventCorrection`), game predictions written by the predictor (`GamePrediction`, `GamePredictionRun`), fantasy lineups written by the optimizer (`PlayerPrediction`, `Lineup`, `LineupSlot`), the API-consumer layer (`ApiConsumer`, `ApiKey`, `ApiUsageLog`), dataset releases (`DatasetRelease`), analyst-defined statistics (`CustomStatistic`), the ingestion job queue (`IngestionRequest`, `IngestionWorker`), and personal data the API writes when a signed-in user saves something (`UserFollowedPlayer`, `GamePick`, `SavedComparison`, `SavedComparisonPlayer`, `SavedLineup`, `SavedLineupSlot`, and more added since). See [ERD](erd.md) for what every column means, and [ADR-001: Database](../decisions/adr-001-database.md) for why the schema is designed this way.
+Regenerated 2026-10-03 and split into three diagrams for readability — see [ERD](erd.md#diagram) for all three (core NBA data, user state, operations/Become Pro) and what each covers.
 
 ### Sequence diagram: `GET /v1/games/:id/prediction`
 
 ![Sequence diagram: game prediction request](diagrams/sequence-game-prediction.svg)
 
-Walks a single auth-gated request end to end, including why it works cross-origin in production (Cloudflare Pages calling Render): the CORS middleware checks the request's `Origin` against the `WEB_ORIGIN` allowlist before it ever reaches Nest, and the session cookie survives the cross-site request only because `auth.config.ts` sets `defaultCookieAttributes: { sameSite: "none" }` in production (paired with `Secure`, derived from `baseURL`'s `https://` scheme). Also shows the two-step 404 (game not found vs. game found but not yet predicted) and that the `GamePrediction` row itself comes from an out-of-band `apps/predictor` run, never from this request. See [API Design](api-design.md) for the full endpoint table.
+Corrected 2026-10-03: this route is **not** session-required. It uses `OptionalSessionGuard` (attaches the user if a valid session cookie is present, never rejects) followed by `ApiKeyGuard` (only runs its checks if no session was found) — so a signed-out browser reaches it successfully because the Cloudflare Pages Functions proxy (or the Vite dev proxy locally) injects a first-party `X-API-Key` on every request that didn't already carry one. A truly keyless, sessionless request gets `401 API_KEY_REQUIRED`; an invalid/inactive key gets `401 UNAUTHORIZED`; over the consumer's rate limit or daily quota gets `429`. The diagram also no longer shows a separate `PredictionsService` — the current code reads the prediction from the same single `GamesService.getGameById` query that loads the game, teams and market odds, not a second round trip. Still shows the two-step 404 (game not found vs. game found but not yet predicted) and that the `GamePrediction` row itself comes from an out-of-band `apps/predictor` run, never from this request. See [API Design](api-design.md) for the full endpoint table.
+
+### Sequence diagram: admin event correction
+
+![Sequence diagram: admin event correction](diagrams/sequence-event-correction.svg)
+
+New 2026-10-03 — this flow didn't exist when the other sequence diagram was first drawn. Covers the three-step admin correction workflow end to end: a dry-run preview (`POST .../preview`, no writes), the confirmed write (`POST .../correct`, which locks the game row, re-derives every affected player's `PlayerGameStat`, marks that season's dataset releases stale, and inserts one `EventCorrection` audit row, all in one transaction), and an undo (`POST /v1/admin/corrections/:id/revert`), which never deletes history — it applies the original's `previousValues` as a brand-new correction linked back via `revertsCorrectionId`. Shows every 4xx/409 branch: missing session, wrong role, malformed body, game/event not found, a rule violation, or — on undo — a later correction touching the same fields, or the play having changed since (re-ingested).
+
+### Superseded diagrams
+
+??? note "Pre-Sprint-3 deployment, class and sequence diagrams"
+    Kept for history. These predate the admin corrections, datasets, custom statistics, pull-queue and Become Pro features, and the deployment diagram predates the Cloudflare Pages Functions proxy being drawn explicitly.
+
+    ![Deployment diagram (superseded)](diagrams/deployment-pre-sprint3-superseded.svg)
+
+    ![Backend class diagram (superseded)](diagrams/class-diagram-pre-sprint3-superseded.svg)
+
+    ![Sequence diagram: game prediction request (superseded)](diagrams/sequence-game-prediction-pre-sprint3-superseded.svg)
 
 ## Frontend (`apps/web`)
 
