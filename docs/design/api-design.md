@@ -15,7 +15,7 @@ The rules every route follows, and why. The full list of routes, with parameters
 | **Regular season and playoffs never mix** | Stat routes take `seasonType` (`REGULAR` by default) and echo it back. | A chart can't be labelled with the wrong segment. |
 | **Request bodies are validated** | The main write routes check their body with a Zod schema and return `400` with the reason. | Bad input is rejected at the edge, not in the database. |
 | **Public reads are cached briefly** | In memory, for up to 5 minutes (1 hour for teams and seasons). Nothing under `/v1/me` is cached ([ADR-004](../decisions/adr-004-caching-strategy.md)). | NBA data changes only when the batch jobs run, and every trip from Render to the database is slow. |
-| **Everything is synchronous** | Every response, including dataset publishing, completes within the request. Long NBA pulls are queued and run by the pull worker ([Data Ingestion](ingestion.md)). | Simpler for consumers at this scale. |
+| **Slow work doesn't block a request** | An admin's NBA pull returns at once and runs in the background or on the pull worker ([Data Ingestion](ingestion.md)), and its status shows on the admin page. `GET /v1/games/:id/live?afterSequence=` returns only plays newer than the caller's last one, with a suggested 5-second polling interval. | Requests stay fast, and a client never re-downloads what it already has. |
 
 ## Auth model
 
@@ -34,8 +34,8 @@ The request flow for an authenticated route, `GET /v1/games/:id/prediction`, is 
 
 ## Not built
 
-- **Asynchronous jobs for consumers.** A large request runs to completion within the request; there is no "submit, then poll" pattern.
-- **A live event feed.** Games are ingested after they finish, one batch per game. The platform has one automated data source, not many competing submitters, so the brief's late-arriving-event rules apply only to re-pulls and corrections ([Feature Tiers](feature-tiers.md)).
+- **Asynchronous jobs for consumers.** A consumer's request, including dataset publishing, runs to completion within the request; there is no "submit, then poll" pattern outside admin pulls.
+- **Real-time data.** The live feed only has new plays when ingestion runs, and games are ingested after they finish. The platform has one automated data source, not many competing submitters ([Feature Tiers](feature-tiers.md)).
 
 ---
 
