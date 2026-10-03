@@ -4,13 +4,15 @@ What is tested, how the tests run, and the team's test policy. User testing is o
 
 ## At a glance
 
-| Suite | Where | Spec files on `main` | Tests at the Become Pro hand-off (27 Sep) |
+| Suite | Where | Spec files, with Player Archetypes | Tests at the Become Pro hand-off (27 Sep) |
 |---|---|---|---|
-| API unit | `apps/api/src/**/*.spec.ts` | 61 | 974 API tests in total, all passing |
+| API unit | `apps/api/src/**/*.spec.ts` | 62 | 974 API tests in total, all passing |
 | API end-to-end | `apps/api/test/*.e2e-spec.ts`, against a real Postgres | 19 | (included above; 31 of them for Become Pro) |
-| Web components | `apps/web/src/**/*.spec.{ts,tsx}` | 75 | 717, all passing, at 90.2% line and 84.2% branch coverage |
-| Python | `test_*.py` in `apps/ingestion`, `predictor`, `optimizer` and `valuation` | 20 | Run locally with `pytest`; `apps/valuation` has 24 |
+| Web components | `apps/web/src/**/*.spec.{ts,tsx}` | 77 | 717, all passing, at 90.2% line and 84.2% branch coverage |
+| Python | `test_*.py` in `apps/ingestion`, `predictor`, `optimizer`, `valuation` and `similarity` | 25 | Run locally with `pytest`; `apps/valuation` has 24 and `apps/similarity` 73 |
 | Live browser | Headless Edge against the real stack | — | 65 of 65 checks passed |
+
+Player Archetypes came after the hand-off and adds 73 Python, 15 API and 18 web tests ([Player Archetypes](player-archetypes/index.md#testing)).
 
 CI fails if any API or web test fails, or if either app drops below **80%** lines, statements, functions or branches.
 
