@@ -70,7 +70,7 @@ Every rubric criterion in the COMS3011A brief, linked to its evidence, grouped b
 | Responsiveness | App | 5% | [UI Overview](design/wireframes.md#responsive-design), with phone screenshots |
 | Structure | App | 5% | [Architecture](design/architecture.md) |
 | Git Methodology | Misc | 5% | [Git Methodology](git-methodology.md) |
-| Integration | Misc | 7% | `nba_api` through the [ingestion service](design/ingestion.md), and The Odds API for bookmaker lines ([Feature Tiers](design/feature-tiers.md#bonus-beyond-the-brief)) |
+| Integration | Misc | 7% | `nba_api` through the [ingestion service](design/ingestion.md), and The Odds API for bookmaker lines ([Feature Tiers](design/feature-tiers.md#beyond-the-brief)) |
 | Testing | Misc | 8% | [Testing](testing.md) and [CI/CD Pipeline](ci-cd.md) |
 | Tools | Misc | 5% | [Tech Stack](tech-stack.md), [CI/CD Pipeline](ci-cd.md), [AI Usage Ledger](ai-usage.md) |
 
