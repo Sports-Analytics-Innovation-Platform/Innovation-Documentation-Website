@@ -21,12 +21,12 @@ F7 example, from the radar: *"TS%: True shooting percentage. Scoring efficiency 
 
 Source files for the shipped items:
 
-- F1: [ModelAccuracyLedger.tsx](https://github.com/Sports-Analytics-Innovation-Platform/sportsanalytics/blob/main/apps/web/src/components/home/ModelAccuracyLedger.tsx)
-- F2: [PredictionsPage.tsx](https://github.com/Sports-Analytics-Innovation-Platform/sportsanalytics/blob/main/apps/web/src/pages/PredictionsPage.tsx#L350-L374)
-- F5: [OptimizerPage.tsx](https://github.com/Sports-Analytics-Innovation-Platform/sportsanalytics/blob/main/apps/web/src/pages/OptimizerPage.tsx)
-- F7: [PlayerTraitsRadar.tsx](https://github.com/Sports-Analytics-Innovation-Platform/sportsanalytics/blob/main/apps/web/src/components/PlayerTraitsRadar.tsx#L45-L160)
-- F13: [TeamProfilePage.tsx](https://github.com/Sports-Analytics-Innovation-Platform/sportsanalytics/blob/main/apps/web/src/pages/TeamProfilePage.tsx), [TeamsListPage.tsx](https://github.com/Sports-Analytics-Innovation-Platform/sportsanalytics/blob/main/apps/web/src/pages/TeamsListPage.tsx)
-- F17: [PlayerProfilePage.tsx](https://github.com/Sports-Analytics-Innovation-Platform/sportsanalytics/blob/main/apps/web/src/pages/PlayerProfilePage.tsx)
+- F1: [ModelAccuracyLedger.tsx](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/src/branch/main/apps/web/src/components/home/ModelAccuracyLedger.tsx)
+- F2: [PredictionsPage.tsx](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/src/branch/main/apps/web/src/pages/PredictionsPage.tsx#L350-L374)
+- F5: [OptimizerPage.tsx](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/src/branch/main/apps/web/src/pages/OptimizerPage.tsx)
+- F7: [PlayerTraitsRadar.tsx](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/src/branch/main/apps/web/src/components/PlayerTraitsRadar.tsx#L45-L160)
+- F13: [TeamProfilePage.tsx](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/src/branch/main/apps/web/src/pages/TeamProfilePage.tsx), [TeamsListPage.tsx](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/src/branch/main/apps/web/src/pages/TeamsListPage.tsx)
+- F17: [PlayerProfilePage.tsx](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/src/branch/main/apps/web/src/pages/PlayerProfilePage.tsx)
 
 ## Measured improvement
 

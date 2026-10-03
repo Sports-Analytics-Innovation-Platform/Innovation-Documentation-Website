@@ -22,7 +22,7 @@ Every rubric criterion in the COMS3011A brief, linked to its evidence, grouped b
 
 | Criterion | Weight | Evidence |
 |---|---|---|
-| Core Features | 25% | [Feature Tiers](design/feature-tiers.md) (Basic tier complete) and [Requirements Traceability](requirements.md) |
+| Core Features | 25% | [Feature Tiers](design/feature-tiers.md) (Basic tier complete) |
 | Automated Testing | 10% | [Testing](testing.md): Vitest and Supertest against real Postgres, run in CI by the `coverage` job |
 | Stakeholder Reviews | 10% | [Stakeholder Interactions](stakeholder-interactions.md): every client meeting, the feedback given and the action taken |
 | API | 15% | [API Reference](api-reference.md), [API Design](design/api-design.md) and the live [Swagger UI](https://sportsanalytics-api.onrender.com/api/docs) |
