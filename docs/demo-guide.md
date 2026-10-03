@@ -35,7 +35,7 @@ Click **Players**.
 
 Click any player.
 
-- Headshot, team, position and 12 stat tiles, including advanced stats (TS%, eFG%, usage, offensive and defensive rating).
+- Headshot, team, position and 12 stat tiles, including usage, plus-minus, and offensive and defensive rating.
 - **Points trend by season**, including a projected next season, and a **Player Traits** radar.
 - **Edit Stats:** change a counting stat to try a "what-if" and watch the derived figures update. Nothing is saved.
 - **Compare** opens the comparison with this player already added.

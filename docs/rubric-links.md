@@ -1,81 +1,79 @@
 # Rubric Quick Links
 
-One page mapping every rubric criterion (from the COMS3011A project brief) to where the evidence for it actually lives, so a marking tutor doesn't have to hunt across the site or the codebase. Grouped by milestone, in the brief's own order.
+Every rubric criterion in the COMS3011A brief, linked to its evidence, grouped by milestone in the brief's order. Live evidence: the [web app](https://sportsanalytics.pages.dev/), the [API's Swagger UI](https://sportsanalytics-api.onrender.com/api/docs) and the [Gitea repo](https://sdp.ms.wits.ac.za/innovation/sportsanalytics) (needs a login).
 
-!!! warning "Honest about gaps, not just links"
-    Where a criterion doesn't have real evidence yet, that's stated plainly with a ⚠️ below. Sprint 1 is complete with most criteria having solid evidence. Sprint 2's user-feedback round is complete (11 responses, findings and traceability documented); the Sprint 3 round is under way — the first follow-up interview and hands-on session was conducted 2026-09-27, with two more interviews and a second survey wave pending. The **Improvement** criterion (Milestone 3) is now evidenced: [Improvements Made](improvements.md) documents 6 shipped improvements with explicit before/after comparisons, each mapped to its originating survey feedback item, plus 1 interview in progress and 1 pending merge. **Performance** is now fully evidenced: [Performance](design/performance.md) documents a real, measured caching/query-consolidation pass (query counts, before/after) **and** a production load test (2026-09-29, 704 requests, 10 concurrent users, P95 495ms on Render free tier). [ADR-004](decisions/adr-004-caching-strategy.md) records the caching decision and its staleness contract. Also directly evaluable on the [live webapp](https://sportsanalytics.pages.dev/) and [live API](https://sportsanalytics-api.onrender.com/health).
+!!! note "Known gap"
+    Player Archetypes is built but not merged, so it is not live. It is marked "in review" wherever it appears.
 
 ## Milestone 1: Sprint 1 (due 2026-08-25)
 
 | Criterion | Weight | Evidence |
 |---|---|---|
-| Version Control | 10% | Repo itself (Gitea, not linkable from this site) + [Git Methodology](git-methodology.md) for how it's used. All members have committed code |
-| CI/CD (brief §2.1, not a weighted line) | — | [CI/CD Pipeline](ci-cd.md) — Gitea Actions running lint/typecheck/test on every push and PR. CD is live: frontend auto-deploys to [Cloudflare Pages](https://sportsanalytics.pages.dev/), API auto-deploys to [Render](https://sportsanalytics-api.onrender.com/health) via GitHub mirror ([ADR-003](decisions/adr-003-hosting-topology.md) accepted and implemented) |
-| Documentation Site | 10% | This site — deployed via GitHub Pages on every push to `main` |
-| Getting Started / Dev Guides | 5% | [Getting Started](getting-started.md) |
-| Work Tracker | 5% | [Gitea Projects Board](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/projects/8) (requires Gitea authorisation) |
+| Version Control | 10% | The Gitea repo, used as described in [Git Methodology](git-methodology.md). Every member has committed code. |
+| CI/CD (brief §2.1, unweighted) | — | [CI/CD Pipeline](ci-cd.md): lint, typecheck and tests on every push. The web app and API auto-deploy ([ADR-003](decisions/adr-003-hosting-topology.md)). |
+| Documentation Site | 10% | This site, deployed by GitHub Actions on every push to `main` |
+| Getting Started | 5% | [Getting Started](getting-started.md) |
+| Work Tracker | 5% | [Gitea project board](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/projects/8) (needs a login) |
 | Git Methodology | 5% | [Git Methodology](git-methodology.md) |
-| Project Methodology | 10% | [Methodology](methodology.md) |
-| Tech Stack | 5% | [Tech Stack](tech-stack.md) — fully listed and motivated |
-| Stakeholder Interaction | 10% | [Stakeholder Interactions](stakeholder-interactions.md) — full log of client meetings with feedback traceability. Also [Client Meetings](meetings/client/index.md), [Scrum](meetings/scrum/index.md) |
+| Project Methodology | 10% | [Methodology](methodology.md) and the [Sprint Log](sprint-log.md) |
+| Tech Stack | 5% | [Tech Stack](tech-stack.md): every choice listed with its reason |
+| Stakeholder Interaction | 10% | [Stakeholder Interactions](stakeholder-interactions.md), [Client Meetings](meetings/client/index.md), [Scrum Meetings](meetings/scrum/index.md) |
 | Initial Design & Dev Plan | 20% | [Architecture](design/architecture.md), [ERD](design/erd.md), [API Design](design/api-design.md), [UI Overview](design/wireframes.md), [Feature Tiers](design/feature-tiers.md), [Roadmap](design/roadmap.md) |
-| Implementation | 20% | Live webapp at [sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/), live API at [sportsanalytics-api.onrender.com](https://sportsanalytics-api.onrender.com/health), codebase on Gitea |
+| Implementation | 20% | The live [web app](https://sportsanalytics.pages.dev/) and [API](https://sportsanalytics-api.onrender.com/api/docs). Walk through it with the [Demo Guide](demo-guide.md). |
 
 ## Milestone 2: Sprint 2 (due 2026-09-15)
 
 | Criterion | Weight | Evidence |
 |---|---|---|
-| Core Features | 25% | [Feature Tiers](design/feature-tiers.md) — basic tier fully built and deployed, plus several intermediate-tier features already live (player comparisons, postseason views, advanced stats) + [Requirements Traceability](requirements.md) |
-| Automated Testing | 10% | [Testing](testing.md) — full testing strategy, test inventory, and policy. Vitest + Supertest (API, against real Postgres) and Vitest + React Testing Library (web). CI `coverage` job runs both suites against a disposable Postgres service container — no `--passWithNoTests` tolerance. See also [CI/CD Pipeline](ci-cd.md) |
-| Stakeholder Reviews | 10% | [Stakeholder Interactions](stakeholder-interactions.md) — consolidated log of all client meetings with dates, attendees, feedback received, and actions taken. Also [Client Meetings](meetings/client/index.md), [Scrum](meetings/scrum/index.md) |
-| API | 15% | [API Reference (Swagger)](api-reference.md) — full OpenAPI endpoint reference with request/response shapes, auth requirements, and live Swagger UI at `/api/docs`. [API Design](design/api-design.md) for architecture. Live at [sportsanalytics-api.onrender.com/health](https://sportsanalytics-api.onrender.com/health). External integration: `nba_api` via [ingestion service](design/architecture.md) |
-| User Feedback | 10% | [User Feedback Methodology](user-feedback-methodology.md) — why Google Forms + WhatsApp, distribution timeline, response count (11), key findings, and integration evidence (F1–F19 traceability). Also [Survey Instrument](feedback-survey.md) and [Testing — User Feedback Process](testing.md#user-feedback-process) |
-| Project Methodology | 10% | [Methodology](methodology.md) — this rubric line specifically wants evidence of *active* following, not just the document existing |
-| Bug Tracker | 5% | [Testing — Bug tracking](testing.md#bug-tracking) — process, issue template screenshot, and a real filed-and-closed example ([#83](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/issues/83)). Live tracker: [Gitea Issues](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/issues) / [Projects Board](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/projects/8) (both require Gitea authorisation) |
-| Database Documentation | 5% | [ERD](design/erd.md), [ADR-001: Database](decisions/adr-001-database.md) — Supabase managed Postgres, live and connected |
-| Third-Party Code Documentation | 5% | [Tech Stack](tech-stack.md) — every dependency in `apps/api`, `apps/web`, and all three Python services listed with motivation. Covers framework, database, auth, security, UI, testing, and infrastructure packages |
-| Testing Documentation | 5% | [Testing](testing.md) — automated testing procedure (unit, integration, E2E, component), test policy, coverage reporting, and test conventions. See also [CI/CD Pipeline](ci-cd.md) for how tests run in CI |
+| Core Features | 25% | [Feature Tiers](design/feature-tiers.md) (Basic tier complete) and [Requirements Traceability](requirements.md) |
+| Automated Testing | 10% | [Testing](testing.md): Vitest and Supertest against real Postgres, run in CI by the `coverage` job |
+| Stakeholder Reviews | 10% | [Stakeholder Interactions](stakeholder-interactions.md): every client meeting, the feedback given and the action taken |
+| API | 15% | [API Reference](api-reference.md), [API Design](design/api-design.md) and the live [Swagger UI](https://sportsanalytics-api.onrender.com/api/docs) |
+| User Feedback | 10% | [User Feedback Survey](feedback-survey.md): method, 11 responses, findings, and how each one was acted on |
+| Project Methodology | 10% | [Methodology](methodology.md), [Sprint Log](sprint-log.md), [Scrum Meetings](meetings/scrum/index.md) |
+| Bug Tracker | 5% | [Testing: Bug tracking](testing.md#bug-tracking). Example: issue [#83](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/issues/83), filed and closed. |
+| Database Documentation | 5% | [ERD](design/erd.md) and [ADR-001: Database](decisions/adr-001-database.md) |
+| Third-Party Code | 5% | [Tech Stack](tech-stack.md): every dependency in the API, the web app and the Python services, with its reason |
+| Testing Documentation | 5% | [Testing](testing.md): procedure, policy, coverage and conventions |
 
 ## Milestone 3: Sprint 3 (due 2026-09-29)
 
-The brief lists weights and brief descriptors for this milestone — criteria names are assumed to carry the same meaning as their Sprint 2 counterparts.
-
 | Criterion | Weight | Evidence |
 |---|---|---|
-| User Feedback | 10% | Round 1 complete — [methodology](user-feedback-methodology.md) and [findings](feedback-survey.md) documented (11 responses). Sprint 3 round under way: first follow-up interview + hands-on session conducted 2026-09-27 ([User Interviews](user-interviews.md)); two interviews and a second survey wave pending. Shipped improvements documented with before/after comparisons on the [Improvements Made](improvements.md) page |
-| Automated Testing | 10% | [Testing](testing.md) — full test inventory and policy. Vitest + Supertest (API) and Vitest + React Testing Library (web), both running in CI against real Postgres with an enforced 80% coverage threshold — [CI/CD Pipeline](ci-cd.md). At the Become Pro hand-off: 974 API and 717 web tests passing, plus a 65-check live browser run ([Testing — Become Pro](testing.md#become-pro)) |
-| Feature Implementation | 20% | [Feature Tiers](design/feature-tiers.md) — updated 2026-09-23: Basic tier essentially complete, Intermediate tier substantially complete (two real bugs found and fixed this week — review not gating publication, a batch-resume durability gap — both merged to `main` on 2026-09-23, PRs #184 and #186), Advanced tier strong but genuinely partial (custom statistics, point-in-time queries, dataset diffing, and live event feed with late-event reordering are done; async consumer jobs are not). Beyond the brief's tiers, Sprint 3 also shipped [Become Pro](become-pro/index.md) (PR #192): user-logged games, a derived season line, a draft-pick model trained on NBA rookie seasons ([Valuation Model](become-pro/valuation-model.md)), and a comparison with real NBA rookies |
-| API Implementation | 20% | [API Reference (Swagger)](api-reference.md) — full endpoint documentation including the admin, datasets, custom-statistics and API-key endpoints added 2026-09-23 and the eight session-guarded [Become Pro routes](api-reference.md#become-pro), with live Swagger UI. [API Design](design/api-design.md) for architecture. Live at [sportsanalytics-api.onrender.com/health](https://sportsanalytics-api.onrender.com/health), with two external integrations: `nba_api` (ingestion) and The Odds API (market win-probability, see [Feature Tiers](design/feature-tiers.md#bonus-beyond-the-brief)) |
-| Performance | 5% | [Performance](design/performance.md) — caching strategy, five query consolidations and new indexes, with measured before/after query counts per endpoint (most public endpoints drop to zero queries on a repeat call). **Load test conducted 2026-09-29** against production API: 704 requests over 30s with 10 concurrent users, P95 495ms, P99 1018ms on Render free tier. Public endpoints 100% success, auth guards working correctly (523 protected requests returned 401 as expected). **Lighthouse scores 2026-09-29** (Mobile): Home 93, Teams 95, Players 88, Admin 95 — Accessibility and Best Practices 100 across all pages. [ADR-004](decisions/adr-004-caching-strategy.md) records the decision and its staleness contract. [Load test report](assets/load-test-report.html), [raw results](assets/load-test-results.json), Lighthouse screenshots ([Home](assets/lighthouse/homepage-mobile.jpg), [Teams](assets/lighthouse/teams-mobile.jpg), [Players](assets/lighthouse/players-mobile.jpg), [Admin](assets/lighthouse/admin-mobile.jpg)). Also directly evaluable on the [live webapp](https://sportsanalytics.pages.dev/) and [live API](https://sportsanalytics-api.onrender.com/health) |
-| Improvement | 5% | **Before:** no evidence of acting on user feedback — the survey collected 11 responses but nothing was documented as changed. **After:** [Improvements Made](improvements.md) maps 6 shipped changes directly to survey/interview feedback with before/after comparisons: (1) Model Accuracy Ledger added to home dashboard (F1 — "show historical accuracy"), (2) "How it works" explainer on Predictions page (F2 — "explain methodology"), (3) per-slot projected points on optimizer board (F5 — "show projected points per player"), (4) abbreviation explainer in Player Traits Radar — click any trait axis to see plain-English definitions of PTS/G, FGA/G, TS%, REB/G, AST/G, etc. (F7 — "stat abbreviations unexplained"), (5) team profile pages with record, Elo, recent form (F13 — "more team details"), (6) per-player matchup projections on profile pages (F17 — "player-level predictions"). Plus 1 interview conducted (F15, in progress) and 1 Player Archetypes & Style Map pending merge (F9). Second survey wave planned to measure before/after delta against the n=11 baseline |
-| Documentation | 15% | This site (deployed at [docs](https://sports-analytics-innovation-platform.github.io/Innovation-Documentation-Website/)), [API Design](design/api-design.md), [ERD](design/erd.md), [Architecture](design/architecture.md) |
-| Project Methodology | 15% | [Methodology](methodology.md), [Sprint Log](sprint-log.md) |
+| User Feedback | 10% | [User Feedback Survey](feedback-survey.md) (11 responses) and a hands-on [User Interview](user-interviews.md) (2026-09-27) |
+| Automated Testing | 10% | [Testing](testing.md): 974 API and 717 web tests at the Become Pro hand-off, plus a 65-check live browser run, with an 80% coverage threshold in CI |
+| Feature Implementation | 20% | [Feature Tiers](design/feature-tiers.md): Basic complete, Intermediate largely complete, Advanced partial. Also [Become Pro](become-pro/index.md). |
+| API Implementation | 20% | [API Reference](api-reference.md): 103 live operations, including admin, datasets, custom statistics, API keys and Become Pro |
+| Performance | 5% | [Performance](design/performance.md): caching with before/after query counts, a load test (P95 495 ms), and Lighthouse scores of 88–95 |
+| Improvement | 5% | [Improvements Made](improvements.md): six shipped changes, each with a before/after and the feedback item that prompted it |
+| Documentation | 15% | This site, especially the [API Reference](api-reference.md), [ERD](design/erd.md) and [Architecture](design/architecture.md) |
+| Project Methodology | 15% | [Methodology](methodology.md) and the [Sprint Log](sprint-log.md) |
 
 ## Milestone 4: Project Submission (due 2026-10-11)
 
-| Criterion | Category | Weight | Evidence |
+| Criterion | Area | Weight | Evidence |
 |---|---|---|---|
-| Data | Database | 3% | [ERD](design/erd.md) — 35 tables / 7 enums on Supabase managed Postgres (checked 2026-09-28), live. With the player-archetypes branch (not yet merged), 39 tables |
-| Deployment | Database | 2% | [ADR-003: Hosting Topology](decisions/adr-003-hosting-topology.md) — accepted and implemented. Supabase managed Postgres with connection pooling over TLS |
-| Structure | Database | 5% | [ERD](design/erd.md), [ADR-001: Database](decisions/adr-001-database.md) |
-| Availability | API | 3% | Live at [sportsanalytics-api.onrender.com/health](https://sportsanalytics-api.onrender.com/health) — kept responsive by a pinger service |
-| Architecture | API | 5% | [Architecture](design/architecture.md) — non-monolithic, `apps/web` and `apps/api` independently deployed, HTTP-only communication |
-| Deployment | API | 2% | [ADR-003](decisions/adr-003-hosting-topology.md) — Render auto-deploy from GitHub mirror. Live at [sportsanalytics-api.onrender.com/health](https://sportsanalytics-api.onrender.com/health) |
-| Performance | API | 5% | [Performance](design/performance.md) — an in-process response cache, five redundant-query consolidations, a session cookie cache removing a per-request `Session`/`User` read, and new indexes on `Game`, `PlayerGameStat` and `Player`, all with measured query counts. [ADR-004](decisions/adr-004-caching-strategy.md) for the in-process-vs-Redis decision. Live at [sportsanalytics-api.onrender.com](https://sportsanalytics-api.onrender.com/health), kept warm by a pinger |
-| Design | API | 10% | [API Reference (Swagger)](api-reference.md) — full OpenAPI spec with all endpoints documented and live Swagger UI. [API Design](design/api-design.md) for architecture — versioned under `/v1/`, hand-written NestJS controllers/services |
-| Accessibility | App | 5% | Skip-to-content link, `aria-label`, responsive breakpoints — see [UI Overview](design/wireframes.md). Automated `axe-core` checks now run on Home, Players, Predictions, and Optimizer (added Sprint 2) |
-| Aesthetics | App | 3% | [UI Overview](design/wireframes.md) — every page now shares the lighter "locker" design language (CSS custom properties, themed charts); Compare and Teams were the last two on the original dark app-shell theme and moved over in Sprint 2 |
-| User Experience | App | 5% | [UI Overview](design/wireframes.md), live at [sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/) — 15 routes (added `/datasets`, `/admin`, `/onboarding`, `/profile`, `/home` and `/become-pro` since this row was last checked), navbar navigation, court view visualisation, and Become Pro's fast game entry (Enter to save, date carried forward, "Copy last game") |
-| Deployment | App | 2% | [ADR-003](decisions/adr-003-hosting-topology.md) — Cloudflare Pages auto-deploy from GitHub mirror. Live at [sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/) |
-| Performance | App | 5% | [Performance](design/performance.md#frontend-caching) — a 5-minute React Query `staleTime` with no refetch on window focus, ending a refetch of all 41 queries on every mount and tab switch. Vite-built static SPA on Cloudflare's global edge network. Live at [sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/) |
-| Features | App | 10% | [Feature Tiers](design/feature-tiers.md) — player/team browsing, search, predictions, court view, fantasy optimizer, plus (added 2026-09-23) a Datasets page for browsing/downloading versioned releases, an Admin page (batch review, event corrections, API consumers), and self-service API keys on the profile page; plus [Become Pro](become-pro/index.md) (Sprint 3) |
-| Responsiveness | App | 5% | [UI Overview](design/wireframes.md) — mobile/tablet/desktop breakpoints documented. Live at [sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/) |
-| Structure | App | 5% | [Architecture](design/architecture.md) — non-monolithic, separately deployed frontend and backend |
+| Data | Database | 3% | [ERD](design/erd.md): 35 tables and 7 enums on Supabase Postgres |
+| Deployment | Database | 2% | [ADR-003](decisions/adr-003-hosting-topology.md): Supabase, pooled connections over TLS |
+| Structure | Database | 5% | [ERD](design/erd.md), [ADR-001](decisions/adr-001-database.md), [ADR-005](decisions/adr-005-play-by-play-storage.md) |
+| Availability | API | 3% | [Live API](https://sportsanalytics-api.onrender.com/v1/health), kept warm by a pinger |
+| Architecture | API | 5% | [Architecture](design/architecture.md): separate web, API and Python services that talk over HTTP |
+| Deployment | API | 2% | [ADR-003](decisions/adr-003-hosting-topology.md): Render auto-deploys from the GitHub mirror |
+| Performance | API | 5% | [Performance](design/performance.md) and [ADR-004](decisions/adr-004-caching-strategy.md). Load test: [report](assets/load-test-report.html), [raw results](assets/load-test-results.json). |
+| Design | API | 10% | [API Design](design/api-design.md) and the [API Reference](api-reference.md): hand-written, versioned under `/v1/`, one error envelope |
+| Accessibility | App | 5% | Lighthouse Accessibility **100** on every page tested ([Home](assets/lighthouse/homepage-mobile.jpg), [Teams](assets/lighthouse/teams-mobile.jpg), [Players](assets/lighthouse/players-mobile.jpg), [Admin](assets/lighthouse/admin-mobile.jpg)). `axe-core` runs in CI. See [UI Overview](design/wireframes.md#accessibility). |
+| Aesthetics | App | 3% | [UI Overview](design/wireframes.md), with screenshots |
+| User Experience | App | 5% | [UI Overview](design/wireframes.md) and the [Demo Guide](demo-guide.md) |
+| Deployment | App | 2% | [ADR-003](decisions/adr-003-hosting-topology.md): Cloudflare Pages auto-deploys from the GitHub mirror |
+| Performance | App | 5% | [Performance](design/performance.md#frontend-caching) and Lighthouse Performance 88–95 on mobile |
+| Features | App | 10% | [Feature Tiers](design/feature-tiers.md) and the [Demo Guide](demo-guide.md) |
+| Responsiveness | App | 5% | [UI Overview](design/wireframes.md#responsive-design), with phone screenshots |
+| Structure | App | 5% | [Architecture](design/architecture.md) |
 | Git Methodology | Misc | 5% | [Git Methodology](git-methodology.md) |
-| Integration | Misc | 7% | `nba_api` (Python client for stats.nba.com) integrated via [ingestion service](design/architecture.md) (`apps/ingestion`) — fetches teams, rosters, games, and box scores into Postgres. A second, independent external API (The Odds API, real bookmaker win-probability lines) is also integrated — see [Feature Tiers](design/feature-tiers.md#bonus-beyond-the-brief). See also [Tech Stack](tech-stack.md) |
-| Testing | Misc | 8% | [Testing](testing.md) — full test strategy, inventory, and policy. Vitest + Supertest (API, against real Postgres) and Vitest + React Testing Library (web). CI runs both suites in the `coverage` job — [CI/CD Pipeline](ci-cd.md) |
-| Tools | Misc | 5% | [Tech Stack](tech-stack.md), [AI Usage Ledger](ai-usage.md), [CI/CD Pipeline](ci-cd.md) |
+| Integration | Misc | 7% | `nba_api` through the [ingestion service](design/ingestion.md), and The Odds API for bookmaker lines ([Feature Tiers](design/feature-tiers.md#bonus-beyond-the-brief)) |
+| Testing | Misc | 8% | [Testing](testing.md) and [CI/CD Pipeline](ci-cd.md) |
+| Tools | Misc | 5% | [Tech Stack](tech-stack.md), [CI/CD Pipeline](ci-cd.md), [AI Usage Ledger](ai-usage.md) |
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder[Qoder Lite], Claude-Code[Claude Sonnet 5] (last two AI-assisted edits), Claude-Code[Claude Opus 5.5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder[Qoder Lite], Claude-Code[Claude Sonnet 5], Claude-Code[Claude Opus 5.5]*

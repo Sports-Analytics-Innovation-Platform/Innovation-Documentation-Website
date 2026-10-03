@@ -38,7 +38,7 @@ Walks a single auth-gated request end to end, including why it works cross-origi
 - **shadcn/ui** for component library, paired with Tailwind.
 - All backend calls go through `lib/apiClient.ts`, a single `fetchJson<T>` wrapper — one place controls the base URL and request options.
 - `credentials: "include"` on every request for cookie-based auth.
-- **Top navbar** with eight nav links (Home, Players, Compare, Teams, Datasets, Optimizer, Predictions, Become Pro, plus Admin for admins), a recent-result widget, and an auth status button. See [UI Overview](wireframes.md#navigation).
+- **Top navbar** with eight nav links (Home, Players, Compare, Teams, Datasets, Optimizer, Predictions, Become Pro, plus Admin for admins) and a sign-in button. See [UI Overview](wireframes.md#navigation).
 - **Court view** visualisation for predicted top scorers by position on a basketball court.
 - Deployed on **Cloudflare Pages** (global CDN, managed TLS, auto-deploy from GitHub mirror).
 
