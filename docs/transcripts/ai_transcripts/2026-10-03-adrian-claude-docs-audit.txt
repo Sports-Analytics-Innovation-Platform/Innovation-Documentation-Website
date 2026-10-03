@@ -1,0 +1,783 @@
+========================================================================
+CHAT EXPORT
+Docs site audit and cleanup: checked the documentation site against the
+rubric and the live app, then cut it down and brought it up to date
+Date: 3 October 2026
+Author: Adrian Draxl
+Tool: Claude Code (VS Code extension), model Claude Opus 5.5
+Branch: docs-site-cleanup (Innovation-Documentation-Website)
+========================================================================
+
+HOW THIS FILE WAS PRODUCED: exported from the Claude Code session log by a
+script. It keeps the user's prompts and every message the assistant wrote
+to the user, in order. Tool calls (file reads, searches, builds, git
+commands) are summarised as one line per run of calls; their output,
+the assistant's private reasoning and the screenshots are left out. The
+audit report itself was written in a Claude Docs document, not in chat.
+
+------------------------------------------------------------------------
+USER (2026-10-03 11:03 UTC)
+------------------------------------------------------------------------
+hey please check if the doc site is in order and I am scared that the doc site is over documenting. so just check it out against the rubric and tell me if it is and maybe where I can make it more readable and intuitive for veiwers. also check it against the live website to see if it is up to date. make sa report on everything.
+
+thereafter make a plan to sort out the issues stated in the report you make.
+
+ASSISTANT:
+I'll start by exploring the repo to find the doc site, the rubric, and the live website URL.
+
+    [tool calls: Bash x2, Skill, mcp__claude_ai_Claude_Docs__batch]
+
+ASSISTANT:
+Outline is up; now reading the doc site source and rubric.
+
+    [tool calls: mcp__claude_ai_Claude_Docs__guide x2, Artifact]
+
+ASSISTANT:
+Now reading the site config, rubric page, and page sizes.
+
+    [tool calls: Bash x2]
+
+ASSISTANT:
+~101,000 words across 45 pages — that's the first big signal. Reading the rubric page and home page next.
+
+    [tool calls: Bash, Grep]
+
+ASSISTANT:
+The rubric lives inside `rubric-links.md` (copied from the COMS3011A brief), and Milestone 4 is due 2026-10-11 — 8 days out. Now checking structure stats per page and git sync state.
+
+    [tool calls: Bash, ToolSearch]
+
+ASSISTANT:
+Local `main` is 1 commit behind origin. Fetching the remote state and hitting the live docs site, webapp, and API.
+
+    [tool calls: Bash x2]
+
+ASSISTANT:
+Origin has a newer commit ("fix consistency issues found in a full site audit") that also untracks `site/`. Checking its real content changes, and the live sitemap is empty — looking into why.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+Live docs site responds, but the sitemap is empty because `mkdocs.yml` has no `site_url`. Next I'll do a clean strict build of origin/main in the scratchpad and diff it against what's live.
+
+    [tool calls: Bash x2]
+
+ASSISTANT:
+Strict build is clean. Now diffing the live site's search index against the fresh build to see if the deployed content matches the latest commit.
+
+    [tool calls: Bash x3]
+
+ASSISTANT:
+API is up and serves its OpenAPI spec at `/api-json`. Comparing live endpoints and webapp routes against the docs.
+
+    [tool calls: Bash x2]
+
+ASSISTANT:
+The regex may be missing endpoints written in table form, so I'll do a looser per-path check, and find the webapp routes a different way.
+
+    [tool calls: Bash x4]
+
+ASSISTANT:
+Webapp routes and nav links match the UI docs. But Player Archetypes doesn't exist on the live app or API, and some `/me` endpoint names differ. Checking how the docs frame those.
+
+    [tool calls: Bash x2]
+
+ASSISTANT:
+Docs flag Archetypes as "not yet merged", which is honest, but it's still a full nav section. Next I'm probing the `/me/follows` endpoints the docs describe, to see if they really exist live.
+
+    [tool calls: Bash x2]
+
+ASSISTANT:
+Auth also drifts: docs say `GET /auth/sign-in/social`, but live it's `POST`. Now checking the published transcripts — their size, and whether any secrets are exposed publicly.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+Several files match secret-like patterns. Most are likely placeholders, so I'll inspect them with values masked.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+Nearly all are local dev or redacted placeholders. One `sk-…` string needs a look at its context.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+That was a false positive (a session ID), so no live secrets are exposed. One last live-site check: how the raw `.jsonl` transcripts are served to viewers.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+Live checks are done. Before writing that section, let me verify the improvement and interview counts the rubric page quotes.
+
+    [tool calls: Bash x2]
+
+ASSISTANT:
+Live comparison is complete. Writing that section now.
+
+    [tool calls: mcp__claude_ai_Claude_Docs__update]
+
+ASSISTANT:
+Now the readability and over-documentation side. Sampling page openings and counting patterns that add length without helping a reader.
+
+    [tool calls: Bash x4]
+
+ASSISTANT:
+Verbatim copy-paste is modest (worst pair: 13% shared). The real issue is topics spread across many pages. Checking a few more rubric-heavy pages (Testing inventory, Methodology, Getting Started).
+
+    [tool calls: Bash x3, Glob, Grep]
+
+ASSISTANT:
+No original brief is in either repo, so I'm using the site's own transcription in `rubric-links.md` as the rubric. Writing the rubric section now, focused on Milestone 4 (due 2026-10-11).
+
+    [tool calls: mcp__claude_ai_Claude_Docs__batch]
+
+ASSISTANT:
+Rubric section is in. Next: readability and navigation.
+
+    [tool calls: mcp__claude_ai_Claude_Docs__update]
+
+ASSISTANT:
+Readability section is in. Last data step before the chart: exact word counts from the latest build.
+
+    [tool calls: Bash x2]
+
+ASSISTANT:
+44 pages, 101,141 words (about 7 hours of reading), and 11 pages hold half of it. Measuring the specific chunks I'd recommend cutting, so the cut list has real numbers.
+
+    [tool calls: mcp__claude_ai_Claude_Docs__read x2, Bash, mcp__claude_ai_Claude_Docs__batch, ToolSearch, mcp__claude_ai_Claude_Docs__guide]
+
+ASSISTANT:
+The over-documentation chart is in and renders cleanly. Next I'm checking two figures it relies on, then I'll write the verdict and the plan.
+
+    [tool calls: Bash x4, mcp__claude_ai_Claude_Docs__update x2]
+
+ASSISTANT:
+The report and the fix plan are both written up in the doc: https://claude.ai/code/artifact/a8da6f75-f4fe-413c-a9e8-dad96f8ca4db
+
+I haven't changed any files in either repo. The plan is a proposal and waits for your go-ahead. Its last section lists four decisions I need from you, starting with which phases to go ahead with.
+
+------------------------------------------------------------------------
+USER (2026-10-03 11:30 UTC)
+------------------------------------------------------------------------
+i see the report. very good. a tutor will be marking this with the help of an AI like you Claude in particular. the over documentation is a problem though even when it comes to Navigation. a claude bot  will be reading it but try to reduce the bloat as much as you can while keeping the rubric in mind. ofc srprint 3 is finished and next we will be submitting the project as finshed. I am going out so I won't be able to come back for a while implement the plan for everything that doesn't need my input. when i come back i expect a list of everything you need form me. and I will provide it for you to finish the plan. Implement this plan on a new branch so I can reveiw it before pushing to main. good work man! I'll see you later.
+
+ASSISTANT:
+Got it. I'll do everything that doesn't need your input on a new local branch, and leave `main` untouched. First, a check of the repo state.
+
+    [tool calls: Bash x5]
+
+ASSISTANT:
+Before rewriting the walkthrough pages, I'll check what an anonymous visitor actually sees on the live webapp. I'm looking for a headless browser to take screenshots with.
+
+    [tool calls: Bash x2, Read]
+
+ASSISTANT:
+Headless Chrome works, and public pages load without signing in, so I can take real screenshots for UI Overview. Next I'll get player, team and game IDs from the live pages.
+
+    [tool calls: Read x12, Bash x7, Write]
+
+ASSISTANT:
+I have the public-page screenshots. Pages that need sign-in (Home dashboard, Optimizer, Predictions, Become Pro, Admin) will go on your list. Now reading the remaining pages so I can rewrite them.
+
+    [tool calls: Bash x6]
+
+ASSISTANT:
+Still working, on the API Reference now. I'm pulling the full list of live operations from the API's OpenAPI spec so the rewritten page matches the deployed API exactly.
+
+    [tool calls: Bash x6]
+
+ASSISTANT:
+Still on the API Reference. Anonymous `curl` gets a 401, but the webapp loads data without anyone signing in, so I'm checking how it authenticates before I document it.
+
+    [tool calls: Bash x6]
+
+ASSISTANT:
+Still working on the docs cleanup branch. Next I'm rewriting the API Reference page against the live API.
+
+    [tool calls: Bash x6]
+
+ASSISTANT:
+Writing the new API Reference now. I'm checking the last few endpoint purposes in the app source first.
+
+    [tool calls: Bash x6]
+
+ASSISTANT:
+Writing the new API Reference file now. It covers all 103 live operations in compact tables.
+
+    [tool calls: Write]
+
+ASSISTANT:
+I wrote an example payload from memory. Checking it against a real response through the web app's proxy before keeping it.
+
+    [tool calls: Bash x4]
+
+ASSISTANT:
+Good thing I checked: the real field names are different. Swapping in the real response shape.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+The API Reference is down from 7,747 to 2,635 words and lists exactly 103 operations. Checking the sign-in path prefix next.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+The sign-in path is confirmed. Next is the Demo Guide: fixing stale steps and replacing its endpoint table with a link.
+
+    [tool calls: Bash x4, Read x3]
+
+ASSISTANT:
+Still on the Demo Guide. I'm checking two routes in the app source so the walkthrough steps are accurate.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+Now rewriting the Demo Guide.
+
+    [tool calls: Write]
+
+ASSISTANT:
+Checking a few claims in the new Demo Guide against the app source.
+
+    [tool calls: Bash x2]
+
+ASSISTANT:
+The game detail page has no play-by-play, and the CI/CD page path was wrong. Fixing both.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+The Demo Guide is down from 2,683 to 1,125 words. Running a strict build before committing.
+
+    [tool calls: Bash x2]
+
+ASSISTANT:
+The build passes. Committing the API Reference and Demo Guide rewrites.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+Next is Phase 1: the Home page status, `site_url`, and hiding the meeting template pages.
+
+    [tool calls: Bash x4, Read, Write]
+
+ASSISTANT:
+Phase 1 config changes are done. Next are the Improvements page status and the Rubric page rewrite.
+
+    [tool calls: Bash x3]
+
+ASSISTANT:
+Commit 56cd37f appears to have undone part of the user's own fix from e44d151. Checking which pages were reverted.
+
+    [tool calls: Bash x4]
+
+ASSISTANT:
+No line-ending churn. Next I'm rewriting the Rubric Quick Links page to one line per cell.
+
+    [tool calls: Read, Bash]
+
+ASSISTANT:
+The schema count (35 tables, 7 enums) is still correct. Writing the condensed Rubric page.
+
+    [tool calls: Write]
+
+ASSISTANT:
+I claimed the second survey wave wasn't run, but I don't actually know that. Removing it and adding it to the questions for the user.
+
+    [tool calls: Edit]
+
+ASSISTANT:
+Rubric page done (2,033 words down to roughly 1,000). Next is the UI Overview, which gets the new screenshots.
+
+    [tool calls: Read]
+
+ASSISTANT:
+Checking a few UI details in the web source before rewriting this page.
+
+    [tool calls: Bash x4, Read x2]
+
+ASSISTANT:
+Writing the new UI Overview with the screenshots.
+
+    [tool calls: Write]
+
+ASSISTANT:
+Checking a few claims on this page against the source.
+
+    [tool calls: Bash x3, Read]
+
+ASSISTANT:
+Breakpoints are confirmed. There is no footer, and the header uses `landing-ink #14100c`, so I'm fixing that sentence along with the other three immediate fixes.
+
+    [tool calls: Bash x4]
+
+ASSISTANT:
+The page renders correctly. Committing this batch now.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+Next is the Sprint Log. I'm reading its current end and the app's merge history since 22 Sep.
+
+    [tool calls: Bash x7]
+
+ASSISTANT:
+I'm on the Sprint Log now. It needs a broken Team table fixed, the 28 Sep merges added, and its long rows cut to one line each.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+Both PRs merged on 13 Sep, so the "open" tags are stale. Writing the condensed Sprint Log.
+
+    [tool calls: Write]
+
+ASSISTANT:
+Tightening a few rows: adding PRs #104 and #181, fixing the source line, and noting that the last week runs to the 29 Sep deadline.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+The Sprint Log is down from 4,111 to 1,906 words. Committing it, then starting the Phase 4 cuts.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+ERD comes first; at 7,686 words it's the largest page.
+
+    [tool calls: Bash x3]
+
+ASSISTANT:
+I'm reading the rest of the ERD so the one-line summaries stay accurate.
+
+    [tool calls: Bash x3, Write]
+
+ASSISTANT:
+Checking two schema details and the archetypes page, which says the ERD documents its columns.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+The archetypes page already has its own table list, so I only need to reword its pointer. Now fixing the inbound links and adding Mermaid support.
+
+    [tool calls: Bash x5, Read]
+
+ASSISTANT:
+Still on the ERD rewrite; checking the new diagram layout.
+
+    [tool calls: Read]
+
+ASSISTANT:
+The diagram is readable at this layout. Committing the ERD.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+The ERD is down from 7,686 to 1,958 words. Next is the Architecture page, which still has stale claims ("31 models", "RolesGuard not used by any route").
+
+    [tool calls: Bash]
+
+ASSISTANT:
+Checking a few facts before rewriting: the health route, the BetterAuth mount path, how the Python jobs run, and what is session-only.
+
+    [tool calls: Bash x4, Write]
+
+ASSISTANT:
+Zod validation covers only 4 of the 15 write controllers, so I'm dropping the "every write" claim.
+
+    [tool calls: Bash x2]
+
+ASSISTANT:
+The ledger is mostly one wide 8-column table. Checking whether there is anything besides it.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+Purpose cells average 74 words across 61 rows. I'm reading the rest so I can cut each to one sentence.
+
+    [tool calls: Bash x2]
+
+ASSISTANT:
+Some cells were cut off in my output. Printing the six longest in full before writing summaries.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+I'm writing the condensed ledger with a script: one sentence per Purpose cell, full author names, rows in date order, a short intro and the AI declaration footer.
+
+    [tool calls: Bash x7, Write]
+
+ASSISTANT:
+The ledger went from 6,057 to 2,633 words. The build reports two broken anchors left by the Sprint Log rewrite; strict mode only logs them as INFO, so it doesn't fail. Fixing them now.
+
+    [tool calls: Bash x2]
+
+ASSISTANT:
+Ledger committed. Next is the Testing page (4,485 words).
+
+    [tool calls: Bash, Read]
+
+ASSISTANT:
+I'm checking the Testing page's facts against the app repo first: spec counts, how CI starts Postgres, axe-core coverage and the Python tests.
+
+    [tool calls: Bash x5, Write, Edit]
+
+ASSISTANT:
+Testing went from 4,485 to 1,121 words. I'm now merging the two survey pages (Methodology and Survey, 5,915 words together) into one User Feedback page.
+
+    [tool calls: Read x5]
+
+ASSISTANT:
+I'm checking two "Verify" items in the feedback table against the app code: F12 (player position) and F19 (player height).
+
+    [tool calls: Bash]
+
+ASSISTANT:
+Both are already on the player profile on main: position in the header, height in the Bio card. So F12 and F19 move from "Verify" to "already shown". Writing the merged User Feedback page now.
+
+    [tool calls: Bash x2, Write]
+
+ASSISTANT:
+Feedback merge builds clean and the interview anchor resolves. Next is Improvements Made (2,152 words). First I'm checking its claims about Teams sorting and the matchup projection.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+Claims hold. Condensing Improvements Made into one before/after table plus short notes.
+
+    [tool calls: Bash x2, Write, Edit]
+
+ASSISTANT:
+Feedback, Testing and Improvements went from 13,970 to 4,390 words. Next is Stakeholder Interactions (2,827).
+
+    [tool calls: Bash x7, Read x3]
+
+ASSISTANT:
+Rewriting the Stakeholder Interactions page now: one feedback-to-action table with the stale statuses corrected, and the 27 Sep client meeting added.
+
+    [tool calls: Write x3, Bash x3]
+
+ASSISTANT:
+My sed edit broke the helper script, so I'm rewriting it with the Write tool.
+
+    [tool calls: Bash x3, Write]
+
+ASSISTANT:
+Stakeholder log committed (2,827 → 903 words). Next up: the ADRs and the other large pages.
+
+    [tool calls: Bash x3, Read x2, Write]
+
+ASSISTANT:
+Checking how sign-in and the proxy actually work in the app before I rewrite ADR-003's hosting details.
+
+    [tool calls: Bash x5, Write]
+
+ASSISTANT:
+ADR-001 and ADR-003 are rewritten. I'm now fixing the two anchor links between them, then I'll build.
+
+    [tool calls: Bash x3]
+
+ASSISTANT:
+Next: CI/CD (3,441 words).
+
+    [tool calls: Bash x4, Read, Write]
+
+ASSISTANT:
+CI/CD page is done (3,441 → 887 words). I'm fixing one link that pointed into the removed ESLint section.
+
+    [tool calls: Edit, Bash]
+
+ASSISTANT:
+Next: Data Ingestion (3,200 words).
+
+    [tool calls: Bash x2, Read, Write]
+
+ASSISTANT:
+Ingestion done (3,200 → 1,399). Now Tech Stack (2,663).
+
+    [tool calls: Bash x5, Read x2, Write]
+
+ASSISTANT:
+Rewrote Tech Stack (2,663 → ~1,150 words); now checking a few remaining claims before building.
+
+    [tool calls: Bash x5, Read]
+
+ASSISTANT:
+Fixing the stale proxy and `/api/auth` claims, and condensing API Design to its design rules (the endpoint list is already on API Reference).
+
+    [tool calls: Bash x5, Write]
+
+ASSISTANT:
+Now fixing Getting Started's `VITE_API_BASE_URL` row, then building.
+
+    [tool calls: Bash x4]
+
+ASSISTANT:
+Committed. Next up: Security page.
+
+    [tool calls: Bash x10, Write x2, Read]
+
+ASSISTANT:
+Security and ADR-002 committed. Now the Roadmap page.
+
+    [tool calls: Bash x5, Read]
+
+ASSISTANT:
+Found that API Design's "not built" list was wrong (a polling live feed and async pulls exist), so correcting it before writing the Roadmap.
+
+    [tool calls: Bash x5, Write]
+
+ASSISTANT:
+Roadmap committed. Moving to Feature Tiers.
+
+    [tool calls: Bash x3, Read]
+
+ASSISTANT:
+Feature Tiers is a key rubric page; restructuring it as status tables per tier and updating the stale load-test row (it was run on 29 Sep: P95 495 ms against a 300 ms target).
+
+    [tool calls: Bash x2, Write]
+
+ASSISTANT:
+Feature Tiers committed (2,108 → 1,311 words). Next: Performance page.
+
+    [tool calls: Bash x10, Read, Write]
+
+ASSISTANT:
+Committed as 3ee8e3d. Next I'm trimming Become Pro.
+
+    [tool calls: Bash x5, Write]
+
+ASSISTANT:
+Become Pro is down from 2,553 to 940 words. Now trimming its Valuation Model page, starting with checking the numbers against the code.
+
+    [tool calls: Bash x3, Write]
+
+ASSISTANT:
+Committed as 2cab537 (2,553 + 2,083 words down to 940 + 1,178). Next is Player Archetypes. It is still in review, so I'll trim it but keep it a full page, and leave the stub-or-full decision to you.
+
+    [tool calls: Bash x9, Write]
+
+ASSISTANT:
+The ADR-001 line is about migrations (25 merged, so the archetypes migration would be the 26th), so it's correct. Now I'm removing the separate model page and updating the nav.
+
+    [tool calls: Bash x2]
+
+ASSISTANT:
+Committed as 943d4e8. Next is ADR-004: it is still marked "implemented on branch", but PR #124 was merged.
+
+    [tool calls: Bash x3, Write x2]
+
+ASSISTANT:
+The meetings guide is an LLM prompt that isn't in the nav, so it doesn't clutter navigation, and I'm leaving it as process evidence. Committing the two ADRs, then restructuring the nav.
+
+    [tool calls: Bash x2]
+
+ASSISTANT:
+Rubric Quick Links is already the marker's entry point on Home, so I'm keeping it under Home and putting the AI Usage Ledger in Process. That gives 5 tabs instead of the planned 6 (down from 11).
+
+    [tool calls: Bash x3, Read]
+
+ASSISTANT:
+The five-tab nav renders cleanly. Committing it, then starting the Phase 6 sweep for leftover self-history notes, stale `/health` links and dated wording.
+
+    [tool calls: Bash x3]
+
+ASSISTANT:
+Total across the site is now 45,465 words, down from 101,162 on main. Requirements still has a stale "⚠️ unresolved" password-reset note and a claim that games need sign-in, so I'm fixing both.
+
+    [tool calls: Bash x3]
+
+ASSISTANT:
+CI claims check out. Next I'm counting PR-number mentions per page, to cut them from the prose pages.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+PR numbers are now rare outside the Sprint Log and AI Ledger, and where they remain they tie feedback to shipped work, so I'm leaving them. Checking for leftover ⚠️ notes and dated self-history.
+
+    [tool calls: Bash x2]
+
+ASSISTANT:
+Getting Started has a dated warning heading, a link to the deprecated `/health`, and setup steps I haven't verified yet. Checking them against the app repo.
+
+    [tool calls: Bash x4, Write]
+
+ASSISTANT:
+Getting Started is now 651 words, down from 1,083. Next: the User Interviews footer, then a build.
+
+    [tool calls: Bash x3]
+
+ASSISTANT:
+I edited this page earlier on the branch, so its declaration should credit Claude Code too. I'll add that, then commit.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+Committed. Last step: the final checks (word counts, links to deleted pages, stale health routes).
+
+    [tool calls: Bash]
+
+ASSISTANT:
+All checks pass. The one remaining `/health` mention is correct (it describes that route's deprecation date). Last, I'll stop the local preview servers I started earlier.
+
+    [tool calls: PowerShell, Bash]
+
+ASSISTANT:
+Everything that didn't need your input is done. It's on a new local branch, `docs-site-cleanup`, and nothing has been pushed. Your `main` and your uncommitted `site/` changes are untouched.
+
+| | Before (`origin/main`) | After (branch) |
+|---|---|---|
+| Words, excluding transcripts | 101,162 | 44,962 (−56%) |
+| Nav tabs | 11 | 5 |
+| Pages | 44 | 42 |
+
+The strict build is clean: no broken links or anchors, and nothing links to the removed pages.
+
+## What changed
+- **Every page trimmed and checked against the live app and the code.** Wrong claims are fixed, for example:
+  - the health route is `/v1/health`;
+  - the local proxy forwards both `/api` and `/auth`;
+  - the ADR statuses;
+  - the Archetype names, now from the 28 Sep fit.
+- **Pages merged:** the Player Archetypes model page into its overview, and the feedback method page into the Survey page.
+- **Nav:** five tabs: Home, Product, Architecture, Process, and Users & Stakeholders.
+- **Performance** now says plainly that the 29 Sep load test only measured the health routes.
+- **AI declarations** all use the standard wording, with the dated notes removed.
+
+The biggest pages left are the meeting minutes, the API Reference and the AI Ledger. They're records the rubric asks for, so I kept them.
+
+## How to review
+- **Commits:** `git log --oneline origin/main..docs-site-cleanup` (23 commits)
+- **Full diff:** `git diff origin/main..docs-site-cleanup` (49 files)
+- **Preview:** run `python -m mkdocs serve` in the worktree:
+  `<scratchpad>/wt`
+- **To check it out in your own folder:** first run `git worktree remove` on that path. That doesn't delete the branch, which lives in your repo either way.
+
+## What I need from you
+Answer by number. "1: no" is enough.
+
+**Decisions that change the docs**
+1. **Retrospectives:** were they held? If yes, send the Sprint 1–3 notes. If no, I'll reword Methodology so it doesn't say they were.
+2. **Player Archetypes:** will it be merged before 11 Oct? If yes, I'll remove the "In review" banner. If no, I'll cut it down to a short placeholder page.
+3. **Load test:** the 29 Sep run sent no API key, so all 523 data-route requests got 401. Either re-run it with an `X-API-Key`, or let me run it (about 700 requests to production).
+   - Also say where the 29 Sep script lives, or whether to merge `add-api-load-test`. That branch's script requires a key, so it can't have produced those results.
+4. **Dead GitHub mirror links:** point them at Gitea, or remove them?
+5. **Nav:** are you happy with five tabs? Rubric Quick Links is under Home, the AI Ledger and Scrum Meetings are under Process, and Client Meetings is under Users & Stakeholders.
+
+**Things only you or the team know**
+6. **Requirements Traceability:** are the owners still right? I removed the empty Issue column.
+7. **Sprint Log:** are the credits right?
+8. **AI Ledger:** are you OK with how I normalised the names? And do you want a row for this session? If so, I need the name to put on it and the transcript.
+9. **Stakeholder log:** two cells say "*To confirm*": the 7 Sep cross-group API, and Brendan's answer on password reset.
+10. **Feedback:** was there a second survey wave, or more interviews after 27 Sep?
+11. **Feedback items:** were F3–F31 filed as Gitea issues? The pages now just say "Backlog".
+12. **Test counts:** please re-run the test suites and send me the counts.
+13. **Screenshots:** send screenshots of the signed-in pages. I could only capture signed-out pages.
+14. **Runner:** was the `kiran-backup` runner registration reset?
+
+**Housekeeping in your repo**
+15. **Your local `main`:** it has uncommitted `site/` changes and is behind `origin/main`. Set them aside (they're build output) and pull.
+16. **Lighthouse report files:** they're untracked. Commit them or delete them?
+17. **`gh-pages` branch:** it's stale. Delete it? I won't touch remote branches.
+
+**FYI: app issues the docs record but I can't fix**
+18. Dataset 2026-27.1 shows 0 players (F25).
+19. Searching "jokic" doesn't find Jokić (F10).
+20. `apiClient.ts` still calls the deprecated `/health` route.
+21. The 28 Sep scrum defers POPIA and RLS to "Sprint 4", and there is no Sprint 4. A marker may notice.
+
+When you've answered, I'll finish these on the same branch. Then you can push it and merge.
+
+------------------------------------------------------------------------
+USER (2026-10-03 14:04 UTC)
+------------------------------------------------------------------------
+okay so there are a lot of warning and other notes that can totaly be removed. we shouldn't even have warnings if things are proper. anyway:
+1. no
+2. yes
+3. the Google Lighthhouse screenshots should be more important. that is what performance is kinda tested on when marked. unless this load test is actually nessesary, ignore it.
+4. not dead. you have an old copy of the githuea / github mirror. the mirror works as intendeed. or maybe I missed what you mean here and they+re are actual dead links?  elaborate.
+5. sure try it out. I will revert it if it gets confusing.
+6. well we all kinda dabbled in everything so i am unsure who really worked on everything there but I seems a litttle useless as a page tbh. both the owner and the issue section can be removed and then what? do we even need that page?
+7. the credits are indeed right.
+8. yes I am unsure how to get  transcript from you for this session in particular. you are gonna have to figure that out or summarise and call it a day. they just want to see how I use the AI. I also have many other AI usages that I could send you and I should. my name is Adrian Draxl
+9. no need for password rest he said. and no need for cross group API. it is not in the rubric so he said no need later on.
+10. no second survey was done. and we only did one interview since he was the only one who replied.
+11. hmm I don't think they were I think these new features were just done without putting them in gitea I should work on that. maybe give me quick copy paste items for each one since there are so many that I can put in the sprint backlog.
+12. idk what you mean test suites? please walk me though how to do this.
+13. linking them here. I hope it doesn't have the little screenshot in the corner omd. I made sure to take screenshots of the window not the full screen
+14. unsure asking group. kiran says no he hasn't toutched it likely because you need docker running for it to work.
+15. yes please do the housekeeping you cutie
+16. commit them please. they must be important right? 
+17.  yes delete it only for the doc site if it is unneeeded
+18. this is because the season hadn't started yet or had just started ( i am guessing since it is 2026. but I heard the team talk about a similar issue like this before.)
+19. will notify the group.
+20. why is this an issue is that not just a test to see if the api works?
+21. when we say sprint 4 we mean milestone 4. or the time between sprint 3's end and the submissiondate.
+
+[23 screenshots of the live app attached]
+
+ASSISTANT:
+Thanks, that covers almost everything. I'll start by checking what's on the branch and in your repo for each answer, then work through them.
+
+    [tool calls: Bash x10]
+
+ASSISTANT:
+Working through your answers now: removing the warnings, cleaning up Archetypes and the load test, adding the screenshots and ledger row, and doing the housekeeping.
+
+    [tool calls: Bash x7]
+
+ASSISTANT:
+Mapped all the spots tied to your answers. Now writing the edit script for the warnings, Archetypes and load-test text.
+
+    [tool calls: Bash x6]
+
+ASSISTANT:
+Writing the first edit script now: it turns the warning and note boxes into plain text, or deletes them.
+
+    [tool calls: Bash x5, Write]
+
+ASSISTANT:
+Box cleanup is committed. Next I'm updating the pages so Player Archetypes reads as merged, since you confirmed it will be merged before 11 Oct.
+
+    [tool calls: Bash x5, Write]
+
+ASSISTANT:
+Archetypes is committed. Next, the Performance page: Lighthouse moves to the top with the screenshots shown inline, and the load test comes out.
+
+    [tool calls: Bash x2, Write, Read]
+
+ASSISTANT:
+The grid renders. I'm making each screenshot open full size when clicked, then committing.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+Performance is committed. Next is the batch for your other answers: password reset, the cross-group API, no retrospectives, the single interview, the runner token and the Owner column.
+
+    [tool calls: Bash x3, Write x2]
+
+ASSISTANT:
+Answers batch committed. Now the screenshots: checking the crop areas before I cut them.
+
+    [tool calls: Read x12, Bash x3]
+
+ASSISTANT:
+The six screenshots are cropped and the username is blanked out. Next I'm adding them to the UI Overview page.
+
+    [tool calls: Bash x2]
+
+ASSISTANT:
+Screenshots are committed. Now the AI Usage Ledger row and this session's transcript.
+
+    [tool calls: Bash x2]
+
+ASSISTANT:
+I'll export this session's transcript the way Kiran's was done: by script from the Claude Code log, keeping the prompts and replies and leaving out tool output.
+
+    [tool calls: Bash x3, Write, Read]
+
+ASSISTANT:
+The export reads well. Before committing I'll also hide the local Windows path, and I'll re-run the export at the very end so it covers the whole session. Next is the ledger row.
+
+    [tool calls: Bash x3]
+
