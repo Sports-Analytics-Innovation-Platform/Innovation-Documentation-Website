@@ -1,1480 +1,292 @@
-# API Reference (OpenAPI / Swagger)
+# API Reference
 
-This page is the canonical API reference for the NBA Analytics API. It documents every endpoint, request/response shape, authentication requirement, and error format — and describes how Swagger UI is served from the running API (see [Setup](#swagger-setup) below).
+The NBA Analytics API is a NestJS service hosted at **[sportsanalytics-api.onrender.com](https://sportsanalytics-api.onrender.com)**. The interactive reference is generated from the code, so it is always the source of truth:
 
-The API is hosted at **[sportsanalytics-api.onrender.com](https://sportsanalytics-api.onrender.com)**. Swagger UI is live at:
+- **Swagger UI:** [/api/docs](https://sportsanalytics-api.onrender.com/api/docs). Every operation, its parameters and response shapes, with "Try it out".
+- **OpenAPI JSON:** [/api-json](https://sportsanalytics-api.onrender.com/api-json).
 
-- **Swagger UI:** `https://sportsanalytics-api.onrender.com/api/docs`
-- **OpenAPI JSON:** `https://sportsanalytics-api.onrender.com/api-json`
-- **OpenAPI YAML:** `https://sportsanalytics-api.onrender.com/api-yaml`
-
----
-
-## Swagger setup
-
-The NestJS API uses `@nestjs/swagger` to auto-generate an OpenAPI 3.0 specification from decorator metadata on controllers and DTOs.
-
-### Installation
-
-```bash
-cd apps/api
-npm install @nestjs/swagger
-```
-
-### Bootstrap changes (`src/main.ts`)
-
-> **Status: Done.** `@nestjs/swagger@^7` is installed and configured. The Swagger setup below is active in production.
-
-Swagger setup in `src/main.ts`, after the Nest app is created and before `app.listen()`:
-
-```typescript
-import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
-
-// ... after app creation and global filters ...
-
-const swaggerConfig = new DocumentBuilder()
-  .setTitle("NBA Analytics API")
-  .setDescription(
-    "REST API for the NBA Analytics & Optimisation Engine. " +
-    "Provides player/team/game data ingested from nba_api, " +
-    "Elo-based game predictions, Four Factors analysis, and " +
-    "MILP fantasy lineup optimisation."
-  )
-  .setVersion("1.0")
-  .addCookieAuth("better-auth.session_token", {
-    type: "apiKey",
-    in: "cookie",
-    name: "better-auth.session_token",
-    description: "BetterAuth session cookie. Required for auth-gated endpoints.",
-  })
-  .addTag("health", "Service health check")
-  .addTag("players", "Player data and statistics (public)")
-  .addTag("teams", "Team data (public)")
-  .addTag("games", "Game data and predictions (auth required)")
-  .addTag("optimizer", "Fantasy lineup optimiser (auth required)")
-  .addTag("analytics", "Model accuracy and leaderboard (public)")
-  .addTag("me", "Personalised user data: watchlist, follows, picks, saved comparisons (auth required)")
-  .build();
-
-const document = SwaggerModule.createDocument(app, swaggerConfig);
-SwaggerModule.setup("api/docs", app, document, {
-  swaggerOptions: { persistAuthorization: true },
-});
-```
-
-### Controller decorators
-
-Each controller gets `@ApiTags()` and each method gets `@ApiOperation()`, `@ApiResponse()`, and `@ApiQuery()` decorators. Example for the players controller:
-
-```typescript
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam } from "@nestjs/swagger";
-
-@ApiTags("players")
-@Controller("v1/players")
-export class PlayersController {
-
-  @Get()
-  @ApiOperation({ summary: "List players (paginated)" })
-  @ApiQuery({ name: "teamId", required: false, description: "Filter by team ID" })
-  @ApiQuery({ name: "position", required: false, description: "Filter by position (PG, SG, SF, PF, C)" })
-  @ApiQuery({ name: "search", required: false, description: "Search by player name" })
-  @ApiQuery({ name: "page", required: false, type: Number, description: "Page number (default: 1)" })
-  @ApiQuery({ name: "pageSize", required: false, type: Number, description: "Items per page (default: 25, max: 100)" })
-  @ApiResponse({ status: 200, description: "Paginated player list" })
-  listPlayers(@Query() query: Record<string, unknown>) { ... }
-
-  @Get(":id")
-  @ApiOperation({ summary: "Get player by ID" })
-  @ApiParam({ name: "id", description: "Player UUID" })
-  @ApiResponse({ status: 200, description: "Player details with team" })
-  @ApiResponse({ status: 404, description: "Player not found" })
-  async getPlayer(@Param("id") id: string) { ... }
-}
-```
-
-### DTOs with `@ApiProperty()`
-
-For richer schema documentation, create DTO classes with `@ApiProperty()` decorators. This is optional — the auto-generated spec works from controller metadata alone — but produces better Swagger UI descriptions:
-
-```typescript
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-
-class PagedResponseDto {
-  @ApiProperty({ description: "Array of result items" })
-  data: unknown[];
-
-  @ApiProperty({ description: "Current page number", example: 1 })
-  page: number;
-
-  @ApiProperty({ description: "Items per page", example: 25 })
-  pageSize: number;
-
-  @ApiProperty({ description: "Total number of matching items", example: 540 })
-  total: number;
-}
-
-class ErrorResponseDto {
-  @ApiProperty({ description: "Error envelope" })
-  error: {
-    @ApiProperty({ description: "Machine-readable error code", example: "NOT_FOUND" })
-    code: string;
-
-    @ApiProperty({ description: "Human-readable error message" })
-    message: string;
-  };
-}
-```
-
----
-
-## Endpoint reference
-
-### Health
-
-#### `GET /health`
-
-Service health check. No authentication required. Used by the topology pinger to verify the API is running.
-
-**Response `200`:**
-
-```json
-{ "status": "ok" }
-```
-
----
-
-### Players
-
-All player endpoints are **public** — a session cookie or API key is required (see [Authentication](#authentication)).
-
-#### `GET /v1/players`
-
-Paginated list of players, optionally filtered by team, position, or name search. Results ordered by last name ascending.
-
-**Query parameters:**
-
-| Parameter | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `teamId` | string | No | — | Filter by team UUID |
-| `position` | string | No | — | Filter by position (`PG`, `SG`, `SF`, `PF`, `C`) |
-| `search` | string | No | — | Search by first or last name (case-insensitive, space-separated terms) |
-| `seasonType` | string | No | `REGULAR` | Season segment (`REGULAR`, `PLAY_IN`, `PLAYOFFS`, `FINALS`). Only takes effect when combined with `participated=true` |
-| `participated` | boolean | No | `false` | When `true`, restrict the list to players who appeared in at least one game of `seasonType`. Lets the players list swap to a postseason-only roster |
-| `page` | integer | No | `1` | Page number (minimum 1) |
-| `pageSize` | integer | No | `25` | Items per page (1–100) |
-
-**Response `200`** — `PagedResult<PlayerWithTeam>`:
-
-```json
-{
-  "data": [
-    {
-      "id": "uuid",
-      "nbaPlayerId": 2544,
-      "firstName": "LeBron",
-      "lastName": "James",
-      "position": "SF",
-      "heightInches": 81,
-      "weightLbs": 250,
-      "jerseyNumber": "23",
-      "headshotUrl": "https://cdn.nba.com/headshots/nba/latest/260x190/2544.png",
-      "teamId": "uuid",
-      "team": { "id": "uuid", "nbaTeamId": 1610612747, "name": "Los Angeles Lakers", "abbreviation": "LAL", "city": "Los Angeles", "conference": "West", "division": "Pacific", "logoUrl": "..." }
-    }
-  ],
-  "page": 1,
-  "pageSize": 25,
-  "total": 540
-}
-```
-
----
-
-#### `GET /v1/players/:id`
-
-Single player by UUID, with team relationship included.
-
-**Path parameters:**
-
-| Parameter | Type | Description |
-|---|---|---|
-| `id` | string (UUID) | Player ID |
-
-**Response `200`:** Player object (same shape as array items above).
-
-**Response `404`:**
-
-```json
-{ "error": { "code": "NOT_FOUND", "message": "Player not found" } }
-```
-
----
-
-#### `GET /v1/players/:id/stats`
-
-Season averages and per-game scoring log for a player, both derived at request time from `PlayerGameStat` rows for one season segment.
-
-**Path parameters:**
-
-| Parameter | Type | Description |
-|---|---|---|
-| `id` | string (UUID) | Player ID |
-
-**Query parameters:**
-
-| Parameter | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `seasonType` | string | No | `REGULAR` | Season segment (`REGULAR`, `PLAY_IN`, `PLAYOFFS`, `FINALS`) |
-| `asOf` | string (ISO-8601) | No | — | Only games completed at or before this instant contribute. Invalid timestamps → `400`. Not cached |
-
-**Response `200`:** the response echoes back the resolved `seasonType` so a caller can't mislabel a chart it already rendered. When `asOf` is provided, it is echoed back as well.
-
-```json
-{
-  "playerId": "uuid",
-  "seasonType": "REGULAR",
-  "asOf": "2026-02-15T12:00:00.000Z",
-  "seasonAverages": {
-    "gamesPlayed": 71,
-    "minutesPerGame": 35.2,
-    "pointsPerGame": 25.7,
-    "reboundsPerGame": 7.3,
-    "assistsPerGame": 8.0,
-    "stealsPerGame": 1.2,
-    "blocksPerGame": 0.6,
-    "turnoversPerGame": 3.4,
-    "fieldGoalsMadePerGame": 9.8,
-    "fieldGoalsAttemptedPerGame": 19.4,
-    "fieldGoalPercentage": 0.505,
-    "threesMadePerGame": 2.1,
-    "threesAttemptedPerGame": 6.2,
-    "threePointPercentage": 0.341,
-    "freeThrowsMadePerGame": 4.0,
-    "freeThrowsAttemptedPerGame": 5.3,
-    "freeThrowPercentage": 0.756,
-    "trueShootingPercentage": 0.598,
-    "effectiveFieldGoalPercentage": 0.559,
-    "assistToTurnoverRatio": 2.35,
-    "plusMinusPerGame": 4.1,
-    "usagePercentage": 31.2,
-    "offensiveRating": 118.4,
-    "defensiveRating": 109.7
-  },
-  "gameLog": [
-    {
-      "gameId": "uuid",
-      "gameDate": "2025-03-15T00:00:00.000Z",
-      "points": 30
-    }
-  ]
-}
-```
-
-`assistToTurnoverRatio` is `null` rather than `0` when a player recorded no turnovers (a zero-denominator ratio is undefined, and `0.0` would read as the worst possible ratio, not the best). `plusMinusPerGame`, `usagePercentage`, `offensiveRating`, and `defensiveRating` are `null` for games predating the advanced-boxscore columns, not `0` — a real measurement of an even plus-minus or a 0% usage rate is different from a missing one, and the frontend renders `null` as "—".
-
-**Response `404`:**
-
-```json
-{ "error": { "code": "NOT_FOUND", "message": "Player not found" } }
-```
-
----
-
-#### `GET /v1/players/:id/stats/splits`
-
-The same derived season line as `/:id/stats` above, but for every season segment at once (`REGULAR`, `PLAY_IN`, `PLAYOFFS`, `FINALS`) in a single request — used by the postseason comparison view so it doesn't have to make four separate calls.
-
-**Path parameters:**
-
-| Parameter | Type | Description |
-|---|---|---|
-| `id` | string (UUID) | Player ID |
-
-**Response `200`:**
-
-```json
-{
-  "playerId": "uuid",
-  "splits": {
-    "REGULAR": { "gamesPlayed": 71, "pointsPerGame": 25.7, "...": "..." },
-    "PLAY_IN": { "gamesPlayed": 1, "pointsPerGame": 30.0, "...": "..." },
-    "PLAYOFFS": { "gamesPlayed": 12, "pointsPerGame": 28.4, "...": "..." },
-    "FINALS": { "gamesPlayed": 0, "pointsPerGame": 0, "...": "..." }
-  }
-}
-```
-
-Each value under `splits` has the same `DerivedSeasonAverages` shape as `seasonAverages` above. A segment the player never played in still gets an entry — with zeroed/null stats — rather than being omitted, so the frontend can render every segment tab without a presence check.
-
-**Response `404`:**
-
-```json
-{ "error": { "code": "NOT_FOUND", "message": "Player not found" } }
-```
-
----
-
-#### `GET /v1/players/leaders`
-
-Season leaders across key stat categories. Each category returns the top player (by that metric) who meets the minimum-games threshold, or `null` when nobody qualifies.
-
-**Query parameters:**
-
-| Parameter | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `seasonType` | string | No | `REGULAR` | Season segment (`REGULAR`, `PLAY_IN`, `PLAYOFFS`, `FINALS`) |
-| `minGames` | integer | No | `15` (regular) / `4` (postseason) | Minimum games played to qualify |
-
-**Response `200`:**
-
-```json
-{
-  "seasonType": "REGULAR",
-  "minGames": 15,
-  "leaders": {
-    "ppg":   { "player": { "id": "uuid", "firstName": "...", "lastName": "...", "team": { "...": "..." } }, "value": 28.3, "gamesPlayed": 72 },
-    "rpg":   { "player": { "...": "..." }, "value": 11.2, "gamesPlayed": 70 },
-    "apg":   { "player": { "...": "..." }, "value": 9.1,  "gamesPlayed": 68 },
-    "tsPct": { "player": { "...": "..." }, "value": 65.4, "gamesPlayed": 72 }
-  }
-}
-```
-
-Each category is `SeasonLeader | null`.
-
----
-
-#### `GET /v1/players/aggregates`
-
-Aggregate player stats grouped by team or position.
-
-**Query parameters:**
-
-| Parameter | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `metric` | string | Yes | — | One of: `pointsPerGame`, `reboundsPerGame`, `assistsPerGame` |
-| `groupBy` | string | No | `team` | `team` or `position` |
-| `seasonType` | string | No | `REGULAR` | Season segment |
-
-**Response `200`:**
-
-```json
-{
-  "metric": "pointsPerGame",
-  "groupBy": "team",
-  "seasonType": "REGULAR",
-  "groups": [
-    { "group": "BOS", "playerCount": 14, "average": 22.3 },
-    { "group": "GSW", "playerCount": 15, "average": 21.1 }
-  ]
-}
-```
-
----
-
-#### `GET /v1/players/export`
-
-Export a filtered slice of players as a CSV file. Max 5,000 rows.
-
-**Query parameters:**
-
-| Parameter | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `teamId` | string | No | — | Filter by team UUID |
-| `position` | string | No | — | Filter by position (`PG`, `SG`, `SF`, `PF`, `C`) |
-| `search` | string | No | — | Search by player name |
-
-**Response `200`:** `text/csv` file download (`attachment; filename="players.csv"`). Columns: `id`, `nbaPlayerId`, `firstName`, `lastName`, `position`, `jerseyNumber`, `heightInches`, `weightLbs`, `teamAbbreviation`, `teamCity`, `teamName`.
-
----
-
-#### `GET /v1/players/:id/matchup-projection`
-
-Per-opponent matchup projection for a player's next game. Blends recent form with the player's overall season rate, adjusted for the upcoming opponent. Shipped in PR #105.
-
-**Path parameters:**
-
-| Parameter | Type | Description |
-|---|---|---|
-| `id` | string (UUID) | Player ID |
-
-**Query parameters:**
-
-| Parameter | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `seasonType` | string | No | `REGULAR` | Season segment |
-
-**Response `200`:**
-
-```json
-{
-  "playerId": "uuid",
-  "seasonType": "REGULAR",
-  "overallPointsPerGame": 24.5,
-  "splits": [
-    {
-      "opponent": { "id": "uuid", "name": "Lakers", "abbreviation": "LAL" },
-      "gamesPlayed": 3,
-      "pointsPerGame": 28.0
-    }
-  ],
-  "upcomingGames": [
-    {
-      "gameId": "uuid",
-      "gameDate": "2026-04-01T00:00:00.000Z",
-      "opponent": { "id": "uuid", "name": "Celtics", "abbreviation": "BOS" },
-      "isHome": true,
-      "projectedPoints": 22.3
-    }
-  ]
-}
-```
-
-**Response `404`:**
-
-```json
-{ "error": { "code": "NOT_FOUND", "message": "Player not found" } }
-```
-
----
-
-#### `GET /v1/players/compare`
-
-Compare 2–4 players side by side for one season segment. Returns each player's identity plus their derived season line for that segment. **Public** — no authentication required.
-
-**Query parameters:**
-
-| Parameter | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `ids` | string (comma-separated UUIDs) | Yes | — | Comma-separated list of 2–4 player IDs to compare |
-| `seasonType` | string | No | `REGULAR` | Season segment to compare (`REGULAR`, `PLAY_IN`, `PLAYOFFS`, `FINALS`) |
-
-**Example request:**
-
-```
-GET /v1/players/compare?ids=a1b2c3d4-e5f6-7890-abcd-ef1234567890,f0e9d8c7-b6a5-4321-0987-654321fedcba&seasonType=PLAYOFFS
-```
-
-**Response `200`:** the response echoes back the resolved `seasonType`, same reasoning as `/:id/stats` — comparing two players from inside a postseason view has to compare their postseason lines, or the comparison silently answers a different question than the one on screen.
-
-```json
-{
-  "seasonType": "REGULAR",
-  "players": [
-    {
-      "player": {
-        "id": "uuid",
-        "firstName": "LeBron",
-        "lastName": "James",
-        "position": "SF",
-        "team": { "id": "uuid", "name": "Los Angeles Lakers", "abbreviation": "LAL" }
-      },
-      "seasonAverages": { "gamesPlayed": 71, "pointsPerGame": 25.7, "...": "..." }
-    }
-  ]
-}
-```
-
-**Response `400`:**
-
-```json
-{ "error": { "code": "BAD_REQUEST", "message": "A comparison needs between 2 and 4 player ids" } }
-```
-
-**Response `404`:**
-
-```json
-{ "error": { "code": "NOT_FOUND", "message": "Player {id} not found" } }
-```
-
----
-
-### Archetypes
-
-!!! warning "In review, not yet merged"
-    These three routes are on branch `player-archetypes` and are not live yet. See [Player Archetypes](player-archetypes/index.md).
-
-Playing-style archetypes and similar players, precomputed by `apps/similarity` (see [Archetype Model](player-archetypes/model.md)). The same access rules apply as for the player endpoints. Every route takes an optional `season`; without it, the most recently fitted season is used.
-
-**Query parameters (all three routes):**
-
-| Parameter | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `season` | string | No | Most recently fitted season | Season to read, e.g. `2025-26` |
-
-#### `GET /v1/players/:id/archetype`
-
-A player's archetypes (up to three, strongest first), their five most similar players, and the values behind the profile's style map.
-
-**Path parameters:**
-
-| Parameter | Type | Description |
-|---|---|---|
-| `id` | string (UUID) | Player ID |
-
-**Response `200`:**
-
-```json
-{
-  "playerId": "uuid",
-  "season": "2025-26",
-  "archetype": {
-    "playerId": "uuid",
-    "season": "2025-26",
-    "archetypes": [
-      { "label": "Stretch big", "clusterId": 6, "rank": 1, "weight": 0.46 },
-      { "label": "Traditional big", "clusterId": 5, "rank": 2, "weight": 0.21 }
-    ],
-    "similarPlayers": [
-      { "player": { "id": "uuid", "firstName": "...", "lastName": "...", "team": { "...": "..." } }, "rank": 1, "similarityScore": 71.3 }
-    ],
-    "featureVector": [0.84, 0.51, 1.12, "... 15 values in all"],
-    "distanceToCentroid": 2.37,
-    "plot": { "x": 1.92, "y": 0.44 }
-  }
-}
-```
-
-- **`archetype` is `null` when the player exists but wasn't placed**, because they played too few minutes or a value was missing. This is a normal state, not an error.
-- **`season` and `archetype` are both `null`** when no season has been fitted yet.
-- **`weight`** is how close the player is to that archetype relative to the others, not a probability. **`similarityScore`** (0–100) is similarity of style, never of quality.
-- **`clusterId`** survives a rename but not a re-fit, so it is safer than `label` for colours or links within one fit.
-- **`featureVector`** holds the player's 15 standardised feature values, in the model's fixed order ([The 15 features](player-archetypes/model.md#the-15-features)).
-
-**Response `404`:**
-
-```json
-{ "error": { "code": "NOT_FOUND", "message": "Player not found" } }
-```
-
----
-
-#### `GET /v1/archetypes`
-
-The season's archetypes and how many players each holds, largest first.
-
-**Response `200`:**
-
-```json
-{
-  "season": "2025-26",
-  "archetypes": [
-    { "clusterId": 4, "label": "Scoring wing", "memberCount": 66 }
-  ]
-}
-```
-
-When no season has been fitted: `{ "season": null, "archetypes": [] }`.
-
----
-
-#### `GET /v1/archetypes/map`
-
-Every placed player's point on the style map, plus the archetype list for the legend. Not paginated: the map shows the whole league at once, and each row is small.
-
-**Response `200`:**
-
-```json
-{
-  "season": "2025-26",
-  "players": [
-    { "playerId": "uuid", "firstName": "...", "lastName": "...", "clusterId": 4, "plotX": -1.2, "plotY": 0.8 }
-  ],
-  "archetypes": [
-    { "clusterId": 4, "label": "Scoring wing", "memberCount": 66 }
-  ]
-}
-```
-
-`clusterId` is the player's main (rank 1) archetype. `plotX` and `plotY` are principal-component scores; only their positions relative to each other mean anything.
-
-**Response `404`:** no season has been fitted yet.
-
-```json
-{ "error": { "code": "NOT_FOUND", "message": "No season has a fitted archetype model" } }
-```
-
----
-
-### Teams
-
-All team endpoints are **public** — a session cookie or API key is required (see [Authentication](#authentication)).
-
-#### `GET /v1/teams`
-
-Paginated list of all NBA teams.
-
-**Query parameters:**
-
-| Parameter | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `search` | string | No | — | Search by team name, city, or abbreviation |
-| `page` | integer | No | `1` | Page number |
-| `pageSize` | integer | No | `25` | Items per page (1–100) |
-
-**Response `200`** — `PagedResult<Team>`:
-
-```json
-{
-  "data": [
-    {
-      "id": "uuid",
-      "nbaTeamId": 1610612747,
-      "name": "Los Angeles Lakers",
-      "abbreviation": "LAL",
-      "city": "Los Angeles",
-      "conference": "West",
-      "division": "Pacific",
-      "logoUrl": "https://cdn.nba.com/logos/nba/1610612747/global/L/logo.svg"
-    }
-  ],
-  "page": 1,
-  "pageSize": 25,
-  "total": 30
-}
-```
-
----
-
-#### `GET /v1/teams/:id`
-
-Single team by UUID.
-
-**Path parameters:**
-
-| Parameter | Type | Description |
-|---|---|---|
-| `id` | string (UUID) | Team ID |
-
-**Response `200`:** Team object (same shape as array items above).
-
-**Response `404`:**
-
-```json
-{ "error": { "code": "NOT_FOUND", "message": "Team not found" } }
-```
-
----
-
-#### `GET /v1/teams/elo-ratings`
-
-All teams' current Elo ratings, sorted highest first. Teams with no predicted game are absent (not reported with a default 1500).
-
-**Response `200`:**
-
-```json
-[
-  {
-    "team": { "id": "uuid", "nbaTeamId": 1610612747, "name": "Los Angeles Lakers", "abbreviation": "LAL", "city": "Los Angeles", "conference": "West", "division": "Pacific", "logoUrl": "..." },
-    "elo": 1623.4,
-    "asOfGameId": "uuid",
-    "asOfGameDate": "2026-03-15T00:00:00.000Z"
-  }
-]
-```
-
----
-
-### Games
-
-Game endpoints are **public** — a session cookie or API key is required (see [Authentication](#authentication)).
-
-#### `GET /v1/games`
-
-Paginated list of games, most recent first. Each game includes both teams and its prediction (if generated).
-
-**Query parameters:**
-
-| Parameter | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `seasonType` | string | No | — | Filter to one season segment (`REGULAR`, `PLAY_IN`, `PLAYOFFS`, `FINALS`). Omitted means no filter — all segments returned |
-| `page` | integer | No | `1` | Page number |
-| `pageSize` | integer | No | `25` | Items per page (1–100) |
-
-Postseason games are excluded from the prediction and optimizer models regardless of this filter — a playoff matchup doesn't behave like a regular-season one statistically, so it's never used as training or projection input.
-
-**Response `200`** — `PagedResult<GameWithTeamsAndPrediction>`:
-
-```json
-{
-  "data": [
-    {
-      "id": "uuid",
-      "nbaGameId": "0022400001",
-      "gameDate": "2025-03-15T00:00:00.000Z",
-      "season": "2024-25",
-      "homeTeamId": "uuid",
-      "awayTeamId": "uuid",
-      "homeScore": 112,
-      "awayScore": 105,
-      "homeTeam": { "id": "uuid", "name": "...", "abbreviation": "LAL", "..." : "..." },
-      "awayTeam": { "id": "uuid", "name": "...", "abbreviation": "BOS", "..." : "..." },
-      "prediction": {
-        "id": "uuid",
-        "gameId": "uuid",
-        "homeWinProbability": 0.62,
-        "homeTeamEloPre": 1580.0,
-        "awayTeamEloPre": 1520.0,
-        "predictedMarginHome": 5.3,
-        "marginMethod": "regression"
-      }
-    }
-  ],
-  "page": 1,
-  "pageSize": 25,
-  "total": 1230
-}
-```
-
-**Response `401`:** Unauthenticated — no valid session cookie.
-
----
-
-#### `GET /v1/games/seasons`
-
-List of seasons available in the database, most recent first.
-
-**Response `200`:**
-
-```json
-["2025-26", "2024-25", "2023-24"]
-```
-
----
-
-#### `GET /v1/games/:id`
-
-Full game detail including win probability, predicted margin, and predicted top scorers from both rosters. Everything the game detail page needs in one request.
-
-**Path parameters:**
-
-| Parameter | Type | Description |
-|---|---|---|
-| `id` | string (UUID) | Game ID |
-
-**Response `200`** — `GameDetail`:
-
-```json
-{
-  "id": "uuid",
-  "nbaGameId": "0022400001",
-  "gameDate": "2025-03-15T00:00:00.000Z",
-  "season": "2024-25",
-  "homeTeamId": "uuid",
-  "awayTeamId": "uuid",
-  "homeScore": 112,
-  "awayScore": 105,
-  "homeTeam": { "..." : "..." },
-  "awayTeam": { "..." : "..." },
-  "prediction": { "..." : "..." },
-  "predictedScorers": [
-    {
-      "player": { "id": "uuid", "firstName": "LeBron", "lastName": "James", "position": "SF", "team": { "..." : "..." } },
-      "predictedPoints": 27.3,
-      "gamesConsidered": 10
-    }
-  ]
-}
-```
-
-The `predictedScorers` array contains the top 5 predicted scorers per team (up to 10 total), computed using recency-weighted scoring averages from prior games.
-
-**Response `404`:**
-
-```json
-{ "error": { "code": "NOT_FOUND", "message": "Game not found" } }
-```
-
----
-
-#### `GET /v1/games/:id/events`
-
-Play-by-play events for a game, ordered by sequence ascending. Only 2025-26 games have stored play-by-play; older games return an empty page (not a 404).
-
-**Path parameters:**
-
-| Parameter | Type | Description |
-|---|---|---|
-| `id` | string (UUID) | Game ID |
-
-**Query parameters:**
-
-| Parameter | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `page` | integer | No | `1` | Page number |
-| `pageSize` | integer | No | `25` | Items per page (1–100) |
-
-**Response `200`** — `PagedResult<GameEvent>`:
-
-```json
-{
-  "data": [
-    {
-      "id": "uuid",
-      "gameId": "uuid",
-      "sequence": 1,
-      "period": 1,
-      "clock": "PT12M00.00S",
-      "eventType": "2pt",
-      "subType": null,
-      "playerId": "uuid",
-      "teamId": "uuid",
-      "success": true,
-      "value": 2,
-      "description": "LeBron makes two-point shot"
-    }
-  ],
-  "page": 1,
-  "pageSize": 25,
-  "total": 342
-}
-```
-
-**Response `404`:**
-
-```json
-{ "error": { "code": "NOT_FOUND", "message": "Game not found" } }
-```
-
----
-
-#### `GET /v1/games/export`
-
-Export a filtered slice of games as a CSV file. Max 5,000 rows.
-
-**Query parameters:**
-
-| Parameter | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `status` | string | No | `all` | `all`, `upcoming`, `completed` |
-| `season` | string | No | — | Filter by season, e.g. `2025-26` |
-| `seasonType` | string | No | — | Filter by season segment (`REGULAR`, `PLAY_IN`, `PLAYOFFS`, `FINALS`) |
-
-**Response `200`:** `text/csv` file download (`attachment; filename="games.csv"`). Columns: `id`, `nbaGameId`, `gameDate`, `season`, `seasonType`, `homeTeam`, `awayTeam`, `homeScore`, `awayScore`.
-
----
-
-#### `GET /v1/games/:id/prediction`
-
-Elo win probability and Four Factors predicted margin for a specific game.
-
-**Path parameters:**
-
-| Parameter | Type | Description |
-|---|---|---|
-| `id` | string (UUID) | Game ID |
-
-**Response `200`** — `GamePrediction`:
-
-```json
-{
-  "id": "uuid",
-  "gameId": "uuid",
-  "homeWinProbability": 0.62,
-  "homeTeamEloPre": 1580.0,
-  "awayTeamEloPre": 1520.0,
-  "predictedMarginHome": 5.3,
-  "marginMethod": "regression",
-  "createdAt": "2025-03-14T10:00:00.000Z"
-}
-```
-
-| Field | Type | Description |
-|---|---|---|
-| `homeWinProbability` | float | Elo-based win probability for home team, in [0, 1] |
-| `homeTeamEloPre` | float | Home team's Elo rating before this game |
-| `awayTeamEloPre` | float | Away team's Elo rating before this game |
-| `predictedMarginHome` | float? | Four Factors predicted margin (home − away, in points). Null if either team has insufficient history. |
-| `marginMethod` | string? | `"regression"` (fitted OLS) or `"heuristic"` (fixed weights, used when < `MINIMUM_GAMES_FOR_REGRESSION` completed games) |
-
-**Response `404`** (game not found):
-
-```json
-{ "error": { "code": "NOT_FOUND", "message": "Game not found" } }
-```
-
-**Response `404`** (game found but no prediction yet):
-
-```json
-{ "error": { "code": "NOT_FOUND", "message": "No prediction has been generated for this game yet — run predict_games.py in apps/predictor." } }
-```
-
----
-
-### Optimizer
-
-Auth required.
-
-#### `GET /v1/optimizer/lineup`
-
-Returns the most recently generated fantasy lineup. The lineup is produced by `apps/optimizer/predict.py` (player fantasy point predictions) and `apps/optimizer/optimize.py` (MILP solve under a salary cap).
-
-**Response `200`:**
-
-```json
-{
-  "id": "uuid",
-  "totalPredictedPoints": 245.7,
-  "totalSalary": 48000,
-  "budget": 50000,
-  "createdAt": "2025-03-14T10:00:00.000Z",
-  "slots": [
-    {
-      "id": "uuid",
-      "lineupId": "uuid",
-      "playerId": "uuid",
-      "player": { "id": "uuid", "firstName": "...", "lastName": "...", "team": { "..." : "..." } },
-      "predictedFantasyPoints": 42.5,
-      "salary": 12000
-    }
-  ]
-}
-```
-
-**Response `404`:**
-
-```json
-{ "error": { "code": "NOT_FOUND", "message": "No lineup has been generated yet — run predict.py then optimize.py in apps/optimizer." } }
-```
-
----
-
-#### `GET /v1/optimizer/predictions/:playerId`
-
-Predicted fantasy points for a single player by NBA player ID, as computed by `apps/optimizer/predict.py`.
-
-**Path parameters:**
-
-| Parameter | Type | Description |
-|---|---|---|
-| `playerId` | string | NBA player ID (`nbaPlayerId`, not the internal UUID) |
-
-**Response `200`:** player prediction data (predicted fantasy points and the inputs behind it).
-
-**Response `404`:**
-
-```json
-{ "error": { "code": "NOT_FOUND", "message": "Prediction not found" } }
-```
-
----
-
-### Analytics
-
-Added in PR #94 (merged 2026-09-11). Both analytics endpoints are **public** — no authentication required. They describe the model and the leaderboard, not the caller, so every visitor gets the same response and gating them would add nothing.
-
-!!! note "Exact key names"
-    The endpoints below were documented from their behaviour and their design notes. The quantities each returns are accurate; for the literal JSON key names and types, read the generated spec at [`/api-json`](https://sportsanalytics-api.onrender.com/api-json), which is produced from the controllers themselves and cannot drift from them.
-
-#### `GET /v1/analytics/model-accuracy`
-
-The prediction model's measured accuracy, deliberately published *against a baseline* rather than on its own — an accuracy figure with nothing to compare it to is not a meaningful number.
-
-**Response `200`** — returns:
-
-- **Model accuracy** over completed games that had a prediction
-- **Always-pick-home baseline** accuracy over the same games — the number the model has to beat to be worth anything
-- **Brier score** — scores the probability itself, not just the called side, so a confident wrong call costs more than a hedged one
-- **Games evaluated** — the denominator, so the accuracy figure can be weighed
-- **Forward-prediction count** — how many predictions exist for games that had *not* yet been played when the prediction was made
-- **Calibration bands** — predicted probability bucketed against observed hit rate
-
-As of 2026-09-11, over **231** completed games: **64.1%** accuracy against a **58.9%** always-pick-home baseline, Brier score **0.2163**, with **0** forward predictions.
-
-Two honesty mechanisms are part of the endpoint's contract, not just its presentation:
-
-- The **forward-prediction count is reported even when it is zero**, so a backtest is never quietly presented as a live track record. At present, every prediction was made against a game that had already been played.
-- A calibration band with too few games reports **"n too small"** rather than a percentage. A hit rate over four games is not a fact, and printing `75%` next to the real bands would read as though it were one.
-
----
-
-#### `GET /v1/analytics/leaderboard`
-
-Ranks callers by hit rate, **with the Elo model on the board as a benchmark row** rather than as a rival.
-
-**Response `200`** — a ranking of qualifying users (each with `id`, `name`, and their record) plus one row for the model.
-
-Three fairness mechanisms are worth knowing before reading the board:
-
-- **A minimum of 5 calls to qualify.** One lucky call cannot top the board. The model is exempt from the threshold — it is the benchmark, not a competitor for the top spot.
-- **Users and the model are scored through the same code path.** Both figures come from one shared summariser rather than two parallel implementations, so they cannot drift apart as either side changes.
-- **The comparison is not like-for-like, and the card says so in words.** A user's figure covers only the games they chose to call; the model's covers every game it predicted. The strictly comparable number is the same-subset head-to-head record from `GET /v1/me/picks/record`, which scores both sides over exactly the games that user called.
-
-Only `id` and `name` are read for any user on this board. Email addresses are never selected.
-
----
-
-### Me
-
-Added in PR #94. Every route in this section **requires authentication** via a BetterAuth session cookie, and every query is **scoped to the session user's id in the same `where` clause as the resource id** — so a valid session plus a guessed resource id still cannot reach another user's rows.
-
-Where a resource exists but belongs to a different user, the response is **`404`, not `403`**. A `403` would confirm that the row exists, which is itself a disclosure.
-
-These are the API's first state-changing routes, so they also sit behind `OriginCheckGuard`, registered globally as an `APP_GUARD` — see [Security](security.md) for why CORS alone does not cover this.
-
-#### `GET /v1/me/challenge/next`
-
-Serves one **completed** game for the user to call, **with the final score withheld**, excluding every game they have already picked.
-
-Three correctness details:
-
-- The score is removed by an explicit **allow-list serializer** — the response is built up from named fields, rather than taking a full game row and deleting the score from it. A deny-list breaks silently the first time a new scoring field is added to the model; an allow-list fails closed.
-- **Games that ended in a tie are excluded.** There is no correct call to make on one, and including them deadlocked the "next game" query.
-- **Only games that actually have a prediction are served**, since a pick with nothing to grade against the model is not a Beat the Model round.
-
-**Response `200`:** the game, both teams, and the date — without `homeScore` or `awayScore`.
-
-**Response `401`:** no valid session cookie.
-
----
-
-#### `POST /v1/me/picks`
-
-Submits the user's call on a game. The server grades it against both the real result and the model's prediction, and **only then reveals the score**.
-
-This is the clearest illustration of why the platform requires an account at all: the server can hide a completed game's result from you and still score you on it only if it knows who you are.
-
-The model's numbers are **frozen into the pick row** at this moment (`modelHomeWinProbabilityAtPick`, `modelPredictedMarginAtPick`, `homeTeamEloAtPick`, `awayTeamEloAtPick`) rather than joined at read time — see [ERD](design/erd.md#personal-data) for why.
-
-**Response `200`:** the graded outcome (`CORRECT` / `MISSED`), what the model called, and the now-revealed final score.
-
-**Response `400`:** the body failed Zod validation via `parseBody`.
-
----
-
-#### `GET /v1/me/picks/record`
-
-The caller's head-to-head record against the model **on the same games** — the strictly like-for-like comparison that the leaderboard's ranking deliberately is not.
-
----
-
-#### `GET /v1/me/watchlist`
-
-The caller's followed players, each with points, rebounds and assists per game, a five-game scoring trend, and the caller's own scouting note.
-
-Every figure is **derived at request time** from existing `PlayerGameStat` rows. Nothing is stored, so a newly ingested game is reflected on the next load.
-
-**Query parameters:** `page`, `pageSize` — the standard [pagination](#pagination) envelope.
-
-!!! success "Three queries regardless of how many players are followed"
-    The whole board costs **three queries**: one page of follows, one grouped aggregate for the averages, and one ordered scan for recent points. It is deliberately *not* a loop through the per-player stats service, which would be an N+1 on a page that loads on every visit to the signed-in home page. Following twenty players costs the same three queries as following two.
-
----
-
-#### `GET /v1/me/watchlist/ids`
-
-Just the followed player ids, nothing else. This exists so a follow button on a player profile can render its own state in **one** request, instead of fetching the full derived watchlist to answer a yes/no question.
-
----
-
-#### `POST /v1/me/follows/players/:playerId`
-
-Follow a player. **Idempotent** — following an already-followed player succeeds rather than erroring or creating a duplicate.
-
----
-
-#### `PATCH /v1/me/follows/players/:playerId`
-
-Replace the scouting note on an existing follow (free text, 500 characters). Clearing the note goes through the same route.
-
-**Response `404`:** the caller does not follow this player. This route deliberately **does not create the follow** — a note written about a player you are not following is more likely a stale client than an intent to follow.
-
----
-
-#### `DELETE /v1/me/follows/players/:playerId`
-
-Unfollow a player.
-
-**Response `200`:**
-
-```json
-{ "playerId": "uuid", "removed": true }
-```
-
----
-
-#### `PUT /v1/me/follows/teams/:teamId`
-
-Follow a team, optionally as the caller's **primary** team. At most one followed team can be primary; setting a new one clears the previous.
-
-`PUT` rather than `POST` because the call is idempotent and fully describes the desired end state of that one follow.
-
----
-
-#### `DELETE /v1/me/follows/teams/:teamId`
-
-Unfollow a team.
-
----
-
-#### `GET /v1/me/teams/results`
-
-Recent results for the teams the caller follows, **oriented to the caller's side**: each result names `yourTeam` and the `opponent` and says whether you `won`, rather than reporting home and away and leaving the frontend to work out which side the user cares about.
-
----
-
-#### `GET` `POST` `DELETE` `/v1/me/saved/comparisons`
-
-Saved player comparisons — a named set of players saved from the Compare tab, so a comparison worth returning to does not have to be rebuilt by hand.
-
----
-
-#### `GET` `POST` `DELETE` `/v1/me/saved/lineups`
-
-Saved optimizer lineups. Each slot's `salaryAtSave` and `predictedPointsAtSave` are **frozen at save time**, which is what makes the **drift since you saved this** figure computable: the optimizer's predictions are append-and-take-latest, so without a stored baseline there is nothing to have drifted from. See [ERD](design/erd.md#personal-data).
-
----
-
-### Become Pro
-
-Added in PR #192 (27 September 2026). A signed-in user logs their own games and gets a projected NBA draft pick, a rookie-scale value, and the NBA rookies their line most resembles. See [Become Pro](become-pro/index.md) for the feature and [Valuation Model](become-pro/valuation-model.md) for how the figure is produced.
-
-Every route **requires authentication** (`SessionAuthGuard` on the `v1/me/become-pro` controller) and acts only on the caller's own data. Like the rest of `/v1/me/*`, **another user's season or game returns `404`, not `403`**, exactly as for an id that doesn't exist. There is no public Become Pro route: no leaderboard, no public profile, no comparison between users.
-
-Logging, correcting or removing a game, and editing a season, all re-value the season before the response returns, so the next `GET` already carries the new figure.
-
-| Method | Path | Does |
-|---|---|---|
-| `GET` | `/v1/me/become-pro?seasonId=` | The full page |
-| `GET` | `/v1/me/become-pro/summary` | The small Home/Profile card |
-| `POST` | `/v1/me/become-pro/seasons` | Start a season |
-| `PATCH` | `/v1/me/become-pro/seasons/:seasonId` | Edit a season's details (re-values it) |
-| `DELETE` | `/v1/me/become-pro/seasons/:seasonId` | Delete a season and its games |
-| `POST` | `/v1/me/become-pro/seasons/:seasonId/games` | Log a game (re-values the season) |
-| `PATCH` | `/v1/me/become-pro/games/:gameId` | Correct a game (re-values the season) |
-| `DELETE` | `/v1/me/become-pro/games/:gameId` | Remove a game (re-values the season) |
-
-**Error codes**, in the standard `{ error: { code, message } }` envelope:
-
-| HTTP status | Code | When |
-|---|---|---|
-| `400` | `INVALID_BOX_SCORE` | The line can't be true: a negative stat, more makes than attempts, more threes than field goals, over 65 minutes, or a future date |
-| `404` | `SEASON_NOT_FOUND` / `GAME_NOT_FOUND` | The id doesn't exist, **or belongs to another user** |
-| `409` | `SEASON_ALREADY_EXISTS` | The caller already has a season for that league year |
-| `409` | `SEASON_LIMIT_REACHED` | The caller already has 12 seasons |
-| `409` | `GAME_LIMIT_REACHED` | The season already holds 120 games |
-| `409` | `DUPLICATE_GAME` | A game with the same date and opponent is already logged in that season |
-
-A points total that disagrees with the shooting splits (`POINTS_MISMATCH`) is **not** an error. The game is saved, and the browser flags it for the user to check.
-
-#### `GET /v1/me/become-pro`
-
-Everything the Become Pro page shows, in one response.
-
-**Query parameters:**
-
-| Param | Type | Default | Description |
-|---|---|---|---|
-| `seasonId` | string | The most recent league year | Which season to return in full |
-
-**Response `200`** (`MyBecomePro` in `types/nba.ts`):
-
-```ts
-{
-  seasons: ProspectSeason[],          // every season the caller has
-  activeSeasonId: string | null,
-  seasonAverages: SeasonAverages | null, // DERIVED from the games, never typed
-  gameLog: GameLogEntry[],            // the same type the NBA endpoints return
-  games: ProspectGame[],
-  valuationState: "VALUED" | "BELOW_GAMES_FLOOR" | "AWAITING_MODEL" | null,
-  valuation: ProspectValuation | null, // null unless valuationState is VALUED
-  valueHistory: { computedAt, valueUsd }[], // oldest first; identical runs collapsed
-  minimumGamesRequired: number        // 10, echoed rather than hardcoded client-side
-}
-```
-
-`ProspectValuation` carries `projectedDraftSlot`, `projectedValueUsd`, `projectedValueLowUsd`, `projectedValueHighUsd`, `rookieScaleYear`, `levelFactor`, `levelFactorBasis`, `modelVersion`, `computedAt`, the server-written `drivers`, the `levelAdjustedAverages` the comparison was measured on, three `comparables` (each a `Player`, their rookie `seasonAverages`, `rookieSeason` and a 0–1 `similarity`), and `slotAlumni` (players actually drafted at the projected pick).
-
-A caller with no seasons gets `200` with empty lists and nulls. That is a normal state for your own page, not an error. If a newer model has been trained since the season was last valued, this read re-values it first.
-
-**Response `404`:** `seasonId` is not one of the caller's seasons.
-
----
-
-#### `GET /v1/me/become-pro/summary`
-
-The small card on Home and Profile: a figure and a trend, without the NBA comparables.
-
-**Response `200`** (`MyBecomeProSummary`):
-
-```ts
-{
-  season: string | null,
-  competitionLevel: CompetitionLevel | null,
-  gamesLogged: number,
-  valuationState: ValuationState | null,
-  projectedDraftSlot: number | null,
-  projectedValueUsd: number | null,
-  valueHistory: { computedAt, valueUsd }[],
-  minimumGamesRequired: number
-}
-```
-
----
-
-#### `POST /v1/me/become-pro/seasons`
-
-Start a season.
-
-**Request body:**
-
-```json
-{
-  "season": "2025-26",
-  "competitionLevel": "NCAA_D2",
-  "position": "G",
-  "teamName": "Riverside College"
-}
-```
-
-`season` must match `YYYY-YY`, the format `Game.season` uses. `competitionLevel` is one of `NCAA_D1`, `NCAA_D2`, `NCAA_D3`, `NAIA`, `JUCO`, `INTERNATIONAL_PRO`, `SEMI_PRO`, `HIGH_SCHOOL`, `REC`. `position` is required (the page offers `G`, `F`, `C`, `G-F`, `F-C`); `teamName` is optional, up to 120 characters.
-
-**Response `201`:** the created season. **`409`:** `SEASON_ALREADY_EXISTS` or `SEASON_LIMIT_REACHED`.
-
----
-
-#### `PATCH /v1/me/become-pro/seasons/:seasonId`
-
-Edit a season's details. Takes any subset of the `POST` body. Changing the competition level changes the level factor, so the season is re-valued.
-
----
-
-#### `DELETE /v1/me/become-pro/seasons/:seasonId`
-
-Delete a season, along with every game and valuation in it (cascade).
-
-**Response `200`:** `{ "deleted": true }`
-
----
-
-#### `POST /v1/me/become-pro/seasons/:seasonId/games`
-
-Log one game. The season is re-valued before the response returns.
-
-**Request body** (`ProspectGameInput`):
-
-```json
-{
-  "gameDate": "2026-01-17",
-  "opponent": "Hillcrest",
-  "minutes": 31,
-  "points": 18, "rebounds": 5, "assists": 4,
-  "steals": 2, "blocks": 0, "turnovers": 3,
-  "fieldGoalsMade": 7, "fieldGoalsAttempted": 15,
-  "threesMade": 2, "threesAttempted": 6,
-  "freeThrowsMade": 2, "freeThrowsAttempted": 2
-}
-```
-
-Every count is a whole number from 0 to 200. Whether the *line* is possible is decided separately, by the same checker the admin correction tools run over ingested NBA data (`apps/api/src/admin/stat-anomalies.ts`).
-
-**Response `201`:** the stored game. **`400`:** `INVALID_BOX_SCORE`. **`409`:** `DUPLICATE_GAME` or `GAME_LIMIT_REACHED`.
-
----
-
-#### `PATCH /v1/me/become-pro/games/:gameId`
-
-Correct a game. Takes any subset of the game body. The box-score check runs on the **merged** row, not the patch alone, because raising makes on their own can break a line whose attempts were never touched. Re-values the season.
-
----
-
-#### `DELETE /v1/me/become-pro/games/:gameId`
-
-Remove a game. Re-values the season, which drops it back to `BELOW_GAMES_FLOOR` if it falls under 10 games.
-
-**Response `200`:** `{ "deleted": true }`
-
----
-
-### Datasets
-
-Versioned, checksummed snapshots of season-level player statistics — the brief's "datasets should become releases" requirement.
-
-#### `GET /v1/datasets`
-
-Paginated list of published dataset releases, most recent first. **Public** (session or API key).
-
-#### `GET /v1/datasets/:version`
-
-One release's metadata: its per-field schema (column name, type, description), publish date, row count, and SHA-256 checksum. Does not include the CSV body — see the download route.
-
-#### `GET /v1/datasets/:version/download`
-
-The release's CSV file, byte-identical to what was hashed at publish time. Response header `X-Checksum-SHA256` carries the recomputed checksum of the exact bytes being sent, so a caller can verify it against the published value independently rather than trusting the response body alone.
-
-**Response `409`:** the release is marked stale (a correction landed on data it covers) and has no stored file to fall back to — refuses to silently rebuild corrected data under the old version's name.
-
-#### `GET /v1/datasets/diff?from=&to=`
-
-Compares two named releases' metadata/schema and reports what changed between them.
-
-#### `GET /v1/datasets/changes?since=<ISO timestamp>`
-
-Every release published after the given instant, oldest first, with a `nextSince` cursor in the response — lets a consumer already holding one release pull only what's changed since, rather than re-downloading everything.
-
-#### `POST /v1/datasets/admin/publish`
-
-**Admin only.** Generates the current season's CSV, computes its checksum, and publishes it as a new immutable release.
-
----
-
-### Custom Statistics
-
-Analyst-defined statistics evaluated over event-derived per-game fields (points, rebounds, assists, steals, blocks, turnovers, minutes) — the brief's "define a new statistic over the event schema" requirement. **Requires the `ANALYST` or `ADMIN` role.**
-
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/v1/custom-statistics` | List the caller's own definitions |
-| `POST` | `/v1/custom-statistics` | Create a definition — `{ name, expression }`. The expression is validated (whitelisted field names only, no arbitrary code) before it's stored |
-| `PUT` | `/v1/custom-statistics/:id` | Update a definition's expression; increments its `version` so a figure published under an old version stays reproducible |
-| `GET` | `/v1/custom-statistics/:id/calculate?playerId=&seasonType=` | Evaluate the definition for one player over one season segment, returning per-game averages it was computed from and the resulting value |
-
-The expression evaluator is a hand-rolled recursive-descent parser (no `eval`/`Function`/`vm`) — division by zero and any identifier outside the whitelisted field list are rejected before evaluation, not caught after.
-
----
-
-### Admin
-
-Everything under `/v1/admin/*` requires a session with the `ADMIN` role (`SessionAuthGuard` + `RolesGuard`).
-
-#### Ingestion batches — `/v1/admin/batches`
-
-What batches are for and how review publishes a game are explained on [Data Ingestion](design/ingestion.md#batches).
-
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/v1/admin/batches` | Paginated, filterable by status/search, sortable by game date/season/ingest time |
-| `GET` | `/v1/admin/batches/:id` | One batch's full detail |
-| `POST` | `/v1/admin/batches/:id/approve` | Promote a `PENDING_REVIEW` batch to `COMPLETED` — this is what actually publishes its events/stats on the public API, not just a status change |
-| `POST` | `/v1/admin/batches/:id/reject` | Mark a `PENDING_REVIEW` batch `REJECTED` — its data stays unpublished |
-
-#### Game lookup & corrections — `/v1/admin/games`, `/v1/admin/events`
-
-Only games with stored play-by-play can be corrected, and that means 2025-26 games only. Older games are listed with an event count of 0. See [ADR-005: Play-by-play storage](decisions/adr-005-play-by-play-storage.md).
-
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/v1/admin/games` | Games filtered by season/team/date window, with event and correction counts |
-| `GET` | `/v1/admin/games/:id/play-by-play` | Every event in the game, in order, with each play's resolved assist/block/steal credit and whether it's been corrected |
-| `POST` | `/v1/admin/events/:gameId/:sequence/preview` | Preview a correction's effect (recomputed stats) without writing it |
-| `POST` | `/v1/admin/events/:gameId/:sequence` | Apply a correction — validated, requires a reason, recomputes only the affected player(s)' stats, all in one transaction |
-| `POST` | `/v1/admin/events/:gameId/:sequence/revert` | Undo a correction by applying its previous values as a *new* correction — never deletes the audit trail |
-| `GET` | `/v1/admin/corrections?gameId=` | Paginated correction history |
-
-#### Ingestion pulls and schedule — `/v1/admin/ingestion`
-
-How pulls, the queue and the pull worker fit together is explained on [Data Ingestion](design/ingestion.md#the-pull-worker).
-
-| Method | Path | Description |
-|---|---|---|
-| `POST` | `/v1/admin/ingestion/pull` | Start a pull. Optional body `{ season, fromDate, toDate }`. Where the API can run ingestion itself (local development) it starts `ingest.py --review`; on the deployed API it queues the pull for a pull worker. Refused while another pull is queued or running. |
-| `GET` | `/v1/admin/ingestion/requests` | The 10 most recent queued pulls, newest first, with status, the worker that ran each one and the end of its output |
-| `POST` | `/v1/admin/ingestion/requests/:id/cancel` | Cancel a pull no worker has claimed yet. `409` once it has been claimed. |
-| `GET` | `/v1/admin/ingestion/schedule` | The pull schedule, whether this API runs pulls itself or queues them (`pullMode`), and when a pull worker last checked in |
-| `PUT` | `/v1/admin/ingestion/schedule` | Set the schedule. Body `{ frequency }`: `NEVER`, `HOURLY`, `DAILY` or `WEEKLY`. |
-| `DELETE` | `/v1/admin/ingestion/batches/:id` | Delete a batch. This is a soft delete: it hides the batch and stops it holding its game back from publication, and deletes no game data. |
-
-#### API consumers & keys — `/v1/admin/consumers`
-
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/v1/admin/consumers` | List external API consumers with their rate limit/quota and usage count |
-| `POST` | `/v1/admin/consumers` | Create a consumer and issue its first key |
-| `POST` | `/v1/admin/consumers/:id/keys` | Issue an additional key for an existing consumer |
-| `DELETE` | `/v1/admin/consumers/:id` | Hard-delete a consumer, cascading to its keys and usage log |
-| `DELETE` | `/v1/admin/consumers/:id/keys/:keyId/purge` | Hard-delete one key (alongside the existing soft-delete/revoke) |
-
-### Self-service API keys — `/v1/me/api-keys`
-
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/v1/me/api-keys` | The signed-in user's own keys and usage total |
-| `POST` | `/v1/me/api-keys` | Issue a new key for the signed-in user |
-| `DELETE` | `/v1/me/api-keys/:id` | Revoke a key |
-
----
-
-## Error format
-
-Every error response uses a structured envelope, applied globally by `AllExceptionsFilter`:
-
-```json
-{ "error": { "code": "string", "message": "string" } }
-```
-
-| HTTP status | Code | Meaning |
-|---|---|---|
-| `400` | `VALIDATION_ERROR` / `BAD_REQUEST` | Invalid request body or query parameters |
-| `401` | `UNAUTHENTICATED` | No valid session cookie |
-| `401` | `API_KEY_REQUIRED` | No valid session *and* no valid `X-API-Key` on a route that requires one |
-| `403` | `FORBIDDEN` | Insufficient role permissions |
-| `404` | `NOT_FOUND` | Resource not found |
-| `406` | — | `Accept-Version` header doesn't match a supported API version |
-| `409` | — | Conflict — e.g. downloading a dataset release marked stale with no stored file to serve |
-| `429` | `RATE_LIMIT_EXCEEDED` | Too many requests this minute for the calling API key |
-| `429` | `QUOTA_EXCEEDED` | Daily request quota exhausted for the calling API key |
-| `500` | `INTERNAL_ERROR` | Unexpected server error (logged server-side) |
+This page summarises the conventions every route shares and lists all 103 live operations, grouped by area. The spec comes from `@nestjs/swagger` decorators (`@ApiTags`, `@ApiOperation`, `@ApiQuery`, `@ApiResponse`) on each controller, wired up in `apps/api/src/main.ts`.
 
 ---
 
 ## Authentication
 
-Two independent ways to authenticate a request — either is enough for the five public read controllers (players, games, teams, analytics, datasets); a request with neither gets `401 API_KEY_REQUIRED`.
+There are three ways a request is authorised. The **Auth** column in the tables below says which one each route needs.
 
-### Session cookie
+| Auth | What the caller sends | Who uses it |
+|---|---|---|
+| **Key or session** | A session cookie, **or** an `X-API-Key` header | The public read routes: players, games, teams, analytics, datasets. A request with neither gets `401 API_KEY_REQUIRED`. |
+| **Session** | `Cookie: better-auth.session_token=<token>` | Everything under `/v1/me/**` and `/v1/optimizer/*`. Acts only on the signed-in user's own data. |
+| **Admin** / **Analyst** | A session whose user has the `ADMIN` (or `ANALYST`) role | `/v1/admin/**`, dataset publishing, custom statistics |
 
-The API uses **BetterAuth** for session-based authentication, **Google OAuth as the only sign-in method** — there is no email/password path, so there is nothing to "sign up with a credential." Authenticated endpoints require a valid session cookie:
+**Sessions.** Sign-in is BetterAuth with **Google OAuth only**; there is no email/password route. The web app calls `POST /auth/sign-in/social` with `provider: "google"`, Google redirects back, and the callback sets the session cookie. See [ADR-002: Auth](decisions/adr-002-auth.md).
 
+**API keys.** There are two kinds:
+
+- **Self-service:** created on the user's Profile page (`/v1/me/api-keys`). 60 requests per minute, 5,000 per day.
+- **Admin-issued:** created for an external `ApiConsumer` in the admin Consumers tab, with that consumer's own limits.
+
+Both limits are checked against the `ApiUsageLog` table on every keyed request, so they survive a server restart. Going over returns `429 RATE_LIMIT_EXCEEDED` (per minute) or `429 DAILY_QUOTA_EXCEEDED` (per day).
+
+**Signed-out visitors on the web app** never hold a key. The site's Cloudflare Pages Function (`functions/api/[[path]].ts`) proxies their reads and attaches the server-held `SITE_PROXY_API_KEY`, which belongs to the consumer "NBA Analytics Web App (first-party)". See [Getting Started](getting-started.md).
+
+```bash
+curl -H "X-API-Key: <your key>" \
+  "https://sportsanalytics-api.onrender.com/v1/players?search=nikola&pageSize=5"
 ```
-Cookie: better-auth.session_token=<token>
-```
-
-Sessions are created via:
-- **Google OAuth:** `GET /auth/sign-in/social` → redirect to Google → callback sets session cookie
-
-See [ADR-002: Auth](decisions/adr-002-auth.md) for the full auth architecture, including the still-open password-reset question this design raises.
-
-### API key
-
-Send an `X-API-Key` header. Two kinds of key exist:
-
-- **Self-service** — issued from the signed-in user's Profile page (API Keys section); scoped to that user's own rate limit/quota.
-- **Admin-issued** — created for an external `ApiConsumer` from the admin Consumers tab, for a third party consuming the API outside the web app.
-
-Every keyed request is rate-limited and quota-checked against the issuing consumer's own limits (`ApiConsumer.rateLimit` per minute, `dailyQuota` per day), enforced against `ApiUsageLog` — not `@nestjs/throttler`, a hand-rolled DB-backed check so the limit survives a server restart. Exceeding either returns `429` with a distinct error code (`RATE_LIMIT_EXCEEDED` / `QUOTA_EXCEEDED`).
-
-```
-X-API-Key: <key>
-```
-
-### Versioning and deprecation
-
-Every route is versioned under `/v1/`, enforced by a guard that 406s a mismatched `Accept-Version` header. A deprecated endpoint (so far: `GET /health`, in favour of `GET /v1/health`) responds with `Deprecation`, `Sunset`, and `Link` headers rather than silently changing behaviour or being removed outright.
 
 ---
 
-## Pagination
+## Errors
 
-All list endpoints use the same pagination envelope:
-
-| Parameter | Default | Max | Description |
-|---|---|---|---|
-| `page` | `1` | — | Page number (1-indexed) |
-| `pageSize` | `25` | `100` | Items per page |
-
-Response envelope:
+Every error uses one envelope, applied globally by `AllExceptionsFilter`:
 
 ```json
-{ "data": [...], "page": 1, "pageSize": 25, "total": 540 }
+{ "error": { "code": "NOT_FOUND", "message": "Player not found" } }
 ```
+
+| Status | Code | Meaning |
+|---|---|---|
+| `400` | `BAD_REQUEST` | Invalid query parameters or body. Some routes use a more specific code, such as `INVALID_LINEUP`, `INVALID_CORRECTION` or `INVALID_BOX_SCORE`. |
+| `401` | `UNAUTHENTICATED` | Session route called without a valid session |
+| `401` | `API_KEY_REQUIRED` | Key-or-session route called with neither |
+| `401` | `UNAUTHORIZED` | The `X-API-Key` is unknown, revoked, or its consumer is inactive |
+| `403` | `FORBIDDEN` | Signed in, but without the required role |
+| `404` | `NOT_FOUND` | No such resource. Also returned for another user's data under `/v1/me/**`, so ids can't be probed. |
+| `406` | `UNSUPPORTED_API_VERSION` | The `Accept-Version` header names a version other than `1` |
+| `409` | `CONFLICT` and others | For example `USERNAME_TAKEN`, `CORRECTION_CONFLICT`, or a stale dataset with no stored file |
+| `429` | `RATE_LIMIT_EXCEEDED` / `DAILY_QUOTA_EXCEEDED` | API-key per-minute or per-day limit reached |
+| `500` | `INTERNAL_ERROR` | Unexpected error, logged server-side |
 
 ---
 
-## Data sources
+## Pagination and versioning
 
-All NBA data is ingested from [nba_api](https://github.com/swar/nba_api) (Python client for stats.nba.com) by the `apps/ingestion` service and stored in PostgreSQL (Supabase). The NestJS API reads from the same database — it does not call `nba_api` directly.
+**Pagination.** List routes take `page` (default `1`) and `pageSize` (default `25`, maximum `100`), and return:
 
-Derived statistics (offensive rating, PIE, usage%) are calculated by the team from event-level data, not taken from `nba_api`'s precomputed stats. See [Tech Stack](tech-stack.md) for the full data pipeline description.
+```json
+{ "data": [ ... ], "page": 1, "pageSize": 25, "total": 530 }
+```
+
+**Versioning.** Every route lives under `/v1/`. A request whose `Accept-Version` header names another version gets `406`. The one deprecated route, `GET /health`, still answers but sends `Deprecation`, `Sunset` and `Link` headers pointing to `GET /v1/health`.
+
+**Season segments.** Routes that take `seasonType` accept `REGULAR` (the default), `PLAY_IN`, `PLAYOFFS` or `FINALS`.
+
+---
+
+## Endpoints
+
+### Health
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| `GET` | `/v1/health` | None | Service health check |
+| `GET` | `/health` | None | Deprecated alias of `/v1/health` |
+
+### Players
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| `GET` | `/v1/players` | Key or session | Paginated list. Filters: `search`, `teamId`, `position`, `minGames`. Sort with `sort` and `order`. |
+| `GET` | `/v1/players/{id}` | Key or session | One player with their team |
+| `GET` | `/v1/players/{id}/stats` | Key or session | Season averages and game log for one `seasonType` |
+| `GET` | `/v1/players/{id}/stats/splits` | Key or session | The same season line for every segment at once |
+| `GET` | `/v1/players/{id}/stats/career` | Key or session | Career totals, averages and a per-season breakdown |
+| `GET` | `/v1/players/{id}/matchup-projection` | Key or session | Splits against each opponent, plus scoring projections for upcoming games |
+| `GET` | `/v1/players/compare` | Key or session | Compare 2–4 players side by side (`ids=a,b,c`) |
+| `GET` | `/v1/players/stats-batch` | Key or session | Season stats for several players in one query (`ids=a,b,c`) |
+| `GET` | `/v1/players/leaders` | Key or session | Leader in PPG, RPG, APG and TS% after a games-played floor (`minGames`, `asOf`) |
+| `GET` | `/v1/players/league-averages` | Key or session | League-wide averages for one segment |
+| `GET` | `/v1/players/aggregates` | Key or session | A metric averaged by team or position (`groupBy`, `metric`) |
+| `GET` | `/v1/players/export` | Key or session | The filtered list as CSV |
+
+Example: `GET /v1/players/{id}/stats?seasonType=REGULAR` for Nikola Jokić. The response is shortened; `seasonAverages` has 24 fields.
+
+```json
+{
+  "playerId": "f74d5514-1a30-4cf7-927a-0c396409f422",
+  "seasonType": "REGULAR",
+  "seasonAverages": {
+    "gamesPlayed": 214, "minutesPerGame": 34.9, "pointsPerGame": 27.8,
+    "reboundsPerGame": 12.6, "assistsPerGame": 9.9, "trueShootingPercentage": 66,
+    "usagePercentage": 28.9, "offensiveRating": 126.1, "defensiveRating": 115.4
+  },
+  "gameLog": [
+    { "gameId": "232b014b-...", "gameDate": "2023-10-24T00:00:00.000Z", "points": 29, "season": "2023-24" }
+  ]
+}
+```
+
+All statistics are derived by the team from play-by-play events, not copied from `nba_api` totals. See [Data Ingestion](design/ingestion.md).
+
+### Games
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| `GET` | `/v1/games` | Key or session | Paginated list, most recent first |
+| `GET` | `/v1/games/seasons` | Key or session | Seasons that have games, for season filters |
+| `GET` | `/v1/games/{id}` | Key or session | Game detail with the prediction and predicted top scorers |
+| `GET` | `/v1/games/{id}/prediction` | Key or session | Elo win probability and Four Factors breakdown |
+| `GET` | `/v1/games/{id}/prediction/history` | Key or session | Every model version's prediction for this game |
+| `GET` | `/v1/games/{id}/events` | Key or session | The ordered play-by-play events |
+| `GET` | `/v1/games/{id}/live` | Key or session | Poll for new events in a game in progress |
+| `GET` | `/v1/games/export` | Key or session | The filtered list as CSV |
+
+### Teams
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| `GET` | `/v1/teams` | Key or session | Paginated list (`search`) |
+| `GET` | `/v1/teams/{id}` | Key or session | One team |
+| `GET` | `/v1/teams/records` | Key or session | Every team's win/loss record and recent form |
+| `GET` | `/v1/teams/elo-ratings` | Key or session | Every team's current Elo rating |
+| `GET` | `/v1/teams/{id}/suggested-players` | Key or session | The roster ranked by usage rate (`count`) |
+
+### Optimizer and analytics
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| `GET` | `/v1/optimizer/lineup` | Session | The latest fantasy lineup from the optimizer |
+| `GET` | `/v1/optimizer/predictions` | Session | Every player's latest projection |
+| `GET` | `/v1/optimizer/predictions/{playerId}` | Session | One player's latest projection |
+| `GET` | `/v1/analytics/model-accuracy` | Key or session | How the Elo model has scored on finished, predicted games |
+| `GET` | `/v1/analytics/leaderboard` | Key or session | Users ranked by prediction accuracy, with the model as the benchmark |
+
+### Me
+
+Every `/v1/me/**` route reads the user from the session. None takes a user id, so a user can only reach their own data.
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| `GET` | `/v1/me` | Session | Profile, role, favourite team and followed players |
+| `PATCH` | `/v1/me` | Session | Change username and/or favourite team |
+| `POST` | `/v1/me/avatar` | Session | Upload an avatar image (multipart) |
+| `PUT` | `/v1/me/followed-players/{playerId}` | Session | Follow a player (idempotent) |
+| `DELETE` | `/v1/me/followed-players/{playerId}` | Session | Unfollow a player (idempotent) |
+| `GET` | `/v1/me/watchlist` | Session | Followed players with their season averages and recent points |
+| `GET` | `/v1/me/teams/results` | Session | Recent results for the user's teams, from their team's side |
+| `GET` | `/v1/me/challenge/next` | Session | A finished game the user hasn't called yet, with the score hidden |
+| `POST` | `/v1/me/picks` | Session | Call that game. The response reveals the result and the final score. |
+| `GET` | `/v1/me/picks/record` | Session | The user's record beside the model's record on the same games |
+| `GET` | `/v1/me/lineups` | Session | Saved optimizer lineups, newest first |
+| `POST` | `/v1/me/lineups` | Session | Save a lineup |
+| `DELETE` | `/v1/me/lineups/{lineupId}` | Session | Delete a saved lineup |
+| `GET` | `/v1/me/saved/comparisons` | Session | Saved player comparisons |
+| `POST` | `/v1/me/saved/comparisons` | Session | Save a comparison |
+| `DELETE` | `/v1/me/saved/comparisons/{id}` | Session | Delete a saved comparison |
+| `GET` | `/v1/me/api-keys` | Session | The user's own API keys, limits and usage |
+| `POST` | `/v1/me/api-keys` | Session | Create a key. The raw key is shown once. |
+| `DELETE` | `/v1/me/api-keys/{keyId}` | Session | Revoke a key (kept, marked inactive) |
+| `DELETE` | `/v1/me/api-keys/{keyId}/purge` | Session | Permanently delete a key |
+
+### Become Pro
+
+A signed-in user logs their own games and gets a projected draft pick, a rookie-scale value and comparable NBA rookies. See [Become Pro](become-pro/index.md) and the [Valuation Model](become-pro/valuation-model.md). Logging, correcting or removing a game, or editing a season, re-values the season before the response returns.
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| `GET` | `/v1/me/become-pro` | Session | The full page: seasons, one season in detail (`seasonId`), valuation and comparables |
+| `GET` | `/v1/me/become-pro/summary` | Session | Current projected value and trend, for the Home and Profile card |
+| `POST` | `/v1/me/become-pro/seasons` | Session | Start a season |
+| `PATCH` | `/v1/me/become-pro/seasons/{seasonId}` | Session | Edit a season |
+| `DELETE` | `/v1/me/become-pro/seasons/{seasonId}` | Session | Delete a season and its games |
+| `POST` | `/v1/me/become-pro/seasons/{seasonId}/games` | Session | Log a game |
+| `PATCH` | `/v1/me/become-pro/games/{gameId}` | Session | Correct a logged game |
+| `DELETE` | `/v1/me/become-pro/games/{gameId}` | Session | Remove a logged game |
+
+Become Pro returns these errors:
+
+- `400 INVALID_BOX_SCORE` for an impossible line, such as more makes than attempts, over 65 minutes, or a future date.
+- `404 SEASON_NOT_FOUND` / `GAME_NOT_FOUND`, also for another user's ids.
+- `409` with `SEASON_ALREADY_EXISTS`, `SEASON_LIMIT_REACHED` (12 seasons), `GAME_LIMIT_REACHED` (120 games) or `DUPLICATE_GAME`.
+
+A points total that disagrees with the shooting splits is saved, and the page flags it for the user to check.
+
+### Datasets
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| `GET` | `/v1/datasets` | Key or session | Published dataset releases |
+| `GET` | `/v1/datasets/{version}` | Key or session | One release's metadata |
+| `GET` | `/v1/datasets/{version}/download` | Key or session | The release as CSV |
+| `GET` | `/v1/datasets/diff` | Key or session | Compare two releases' metadata and schema (`from`, `to`) |
+| `GET` | `/v1/datasets/changes` | Key or session | Releases published after a timestamp (`since`) |
+| `POST` | `/v1/datasets/admin/publish` | Admin | Publish a new release |
+
+### Custom statistics
+
+Analysts define a statistic as an expression over per-game fields: points, rebounds, assists, steals, blocks, turnovers and minutes. The expression is parsed by a hand-written recursive-descent parser (no `eval`). Unknown field names and division by zero are rejected before evaluation.
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| `GET` | `/v1/custom-statistics` | Analyst | The caller's definitions |
+| `POST` | `/v1/custom-statistics` | Analyst | Create a definition: `{ "name", "expression" }` |
+| `PUT` | `/v1/custom-statistics/{id}` | Analyst | Change the expression. This increments its `version`. |
+| `GET` | `/v1/custom-statistics/{id}/value` | Analyst | Evaluate it for one player (`playerId`, optional `seasonType`) |
+
+### Admin
+
+Every `/v1/admin/**` route needs a session with the `ADMIN` role.
+
+**Reference data and users**
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/v1/admin/teams` | Paginated teams for editing |
+| `PATCH` | `/v1/admin/teams/{id}` | Edit a team's imported fields |
+| `GET` | `/v1/admin/players` | Paginated players for editing (`teamId`, `search`) |
+| `PATCH` | `/v1/admin/players/{id}` | Edit a player's imported fields |
+| `GET` | `/v1/admin/users` | Paginated users |
+| `PATCH` | `/v1/admin/users/{id}/role` | Change a user's role |
+| `DELETE` | `/v1/admin/users/{id}` | Delete a user account |
+
+**Ingestion review.** For how batches and the pull worker fit together, see [Data Ingestion](design/ingestion.md#batches).
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/v1/admin/batches` | Paginated ingestion batches (`status`, `search`, `sort`, `order`) |
+| `GET` | `/v1/admin/batches/{id}` | One batch in detail |
+| `POST` | `/v1/admin/batches/{id}/approve` | Approve a `PENDING_REVIEW` batch. This publishes its games. |
+| `POST` | `/v1/admin/batches/{id}/reject` | Reject a batch. Its data stays unpublished. |
+| `POST` | `/v1/admin/ingestion/pull` | Start a pull (optional `season`, `fromDate`, `toDate`). The deployed API queues it for a pull worker. |
+| `GET` | `/v1/admin/ingestion/requests` | The 10 most recent pulls, with status and output |
+| `POST` | `/v1/admin/ingestion/requests/{id}/cancel` | Cancel a pull no worker has claimed |
+| `GET` | `/v1/admin/ingestion/schedule` | The pull schedule and when a worker last checked in |
+| `PUT` | `/v1/admin/ingestion/schedule` | Set the schedule: `NEVER`, `HOURLY`, `DAILY` or `WEEKLY` |
+| `DELETE` | `/v1/admin/ingestion/batches/{id}` | Soft-delete a batch. No game data is deleted. |
+
+**Event corrections.** Only 2025-26 games have stored play-by-play, so only they can be corrected. See [ADR-005](decisions/adr-005-play-by-play-storage.md).
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/v1/admin/games` | Find games by `season`, `teamId` and date window, with event counts |
+| `GET` | `/v1/admin/games/{gameId}/events` | A game's header, every event with player names, and the roster |
+| `GET` | `/v1/admin/games/{gameId}/anomalies` | Player box-score rows that fail sanity checks |
+| `POST` | `/v1/admin/games/{gameId}/events/{sequence}/preview` | Dry run: changed fields and each player's stats before and after |
+| `POST` | `/v1/admin/games/{gameId}/events/{sequence}/correct` | Apply a correction (reason required). Recomputes affected stats in one transaction. |
+| `POST` | `/v1/admin/corrections/{id}/revert` | Undo a correction by applying its old values as a new correction |
+| `POST` | `/v1/admin/games/{gameId}/replay` | Re-derive a game's stats from its current events |
+| `GET` | `/v1/admin/games/{gameId}/corrections` | One game's correction history |
+| `GET` | `/v1/admin/events/corrections` | Paginated correction history (optional `gameId`) |
+
+**API consumers**
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/v1/admin/consumers` | Consumers with their limits and usage |
+| `POST` | `/v1/admin/consumers` | Create a consumer and its first key |
+| `PATCH` | `/v1/admin/consumers/{id}` | Change a consumer's name, limits or active flag |
+| `DELETE` | `/v1/admin/consumers/{id}` | Delete a consumer with its keys and usage log |
+| `POST` | `/v1/admin/consumers/{id}/keys` | Issue another key |
+| `DELETE` | `/v1/admin/consumers/{id}/keys/{keyId}` | Revoke a key |
+| `DELETE` | `/v1/admin/consumers/{id}/keys/{keyId}/purge` | Permanently delete a key |
+
+### Archetypes
+
+!!! note "Planned, not live"
+    The archetype routes (`GET /v1/players/{id}/archetype`, `GET /v1/archetypes`, `GET /v1/archetypes/map`) are on the unmerged `player-archetypes` branch. See [Player Archetypes](player-archetypes/index.md).
+
+The API also serves BetterAuth's own sign-in routes under `/auth/*`. They appear in Swagger as catch-all `/*splat` entries and are not counted above.
 
 ---
 

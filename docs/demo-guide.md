@@ -1,270 +1,148 @@
 # Demo Guide
 
-A step-by-step walkthrough of the [live webapp](https://sportsanalytics.pages.dev/) for the marking tutor. This is the fastest way to see everything the platform does today.
+A step-by-step walkthrough of the [live web app](https://sportsanalytics.pages.dev/). It is the fastest way to see everything the platform does.
 
 !!! tip "For the marking tutor"
-    This guide takes ~10 minutes to walk through. It covers every built feature mapped to the rubric. If you only have 5 minutes, do steps 1–4 (public features, no login needed). Steps 5–7 require Google sign-in.
+    About 10 minutes. Steps 1–6 are public and need no login. Steps 7–11 need a Google sign-in. The admin tools need a role the team has to grant, so they are described [at the end](#what-needs-an-admin-account) instead of walked through.
 
-!!! warning "Updated 2026-09-23 — this guide was missing a week of Sprint 3 work"
-    Steps 9b (Datasets) and 9c (self-service API keys) were added, since neither existed anywhere on this page before, despite both being built and live. The Admin corrections/review workflow (event corrections, batch review, API-consumer management, custom statistics) is real and substantial but requires the `ADMIN`/`ANALYST` role — not walkable by an anonymous marker without one being granted, so it's described rather than given step numbers. Ask the team for temporary access or a screen-share if you want to see it directly, rather than assuming it doesn't exist because it isn't in this walkthrough.
+- **Live web app:** [sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/)
+- **Live API:** [sportsanalytics-api.onrender.com/v1/health](https://sportsanalytics-api.onrender.com/v1/health). A pinger keeps it warm.
 
-## Before you start
-
-- **Live webapp**: [sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/)
-- **Live API**: [sportsanalytics-api.onrender.com/health](https://sportsanalytics-api.onrender.com/health)
-- The API is kept warm by a pinger service, so it should respond immediately.
+Every page has a **Read aloud** button in the bottom-right corner.
 
 ---
 
-## Part 1: Public features (no login required)
+## Part 1: Public features (no login)
 
 ### 1. Landing page
 
-Navigate to [sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/).
+Open [sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/).
 
-**What to look for:**
-- Marketing page with alternating light/dark sections (hero, developer credits, tech-stack marquee) — distinct from the dark app shell every other page uses
-- Recent-result widget in the navbar (hidden on mobile)
-- Top navbar with four links here: Home, Players, Compare, Teams (Optimizer/Predictions appear once you navigate into the app shell)
-- "Get Started" button — signs in with Google and lands on `/home`, a separate personalised dashboard backed by real endpoints since PR #94. Its data is per-user, so it needs a working Google sign-in — see [UI Overview](design/wireframes.md) for what the page shows and for the current sign-in caveat
-- Skip-to-content link (try tabbing to see the focus indicator)
+- The navbar has Home, Players, Compare, Teams, Datasets, Optimizer, Predictions and Become Pro, plus **Sign in with Google**. On a phone it collapses into a menu.
+- Scroll for "How we predict" (Elo win probability, Four Factors margin) and "How we stand out" (dashboard, watchlist, saved comparisons, lineup planning).
+- Press Tab on page load to see the **Skip to content** link.
 
-### 2. Players list
+### 2. Players
 
-Click **Players** in the navbar.
+Click **Players**.
 
-**What to look for:**
-- Paginated table of NBA players: Name, Team, Position, Jersey number
-- **Filter bar** — filter by team and position using the dropdowns
-- **Search** — type a player name in the search field to do server-side search across the full dataset
-- Player names are clickable links to their profile page
+- **League leaders** for PPG, RPG, APG and true shooting, with a minimum-games floor.
+- A sortable table: player, team, position, number, PPG, RPG, APG, TS%, and a sparkline of the last 8 games.
+- Filter by team, position and minimum games; search by name; sort by any stat.
+- The **Regular / Play-In / Playoffs / Finals** control switches every figure to that part of the season.
 
 ### 3. Player profile
 
-Click any player name.
+Click any player.
 
-**What to look for:**
-- **Header + stat tiles**: Player headshot (from nba.com CDN), name, team, position, jersey number, height, followed by season stat tiles (PPG, RPG, APG, Games)
-- **Points trend chart**: Line chart showing recent game scoring trends (Recharts, themed against CSS variables)
-- **Player traits radar**: Five-axis radar chart (Scoring, Rebounding, Playmaking, Defense, Efficiency) normalised onto a 0–100 scale
-- **Shooting splits**: FG%, 3P%, FT% as stat tiles
-- **Season segment control**: switch between Regular, Play-In, Playoffs, and Finals — stats, splits, and the compare link all follow the selected segment
-- **Advanced stats**: true shooting%, effective FG%, assist-to-turnover, plus-minus, usage%, offensive/defensive rating
-- **Local stat editing**: click into any counting stat to try a "what-if" value and see it ripple into the derived figures — resets on refresh, segment change, or leaving the page (never saved)
-- All charts are themed against the same CSS custom properties as the rest of the UI
+- Headshot, team, position and 12 stat tiles, including advanced stats (TS%, eFG%, usage, offensive and defensive rating).
+- **Points trend by season**, including a projected next season, and a **Player Traits** radar.
+- **Edit Stats:** change a counting stat to try a "what-if" and watch the derived figures update. Nothing is saved.
+- **Compare** opens the comparison with this player already added.
 
-### 3b. Player comparison
+### 4. Compare
 
-Click **Compare** in the navbar, or the compare link from a player profile.
+Click **Compare**. Add up to four players and compare their season lines side by side for the chosen segment.
 
-**What to look for:**
-- Side-by-side comparison of 2–4 players' derived season lines for the same segment picked on the profile page
-- Same season-segment control as the profile page — comparing from inside a postseason view compares postseason lines, not regular-season ones
+### 5. Teams
 
-### 4. Teams
+Click **Teams**.
 
-Click **Teams** in the navbar.
+- A card per team with its logo, record, win %, Elo rating and recent form. Search and pagination are server-side.
+- Click a team for its profile and roster. Each player links to their profile.
 
-**What to look for:**
-- Table of all 30 NBA teams with **real team logos**
-- Paginated with server-side search
-- Click any team to see their roster
+### 6. Datasets
 
-### 5. Team profile
+Click **Datasets**.
 
-Click any team.
-
-**What to look for:**
-- Team information with logo
-- Full roster of players linked to their profiles
+- Versioned **releases** of season data, each with a description, player and game counts and a publish date.
+- Expand a release to see its field **schema**.
+- **Download** the CSV. The page checks the file's SHA-256 checksum against the published one.
 
 ---
 
-## Part 2: Authenticated features (Google sign-in required)
+## Part 2: Signed-in features (Google sign-in)
 
-### 6. Sign in
+### 7. Sign in and Home
 
-Click the **Sign in** button in the navbar (top-right).
+Click **Sign in with Google**. Sign-in is BetterAuth with Google OAuth. First-time users pick a username, then land on **Home**:
 
-**What to look for:**
-- Google OAuth redirect (BetterAuth — not hand-rolled auth, per the brief's requirement)
-- After signing in, the navbar shows an auth status button with sign-out option
-- The Optimizer and Predictions nav links are now accessible
+- **Watchlist** of followed players with their current form.
+- **Your teams** with recent results.
+- **Beat the Model:** call the winner of a finished game whose score is hidden, then compare your record with the model's. A **leaderboard** ranks users.
+- **Saved** comparisons and lineups, and your **Become Pro** card.
 
-### 7. Predictions
+### 8. Predictions and game detail
 
-Click **Predictions** in the navbar.
+Click **Predictions**.
 
-**What to look for:**
-- List of games with **Elo-based win probabilities** and **Four Factors predicted score margins**
-- Each game shows the predicted winner and margin
-- Click a game to see the detail page
-
-### 8. Game detail
-
-Click any game from the Predictions page.
-
-**What to look for:**
-- Win probability display
-- Predicted score margin
-- **Court view** — a basketball court visualisation showing predicted top scorers from both teams positioned by their location on the court. This is a signature visualisation unique to the platform.
+- Games with an **Elo win probability** and a **Four Factors** predicted margin.
+- Open a game for its detail page. It shows the predicted top scorers on a **court view**, and the bookmakers' win probability from The Odds API beside the model's.
 
 ### 9. Optimizer
 
-Click **Optimizer** in the navbar.
+Click **Optimizer**. It shows the latest fantasy lineup. `apps/optimizer` predicts each player's fantasy points and picks five under a salary cap with MILP (PuLP/CBC). You can save the lineup to your account.
 
-**What to look for:**
-- Fantasy-lineup optimizer showing the latest **MILP-solved** lineup
-- Five players selected under a salary cap with their predicted fantasy points
-- This demonstrates the optimisation engine: `apps/optimizer` predicts per-player fantasy points and solves a 5-player lineup via MILP (PuLP/CBC)
+### 10. Become Pro
 
-### 9b. Datasets (added 2026-09-23)
+Click **Become Pro**.
 
-Click **Datasets** in the navbar.
+1. Start a season. Pick a league year, a position and a competition level, for example NCAA Division II.
+2. Log a few games. Enter saves from any field, and **Copy last game** fills the next row.
+3. Try an impossible line, such as more makes than attempts. It is refused with a "Fix" note.
+4. Keep going to 10 games. The card then shows a projected **draft pick**, a rookie-scale value with a wide range, and the three NBA rookies whose first season was closest.
+5. Change the competition level and watch the value move.
 
-**What to look for:**
-- A list of published dataset **releases** — versioned snapshots of season statistics, each with a publish date and row count
-- Click a release to see its **schema**: every column's name, type, and description
-- **Download** a release's CSV — the response carries an `X-Checksum-SHA256` header; the page compares it against the release's published checksum and shows whether it matches, so you can verify the file you got is byte-identical to what was published
-- This is the brief's "datasets should become releases... versioned snapshots published with their schema, a description of every field, and a checksum" requirement, built directly (§1.1.2)
+Become Pro data is private to you. [Valuation Model](become-pro/valuation-model.md) explains how the figure is produced.
 
-### 9c. Self-service API keys (added 2026-09-23)
+### 11. Your API key
 
-Click your account menu → **Profile**, then the **API Keys** section.
+Open your account menu, then **Profile**, then **API Keys**.
 
-**What to look for:**
-- Issue your own API key from the UI
-- Every keyed request is checked against a per-key rate limit (requests/minute) and daily quota — the page shows your current usage against both
-- Try it: `curl -H "X-API-Key: <your key>" https://sportsanalytics-api.onrender.com/v1/players` from a terminal, then again with no header at all (401 `API_KEY_REQUIRED` — every public read now needs either a session or a key, not open access)
+- Create a key. The page shows your usage against the per-minute limit and the daily quota.
+- Try it from a terminal:
 
-### 9d. Become Pro
+```bash
+curl -H "X-API-Key: <your key>" https://sportsanalytics-api.onrender.com/v1/teams
+curl https://sportsanalytics-api.onrender.com/v1/teams   # 401 API_KEY_REQUIRED
+```
 
-Click **Become Pro** (the last link in the navbar).
+### What needs an admin account
 
-**What to do:**
+These are built and live but need the `ADMIN` or `ANALYST` role. Ask the team for access or a screen-share.
 
-1. Start a season: pick a league year, a position and a competition level (for example NCAA Division II).
-2. Log a few games. Press Enter to save from any field, and use **Copy last game** to fill the next row quickly.
-3. Try an impossible line, such as more makes than attempts. It is refused with a "Fix" note. A points total that disagrees with the shooting splits saves with a "Check" note instead.
-4. Keep going to 10 games. Before that the card reads "N more games needed", with no dollar figure.
-
-**What to look for:**
-
-- The **season line** is derived from the games, never typed: FG% comes from season totals, not an average of each game's percentage.
-- The **value card** leads with the projected draft pick, then the rookie-scale dollar figure, a deliberately wide range, the scale year, the level factor and its basis, and "not an offer and not a market price".
-- **Compared with NBA rookies**: the three real rookies whose rookie line is closest, each linking to their player page, plus "Drafted at pick N".
-- Change the season's competition level and watch the value move. Level is the biggest single input.
-- Back on **Home**, the Become Pro card in the right-hand rail shows the same pick and value.
-- Everything here is **private to you**. There is no leaderboard, and no other user can see it.
-
-How the figure is produced, and what it can't claim, is on [Valuation Model](become-pro/valuation-model.md).
-
-### 9e. What you won't see without an admin account
-
-Not walkable in this guide, but real and substantial — ask the team for access if you want to see it directly:
-
-- **Admin event corrections** — an admin can look up any game's full play-by-play, preview the effect of correcting one event (e.g. reassigning an assist to the right player), apply it with a required reason, and undo it later. Corrections recompute exactly the affected player's stats, mark any dataset release covering that data as stale, and leave a full audit trail.
-- **Batch review** — an ingestion pull can land as `PENDING_REVIEW` rather than publishing immediately; an admin approves or rejects it before its data appears anywhere public.
-- **API consumer management** — issuing/revoking keys for external consumers, viewing usage.
-- **Custom statistics** (`ANALYST`/`ADMIN` role) — define a new statistic as an expression over a player's per-game fields (e.g. `points + assists - turnovers`), evaluated for any player/segment. Validated and sandboxed (no arbitrary code execution), versioned so a figure stays reproducible after the definition changes.
+- **Batch review:** an ingestion pull can land as `PENDING_REVIEW`. An admin approves or rejects it before its games are published.
+- **Event corrections:** find a game, preview a corrected play, then apply it with a reason. Only the affected players' stats are recomputed. Every change is audited and can be reverted.
+- **API consumers:** issue, revoke and monitor keys for external consumers.
+- **Custom statistics** (`ANALYST`): define a statistic as an expression such as `points + assists - turnovers` and evaluate it for any player. Definitions are versioned.
 
 ---
 
-## Part 3: API verification
+## Part 3: The API
 
-### 10. API health check
-
-Visit [sportsanalytics-api.onrender.com/health](https://sportsanalytics-api.onrender.com/health).
-
-**Expected response:**
-```json
-{ "status": "ok" }
-```
-
-This proves the NestJS backend is live and reachable. The API is hand-written (no auto-generated endpoints), versioned under `/v1/`, and uses BetterAuth for session cookies.
-
-### 11. API endpoints (for reference)
-
-!!! note "Auth column corrected 2026-09-23"
-    This table previously marked games/predictions as requiring auth. Since PR #172, **every** row below needs either a signed-in session or an `X-API-Key` header (mandatory, not optional) — "No" below means "no *extra* role beyond that baseline," not "truly open." Optimizer specifically also needs a session (no API-key path).
-
-| Endpoint | Extra auth beyond session-or-key? | What it returns |
-|---|---|---|
-| `GET /health` | No auth at all | Health check (deprecated in favour of `GET /v1/health`) |
-| `GET /v1/players` | No | Paginated player list |
-| `GET /v1/players/:id` | No | Player detail |
-| `GET /v1/players/:id/stats` | No | Player season stats for one segment (`?seasonType=`, `?asOf=` for a point-in-time cutoff) |
-| `GET /v1/players/:id/stats/splits` | No | The same stats for every segment at once |
-| `GET /v1/players/:id/stats/career` | No | Career totals, averages, and per-season breakdown |
-| `GET /v1/players/:id/matchup-projection` | No | Opponent splits and upcoming-game scoring projections |
-| `GET /v1/players/leaders` | No | Season leaders by category |
-| `GET /v1/players/league-averages` | No | Competition-wide averages |
-| `GET /v1/players/aggregates` | No | Group-by aggregate (team/position) over a chosen metric |
-| `GET /v1/players/compare` | No | Side-by-side stats for 2–4 players |
-| `GET /v1/players/export` | No | Filtered player slice as CSV |
-| `GET /v1/teams` | No | Paginated team list |
-| `GET /v1/teams/:id` | No | Team detail with roster |
-| `GET /v1/teams/elo-ratings` | No | Current Elo ratings for all teams |
-| `GET /v1/teams/records` | No | Every team's win/loss record and recent form |
-| `GET /v1/teams/:id/suggested-players` | No | A team's roster ranked by usage percentage |
-| `GET /v1/games` | No | Game list with predictions joined in (`?seasonType=` to filter) |
-| `GET /v1/games/:id` | No | Single game detail |
-| `GET /v1/games/:id/events` | No | Paginated raw play-by-play for one game |
-| `GET /v1/games/:id/prediction` | No | Win probability + predicted margin |
-| `GET /v1/games/:id/prediction/history` | No | Every model version's prediction for this game |
-| `GET /v1/games/:id/live` | No | Poll newly received events for an in-progress fixture |
-| `GET /v1/games/seasons` | No | List of available seasons |
-| `GET /v1/games/export` | No | Filtered game slice as CSV |
-| `GET /v1/datasets` | No | Paginated dataset releases |
-| `GET /v1/datasets/:version` | No | One release's schema/metadata/checksum |
-| `GET /v1/datasets/:version/download` | No | The release's CSV |
-| `GET /v1/datasets/diff`, `/changes` | No | Diff/changes-since between releases |
-| `GET /v1/optimizer/lineup` | Session required (no API-key path) | Latest MILP-solved fantasy lineup |
-| `GET /v1/optimizer/predictions` | No | Every player's latest fantasy-point prediction |
-| `GET /v1/optimizer/predictions/:playerId` | No | One player's latest prediction |
-| `GET /v1/analytics/model-accuracy` | No | Model accuracy metrics |
-| `GET /v1/analytics/leaderboard` | No | Prediction accuracy leaderboard |
-| `GET /v1/me` | Session required | Current user's profile |
-| `PATCH /v1/me` | Session required | Update username and/or favorite team |
-| `POST /v1/me/avatar` | Session required | Upload a new avatar image |
-| `PUT/DELETE /v1/me/followed-players/:playerId` | Session required | Follow/unfollow a player |
-| `GET/POST/DELETE /v1/me/lineups` | Session required | Saved fantasy lineups |
-| `GET /v1/me/watchlist` | Session required | User's watchlist |
-| `GET /v1/me/picks/record` | Session required | Beat the Model pick record |
-| `POST /v1/me/picks` | Session required | Submit a Beat the Model pick |
-| `GET/POST/DELETE /v1/me/saved/comparisons` | Session required | Saved player comparisons |
-| `GET /v1/me/teams/results` | Session required | Results for followed teams |
-| `GET /v1/me/challenge/next` | Session required | Next challenge for the user |
-| `GET/POST/PUT /v1/custom-statistics` | `ANALYST`/`ADMIN` role | Define/evaluate a custom statistic |
-| `GET/POST/DELETE /v1/me/api-keys` | Session required | Self-service API key management |
-| `/v1/admin/*` | `ADMIN` role | Batch review, event corrections, consumer management — see step 9e |
-| `GET /v1/me/become-pro` | Session required | Your own Become Pro page: seasons, derived line, games, valuation, NBA comparables |
-| `GET /v1/me/become-pro/summary` | Session required | The Home/Profile Become Pro card |
-
-Full API documentation: [API Design](design/api-design.md) and the live Swagger UI at `/api/docs`.
+- Check that it is up: [/v1/health](https://sportsanalytics-api.onrender.com/v1/health).
+- Browse every endpoint in [Swagger UI](https://sportsanalytics-api.onrender.com/api/docs).
+- The [API Reference](api-reference.md) lists all 103 operations with their auth rules.
 
 ---
 
 ## What to look for against the rubric
 
-| Rubric criterion | Where to see it in this demo |
+| Rubric criterion | Where to see it |
 |---|---|
-| **Non-monolithic** | Frontend (Cloudflare Pages) and API (Render) are separate, independently deployed apps that only communicate over HTTP |
-| **Hand-written API** | Every endpoint in the table above is a manually written NestJS controller — no auto-generated CRUD |
-| **Authentication** | Google OAuth via BetterAuth (steps 6–9 are auth-gated) |
-| **External API integration** | All player/team/game data comes from `nba_api` (stats.nba.com) via the ingestion service |
-| **CI/CD** | Every push triggers lint, typecheck, and test on Gitea Actions; deploys to Cloudflare Pages and Render are automatic via GitHub mirror |
-| **Responsiveness** | Try resizing your browser window — the layout adapts at mobile/tablet/desktop breakpoints |
-| **Accessibility** | Skip-to-content link (tab from page load), `aria-label` on navigation, keyboard-navigable |
-| **Optimisation** | The Optimizer page (step 9) demonstrates MILP-based lineup optimisation; predictions use Elo + Four Factors |
-| **Event-derived statistics** | Every player stat traces back to `GameEvent` rows, not a typed-in total — see a game's raw play-by-play at `GET /v1/games/:id/events` |
-| **Versioned dataset releases** | Step 9b — schema, checksum, diff/changes-since between releases |
-| **API keys, rate limits, quotas** | Step 9c — issue a key, watch it get rate-limited |
-| **Submission review, corrections, audit trail** | Step 9e — requires admin access to walk through directly |
-| **Analyst-defined custom statistics** | Step 9e — requires `ANALYST`/`ADMIN` role |
-| **Second external API integration** | A real sportsbook win-probability line (The Odds API) shown alongside the model's own prediction on the game detail page |
-| **Trained model on real data** | Become Pro (step 9d) applies a least-squares model fitted on real NBA rookie seasons, re-valuing your season the moment a game is logged |
+| **Non-monolithic** | The web app (Cloudflare Pages) and the API (Render) are deployed separately and talk only over HTTP |
+| **Hand-written API** | Every route is a hand-written NestJS controller. See the [API Reference](api-reference.md). |
+| **Authentication** | Google OAuth through BetterAuth (step 7) |
+| **External APIs** | Game data from `nba_api` (stats.nba.com). Sportsbook lines from The Odds API (step 8). |
+| **Responsiveness** | Resize the window, or open the site on a phone |
+| **Accessibility** | Skip link, labelled navigation, keyboard focus, Read aloud. Lighthouse Accessibility is 100. |
+| **Optimisation and models** | MILP lineup (step 9), Elo plus Four Factors (step 8), Become Pro's fitted model (step 10) |
+| **Event-derived statistics** | Every stat is built from play-by-play events, not copied totals |
+| **Versioned dataset releases** | Step 6 |
+| **API keys, rate limits, quotas** | Step 11 |
+| **Review, corrections, audit trail** | [Admin features](#what-needs-an-admin-account) |
+| **CI/CD** | Every push runs lint, typecheck and tests. See [CI/CD Pipeline](ci-cd.md). |
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5] (2026-09-23: added Datasets/API-keys/Admin coverage, corrected the endpoint auth table, added Sprint 3 rubric rows; 2026-09-29: expanded endpoint table to match live API — added career stats, matchup projections, live feed, saved lineups, watchlist, Beat the Model picks, analytics endpoints, and full /v1/me/* coverage), Claude-Code[Claude Opus 5.5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5], Claude-Code[Claude Opus 5.5]*
