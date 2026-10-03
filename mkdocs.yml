@@ -73,60 +73,60 @@ extra:
       link: https://sdp.ms.wits.ac.za/innovation/sportsanalytics/projects/8
       name: Project Board (Gitea)
 
-# Working aids for writing minutes: built and linked from Meetings, but kept out of the nav.
+# Built but kept out of the nav: the meetings overview and the aids for writing minutes.
 not_in_nav: |
+  meetings/index.md
   meetings/_template.md
   meetings/how-to-summarize.md
 
 nav:
   - Home:
       - Overview: index.md
-      - Demo Guide: demo-guide.md
       - Rubric Quick Links: rubric-links.md
-  - Getting Started: getting-started.md
+      - Demo Guide: demo-guide.md
+      - Getting Started: getting-started.md
+  - Product:
+      - Feature Tiers: design/feature-tiers.md
+      - UI Overview: design/wireframes.md
+      - Become Pro:
+          - Overview: become-pro/index.md
+          - Valuation Model: become-pro/valuation-model.md
+      - Player Archetypes (in review): player-archetypes/index.md
+      - Roadmap: design/roadmap.md
   - Architecture:
       - Overview: design/architecture.md
       - ERD: design/erd.md
       - Data Ingestion: design/ingestion.md
       - API Design: design/api-design.md
-      - API Reference (Swagger): api-reference.md
-      - UI Overview: design/wireframes.md
+      - API Reference: api-reference.md
       - Performance: design/performance.md
-      - Feature Tiers: design/feature-tiers.md
-      - Roadmap: design/roadmap.md
-  - Become Pro:
-      - Overview: become-pro/index.md
-      - Valuation Model: become-pro/valuation-model.md
-  - Player Archetypes:
-      - Overview: player-archetypes/index.md
+      - Tech Stack: tech-stack.md
+      - Security: security.md
+      - Decisions (ADRs):
+          - Index: decisions/index.md
+          - "ADR-001: Database": decisions/adr-001-database.md
+          - "ADR-002: Auth": decisions/adr-002-auth.md
+          - "ADR-003: Hosting Topology": decisions/adr-003-hosting-topology.md
+          - "ADR-004: Caching Strategy": decisions/adr-004-caching-strategy.md
+          - "ADR-005: Play-by-play Storage": decisions/adr-005-play-by-play-storage.md
   - Process:
       - Methodology: methodology.md
       - Sprint Log: sprint-log.md
+      - Scrum Meetings: meetings/scrum/index.md
       - Git Methodology: git-methodology.md
       - Definition of Done: definition-of-done.md
       - Coding Conventions: coding-conventions.md
       - CI/CD Pipeline: ci-cd.md
       - Testing: testing.md
-      - Stakeholder Interactions: stakeholder-interactions.md
       - Requirements Traceability: requirements.md
       - AI Usage Ledger: ai-usage.md
-  - User Feedback:
-      - Survey: feedback-survey.md
-      - User Interviews: user-interviews.md
-      - Improvements Made: improvements.md
-  - Decisions (ADRs):
-      - Index: decisions/index.md
-      - "ADR-001: Database": decisions/adr-001-database.md
-      - "ADR-002: Auth": decisions/adr-002-auth.md
-      - "ADR-003: Hosting Topology": decisions/adr-003-hosting-topology.md
-      - "ADR-004: Caching Strategy": decisions/adr-004-caching-strategy.md
-      - "ADR-005: Play-by-play Storage": decisions/adr-005-play-by-play-storage.md
-  - Tech Stack: tech-stack.md
-  - Security: security.md
-  - Meetings:
-      - Overview: meetings/index.md
+  - Users & Stakeholders:
+      - Stakeholder Log: stakeholder-interactions.md
       - Client Meetings: meetings/client/index.md
-      - Scrum Meetings: meetings/scrum/index.md
+      - User Feedback:
+          - Survey: feedback-survey.md
+          - User Interviews: user-interviews.md
+          - Improvements Made: improvements.md
 
 extra_css:
   - stylesheets/extra.css
