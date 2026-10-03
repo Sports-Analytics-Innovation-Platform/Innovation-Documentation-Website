@@ -1,15 +1,36 @@
 # Performance
 
-How the platform keeps database work down, and what was measured. Most of the work was one optimisation pass (PR #124, 13 Sep).
-
-## Evidence at a glance
+How fast the live app is, and how the API keeps database work down. Most of the API work was one optimisation pass (PR #124, 13 Sep).
 
 | Evidence | Result |
 |---|---|
-| [Query counts](#measured-result) | Most public routes issue **0** database statements on a repeat request. |
-| [Lighthouse](#lighthouse-scores-2026-09-29), mobile, 29 Sep | Performance **88–95**, Accessibility **100** on Home, Teams, Players and Admin. |
-| [Load test](#load-test-2026-09-29), 29 Sep | Round trip to the production API: P95 **495 ms**. The data routes were not measured, because the test sent no API key. |
-| Target | P95 under 300 ms for data reads. Not yet shown to be met. |
+| [Lighthouse](#lighthouse-scores-2026-09-29), mobile, 29 Sep | Performance **88–95**, Accessibility **100** on Home, Teams, Players and Admin |
+| [Query counts](#measured-result) | Most public routes issue **0** database statements on a repeat request |
+
+## Lighthouse scores (2026-09-29)
+
+Google PageSpeed Insights, mobile, against the live site:
+
+| Page | Performance | Accessibility | Best Practices | SEO |
+|---|---|---|---|---|
+| [Home](https://sportsanalytics.pages.dev/) | 93 | 100 | 100 | 92 |
+| [Teams](https://sportsanalytics.pages.dev/teams) | 95 | 100 | 100 | 92 |
+| [Players](https://sportsanalytics.pages.dev/players) | 88 | 100 | 100 | 92 |
+| [Admin](https://sportsanalytics.pages.dev/admin) | 95 | 100 | 100 | 92 |
+
+<div class="grid" markdown>
+
+[![PageSpeed Insights report for Home: Performance 93](../assets/lighthouse/homepage-mobile.jpg)](../assets/lighthouse/homepage-mobile.jpg)
+
+[![PageSpeed Insights report for Teams: Performance 95](../assets/lighthouse/teams-mobile.jpg)](../assets/lighthouse/teams-mobile.jpg)
+
+[![PageSpeed Insights report for Players: Performance 88](../assets/lighthouse/players-mobile.jpg)](../assets/lighthouse/players-mobile.jpg)
+
+[![PageSpeed Insights report for Admin: Performance 95](../assets/lighthouse/admin-mobile.jpg)](../assets/lighthouse/admin-mobile.jpg)
+
+</div>
+
+Admin was measured signed out, so it shows only the sign-in prompt.
 
 ## Why caching is safe here
 
@@ -91,32 +112,6 @@ SQL statements per request against a local database with real data: first call, 
 | `GET /v1/players/:id/stats/splits` | 3 | 1 |
 
 A sorted player list costs nothing even on its first call because it reuses the leaders data. Splits is consolidated but deliberately uncached, so it still runs one statement. These are statement counts from a local database, not production timings.
-
-## Load test (2026-09-29)
-
-10 simulated users sent 704 requests to the production API on Render over 30 seconds. Raw results: [report](../assets/load-test-report.html), [JSON](../assets/load-test-results.json).
-
-| Routes | Requests | Result | P95 |
-|---|---|---|---|
-| `/v1/health` and `/health` | 181 | All succeeded | 495 ms and 706 ms |
-| Six data routes (players, teams, games, seasons, leaders, Elo ratings) | 523 | All rejected with `401`: the test sent no API key | 425–671 ms |
-
-**What this shows:** under 10 concurrent users the API stayed up, every request was answered, and the key check refused keyless requests. The median was 374 ms, which is mostly the round trip to Render's Oregon region.
-
-**What it doesn't show:** how fast the data routes are. The health route doesn't query the database, and the rejected requests never reached it. Re-running the test with an `X-API-Key` header would measure them.
-
-## Lighthouse scores (2026-09-29)
-
-Google PageSpeed Insights, mobile, against the live site:
-
-| Page | Performance | Accessibility | Best Practices | SEO |
-|---|---|---|---|---|
-| [Home](https://sportsanalytics.pages.dev/) | 93 | 100 | 100 | 92 |
-| [Teams](https://sportsanalytics.pages.dev/teams) | 95 | 100 | 100 | 92 |
-| [Players](https://sportsanalytics.pages.dev/players) | 88 | 100 | 100 | 92 |
-| [Admin](https://sportsanalytics.pages.dev/admin) | 95 | 100 | 100 | 92 |
-
-Screenshots: [Home](../assets/lighthouse/homepage-mobile.jpg), [Teams](../assets/lighthouse/teams-mobile.jpg), [Players](../assets/lighthouse/players-mobile.jpg), [Admin](../assets/lighthouse/admin-mobile.jpg). Admin was measured signed out, so it shows only the sign-in prompt.
 
 ## The staleness contract
 

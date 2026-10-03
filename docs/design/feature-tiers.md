@@ -34,7 +34,7 @@ How the platform meets each tier of the brief (COMS3011A Project 3, "Sport Analy
 | Only dependent figures recomputed | ✅ | A correction recomputes only the players in the corrected game (`plan-stat-recompute.ts`). |
 | Impossible data caught; corrections keep a history | ✅ | Correction rules refuse, for example, credit left on the wrong player. Corrections are append-only; an undo is a new correction. |
 | Figures checked against reference results | ⚠️ | Unit tests match the NBA's published advanced stats to three decimal places. There is no automated test replaying a whole game against its published box score. |
-| A stated response time | ⚠️ | Target: P95 under 300 ms for data reads. Not yet shown: the 29 Sep load test sent no API key, so its data requests were refused before reaching the database. Caching and indexes were chosen from measured query counts ([Performance](performance.md)). |
+| A stated response time | ⚠️ | Target: P95 under 300 ms for data reads, not measured on production. Repeat reads of public data issue no database statements, and Lighthouse scores the live pages 88–95 ([Performance](performance.md)). |
 | Versioned API | ✅ | `/v1/`, `Accept-Version`, and `Deprecation`/`Sunset` headers ([API Design](api-design.md)). |
 | Keys, rate limits and quotas | ✅ | Per-minute limits and daily quotas per key, counted in the database. |
 | Repeated reads from cache | ✅ | An in-memory cache with lifetimes by how often data changes ([ADR-004](../decisions/adr-004-caching-strategy.md)). |

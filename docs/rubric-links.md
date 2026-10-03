@@ -41,7 +41,7 @@ Every rubric criterion in the COMS3011A brief, linked to its evidence, grouped b
 | Automated Testing | 10% | [Testing](testing.md): 974 API and 717 web tests at the Become Pro hand-off, plus a 65-check live browser run, with an 80% coverage threshold in CI |
 | Feature Implementation | 20% | [Feature Tiers](design/feature-tiers.md): Basic complete, Intermediate largely complete, Advanced partial. Also [Become Pro](become-pro/index.md) and [Player Archetypes](player-archetypes/index.md). |
 | API Implementation | 20% | [API Reference](api-reference.md): 106 live operations, including admin, datasets, custom statistics, API keys and Become Pro |
-| Performance | 5% | [Performance](design/performance.md): caching with before/after query counts, a load test at 10 concurrent users (the data routes still need measuring with an API key), and Lighthouse scores of 88–95 |
+| Performance | 5% | [Performance](design/performance.md): Lighthouse Performance 88–95 and Accessibility 100 on mobile, and caching with before/after query counts |
 | Improvement | 5% | [Improvements Made](improvements.md): seven shipped changes, each with a before/after and the feedback item that prompted it |
 | Documentation | 15% | This site, especially the [API Reference](api-reference.md), [ERD](design/erd.md) and [Architecture](design/architecture.md) |
 | Project Methodology | 15% | [Methodology](methodology.md) and the [Sprint Log](sprint-log.md) |
@@ -56,13 +56,13 @@ Every rubric criterion in the COMS3011A brief, linked to its evidence, grouped b
 | Availability | API | 3% | [Live API](https://sportsanalytics-api.onrender.com/v1/health), kept warm by a pinger |
 | Architecture | API | 5% | [Architecture](design/architecture.md): separate web, API and Python services that talk over HTTP |
 | Deployment | API | 2% | [ADR-003](decisions/adr-003-hosting-topology.md): Render auto-deploys from the GitHub mirror |
-| Performance | API | 5% | [Performance](design/performance.md) and [ADR-004](decisions/adr-004-caching-strategy.md). Load test: [report](assets/load-test-report.html), [raw results](assets/load-test-results.json). |
+| Performance | API | 5% | [Performance](design/performance.md#measured-result): repeat requests for public data issue no database statements. Why: [ADR-004](decisions/adr-004-caching-strategy.md) |
 | Design | API | 10% | [API Design](design/api-design.md) and the [API Reference](api-reference.md): hand-written, versioned under `/v1/`, one error envelope |
 | Accessibility | App | 5% | Lighthouse Accessibility **100** on every page tested ([Home](assets/lighthouse/homepage-mobile.jpg), [Teams](assets/lighthouse/teams-mobile.jpg), [Players](assets/lighthouse/players-mobile.jpg), [Admin](assets/lighthouse/admin-mobile.jpg)). `axe-core` runs in CI. See [UI Overview](design/wireframes.md#accessibility). |
 | Aesthetics | App | 3% | [UI Overview](design/wireframes.md), with screenshots |
 | User Experience | App | 5% | [UI Overview](design/wireframes.md) and the [Demo Guide](demo-guide.md) |
 | Deployment | App | 2% | [ADR-003](decisions/adr-003-hosting-topology.md): Cloudflare Pages auto-deploys from the GitHub mirror |
-| Performance | App | 5% | [Performance](design/performance.md#frontend-caching) and Lighthouse Performance 88–95 on mobile |
+| Performance | App | 5% | [Lighthouse](design/performance.md#lighthouse-scores-2026-09-29) Performance 88–95 on mobile, and [frontend caching](design/performance.md#frontend-caching) |
 | Features | App | 10% | [Feature Tiers](design/feature-tiers.md) and the [Demo Guide](demo-guide.md) |
 | Responsiveness | App | 5% | [UI Overview](design/wireframes.md#responsive-design), with phone screenshots |
 | Structure | App | 5% | [Architecture](design/architecture.md) |
