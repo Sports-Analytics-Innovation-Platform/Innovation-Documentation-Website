@@ -104,4 +104,4 @@ None shipped yet — all twelve items are queued for triage alongside the survey
 
 ---
 
-*AI Declaration: This page was created with the assistance of Qoder[Qoder Lite].*
+*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude-Code[Claude Opus 5.5]*
