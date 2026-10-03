@@ -1,0 +1,4 @@
+/* Keep table names and routes in the first column on one line. */
+.md-typeset table:not([class]) td:first-child code {
+  white-space: nowrap;
+}

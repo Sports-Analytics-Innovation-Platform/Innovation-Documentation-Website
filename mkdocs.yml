@@ -45,7 +45,11 @@ markdown_extensions:
   - attr_list
   - md_in_html
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.highlight
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
@@ -125,3 +129,6 @@ nav:
       - Overview: meetings/index.md
       - Client Meetings: meetings/client/index.md
       - Scrum Meetings: meetings/scrum/index.md
+
+extra_css:
+  - stylesheets/extra.css

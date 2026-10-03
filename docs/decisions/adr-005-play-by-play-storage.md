@@ -180,7 +180,7 @@ ORDER BY g.season;
 - The team-profiles feasibility study (branch `team-profiles-feasibility`, 2026-09-25), for the counts of older player rows.
 - In the source repository: `apps/api/src/admin/admin-events.service.ts`, `apps/api/src/admin/plan-stat-recompute.ts`, `apps/web/src/components/admin/CorrectionGamePicker.tsx`, `apps/web/src/components/admin/GamePlayByPlayPanel.tsx`, `apps/ingestion/ingest.py`, `apps/ingestion/ingest_postseason.py`, `apps/ingestion/ingest_historical_season.py`, `apps/ingestion/play_by_play.py`, `apps/ingestion/backfill_advanced_stats.py` and `apps/similarity/player_seasons.py`.
 - [Supabase: Database size](https://supabase.com/docs/guides/platform/database-size).
-- [ADR-001: Database](adr-001-database.md), [ADR-003: Hosting Topology](adr-003-hosting-topology.md) and the [ERD](../design/erd.md#gameevent).
+- [ADR-001: Database](adr-001-database.md), [ADR-003: Hosting Topology](adr-003-hosting-topology.md) and the [ERD](../design/erd.md#nba-data-and-models).
 
 ---
 

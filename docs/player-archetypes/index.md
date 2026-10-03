@@ -87,7 +87,7 @@ The model is stored in four tables. Each is written only by `apps/similarity` an
 | `PlayerArchetypeMembership` | One of a player's top archetypes (up to three), with its rank and weight |
 | `PlayerSimilarity` | One of a player's five most similar players, with its rank and score |
 
-Every column is documented on the [ERD](../design/erd.md#player-archetypes). Two design choices are worth knowing:
+The full columns are in `schema.prisma` on the `player-archetypes` branch. Two design choices are worth knowing:
 
 - **Names are stored once, on `Archetype`.** Players point to an archetype by id, so renaming an archetype updates one row and nothing else.
 - **A player's main archetype isn't stored separately.** It is their rank-1 membership. Storing it twice would create a second copy that could disagree with the first.
