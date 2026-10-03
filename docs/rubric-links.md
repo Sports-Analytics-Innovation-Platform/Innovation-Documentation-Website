@@ -44,7 +44,7 @@ Every rubric criterion in the COMS3011A brief, linked to its evidence, grouped b
 | Automated Testing | 10% | [Testing](testing.md): 974 API and 717 web tests at the Become Pro hand-off, plus a 65-check live browser run, with an 80% coverage threshold in CI |
 | Feature Implementation | 20% | [Feature Tiers](design/feature-tiers.md): Basic complete, Intermediate largely complete, Advanced partial. Also [Become Pro](become-pro/index.md). |
 | API Implementation | 20% | [API Reference](api-reference.md): 103 live operations, including admin, datasets, custom statistics, API keys and Become Pro |
-| Performance | 5% | [Performance](design/performance.md): caching with before/after query counts, a load test (P95 495 ms), and Lighthouse scores of 88–95 |
+| Performance | 5% | [Performance](design/performance.md): caching with before/after query counts, a load test at 10 concurrent users (the data routes still need measuring with an API key), and Lighthouse scores of 88–95 |
 | Improvement | 5% | [Improvements Made](improvements.md): six shipped changes, each with a before/after and the feedback item that prompted it |
 | Documentation | 15% | This site, especially the [API Reference](api-reference.md), [ERD](design/erd.md) and [Architecture](design/architecture.md) |
 | Project Methodology | 15% | [Methodology](methodology.md) and the [Sprint Log](sprint-log.md) |
