@@ -1,6 +1,6 @@
 # User Interviews
 
-One-on-one follow-up interviews with [survey](feedback-survey.md) respondents who volunteered their contact details (Q25) — the qualitative second half of the [user feedback process](user-feedback-methodology.md). Sessions are hands-on: the participant drives the live app while thinking aloud, which catches the comprehension and discoverability problems a screenshot-based survey structurally cannot.
+One-on-one follow-up interviews with [survey](feedback-survey.md) respondents who volunteered their contact details (Q25) — the qualitative second half of the [user feedback process](feedback-survey.md#how-feedback-is-integrated). Sessions are hands-on: the participant drives the live app while thinking aloud, which catches the comprehension and discoverability problems a screenshot-based survey structurally cannot.
 
 ---
 
@@ -78,17 +78,17 @@ Quotes below are as captured in the session minutes (lightly cleaned).
 
 | ID | Feedback (source) | Category | Action | Status |
 |---|---|---|---|---|
-| F20 | "Beat the Model" name and the model's win-probability label ("model GSW %") are opaque without explanation | UX / Copy | Rename the feature or add a one-line explainer on the card; label win probabilities in plain language | Backlog — file as Gitea issue |
-| F21 | Player headshots too small on desktop (fine on mobile) | UX | Desktop sizing pass on headshots | Backlog — file as Gitea issue |
-| F22 | Leaderboard graphs don't reflect the user's search/filter selection | Feature | Wire the players-list leaderboard chart to the active selection | Backlog — file as Gitea issue |
-| F23 | Teams list sorted by Elo confuses — expected favourite team first; "what's the difference between win percentage and Elo?" | UX / Feature | Sort/search controls (including "my teams first") plus a short Elo explainer; extends F13's standings request | Backlog — file as Gitea issue |
-| F24 | Data set page purpose unclear — "what is this?", how is the data sorted, can it be downloaded | UX / Docs | Framing copy, sort explanation, and a clear download affordance | Backlog — file as Gitea issue |
-| F25 | A season that hasn't started is listed as if already ingested | Bug | File as a Gitea bug report (data integrity) | Backlog — file as Gitea issue |
-| F26 | Season download fails after a stat is edited — the export can't be reproduced and nothing downloads | Bug | File as a Gitea bug report; likely an interaction with the editable-stats feature (PR #81/#85/#107) | Backlog — file as Gitea issue |
-| F27 | Optimiser reads as "a minigame, not fantasy basketball" — "optimal lineup" unexplained, fantasy literacy assumed, editable budget isn't a real fantasy rule | UX / Scope | In-app onboarding copy plus a scope decision: model a real fantasy NBA format or reframe the feature honestly; extends F9 | Backlog — file as Gitea issue |
-| F28 | Dropdowns and search controls on the predictions page are hard to see and read | UX / Accessibility | Contrast/readability pass on form controls; extends F7 | Backlog — file as Gitea issue |
-| F29 | Become Pro page purpose unclear — "is this fantasy basketball? no. what is this?" | UX / Copy | Explainer and clearer labeling for the self-upload feature | Backlog — file as Gitea issue |
-| F30 | Player profiles not discoverable — the participant didn't know they existed until shown | UX / Discoverability | Make profile pages discoverable from the players list (explicit affordance on each card) | Backlog — file as Gitea issue |
+| F20 | "Beat the Model" name and the model's win-probability label ("model GSW %") are opaque without explanation | UX / Copy | Rename the feature or add a one-line explainer on the card; label win probabilities in plain language | Backlog |
+| F21 | Player headshots too small on desktop (fine on mobile) | UX | Desktop sizing pass on headshots | Backlog |
+| F22 | Leaderboard graphs don't reflect the user's search/filter selection | Feature | Wire the players-list leaderboard chart to the active selection | Backlog |
+| F23 | Teams list sorted by Elo confuses — expected favourite team first; "what's the difference between win percentage and Elo?" | UX / Feature | Sort/search controls (including "my teams first") plus a short Elo explainer; extends F13's standings request | Backlog |
+| F24 | Data set page purpose unclear — "what is this?", how is the data sorted, can it be downloaded | UX / Docs | Framing copy, sort explanation, and a clear download affordance | Backlog |
+| F25 | A season that hasn't started is listed as if already ingested | Bug | File as a Gitea bug report (data integrity) | Backlog |
+| F26 | Season download fails after a stat is edited — the export can't be reproduced and nothing downloads | Bug | File as a Gitea bug report; likely an interaction with the editable-stats feature (PR #81/#85/#107) | Backlog |
+| F27 | Optimiser reads as "a minigame, not fantasy basketball" — "optimal lineup" unexplained, fantasy literacy assumed, editable budget isn't a real fantasy rule | UX / Scope | In-app onboarding copy plus a scope decision: model a real fantasy NBA format or reframe the feature honestly; extends F9 | Backlog |
+| F28 | Dropdowns and search controls on the predictions page are hard to see and read | UX / Accessibility | Contrast/readability pass on form controls; extends F7 | Backlog |
+| F29 | Become Pro page purpose unclear — "is this fantasy basketball? no. what is this?" | UX / Copy | Explainer and clearer labeling for the self-upload feature | Backlog |
+| F30 | Player profiles not discoverable — the participant didn't know they existed until shown | UX / Discoverability | Make profile pages discoverable from the players list (explicit affordance on each card) | Backlog |
 | F31 | Public data behind login — "we need an API even for info that is not private" | API / Access | Verify public endpoint coverage (read-only game endpoints were made public in PR #99), document how to call the public API without an account, and evaluate what genuinely requires auth | Verify + evaluate |
 
 ### What the interview confirmed
@@ -100,7 +100,7 @@ Quotes below are as captured in the session minutes (lightly cleaned).
 
 ### Interview-sourced changes
 
-None shipped yet — all twelve items are queued for triage alongside the survey backlog (F3–F14, F16, F18) into Gitea issues, per the [integration process](testing.md#how-feedback-is-integrated).
+None shipped yet — all twelve items are queued for triage alongside the survey backlog (F3–F14, F16, F18) into Gitea issues, per the [integration process](feedback-survey.md#how-feedback-is-integrated).
 
 ---
 

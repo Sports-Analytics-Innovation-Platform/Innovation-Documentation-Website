@@ -112,8 +112,7 @@ nav:
       - Requirements Traceability: requirements.md
       - AI Usage Ledger: ai-usage.md
   - User Feedback:
-      - Methodology: user-feedback-methodology.md
-      - Survey Instrument: feedback-survey.md
+      - Survey: feedback-survey.md
       - User Interviews: user-interviews.md
       - Improvements Made: improvements.md
   - Decisions (ADRs):
