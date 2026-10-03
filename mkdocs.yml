@@ -1,5 +1,6 @@
 site_name: NBA Analytics & Optimisation Engine
 site_description: Documentation for the COMS3011A NBA Analytics & Optimisation Engine
+site_url: https://sports-analytics-innovation-platform.github.io/Innovation-Documentation-Website/
 repo_url: https://github.com/Sports-Analytics-Innovation-Platform/Innovation-Documentation-Website.git
 edit_uri: edit/main/docs/
  
@@ -58,7 +59,7 @@ extra:
       link: https://sportsanalytics.pages.dev/
       name: Live Webapp (Cloudflare Pages)
     - icon: material/api
-      link: https://sportsanalytics-api.onrender.com/health
+      link: https://sportsanalytics-api.onrender.com/api/docs
       name: Live API (Render)
     - icon: fontawesome/brands/git
       link: https://sdp.ms.wits.ac.za/innovation/sportsanalytics
@@ -66,6 +67,11 @@ extra:
     - icon: material/view-dashboard
       link: https://sdp.ms.wits.ac.za/innovation/sportsanalytics/projects/8
       name: Project Board (Gitea)
+
+# Working aids for writing minutes: built and linked from Meetings, but kept out of the nav.
+not_in_nav: |
+  meetings/_template.md
+  meetings/how-to-summarize.md
 
 nav:
   - Home:
@@ -118,5 +124,3 @@ nav:
       - Overview: meetings/index.md
       - Client Meetings: meetings/client/index.md
       - Scrum Meetings: meetings/scrum/index.md
-      - Meeting Template: meetings/_template.md
-      - How to Summarise: meetings/how-to-summarize.md

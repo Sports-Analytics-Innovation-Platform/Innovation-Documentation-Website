@@ -128,7 +128,7 @@ Every distinct piece of feedback was mapped to an action: what was already shipp
 | F12 | Show player position in player stats | Verify if surfaced; file if missing | Verify |
 | F13 | More team details (recent games with outcomes) | Team profile pages shipped (PR #123); extend if needed | **Shipped** |
 | F14 | Beat the Model: random daily/weekly games | Evaluate for Sprint 3 | Backlog |
-| F15 | Three respondents left contact details for interviews | 1:1 follow-up interviews in Sprint 3 — first session conducted 2026-09-27; two remain | **In progress** |
+| F15 | One respondent left contact details for an interview | 1:1 follow-up interview conducted 2026-09-27 | **Complete** |
 | F16 | Injuries and expected return dates | Evaluate adding an injury data source | Backlog |
 | F17 | Player-level predictions, not just game-level | Matchup projections already exist (PR #105); surface them next to game predictions | Shipped |
 | F18 | Some pages carry too much information | Progressive-disclosure pass alongside F7–F9 | Backlog |
