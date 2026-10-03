@@ -1,6 +1,6 @@
 # CI/CD Pipeline
 
-CI runs on **Gitea Actions** from one workflow, `.gitea/workflows/ci.yml` in the app repo, on every push and pull request. CD runs from a GitHub mirror of the Gitea repo, which Cloudflare Pages and Render deploy from. This meets the brief's CI/CD requirement (§2.1, see [Requirements](requirements.md)).
+CI runs on **Gitea Actions** from one workflow, `.gitea/workflows/ci.yml` in the app repo, on every push and pull request. CD runs from a GitHub mirror of the Gitea repo, which Cloudflare Pages and Render deploy from. This meets the brief's CI/CD requirement (§2.1).
 
 ## CI: three parallel jobs
 
