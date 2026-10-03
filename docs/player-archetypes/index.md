@@ -2,9 +2,6 @@
 
 Every NBA player with enough minutes is placed into **playing-style archetypes**, such as "Stretch big" or "Pass-first point guard", and matched with the **five players who play most like them**. Both are worked out from box-score data and shown in a "Style & similar players" section on the player's profile.
 
-!!! warning "In review, not merged"
-    Built on branch `player-archetypes` (last updated 28 Sep). It adds the `apps/similarity` service, four tables, three API routes and the profile section. None of it is in production yet.
-
 ## What users see
 
 - **Playing style.** Up to three archetypes, strongest first, each with a bar and a whole-number percentage. The player's listed position is shown beside them, because position isn't a model input and about a third of players land in an archetype that doesn't match it.
@@ -76,13 +73,14 @@ All public, behind the same guards as other player routes. Without `season`, eac
 
 Details are in the [API Reference](../api-reference.md#archetypes); the four tables are in the [ERD](../design/erd.md#player-archetypes).
 
-## Deploying to production
+## Fitting a season
 
-1. **Apply the migration.** It only adds four tables, so the current code ignores them.
-2. **Merge the pull request.** Profiles show "No season has been analysed for playing style yet." until step 3.
-3. **Write the model:** `python build_archetypes.py --season 2025-26 --apply` with `apps/similarity/.env` pointing at production.
+```bash
+cd apps/similarity
+python build_archetypes.py --season 2025-26 --apply
+```
 
-Without `--apply` the script is a dry run on a read-only connection. With it, the season's rows are replaced in one transaction. It refuses to fit fewer than 10 eligible players per group.
+The script reads `apps/similarity/.env` for the database. Without `--apply` it is a dry run on a read-only connection; with it, the season's rows are replaced in one transaction. It refuses to fit fewer than 10 eligible players per group. Until a season is fitted, profiles show "No season has been analysed for playing style yet."
 
 ## Testing
 

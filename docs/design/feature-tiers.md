@@ -71,7 +71,7 @@ How the platform meets each tier of the brief (COMS3011A Project 3, "Sport Analy
 | **Lineup optimizer** | The best five-player fantasy lineup under a salary cap, solved as an integer program. |
 | **Personal features** | Beat the Model picks with a leaderboard, followed players and teams, saved comparisons and lineups. |
 | **[Become Pro](../become-pro/index.md)** | A user logs their own games and sees the NBA draft pick their season most resembles, its rookie salary, and the three most similar NBA rookies. Private to each user. |
-| **[Player Archetypes](../player-archetypes/index.md)** | In review, not merged. Nine playing styles found by clustering 2025-26 box-score rates, with a league style map. |
+| **[Player Archetypes](../player-archetypes/index.md)** | Nine playing styles found by clustering 2025-26 box-score rates, with a league style map. |
 
 ---
 

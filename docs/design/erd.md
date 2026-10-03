@@ -1,6 +1,6 @@
 # ERD
 
-The platform's PostgreSQL database (Supabase), managed with Prisma. On `main` the schema has **35 tables and 7 enums**; the newest migration is `20260923000000_add_become_pro`. Every table and constraint here was checked against `apps/api/prisma/schema.prisma` on 28 September 2026.
+The platform's PostgreSQL database (Supabase), managed with Prisma. The schema has **39 tables and 7 enums**; the newest migration is `20260923000000_add_become_pro`. Every table and constraint here was checked against `apps/api/prisma/schema.prisma` on 28 September 2026.
 
 Why the database is designed this way: [ADR-001: Database](../decisions/adr-001-database.md). Where it runs: [ADR-003](../decisions/adr-003-hosting-topology.md). Why play-by-play is stored for one season only: [ADR-005](../decisions/adr-005-play-by-play-storage.md).
 
@@ -182,8 +182,7 @@ Five indexes for the common queries (`Game` by date and by team, `PlayerGameStat
 
 ## Player archetypes
 
-!!! warning "In review, not merged"
-    Four more tables (`Archetype`, `PlayerArchetype`, `PlayerArchetypeMembership`, `PlayerSimilarity`) come from migration `20260922200000_add_player_archetypes` on the `player-archetypes` branch. They are not in production. [Player Archetypes](../player-archetypes/index.md) describes them.
+Four tables from migration `20260922200000_add_player_archetypes`: `Archetype`, `PlayerArchetype`, `PlayerArchetypeMembership` and `PlayerSimilarity`. They are written only by `apps/similarity` and read by three API routes; [Player Archetypes](../player-archetypes/index.md#how-it-works) describes what they hold.
 
 ## Open issues
 

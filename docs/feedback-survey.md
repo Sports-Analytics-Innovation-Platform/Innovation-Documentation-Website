@@ -85,7 +85,7 @@ The sample leans towards basketball novices on phones, but it includes one hardc
 | F6 | Optimiser: alternative lineups (Q17: 3) | Next-best lineups from the solver | Backlog |
 | F7 | Stat abbreviations unexplained; small labels (Q9, Q21) | Explanations beside the traits radar; the stat tiles still have none | **Partly shipped** |
 | F8 | Landing copy is "wordy… LLM-esque" (Q6) | Plain-language pass | Backlog |
-| F9 | A beginner's guide (Q21, Q23) | Player Archetypes explains each player's style in plain words | In review, not merged |
+| F9 | A beginner's guide (Q21, Q23) | Player Archetypes explains each player's style in plain words | **Shipped** |
 | F10 | Search "manon" should find "Mañón" (Q24) | Accent-insensitive search | Backlog |
 | F11 | All-time stat leaders (Q9) | Needs seasons beyond the three ingested | Backlog |
 | F12 | Show player position (Q21) | Already in the profile header | **Already shown** |

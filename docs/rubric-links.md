@@ -2,9 +2,6 @@
 
 Every rubric criterion in the COMS3011A brief, linked to its evidence, grouped by milestone in the brief's order. Live evidence: the [web app](https://sportsanalytics.pages.dev/), the [API's Swagger UI](https://sportsanalytics-api.onrender.com/api/docs) and the [Gitea repo](https://sdp.ms.wits.ac.za/innovation/sportsanalytics) (needs a login).
 
-!!! note "Known gap"
-    Player Archetypes is built but not merged, so it is not live. It is marked "in review" wherever it appears.
-
 ## Milestone 1: Sprint 1 (due 2026-08-25)
 
 | Criterion | Weight | Evidence |
@@ -42,10 +39,10 @@ Every rubric criterion in the COMS3011A brief, linked to its evidence, grouped b
 |---|---|---|
 | User Feedback | 10% | [User Feedback Survey](feedback-survey.md) (11 responses) and a hands-on [User Interview](user-interviews.md) (2026-09-27) |
 | Automated Testing | 10% | [Testing](testing.md): 974 API and 717 web tests at the Become Pro hand-off, plus a 65-check live browser run, with an 80% coverage threshold in CI |
-| Feature Implementation | 20% | [Feature Tiers](design/feature-tiers.md): Basic complete, Intermediate largely complete, Advanced partial. Also [Become Pro](become-pro/index.md). |
-| API Implementation | 20% | [API Reference](api-reference.md): 103 live operations, including admin, datasets, custom statistics, API keys and Become Pro |
+| Feature Implementation | 20% | [Feature Tiers](design/feature-tiers.md): Basic complete, Intermediate largely complete, Advanced partial. Also [Become Pro](become-pro/index.md) and [Player Archetypes](player-archetypes/index.md). |
+| API Implementation | 20% | [API Reference](api-reference.md): 106 live operations, including admin, datasets, custom statistics, API keys and Become Pro |
 | Performance | 5% | [Performance](design/performance.md): caching with before/after query counts, a load test at 10 concurrent users (the data routes still need measuring with an API key), and Lighthouse scores of 88–95 |
-| Improvement | 5% | [Improvements Made](improvements.md): six shipped changes, each with a before/after and the feedback item that prompted it |
+| Improvement | 5% | [Improvements Made](improvements.md): seven shipped changes, each with a before/after and the feedback item that prompted it |
 | Documentation | 15% | This site, especially the [API Reference](api-reference.md), [ERD](design/erd.md) and [Architecture](design/architecture.md) |
 | Project Methodology | 15% | [Methodology](methodology.md) and the [Sprint Log](sprint-log.md) |
 
@@ -53,7 +50,7 @@ Every rubric criterion in the COMS3011A brief, linked to its evidence, grouped b
 
 | Criterion | Area | Weight | Evidence |
 |---|---|---|---|
-| Data | Database | 3% | [ERD](design/erd.md): 35 tables and 7 enums on Supabase Postgres |
+| Data | Database | 3% | [ERD](design/erd.md): 39 tables and 7 enums on Supabase Postgres |
 | Deployment | Database | 2% | [ADR-003](decisions/adr-003-hosting-topology.md): Supabase, pooled connections over TLS |
 | Structure | Database | 5% | [ERD](design/erd.md), [ADR-001](decisions/adr-001-database.md), [ADR-005](decisions/adr-005-play-by-play-storage.md) |
 | Availability | API | 3% | [Live API](https://sportsanalytics-api.onrender.com/v1/health), kept warm by a pinger |

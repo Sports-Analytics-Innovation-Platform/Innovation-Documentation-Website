@@ -48,7 +48,7 @@ What the client asked for at each meeting and what the team did about it. The fu
 | 27 Sep | Run Lighthouse on data-heavy pages, not only the landing page | Home, Teams, Players and Admin scored 88–95 for performance on mobile and 100 for accessibility | [Performance](design/performance.md#lighthouse-scores-2026-09-29) |
 | 27 Sep | Re-test the API now that keys are required, including rate limits | Live API tested with a consumer key: missing and invalid keys and rate limits | [AI Usage Ledger](ai-usage.md) (27 Sep) |
 | 27 Sep | Stress-test the API | 704 requests in 30 seconds from 10 concurrent users against production. It sent no API key, so the data routes still need re-testing | [Performance](design/performance.md#load-test-2026-09-29) |
-| 27 Sep | Ship and document at least one change that came from user feedback | Six shipped, each with before and after | [Improvements Made](improvements.md) |
+| 27 Sep | Ship and document at least one change that came from user feedback | Seven shipped, each with before and after | [Improvements Made](improvements.md) |
 
 At the 27 Sep meeting the client said the docs site needed no changes and the Git and meeting process was being followed, and closed with "I'm happy. There's nothing left."
 

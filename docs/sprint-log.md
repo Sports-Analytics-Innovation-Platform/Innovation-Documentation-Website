@@ -154,7 +154,7 @@ About 35 merged PRs, mostly the brief's Intermediate and Advanced requirements.
 | Re-scope Become Pro to private only; fix bugs from a 65-check live browser run | `fix` | Kiran Soodyall |
 | Train the valuation model (140 rookie seasons, MAE 10.9 picks) | `chore` | Kiran Soodyall |
 | Past-season ingestion without overwriting rosters; career tab kept to one segment (PRs #196–#198) | `fix` | Sanele H. |
-| Player Archetypes and the style map (in review, not merged) | `feat` | Sanele H. |
+| Player Archetypes and the style map | `feat` | Sanele H. |
 | Database, ingestion and archetypes docs | `docs` | Sanele H. |
 | Live API test transcript | `docs` | Daniel Passos |
 | Survey analysis at 11 responses; first follow-up interview (F20–F31) | `docs` | Adrian Draxl |

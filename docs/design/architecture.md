@@ -7,7 +7,7 @@ The platform is not a monolith. The web app (`apps/web`) and the API (`apps/api`
 | `apps/web` | React single-page app | Cloudflare Pages ([sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/)) |
 | `apps/api` | NestJS REST API, versioned under `/v1/` | Render ([Swagger UI](https://sportsanalytics-api.onrender.com/api/docs)) |
 | Database | PostgreSQL with Prisma | Supabase |
-| `apps/ingestion`, `apps/predictor`, `apps/optimizer`, `apps/valuation` | Python batch jobs | Run from a team member's machine |
+| `apps/ingestion`, `apps/predictor`, `apps/optimizer`, `apps/valuation`, `apps/similarity` | Python batch jobs | Run from a team member's machine |
 | CI | Lint, typecheck and tests on every push | Gitea Actions |
 | Docs | This site | GitHub Pages |
 
@@ -55,6 +55,7 @@ One request end to end: the CORS check against `WEB_ORIGIN`, the session cookie,
 | `apps/predictor` | Elo win probability and Four Factors margin for each game | `GamePrediction`, `GamePredictionRun` |
 | `apps/optimizer` | Projects fantasy points and picks five players under a salary cap with MILP (PuLP/CBC) | `PlayerPrediction`, `Lineup`, `LineupSlot` |
 | `apps/valuation` | Fits the Become Pro draft-slot model on real NBA rookie seasons. The API applies it whenever a user's season changes. | `ProspectValuationModel` |
+| `apps/similarity` | Groups players into [playing-style archetypes](../player-archetypes/index.md) and finds the five most similar players | `Archetype`, `PlayerArchetype`, `PlayerArchetypeMembership`, `PlayerSimilarity` |
 
 The tables are on the [ERD](erd.md).
 

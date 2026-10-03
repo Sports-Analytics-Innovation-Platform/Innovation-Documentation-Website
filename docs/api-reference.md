@@ -5,7 +5,7 @@ The NBA Analytics API is a NestJS service hosted at **[sportsanalytics-api.onren
 - **Swagger UI:** [/api/docs](https://sportsanalytics-api.onrender.com/api/docs). Every operation, its parameters and response shapes, with "Try it out".
 - **OpenAPI JSON:** [/api-json](https://sportsanalytics-api.onrender.com/api-json).
 
-This page summarises the conventions every route shares and lists all 103 live operations, grouped by area. The spec comes from `@nestjs/swagger` decorators (`@ApiTags`, `@ApiOperation`, `@ApiQuery`, `@ApiResponse`) on each controller, wired up in `apps/api/src/main.ts`.
+This page summarises the conventions every route shares and lists all 106 live operations, grouped by area. The spec comes from `@nestjs/swagger` decorators (`@ApiTags`, `@ApiOperation`, `@ApiQuery`, `@ApiResponse`) on each controller, wired up in `apps/api/src/main.ts`.
 
 ---
 
@@ -283,8 +283,13 @@ Every `/v1/admin/**` route needs a session with the `ADMIN` role.
 
 ### Archetypes
 
-!!! note "Planned, not live"
-    The archetype routes (`GET /v1/players/{id}/archetype`, `GET /v1/archetypes`, `GET /v1/archetypes/map`) are on the unmerged `player-archetypes` branch. See [Player Archetypes](player-archetypes/index.md).
+Each uses the latest fitted season unless `season` is given. See [Player Archetypes](player-archetypes/index.md).
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| `GET` | `/v1/players/{id}/archetype` | Key or session | Up to three archetypes, the five most similar players and the style-map position. `archetype` is `null` if the player wasn't placed. |
+| `GET` | `/v1/archetypes` | Key or session | The season's archetypes and their sizes |
+| `GET` | `/v1/archetypes/map` | Key or session | Every placed player's style-map position; `404` if no season has been fitted |
 
 The API also serves BetterAuth's own sign-in routes under `/auth/*`. They appear in Swagger as catch-all `/*splat` entries and are not counted above.
 

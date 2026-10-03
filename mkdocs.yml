@@ -91,7 +91,7 @@ nav:
       - Become Pro:
           - Overview: become-pro/index.md
           - Valuation Model: become-pro/valuation-model.md
-      - Player Archetypes (in review): player-archetypes/index.md
+      - Player Archetypes: player-archetypes/index.md
       - Roadmap: design/roadmap.md
   - Architecture:
       - Overview: design/architecture.md

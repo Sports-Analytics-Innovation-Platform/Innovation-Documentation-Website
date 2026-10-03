@@ -54,7 +54,7 @@ These rules are built into the schema or the shared queries, so no single page o
 
 ## Schema change history
 
-All 25 migrations are in `apps/api/prisma/migrations/`, applied in date order.
+All 26 migrations are in `apps/api/prisma/migrations/`, applied in date order.
 
 | Date | Migration | Change |
 |---|---|---|
@@ -82,9 +82,8 @@ All 25 migrations are in `apps/api/prisma/migrations/`, applied in date order.
 | 18 Sep | `store_dataset_release_csv` | Releases store their CSV (rule 14) |
 | 18 Sep | `add_ingestion_request_queue` | Queued pulls and the pull worker |
 | 19 Sep | `add_event_correction_revert_link` | Undo links to the correction it reverts (rule 12) |
+| 22 Sep | `add_player_archetypes` | The four [Player Archetypes](../player-archetypes/index.md) tables |
 | 23 Sep | `add_become_pro` | The four [Become Pro](../become-pro/index.md) tables |
-
-[Player Archetypes](../player-archetypes/index.md), in review, adds a 26th.
 
 ## Consequences
 
