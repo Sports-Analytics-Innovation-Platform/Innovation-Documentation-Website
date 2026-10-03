@@ -2,8 +2,7 @@
 
 How [Become Pro](index.md) turns a user's season line into a projected draft pick and a dollar figure. There is no LLM in this pipeline: a Python job fits an ordinary least-squares model on real NBA rookie seasons, and the API applies it.
 
-!!! warning "What the figure means"
-    The model answers **"which pick's rookie year does this line most resemble"**, not "where would this player be drafted". Age, size, athleticism and scouting aren't in the data. The page says the figure is "not an offer and not a market price" and always shows a wide range. See [Known limitations](#known-limitations).
+The figure answers "which pick's rookie year does this line most resemble", not "where would this player be drafted" ([Known limitations](#known-limitations)). The page calls it "not an offer and not a market price" and always shows a range.
 
 ## From a season line to a dollar figure
 

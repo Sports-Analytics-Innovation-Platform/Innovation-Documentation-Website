@@ -2,8 +2,7 @@
 
 A step-by-step walkthrough of the [live web app](https://sportsanalytics.pages.dev/). It is the fastest way to see everything the platform does.
 
-!!! tip "For the marking tutor"
-    About 10 minutes. Steps 1–6 are public and need no login. Steps 7–11 need a Google sign-in. The admin tools need a role the team has to grant, so they are described [at the end](#what-needs-an-admin-account) instead of walked through.
+It takes about 10 minutes. Steps 1–6 are public; steps 7–11 need a Google sign-in. The admin tools need a role the team grants, so they are [described at the end](#what-needs-an-admin-account) instead.
 
 - **Live web app:** [sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/)
 - **Live API:** [sportsanalytics-api.onrender.com/v1/health](https://sportsanalytics-api.onrender.com/v1/health). A pinger keeps it warm.

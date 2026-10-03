@@ -71,7 +71,6 @@ The intent is for CI to also run a secret scanner (`gitleaks`/`trufflehog`) on e
 - Every repo (`apps/api`, `apps/web`) keeps its own README with setup instructions, verified periodically by a teammate who hasn't touched that repo doing a clean install.
 - Commit history should stay clean going into each milestone — no dead code, no commented-out blocks, consistent formatting.
 
-!!! note "Why not push straight to `main`?"
-    Milestone rubrics grade both **git methodology being documented** and **being used** — direct pushes and unreviewed merges undercut both, even if the code itself is fine.
+---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5.5]*

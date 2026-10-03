@@ -194,10 +194,7 @@ Five indexes for the common queries (`Game` by date and by team, `PlayerGameStat
 
 The database has an index on `IngestionBatch.reviewedById` and a default on `IngestionSchedule.updatedAt` that `schema.prisma` doesn't declare. Both are harmless. The next `prisma migrate dev` will try to drop them; remove those lines from the generated migration unless the change is intended.
 
-??? note "The original column diagram (20 tables, drawn before Sprint 3)"
-    ![Database ERD, Sprints 1–2](diagrams/database-erd.svg)
-
-    Source: `docs/diagrams/database-erd.puml` in the app repository. It predates the 15 tables added in Sprint 3 and the five play-by-play columns on `GameEvent`.
+The [original column diagram](diagrams/database-erd.svg) (20 tables) was drawn before Sprint 3 and is kept for the record; its source is `docs/diagrams/database-erd.puml` in the app repository.
 
 ---
 

@@ -7,10 +7,11 @@ COMS3011A Sport Analytics Tool: project documentation. The code lives in the tea
 - [:material-server: **Source repo**](https://sdp.ms.wits.ac.za/innovation/sportsanalytics) on Gitea
 - [:material-view-dashboard: **Project board**](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/projects/8) on Gitea (needs a Gitea login)
 
-!!! tip "Marking? Start here"
-    1. **[Demo Guide](demo-guide.md):** a 10-minute walkthrough of the live app.
-    2. **[Rubric Quick Links](rubric-links.md):** every rubric criterion linked to its evidence.
-    3. **[Getting Started](getting-started.md):** run the project locally.
+## Start here
+
+1. **[Demo Guide](demo-guide.md):** a 10-minute walkthrough of the live app.
+2. **[Rubric Quick Links](rubric-links.md):** every rubric criterion linked to its evidence.
+3. **[Getting Started](getting-started.md):** run the project locally.
 
 ## Status
 

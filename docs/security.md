@@ -13,10 +13,7 @@ Sign-in is **BetterAuth** with **Google OAuth** ([ADR-002](decisions/adr-002-aut
 
 ### Session cookie cache
 
-BetterAuth trusts a signed session cookie for up to 5 minutes instead of reading the `Session` and `User` tables on every request ([ADR-004](decisions/adr-004-caching-strategy.md), [Performance](design/performance.md)).
-
-!!! warning "A revoked session stays valid for up to 5 minutes"
-    A session revoked from another device, or a role changed directly in the database, takes effect only when the cookie is next checked. Sign-out and account deletion clear the cookie at once. A future "sign out of all devices" button would need to bypass the cache.
+BetterAuth trusts a signed session cookie for up to 5 minutes instead of reading the `Session` and `User` tables on every request ([ADR-004](decisions/adr-004-caching-strategy.md), [Performance](design/performance.md)). So a session revoked from another device, or a role changed in the database, takes effect when the cookie is next checked. Sign-out and account deletion clear the cookie at once.
 
 ## Authorization
 

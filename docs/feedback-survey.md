@@ -106,19 +106,17 @@ F20–F31 come from the interview and are listed on [User Interviews](user-inter
 
 ## The questionnaire
 
-??? note "All 25 questions"
-
-    | Section | Questions |
-    |---|---|
-    | About you | Q1 basketball familiarity · Q2 fantasy experience · Q3 device |
-    | First impressions (landing page) | Q4 what does the tool do? (text) · Q5 visual appeal (1–5) · Q6 is it clear what you can do? |
-    | Home dashboard | Q6b dashboard usefulness (1–5) · Q6c Beat the Model engagement (1–5) |
-    | Players | Q7 finding a player (1–5) · Q8 stats usefulness · Q9 what else would you like to see? (text) |
-    | Teams | Q10 browsing teams (1–5) · Q11 want more team details? |
-    | Predictions | Q12 confidence for fantasy decisions (1–5) · Q13 what would build trust? · Q14 what would you use them for? |
-    | Optimiser | Q15 usefulness (1–5) · Q16 output clarity (1–5) · Q17 what would improve it? |
-    | Overall | Q18 satisfaction (1–5) · Q19 use again (1–5) · Q20 most useful feature · Q21 what's missing? (text) · Q22 any bugs? |
-    | Final thoughts | Q23 one feature to add (text) · Q24 other comments (text) · Q25 follow-up interview? (optional email) |
+| Section | Questions |
+|---|---|
+| About you | Q1 basketball familiarity · Q2 fantasy experience · Q3 device |
+| First impressions (landing page) | Q4 what does the tool do? (text) · Q5 visual appeal (1–5) · Q6 is it clear what you can do? |
+| Home dashboard | Q6b dashboard usefulness (1–5) · Q6c Beat the Model engagement (1–5) |
+| Players | Q7 finding a player (1–5) · Q8 stats usefulness · Q9 what else would you like to see? (text) |
+| Teams | Q10 browsing teams (1–5) · Q11 want more team details? |
+| Predictions | Q12 confidence for fantasy decisions (1–5) · Q13 what would build trust? · Q14 what would you use them for? |
+| Optimiser | Q15 usefulness (1–5) · Q16 output clarity (1–5) · Q17 what would improve it? |
+| Overall | Q18 satisfaction (1–5) · Q19 use again (1–5) · Q20 most useful feature · Q21 what's missing? (text) · Q22 any bugs? |
+| Final thoughts | Q23 one feature to add (text) · Q24 other comments (text) · Q25 follow-up interview? (optional email) |
 
 ---
 

@@ -46,8 +46,7 @@ A developer can also run `ingest.py` by hand, and a locally running API starts `
 
 A full pull takes 35–45 minutes. Every write is an upsert on the NBA's own IDs, so re-running a pull refreshes data instead of duplicating it.
 
-!!! warning "Don't pull an older season into production"
-    Play-by-play is stored for 2025-26 only, because of the 500 MB database limit. Pulling 2023-24 or 2024-25 would add at least 120 MB. Older postseasons have their own route: see [ADR-005](../decisions/adr-005-play-by-play-storage.md#loading-older-postseasons).
+Production stores play-by-play for 2025-26 only, because of the 500 MB database limit, so older seasons are loaded without plays ([ADR-005](../decisions/adr-005-play-by-play-storage.md#loading-older-postseasons)).
 
 ## Batches
 
