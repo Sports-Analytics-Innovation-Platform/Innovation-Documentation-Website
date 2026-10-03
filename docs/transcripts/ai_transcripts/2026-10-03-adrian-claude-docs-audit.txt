@@ -779,5 +779,40 @@ I'll export this session's transcript the way Kiran's was done: by script from t
 ASSISTANT:
 The export reads well. Before committing I'll also hide the local Windows path, and I'll re-run the export at the very end so it covers the whole session. Next is the ledger row.
 
-    [tool calls: Bash x3]
+    [tool calls: Bash x4]
+
+ASSISTANT:
+Ledger row and transcript are committed. Next, the Testing page needs the similarity service, since Archetypes is now documented as merged.
+
+    [tool calls: Bash x5]
+
+ASSISTANT:
+Testing is updated. Now the housekeeping in your local docs repo: stash the `site/` build output, then pull `main`.
+
+    [tool calls: Bash x2]
+
+ASSISTANT:
+`main` is now up to date at 4c00ab5, and `site/` is no longer tracked (that commit untracked it). Next I'm checking whether `gh-pages` is still used.
+
+    [tool calls: Bash]
+
+ASSISTANT:
+The workflow deploys with `actions/deploy-pages`, and `gh-pages` was last written on 6 Aug. To be sure, I'll also check that GitHub Pages is set to build from Actions rather than from that branch.
+
+    [tool calls: Bash x4]
+
+ASSISTANT:
+The push is probably waiting on a GitHub sign-in window from Git Credential Manager. If one has popped up, approve it. Meanwhile I'm writing the copy-paste backlog items.
+
+    [tool calls: Bash x2, Artifact]
+
+ASSISTANT:
+While the push waits, I'm drafting the backlog items. First a quick check of two facts they rely on.
+
+    [tool calls: Bash x2]
+
+ASSISTANT:
+It's only a warm-up ping that ignores the reply, so your instinct on item 20 was right. I'll write that up. Now building the backlog page.
+
+    [tool calls: Bash x4, Write, Artifact, PowerShell]
 
