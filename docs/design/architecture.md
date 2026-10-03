@@ -1,85 +1,66 @@
 # Architecture Overview
 
-## Deployment diagram
+The platform is not a monolith. The web app (`apps/web`) and the API (`apps/api`) are separate applications, deployed separately, that talk only over HTTP. Python services write to Postgres as separate processes and never go through the API.
 
-This satisfies the brief's non-monolithic requirement (§2.1): `apps/web` and `apps/api` are separate, independently deployed applications that only communicate over HTTP — confirmed directly from the code (`apiClient.ts` calls `fetch` against `VITE_API_BASE_URL`, nothing shares in-process state). The Python services (`ingestion`, `predictor`, `optimizer`, and since PR #192 `valuation`) write directly to Postgres as separate processes, never through the API.
+| Component | What it is | Host |
+|---|---|---|
+| `apps/web` | React single-page app | Cloudflare Pages ([sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/)) |
+| `apps/api` | NestJS REST API, versioned under `/v1/` | Render ([Swagger UI](https://sportsanalytics-api.onrender.com/api/docs)) |
+| Database | PostgreSQL with Prisma | Supabase |
+| `apps/ingestion`, `apps/predictor`, `apps/optimizer`, `apps/valuation` | Python batch jobs | Run from a team member's machine |
+| CI | Lint, typecheck and tests on every push | Gitea Actions |
+| Docs | This site | GitHub Pages |
+
+Why these hosts: [ADR-003: Hosting Topology](../decisions/adr-003-hosting-topology.md).
+
+## Deployment diagram
 
 ![Deployment diagram](diagrams/deployment.svg)
 
-Generated from [ADR-003](../decisions/adr-003-hosting-topology.md) and the current `apps/api`/`apps/web` source (PlantUML source in the main app repo's `docs/diagrams/deployment.puml`). Shows the full production path (Cloudflare Pages → Render → Supabase), the OAuth and unofficial `stats.nba.com` dependencies, local dev as a separate parallel path, and CI. As of this diagram, the Python batch jobs (`ingestion`/`predictor`/`optimizer`) are still run manually from a developer machine — `render.yaml` only declares the API web service, not the Cron Jobs/Background Workers this page's table below still lists as "planned."
+The production path is Cloudflare Pages → Render → Supabase. Pages Functions proxy `/api` and `/auth` on the web app's own origin, so the session cookie is first-party. Ingestion runs on a team member's machine because stats.nba.com blocks cloud networks: the API queues a pull and the pull worker runs it ([Data Ingestion](ingestion.md)).
+
+## Frontend (`apps/web`)
+
+- **React 19 and Vite**, **Tailwind CSS v4** (theme tokens in `index.css`) and shadcn/ui components.
+- **React Router** with 16 routes. The [UI Overview](wireframes.md#pages) lists them.
+- **TanStack Query** for fetching and caching. Every call goes through one wrapper in `lib/apiClient.ts`, with `credentials: "include"` for the session cookie.
+- **Recharts** for the traits radar and the points trend.
+
+## Backend (`apps/api`)
+
+- **NestJS, Prisma and PostgreSQL** ([ADR-001](../decisions/adr-001-database.md)). One module per feature, each with a controller and a service; every service uses the shared `PrismaService`.
+- **BetterAuth** with Google OAuth, mounted at `/auth/*` ([ADR-002](../decisions/adr-002-auth.md)).
+- **Guards:** public reads need a session or an `X-API-Key`; `/v1/me/*` and the optimizer need a session; `/v1/admin/*` needs the `ADMIN` role (`RolesGuard`). The [API Reference](../api-reference.md#authentication) has the details.
+- **One error envelope** for every error response ([API Design](api-design.md)).
+- **An in-process response cache** for public reads ([ADR-004](../decisions/adr-004-caching-strategy.md), [Performance](performance.md)).
+- **Health check** at [`/v1/health`](https://sportsanalytics-api.onrender.com/v1/health). A pinger keeps the free Render instance warm.
 
 ### Class diagram
 
 ![Backend class diagram](diagrams/class-diagram.svg)
 
-The `apps/api` controller/service/guard structure: each feature module's controller depends on its own service(s), every service goes through the single `PrismaService`, and `SessionAuthGuard`/`RolesGuard` sit in front of the auth-gated controllers (Games, Optimizer). `RolesGuard` is wired up and tested but not yet used by any route — no endpoint currently requires a role above the default `USER`.
-
-### Database ERD
-
-![Database ERD](diagrams/database-erd.svg)
-
-!!! warning "Diagram not regenerated — schema has grown substantially since"
-    The schema is now 31 models and 6 enums (`schema.prisma`, checked 2026-09-23), not the 20 tables/3 enums this diagram and its caption originally described. The image above has not been regenerated against the current schema and should not be trusted for exact table names/relationships until it is — see [ERD](erd.md) and `apps/api/prisma/schema.prisma` directly in the meantime.
-
-Grouped by which part of the system writes to them: user accounts (`User`, `Session`, `Account`, `Verification`), NBA data written by the ingestion scripts (`Team`, `Player`, `Game`, `GameEvent`, `PlayerGameStat`), the submission/review layer (`IngestionBatch`, `EventCorrection`), game predictions written by the predictor (`GamePrediction`, `GamePredictionRun`), fantasy lineups written by the optimizer (`PlayerPrediction`, `Lineup`, `LineupSlot`), the API-consumer layer (`ApiConsumer`, `ApiKey`, `ApiUsageLog`), dataset releases (`DatasetRelease`), analyst-defined statistics (`CustomStatistic`), the ingestion job queue (`IngestionRequest`, `IngestionWorker`), and personal data the API writes when a signed-in user saves something (`UserFollowedPlayer`, `GamePick`, `SavedComparison`, `SavedComparisonPlayer`, `SavedLineup`, `SavedLineupSlot`, and more added since). See [ERD](erd.md) for what every column means, and [ADR-001: Database](../decisions/adr-001-database.md) for why the schema is designed this way.
+Drawn in Sprint 1: controllers depend on their services, and every service goes through `PrismaService`. The modules added since (admin, datasets, API keys, custom statistics, Become Pro) follow the same pattern.
 
 ### Sequence diagram: `GET /v1/games/:id/prediction`
 
 ![Sequence diagram: game prediction request](diagrams/sequence-game-prediction.svg)
 
-Walks a single auth-gated request end to end, including why it works cross-origin in production (Cloudflare Pages calling Render): the CORS middleware checks the request's `Origin` against the `WEB_ORIGIN` allowlist before it ever reaches Nest, and the session cookie survives the cross-site request only because `auth.config.ts` sets `defaultCookieAttributes: { sameSite: "none" }` in production (paired with `Secure`, derived from `baseURL`'s `https://` scheme). Also shows the two-step 404 (game not found vs. game found but not yet predicted) and that the `GamePrediction` row itself comes from an out-of-band `apps/predictor` run, never from this request. See [API Design](api-design.md) for the full endpoint table.
-
-## Frontend (`apps/web`)
-
-- **React + Vite**, **Tailwind CSS v4** (via `@theme` custom properties in `index.css`, not the older `tailwind.config.js` token approach).
-- **React Router** — grown well past the original eight routes: `/` (landing), `/onboarding`, `/profile` (API keys live here now, `/api-keys` redirects), `/home` (signed-in dashboard), `/players`, `/players/:playerId`, `/compare`, `/teams`, `/teams/:teamId`, `/datasets`, `/become-pro` (signed-in, private to its owner), `/optimizer` (signed-in), `/predictions` (signed-in), `/games/:gameId`, `/admin` (`ADMIN` role).
-- **Recharts** — `RadarChart` (player traits) and `LineChart` (points trend), both themed against the same CSS variables as the rest of the UI.
-- **TanStack Query** for data-fetching/caching against the API.
-- **shadcn/ui** for component library, paired with Tailwind.
-- All backend calls go through `lib/apiClient.ts`, a single `fetchJson<T>` wrapper — one place controls the base URL and request options.
-- `credentials: "include"` on every request for cookie-based auth.
-- **Top navbar** with eight nav links (Home, Players, Compare, Teams, Datasets, Optimizer, Predictions, Become Pro, plus Admin for admins) and a sign-in button. See [UI Overview](wireframes.md#navigation).
-- **Court view** visualisation for predicted top scorers by position on a basketball court.
-- Deployed on **Cloudflare Pages** (global CDN, managed TLS, auto-deploy from GitHub mirror).
-
-## Backend (`apps/api`)
-
-- **NestJS** on top of **Prisma** and **PostgreSQL (Supabase)** — see [ADR-001](../decisions/adr-001-database.md).
-- **BetterAuth** (Google OAuth) for auth — see [ADR-002](../decisions/adr-002-auth.md). BetterAuth mounts its own route set at `/api/auth/*`.
-- Routes are versioned under `/v1/` — see [API Design](api-design.md) for the full endpoint table.
-- **Auth-gated endpoints**: predictions and optimizer endpoints require an authenticated session (`SessionAuthGuard`). Players, teams, games, analytics, and datasets are public reads — but "public" no longer means "no auth at all": since PR #172, every request to those routes needs *either* a signed-in session *or* a valid `X-API-Key` (`OptionalSessionGuard` + `ApiKeyGuard`), so a truly anonymous, keyless request gets `401 API_KEY_REQUIRED`. Admin endpoints (`/v1/admin/*`) require the `ADMIN` role via `RolesGuard` — the first real use of the role infrastructure, wired up once the admin corrections/consumer-management features landed.
-- **Response cache** — a small in-process cache (`apps/api/src/cache/`) in front of public reads, with no external cache service. Nothing under `/v1/me` is cached. See [Performance](performance.md) and [ADR-004](../decisions/adr-004-caching-strategy.md).
-- **Become Pro module** (`apps/api/src/become-pro/`) — the session-guarded `/v1/me/become-pro` routes. It derives a user's season line with the same `deriveSeasonAverages` code as the NBA player pages, and re-values the season against the newest `ProspectValuationModel` (trained by `apps/valuation`) on every game write. See [Become Pro](../become-pro/index.md).
-- **Health check** at `/health` for Render liveness probes.
-- Deployed on **Render** (Node.js web service, free tier). A pinger service keeps the instance warm to avoid cold-start delays.
+One request end to end: the CORS check against `WEB_ORIGIN`, the session cookie, and the two different 404s (no such game, or no prediction yet). The prediction itself is written earlier by `apps/predictor`, never during the request.
 
 ## Python services
 
-Four Python services run alongside the TypeScript apps, writing directly to Postgres:
+| Service | What it does | Writes to |
+|---|---|---|
+| `apps/ingestion` | Pulls teams, rosters, games, box scores and play-by-play with `nba_api`. Can land a batch for admin review (`--review`). `pull_worker.py` runs pulls queued from the admin page. | NBA data and ingestion tables |
+| `apps/predictor` | Elo win probability and Four Factors margin for each game | `GamePrediction`, `GamePredictionRun` |
+| `apps/optimizer` | Projects fantasy points and picks five players under a salary cap with MILP (PuLP/CBC) | `PlayerPrediction`, `Lineup`, `LineupSlot` |
+| `apps/valuation` | Fits the Become Pro draft-slot model on real NBA rookie seasons. The API applies it whenever a user's season changes. | `ProspectValuationModel` |
 
-- **`apps/ingestion`** — `nba_api` client that fetches teams, rosters, games, and box scores into Postgres. Orchestrated by `ingest.py`, which now writes real per-play `GameEvent` rows (not just bookend markers) and can land a batch as `PENDING_REVIEW` for admin approval (`--review`) instead of auto-publishing. `pull_worker.py` polls an `IngestionRequest` queue so an admin can trigger a pull from the web app on a host that can't run `nba_api` calls directly (Render, per stats.nba.com's cloud-IP blocking — see [Getting Started](../getting-started.md)). Built during Sprint 1 (week of 18 Aug); the review/queue/event-derivation work above landed in Sprint 3.
-- **`apps/predictor`** — computes Elo-based home win probability and Four Factors-based predicted score margin for each game. Writes to the `GamePrediction` table.
-- **`apps/optimizer`** — predicts per-player fantasy points and solves a 5-player lineup under a salary cap via MILP (PuLP/CBC). Writes to `PlayerPrediction`, `Lineup`, and `LineupSlot` tables.
-- **`apps/valuation`** — fits a least-squares model on real NBA rookie seasons mapping a season line to a draft pick, and writes it, with the rookie scale and level factors, as one `ProspectValuationModel` row. Unlike the other three, its output is not served as it stands: the API applies the stored model to each user's Become Pro season whenever that season changes. See [Valuation Model](../become-pro/valuation-model.md). Added in PR #192.
-
-These are planned to run as Render Cron Jobs or Background Workers in production.
+The tables are on the [ERD](erd.md).
 
 ## Local development
 
-**Docker Compose** runs Postgres locally; both apps run with their own dev server (`npm run start:dev` / `npm run dev`) against it — see [Getting Started](../getting-started.md).
-
-## Deployment topology
-
-Production hosting per [ADR-003](../decisions/adr-003-hosting-topology.md):
-
-| Component | Host | URL | Deploy method |
-|---|---|---|---|
-| Frontend (`apps/web`) | Cloudflare Pages | [sportsanalytics.pages.dev](https://sportsanalytics.pages.dev/) | Auto-deploy from GitHub mirror |
-| API (`apps/api`) | Render | [sportsanalytics-api.onrender.com/health](https://sportsanalytics-api.onrender.com/health) | Auto-deploy from GitHub mirror |
-| Database | Supabase (managed Postgres) | — | Direct connection from API and Python services |
-| Python services | Render (Cron/Worker, planned) | — | Manual or scheduled |
-| CI | Gitea Actions | — | Lint, typecheck, test on every push/PR |
-| Docs site | GitHub Pages | [sports-analytics-innovation-platform.github.io/Innovation-Documentation-Website](https://sports-analytics-innovation-platform.github.io/Innovation-Documentation-Website/) | Auto-deploy on push to `main` |
+Docker Compose runs Postgres; the API and the web app each run their own dev server against it. See [Getting Started](../getting-started.md).
 
 ---
 
