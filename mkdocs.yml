@@ -99,7 +99,6 @@ nav:
       - Valuation Model: become-pro/valuation-model.md
   - Player Archetypes:
       - Overview: player-archetypes/index.md
-      - Archetype Model: player-archetypes/model.md
   - Process:
       - Methodology: methodology.md
       - Sprint Log: sprint-log.md
