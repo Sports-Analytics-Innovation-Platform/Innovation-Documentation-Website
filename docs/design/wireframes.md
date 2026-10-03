@@ -48,6 +48,12 @@ Every figure is derived from the app's own box-score rows. The **Regular / Play-
 
 The radar puts five traits (Scoring, Rebounding, Playmaking, Defense, Efficiency) on one 0–100 scale. Clicking a trait lists the stats behind it in plain English, which came from user feedback ([F7](../improvements.md)).
 
+### Compare
+
+![Compare](../assets/ui/compare-desktop.jpg)
+
+Each stat is a pair of bars, and a glossary under them explains every term.
+
 ### Teams
 
 ![Teams](../assets/ui/teams-desktop.jpg)
@@ -60,6 +66,8 @@ The Elo shown is the same pre-game rating stored on each prediction, so it is wh
 
 ### Home (signed in)
 
+![Home, signed in](../assets/ui/home-signed-in-desktop.jpg)
+
 The dashboard is built around one idea: **an account has to be necessary, not decorative**. The NBA data is the same for everyone; what you follow and how well you call games is yours.
 
 | Section | What it shows |
@@ -71,6 +79,28 @@ The dashboard is built around one idea: **an account has to be necessary, not de
 | **Leaderboard** | Users ranked by hit rate, with the model as a benchmark row |
 | **Saved** | Saved comparisons and lineups |
 | **Become Pro** | Your projected pick and value, or an invitation to start a season |
+
+### Predictions
+
+![Predictions](../assets/ui/predictions-desktop.jpg)
+
+Played games are marked as a model hit or miss. **Your Matchups** shows the next game for your team and the players you follow.
+
+### Optimizer
+
+![Optimizer](../assets/ui/optimizer-desktop.jpg)
+
+Under the lineup, **Solver checks** shows each constraint and whether the lineup meets it.
+
+### Become Pro
+
+![Become Pro](../assets/ui/become-pro-desktop.jpg)
+
+Only the signed-in user sees this page. [Become Pro](../become-pro/index.md) explains the valuation.
+
+### Profile
+
+![Profile](../assets/ui/profile-desktop.jpg)
 
 ## Visual design
 
