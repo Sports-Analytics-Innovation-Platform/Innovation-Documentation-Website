@@ -1,6 +1,6 @@
 # ERD
 
-The platform's PostgreSQL database (Supabase), managed with Prisma. The production database has **39 tables and 7 enums**. On the app repository's `main`, the newest migration is `20260923000000_add_become_pro` and `schema.prisma` declares 35 of those tables; the other four are the [Player archetypes](#player-archetypes) tables. Every table and constraint here was checked against `apps/api/prisma/schema.prisma` on 28 September 2026, and the diagrams were regenerated on 3 October 2026.
+The platform's PostgreSQL database (Supabase), managed with Prisma. The production database has **40 tables and 7 enums**, all declared in `apps/api/prisma/schema.prisma` on the app repository's `main`; the newest migration is `20261007120000_add_page_tutorials`. Every table and constraint here was checked against `schema.prisma` on 28 September 2026, `UserSeenTutorial` (added 7 October) on 8 October, and the diagrams were regenerated on 3 October 2026, before `UserSeenTutorial` existed.
 
 Why the database is designed this way: [ADR-001: Database](../decisions/adr-001-database.md). Where it runs: [ADR-003](../decisions/adr-003-hosting-topology.md). Why play-by-play is stored for one season only: [ADR-005](../decisions/adr-005-play-by-play-storage.md).
 
@@ -10,7 +10,7 @@ Unless stated otherwise, each table's primary key is `id`, a generated UUID. In 
 |---|---|---|
 | [NBA data and models](#nba-data-and-models) | 11 | Ingestion (`apps/ingestion`), predictor and optimizer scripts. The API writes NBA data only through admin corrections. |
 | [Ingestion and review](#ingestion-and-review) | 5 | Ingestion scripts and the pull worker; the API for reviews, corrections and the schedule |
-| [Accounts and personal data](#accounts-and-personal-data) | 10 | BetterAuth, and the API when a user saves something |
+| [Accounts and personal data](#accounts-and-personal-data) | 11 | BetterAuth, and the API when a user saves something |
 | [Publishing and API access](#publishing-and-api-access) | 5 | The API |
 | [Become Pro](#become-pro) | 4 | The API; `apps/valuation` writes the trained model |
 
@@ -109,6 +109,7 @@ erDiagram
     User ||--o{ SavedLineup : ""
     SavedLineup ||--o{ SavedLineupSlot : ""
     Player ||--o{ SavedLineupSlot : ""
+    User ||--o{ UserSeenTutorial : "tutorials seen"
     Verification {
         string identifier
     }
@@ -118,7 +119,7 @@ erDiagram
 
 | Table | One row is | Key columns and constraints |
 |---|---|---|
-| `User` | A user | `email` unique; `role` (`PUBLIC`, `USER`, `ANALYST`, `ADMIN`), which sign-up can't change; `username` unique; `avatarUrl` (a private storage path); `favoriteTeamId` |
+| `User` | A user | `email` unique; `role` (`PUBLIC`, `USER`, `ANALYST`, `ADMIN`), which sign-up can't change; `username` unique; `avatarUrl` (a private storage path); `favoriteTeamId`; `autoOpenTutorials` (the page tutorials' "Skip all") |
 | `Session` | A signed-in browser session | `token` unique, `expiresAt` |
 | `Account` | A linked sign-in method | Provider and its tokens. Google is the only provider. |
 | `Verification` | A short-lived code | Required by BetterAuth; unused while Google is the only sign-in |
@@ -128,6 +129,7 @@ erDiagram
 | `SavedComparisonPlayer` | One player in it | Unique `(savedComparisonId, playerId)`; `position` is the left-to-right order |
 | `SavedLineup` | A lineup the user kept | Name; totals copied at save time |
 | `SavedLineupSlot` | One player in it | Unique `(savedLineupId, playerId)`; points and salary copied at save time |
+| `UserSeenTutorial` | A page tutorial the user has seen | No `id`; unique `(userId, tutorialId)`. Once a row exists, that page's tutorial no longer opens by itself. |
 
 `GamePick` and the saved lineups copy model figures on purpose: predictions are replaced on every run, and a user's record must not change afterwards. Every `/v1/me/*` query is scoped to the session user.
 

@@ -5,7 +5,8 @@ How fast the live app is, and how the API keeps database work down. Most of the 
 | Evidence | Result |
 |---|---|
 | [Lighthouse](#lighthouse-scores-2026-09-29), mobile, 29 Sep | Performance **88–95**, Accessibility **100** on Home, Teams, Players and Admin |
-| [Query counts](#measured-result) | Most public routes issue **0** database statements on a repeat request |
+| [Query counts](#measured-result) | Most public routes issue **0** data queries on a repeat request |
+| [Production timings](#production-timings-8-oct), 8 Oct | Public data reads took **2.6–4.7 s**, against a 300 ms target, because of the API-key check |
 
 ## Lighthouse scores (2026-09-29)
 
@@ -112,6 +113,23 @@ SQL statements per request against a local database with real data: first call, 
 | `GET /v1/players/:id/stats/splits` | 3 | 1 |
 
 A sorted player list costs nothing even on its first call because it reuses the leaders data. Splits is consolidated but deliberately uncached, so it still runs one statement. These are statement counts from a local database, not production timings.
+
+They also leave out the API-key check. These counts were taken before API keys were required (17 Sep). Since then every signed-out request carries the site proxy's key, and the check that validates it ran three queries (the key lookup, then the last minute's and today's usage counts) plus a usage-log write on every request, before any cached read was served.
+
+## Production timings (8 Oct)
+
+Repeat requests per route from Johannesburg, through the site's own proxy, leaving out each route's first (cold) request:
+
+| Route | Response time |
+|---|---|
+| `GET /v1/health` (no key check, no database) | 0.49–0.55 s |
+| `GET /v1/teams` | 2.6–2.8 s |
+| `GET /v1/games?pageSize=25` | 2.6–2.8 s |
+| `GET /v1/players/:id/stats` | 2.7–2.8 s |
+| `GET /v1/players?pageSize=25` | 3.6–4.3 s |
+| `GET /v1/games/:id/events?pageSize=200` | 4.3–4.7 s |
+
+The health route shows that the network and the proxy account for about half a second. The other two seconds or more come from the API-key check's database round trips through the Supabase pooler, which run before the response cache is consulted. The fix ([PR #204](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/204), in review) keeps resolved keys and rate-limit counts in memory and batches the usage-log writes, so a cached read touches the database not at all.
 
 ## The staleness contract
 

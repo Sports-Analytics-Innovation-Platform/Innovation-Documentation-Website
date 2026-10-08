@@ -56,9 +56,11 @@ The headers were checked on the live API on 3 Oct.
 - **A leaked secret is rotated,** not just deleted, because it stays in git history.
 - **Scripts can't hit production by accident.** The repo's root `.env` points at production, so the valuation job reads only its own `.env` and fails if it is missing.
 
-### Incident, 11 Sep: a runner token on a branch
+### Incident, 11 Sep: a runner token committed
 
-A Gitea runner registration file (`ci-runner/data/.runner`, runner `kiran-backup`) was committed on the `LandingPageUpdates` branch. Review caught it and it never reached `main`, but the token is still in that branch's history on the Gitea server. The runner hasn't been removed from Gitea yet; removing it there makes the token useless.
+A Gitea runner registration file (`ci-runner/data/.runner`, runner `kiran-backup`) was committed on 11 Sep. Review caught it on the `LandingPageUpdates` branch, but the same file reached `main` the next day in a direct commit (`020f4c6`, 12 Sep) that bypassed review, and an 8 Oct audit found it still there.
+
+Deleting the file is not enough: the token stays in git history. What makes it useless is removing the `kiran-backup` runner on Gitea (and registering a new one if it is still needed). Removing the file from `main`, with `ci-runner/` added to `.gitignore` so a runner's local state can't be committed again, is in review ([PR #207](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/207)). Since 8 Oct `main` also refuses direct pushes, the route this file took.
 
 ## Third-party data
 

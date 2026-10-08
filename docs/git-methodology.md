@@ -1,12 +1,16 @@
 # Git Methodology
 
-We use a lightweight, PR-based branching workflow on **Gitea**, which hosts the project's `apps/api` and `apps/web` repos per the university's requirement to use university-provided version control. This documentation site is a separate case — it's built with MkDocs and deployed via **GitHub Pages** for public static hosting (see [Documentation Site](getting-started.md)), but the actual codebase and issue tracking live on Gitea, not GitHub.
+We use a lightweight, PR-based branching workflow on **Gitea**, which hosts the project's monorepo (`apps/api`, `apps/web` and the Python services) per the university's requirement to use university-provided version control. This documentation site is a separate case — it's built with MkDocs and deployed via **GitHub Pages** for public static hosting (see [Documentation Site](getting-started.md)), but the actual codebase and issue tracking live on Gitea, not GitHub.
 
-Nothing reaches `main` without review.
+Changes reach `main` through pull requests that a teammate reviews.
 
 ## Branches
 
-- **`main`** — the stable, always-deployable version of the code. Nothing goes here until it's reviewed and the team agrees it's done. Direct pushes to `main` are disabled; all changes land via pull request.
+- **`main`** — the stable, always-deployable version of the code. Nothing goes here until it's reviewed and the team agrees it's done, and every change lands via pull request.
+
+  In practice the rule had exceptions: `main` wasn't protected on Gitea, and 21 commits went to it directly, mostly in the first weeks (two of them reverts). An 8 Oct audit found that one of them had carried a CI runner's registration file onto `main` ([Security](security.md#incident-11-sep-a-runner-token-committed)). Of the 107 pull requests merged by 8 Oct, 79 were merged by a teammate other than their author; reviews mostly happened in the lab and on WhatsApp, so only a few carry a recorded Gitea approval.
+
+  Since 8 Oct `main` is protected on Gitea: direct pushes are refused, and a pull request can merge only once its CI checks pass. Approvals aren't enforced, so review stays the team's rule rather than Gitea's.
 - **Feature branches** — one per feature or fix, branched off `main`. Keep names short, lowercase, and hyphenated, e.g. `applicant-profile-page`, `nba-boxscore-import`, `auth-password-reset`.
 
 ## Committing
@@ -64,11 +68,11 @@ The intent is for CI to also run a secret scanner (`gitleaks`/`trufflehog`) on e
 3. Push the feature branch and open a pull request on Gitea against `main`.
 4. **At least one team member reviews and approves.** Only merge once the team has reviewed the code and agrees it's good and finished — don't assume; confirm it.
 5. If there's no confirmation everyone agrees, don't merge — keep the PR open for review instead.
-6. Gitea Actions CI must pass before merge is allowed. The pipeline runs **lint, typecheck, and test** for `apps/api` and `apps/web` as two parallel jobs on every push and pull request — see [CI/CD Pipeline](ci-cd.md) for what it does and doesn't cover. Newer pushes cancel in-flight runs on the same ref, so only the latest commit's result counts.
+6. CI must pass before merging; since 8 Oct Gitea enforces this on `main`. The pipeline lints, typechecks and tests `apps/api` and `apps/web` on every push and pull request — see [CI/CD Pipeline](ci-cd.md) for its jobs and what they don't cover. Newer pushes cancel in-flight runs on the same ref, so only the latest commit's result counts.
 
 ## Repo hygiene
 
-- Every repo (`apps/api`, `apps/web`) keeps its own README with setup instructions, verified periodically by a teammate who hasn't touched that repo doing a clean install.
+- Every app (`apps/api`, `apps/web` and each Python service) keeps its own README with setup instructions, verified periodically by a teammate who hasn't touched that app doing a clean install.
 - Commit history should stay clean going into each milestone — no dead code, no commented-out blocks, consistent formatting.
 
 ---

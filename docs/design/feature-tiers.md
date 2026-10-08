@@ -11,7 +11,7 @@ How the platform meets each tier of the brief (COMS3011A Project 3, "Sport Analy
 | Requirement | | How |
 |---|---|---|
 | Statistics derived from events | ✅ | Box-score lines are summed from stored plays (`derive_player_game_stats.py`, mirrored in TypeScript for corrections). Play-by-play is kept for 2025-26 only; older seasons are box scores, because of the 500 MB database limit ([ADR-005](../decisions/adr-005-play-by-play-storage.md)). |
-| Only approved submitters | ✅ | Data enters only through ingestion. On the site, only an `ADMIN` can start a pull. |
+| Only approved submitters | ⚠️ | Data enters only through the automated ingestion pipeline, which acts as the platform's one approved submitter: only an `ADMIN` can start a pull, and a pull run with review holds its batches until an admin approves them. There is no upload or direct-post path for a human submitter, so per-submitter scopes ("a defined part of the competition") aren't modelled. |
 | Checked against the event schema, with reasons | ✅ | `event_validation.py` checks every play and counts each rejection by reason on its batch ([Data Ingestion](ingestion.md#batches)). |
 | Traceable to events and submission | ✅ | Every stored play points to the batch that wrote it; every manual edit is recorded in `EventCorrection` with who, when and why. |
 | A corrected event updates its statistics | ✅ | A correction re-derives the affected players' lines in the same transaction. |
@@ -19,7 +19,7 @@ How the platform meets each tier of the brief (COMS3011A Project 3, "Sport Analy
 | Stable identifiers | ✅ | Every public id is a UUID, never reused. |
 | Export a filtered slice | ✅ | CSV from `/v1/players/export`, `/v1/games/export` and dataset releases. |
 
-**Basic tier: complete.**
+**Basic tier: complete except a submission path for human submitters.**
 
 ## Intermediate tier
 
@@ -34,7 +34,7 @@ How the platform meets each tier of the brief (COMS3011A Project 3, "Sport Analy
 | Only dependent figures recomputed | ✅ | A correction recomputes only the players in the corrected game (`plan-stat-recompute.ts`). |
 | Impossible data caught; corrections keep a history | ✅ | Correction rules refuse, for example, credit left on the wrong player. Corrections are append-only; an undo is a new correction. |
 | Figures checked against reference results | ⚠️ | Unit tests match the NBA's published advanced stats to three decimal places. There is no automated test replaying a whole game against its published box score. |
-| A stated response time | ⚠️ | Target: P95 under 300 ms for data reads, not measured on production. Repeat reads of public data issue no database statements, and Lighthouse scores the live pages 88–95 ([Performance](performance.md)). |
+| A stated response time | ⚠️ | Target: P95 under 300 ms for data reads. Measured on production on 8 Oct, public data reads took 2.6–4.7 s, even when cached: the API-key check ran three database queries before the cache was consulted ([Performance](performance.md#production-timings-8-oct)). The fix is in review ([PR #204](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/204)). |
 | Versioned API | ✅ | `/v1/`, `Accept-Version`, and `Deprecation`/`Sunset` headers ([API Design](api-design.md)). |
 | Keys, rate limits and quotas | ✅ | Per-minute limits and daily quotas per key, counted in the database. |
 | Repeated reads from cache | ✅ | An in-memory cache with lifetimes by how often data changes ([ADR-004](../decisions/adr-004-caching-strategy.md)). |
@@ -48,9 +48,9 @@ How the platform meets each tier of the brief (COMS3011A Project 3, "Sport Analy
 
 | Requirement | | How |
 |---|---|---|
-| Analyst-defined statistics | ✅ | Formulas over seven event-derived fields, parsed without `eval`, versioned on each edit, for `ANALYST` and `ADMIN` only. |
+| Analyst-defined statistics | ⚠️ | Formulas over seven event-derived per-game averages, parsed without `eval`, for `ANALYST` and `ADMIN` only. Each edit raises a version number, but the previous formula is overwritten, so a figure from an earlier version can't be recomputed; keeping every version is in review ([PR #206](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/206)). A statistic is evaluated for one player per request, not across the whole history at once. |
 | Statistics as of a date | ✅ | `GET /v1/players/:id/stats?asOf=` counts only games finished by then. |
-| Differences between releases; a change feed | ✅ | `GET /v1/datasets/diff` and `GET /v1/datasets/changes?since=`. |
+| Differences between releases; a change feed | ⚠️ | `GET /v1/datasets/diff` reports which release fields differ (checksum, row counts, field schema), not which rows changed. `GET /v1/datasets/changes?since=` lists the releases published since a date, so a consumer learns that a new release exists rather than pulling only the changed rows. |
 | Corrections reach aggregates and releases | ✅ | Season figures update at once; affected releases are marked stale in the same transaction. |
 | Deprecation path and contract tests | ✅ | `GET /health` retires on 31 Mar 2027. A test compares the API with its own OpenAPI document; it isn't consumer-driven. |
 | A feed from a game in progress | ⚠️ | `GET /v1/games/:id/live` returns new plays since a sequence number (PR #161), but plays arrive only when ingestion runs, after the game. |
@@ -60,7 +60,7 @@ How the platform meets each tier of the brief (COMS3011A Project 3, "Sport Analy
 | Large requests as jobs | ❌ | Consumer requests run to completion; only admin pulls are queued. |
 | Reconciling disagreeing submitters | ❌ | There is one automated submitter, so there is nothing to reconcile. |
 
-**Advanced tier: 5 done, 4 partly done, 2 not built.**
+**Advanced tier: 3 done, 6 partly done, 2 not built.**
 
 ## Beyond the brief
 
