@@ -62,6 +62,28 @@ A Gitea runner registration file (`ci-runner/data/.runner`, runner `kiran-backup
 
 Deleting the file is not enough: the token stays in git history. What makes it useless is removing the `kiran-backup` runner on Gitea (and registering a new one if it is still needed). Removing the file from `main`, with `ci-runner/` added to `.gitignore` so a runner's local state can't be committed again, is in review ([PR #207](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/207)). Since 8 Oct `main` also refuses direct pushes, the route this file took.
 
+### Incident, 8 Oct: the Supabase Data API was open
+
+Supabase serves every table in `public` through an auto-generated REST and GraphQL API, authenticated by the project's `anon` key, which isn't a secret. A read-only check of production on 8 Oct found that Supabase's default grants gave the `anon` and `authenticated` roles every privilege on all 41 tables. The 39 row-level security policies, all named `service_role_all`, applied to everyone with `USING (true)`, so they allowed everything rather than restricting it, and two tables had no RLS at all. Anyone with the `anon` key could have read or changed users' emails, session tokens, Google sign-in tokens and API keys.
+
+There is no sign it was used: the `anon` key was never in either repo or in the web app, which doesn't talk to Supabase directly. Nothing in the platform needs those roles, because the API and the Python jobs connect as the tables' owner and Storage uses the service-role key. A migration drops the allow-all policies, enables RLS on every table and revokes the two roles' privileges, now and for future tables ([PR #211](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/211)). Turning off the Data API for the `public` schema in the Supabase dashboard closes it at the source as well.
+
+## Privacy (POPIA)
+
+The platform keeps personal information about signed-in users only: what Google sign-in provides (name, email address, picture link, account ID and sign-in tokens), what they add (username, photo, follows, picks, saved items, Become Pro seasons, custom statistics, API keys), session start and expiry times, and API usage. Browsing without an account stores nothing. The [privacy notice](https://sportsanalytics.pages.dev/privacy) tells users this in plain language. How each POPIA condition is met (changes marked with a PR were in review on 9 Oct and go live when it merges):
+
+| Condition | How |
+|---|---|
+| Notification (s18) | A public privacy notice at `/privacy`, linked from the landing page, the onboarding username step and the profile ([PR #212](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/212)). Contact: analyticclaritycontact@gmail.com. |
+| Minimality (s10) | Sessions no longer store IP addresses or user agents, which nothing read ([PR #212](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/212)). |
+| Consent and purpose (s11, s13) | The public Beat the Model leaderboard shows the username a user chose, not the real name from Google ([PR #212](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/212)). Nothing is used for advertising or analytics. |
+| Retention (s14) | A daily job deletes expired sessions and verification codes and API usage rows older than 90 days. Deleting an account cascades to everything the user added, and deletes their photo from Storage ([PR #212](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/212)). |
+| Security safeguards (s19) | TLS everywhere, photos in a private bucket, API keys stored only as SHA-256 hashes, the database closed to Supabase's public roles ([PR #211](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/211)), and role checks on admin routes. |
+| Access, correction and deletion (s23, s24) | **Download my data** on the profile returns everything stored about the user as JSON, minus credentials; the profile edits the user's details; **Delete account** removes everything ([PR #212](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/212)). |
+| Cross-border transfer (s72) | Data is stored in Supabase's London region; the API runs on Render in the US and the site is served through Cloudflare. The notice says so. |
+
+Not covered: registering an Information Officer with the Information Regulator, and reviewing the hosting providers' data-processing terms as operator agreements. Those are paperwork rather than code, and fall to whoever runs the platform beyond the course.
+
 ## Third-party data
 
 The NBA data is public, so the platform holds no third-party credentials. `nba_api` is an unofficial client and stats.nba.com can block it without warning. The platform copies what it needs into its own database, so users never trigger calls to stats.nba.com, and ingestion waits between calls (`throttle.py`).
