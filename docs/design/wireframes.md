@@ -1,149 +1,144 @@
 # UI Overview
 
-!!! success "Confirmed: UI Overview, not Wireframes"
-    This project didn't go through a formal low-fidelity wireframing stage — the team found reference dashboards for inspiration and used AI to help generate the initial React implementation directly. This page documents the current build, not a planning artifact.
+The web app as it stands at submission. The team skipped low-fidelity wireframes: it worked from reference dashboards and built the React pages directly, so this page documents the build itself. Screenshots were taken from the live site on 2026-10-03.
+
+![Landing page](../assets/ui/landing-desktop.jpg)
 
 ## Navigation
 
-Header component (`LandingHeader`, renamed from the original `Navbar` when it was unified across routes — PR #50). It is now one header with one link set on every page, landing included: **Home**, **Players**, **Compare**, **Teams**, **Datasets**, **Optimizer**, **Predictions** and **Become Pro**, plus **Admin** for a signed-in admin. Become Pro was appended last (PR #192) so no existing link moved. Below the `xl` breakpoint the links move into a drawer behind a menu button. The cutover was `lg` until the eighth link was measured overflowing the header at 1024px wide. The navbar also includes a recent-result widget (hidden on small screens) and an auth status button (sign in/sign out). A skip-to-content link is available for keyboard navigation.
+One header (`LandingHeader`) on every page:
 
-The sidebar from the initial scaffold was replaced with the top navbar during Sprint 1 (week of 11 Aug) to accommodate the growing number of pages.
+- Links: **Home**, **Players**, **Compare**, **Teams**, **Datasets**, **Optimizer**, **Predictions** and **Become Pro**, plus **Admin** for an admin.
+- Sign in or out on the right.
+- Below the `xl` breakpoint the links move into a drawer behind a menu button.
+- A skip-to-content link comes first in the tab order.
+- A **Read aloud** button, bottom right, reads the page with the browser's speech synthesis.
 
-## Screens
+## Pages
 
-### Landing (`/`)
+| Route | Access | What it shows | Main endpoints |
+|---|---|---|---|
+| `/` | Public | Landing: what the product does, how predictions work, developer credits, and Get Started | — |
+| `/players` | Public | League leaders, then a sortable, filterable table with a last-8-games sparkline per player | `GET /v1/players`, `/v1/players/leaders` |
+| `/players/:playerId` | Public | 12 stat tiles, points trend by season with a projected next season, traits radar with stat definitions, Edit Stats ("what-if", never saved), Follow, Compare | `GET /v1/players/{id}`, `/stats`, `/stats/splits`, `/stats/career` |
+| `/compare` | Public | Up to four players side by side for one season segment | `GET /v1/players/compare` |
+| `/teams` | Public | A card per team: record, win %, Elo and last five results. Filter by conference or division, sort by Elo. | `GET /v1/teams`, `/v1/teams/records` |
+| `/teams/:teamId` | Public | Record, win %, Elo and roster | `GET /v1/teams/{id}` |
+| `/datasets` | Public | Versioned releases with schema, CSV download and a checksum check | `GET /v1/datasets`, `/{version}/download` |
+| `/home` | Signed in | Dashboard (see below) | `/v1/me/*`, `/v1/analytics/*` |
+| `/predictions` | Signed in | Games with Elo win probability and Four Factors margin | `GET /v1/games` |
+| `/games/:gameId` | Signed in | Prediction, bookmaker probability from The Odds API, and predicted top scorers on a court view | `GET /v1/games/{id}` |
+| `/optimizer` | Signed in | The latest MILP fantasy lineup under a salary cap, with projected points per slot. It can be saved. | `GET /v1/optimizer/lineup`, `POST /v1/me/lineups` |
+| `/become-pro` | Signed in, private | The user's own seasons, games, derived line, projected pick and value, and NBA comparables | `GET /v1/me/become-pro` |
+| `/profile` | Signed in | Favourite team, followed players, avatar, API keys with usage, Become Pro card, account deletion. `/api-keys` redirects here. | `GET /v1/me`, `/v1/me/api-keys` |
+| `/onboarding` | Signed in | First run: pick a username, a favourite team and players to follow | `PATCH /v1/me` |
+| `/admin` | Admin | Batch review, event corrections, ingestion schedule, API consumers, reference data and users | `/v1/admin/*` |
 
-The public marketing page: hero section with a screenshot cascade, a developer-credits and tech-stack marquee, and a "Get Started" call to action that signs in with Google and lands on `/home`. The first cascade panel shows a real screenshot of the signed-in home page (PR #88); the other two (player profile, optimizer) are still placeholder blocks awaiting their own screenshots.
+The [API Reference](../api-reference.md) lists every endpoint.
 
-### Home (`/home`)
+### Players
 
-The signed-in dashboard ("The Locker"). Built on the landing page's light palette rather than the dark app shell, deliberately, so signing in reads as walking further into the same building.
+![Players list](../assets/ui/players-desktop.jpg)
 
-Every figure on the page is now live (PR #94, merged 2026-09-11), replacing the `components/home/placeholderData.ts` shell that PR #87 shipped. The premise the page is built on is that **an account has to be necessary, not decorative**: the NBA data is identical for every visitor, but which players you follow, what you wrote about them, and how well you call games are yours alone. Nothing derived is stored, so a newly ingested game shows up here immediately.
+Every figure is derived from the app's own box-score rows. The **Regular / Play-In / Playoffs / Finals** control switches the page to that part of the season.
 
-| Section | What it shows | Backed by |
-|---|---|---|
-| **Beat the Model** | A completed game with its final score withheld, for you to call. Submitting grades your call against both the real result and what the Elo model predicted, and only then reveals the score | `GET /v1/me/challenge/next`, `POST /v1/me/picks`, `GET /v1/me/picks/record` |
-| **Your Watchlist** | Followed players with points, rebounds and assists per game and a five-game scoring trend, plus your own scouting note per player (editable, 500 characters) | `GET /v1/me/watchlist` |
-| **Your Teams** | Recent results for the teams you follow, oriented to your side — your team, the opponent, whether you won — rather than home/away | `GET /v1/me/teams/results` |
-| **Model accuracy ledger** | The model's real accuracy against an always-pick-home baseline, its Brier score, and per-band calibration | `GET /v1/analytics/model-accuracy` |
-| **Accuracy leaderboard** | Callers ranked by hit rate, with the Elo model on the board as a benchmark row rather than a rival | `GET /v1/analytics/leaderboard` |
-| **Saved shelf** | Saved player comparisons, and saved optimizer lineups showing how far each slot's salary and predicted points have drifted since you saved it | `GET /v1/me/saved/comparisons`, `GET /v1/me/saved/lineups` |
-| **Become Pro card** | In the right-hand rail (also on `/profile`): your current season, level, projected pick, value and a value sparkline, or an invitation to "Start a season". Added by PR #192 | `GET /v1/me/become-pro/summary` |
+### Player profile
 
-Beat the Model is the page's focal action, and the clearest illustration of why the account is required at all: the server can only hide a completed game's score from you *and still score you on it* if it knows who you are.
+![Player profile](../assets/ui/player-profile-desktop.jpg)
 
-Two sections from the original shell — **"Add to Locker"** and **"Jump Back In"** — were removed. Both were layout with nothing behind them: one searched nothing, the other listed views nobody had recorded. Removing "Add to Locker" left no way to *start* a follow, so an "Add to watchlist" control was added to the [player profile](#player-profile-playersplayerid) instead — that is now the entry point into the watchlist.
+The radar puts five traits (Scoring, Rebounding, Playmaking, Defense, Efficiency) on one 0–100 scale. Clicking a trait lists the stats behind it in plain English, which came from user feedback ([F7](../improvements.md)).
 
-!!! success "Resolved — checked 2026-09-23"
-    This page previously claimed Google OAuth wasn't configured in production, so `/v1/me/*` routes were unreachable outside the e2e suite. That's stale: production sign-in has been live and debugged since at least mid-September (see `docs/decisions/adr-003-hosting-topology.md`'s cross-origin/session-cookie fixes and the 2026-09-17 session summary in the main app repo, which walks through live sign-in verification on the deployed site). Still true and worth keeping as evidence either way: the routes are proven end to end by the API's e2e suite against a real Postgres database, including cross-user isolation (see [Testing](../testing.md)).
+### Compare
 
-### Players list (`/players`)
+![Compare](../assets/ui/compare-desktop.jpg)
 
-Table view: Name, Team, Position, Jersey number. Player name links through to their profile. Data comes from `GET /v1/players`, paginated. Includes a filter bar for team and position filtering, plus a search field for server-side search across the full player dataset.
+Each stat is a pair of bars, and a glossary under them explains every term.
 
-### Player profile (`/players/:playerId`)
+### Teams
 
-The most developed screen. Three-column grid layout (`xl:grid-cols-3`):
+![Teams](../assets/ui/teams-desktop.jpg)
 
-- **Header + season stat tiles** (2/3 width) — player identity (headshot from nba.com CDN, name, team, position, jersey, height), then a row of stat tiles (PPG, RPG, APG, Games), followed by a points-trend line chart across recent games.
-- **Player traits radar** (1/3 width) — a five-axis radar chart (Scoring, Rebounding, Playmaking, Defense, Efficiency) normalising raw per-game stats onto a shared 0–100 scale so different units can share one chart.
-- **Shooting splits** (full width) — FG%, 3P%, FT% as stat tiles.
-- **Season segment control** — a control to switch the whole page between `REGULAR`, `PLAY_IN`, `PLAYOFFS`, and `FINALS`, backed by `GET /v1/players/:id/stats/splits` so every segment is available without a re-fetch per click. Carries through to the profile's compare link so a comparison started from a postseason view compares postseason lines, not regular-season ones.
-- **Advanced stats table** — true shooting%, effective FG%, assist-to-turnover, plus-minus, usage%, and offensive/defensive rating, alongside the basic per-game stats. Local stat editing lets a visitor temporarily edit a displayed stat to see how it ripples into the derived figures, then reset back to the real value — a "what-if" exploration, not a persisted change.
+The Elo shown is the same pre-game rating stored on each prediction, so it is what the model saw.
 
-- **Add to watchlist** — a follow/unfollow control (PR #94), added here because removing the home page's "Add to Locker" section left no other way to start a follow. It renders its own state from `GET /v1/me/watchlist/ids`, which returns just the followed player ids so the button costs one request rather than a full watchlist fetch.
+### Datasets
 
-Data comes from `GET /v1/players/:id`, `GET /v1/players/:id/stats`, and `GET /v1/players/:id/stats/splits` together, plus `GET /v1/me/watchlist/ids` when signed in.
+![Datasets](../assets/ui/datasets-desktop.jpg)
 
-### Player comparison (`/compare`)
+### Home (signed in)
 
-Side-by-side comparison of 2–4 players' derived season lines for a chosen season segment, reachable from a player profile's compare link or by picking players directly on the page. Data comes from `GET /v1/players/compare`.
+![Home, signed in](../assets/ui/home-signed-in-desktop.jpg)
 
-### Teams list (`/teams`)
+The dashboard is built around one idea: **an account has to be necessary, not decorative**. The NBA data is the same for everyone; what you follow and how well you call games is yours.
 
-Table view of all NBA teams with real team logos. Data comes from `GET /v1/teams`, paginated with server-side search. Built with TanStack Query and shadcn/ui components.
+| Section | What it shows |
+|---|---|
+| **Beat the Model** | A finished game with the score hidden. Call it, then see the result beside the model's call. |
+| **Watchlist** | Followed players with their averages, recent scoring and your own scouting note |
+| **Your Teams** | Recent results for your teams, shown from your team's side |
+| **Model accuracy** | The model's hit rate against an always-pick-home baseline, its Brier score and calibration |
+| **Leaderboard** | Users ranked by hit rate, with the model as a benchmark row |
+| **Saved** | Saved comparisons and lineups |
+| **Become Pro** | Your projected pick and value, or an invitation to start a season |
 
-### Team profile (`/teams/:teamId`)
+### Predictions
 
-Team detail page showing team information and its roster of players. Data comes from `GET /v1/teams/:id`.
+![Predictions](../assets/ui/predictions-desktop.jpg)
 
-### Predictions (`/predictions`) — auth-gated
+Played games are marked as a model hit or miss. **Your Matchups** shows the next game for your team and the players you follow.
 
-Lists games with their Elo-based win probabilities and Four Factors predicted margins. Links through to the game detail page. Data comes from `GET /v1/games` (with predictions joined in).
+### Optimizer
 
-### Game detail (`/games/:gameId`) — auth-gated
+![Optimizer](../assets/ui/optimizer-desktop.jpg)
 
-Single game view showing win probability, predicted score margin, a real sportsbook-derived win probability from The Odds API (de-vigged, averaged across bookmakers) shown alongside the model's own — a genuinely demanding baseline ("does the model beat the market," not just a coin flip) — and a **court view** visualising predicted top scorers from both teams by position on a basketball court. Data comes from `GET /v1/games/:id` and `GET /v1/games/:id/prediction`.
+Under the lineup, **Solver checks** shows each constraint and whether the lineup meets it.
 
-### Optimizer (`/optimizer`) — auth-gated
+### Become Pro
 
-Fantasy-lineup optimizer page showing the latest MILP-solved lineup: five players selected under a salary cap with their predicted fantasy points. Data comes from `GET /v1/optimizer/lineup`.
+![Become Pro](../assets/ui/become-pro-desktop.jpg)
 
-### Datasets (`/datasets`) — added 2026-09-23, not yet on this page until now
+Only the signed-in user sees this page. [Become Pro](../become-pro/index.md) explains the valuation.
 
-Browse and download versioned dataset releases — publish date, row count, per-field schema, and a SHA-256 checksum shown against the file you actually download so drift is detectable rather than assumed away. Data comes from `GET /v1/datasets`, `GET /v1/datasets/:version`, `GET /v1/datasets/:version/download`.
+### Profile
 
-### Profile (`/profile`)
-
-Account settings: favorite team, followed players, avatar upload, self-service API key issuance (with live rate-limit/quota usage), the Become Pro summary card, and account deletion. `/api-keys` now redirects here — API keys used to have their own page.
-
-### Onboarding (`/onboarding`)
-
-First-run flow for a newly signed-in user: pick a username, a favorite team, and players to follow, before landing on `/home`.
-
-### Become Pro (`/become-pro`) — auth-gated, private to its owner
-
-The user's own seasons, logged games, derived season line, projected NBA draft pick and rookie-scale value, and the three real NBA rookies their line most resembles (PR #192). It is on the locker palette, and it reuses the NBA pages' `StatTile`, `PointsTrendChart`, `PlayerTraitsRadar` and `ComparisonTraitsRadar`, because the season line has exactly the `SeasonAverages` shape. The user's line is drawn in the leather accent on the comparison radar.
-
-- **Header** — season details, "Edit details", "Add a season", "Delete season" (second click to confirm), and a radio-group season picker once there is more than one season.
-- **Value card** — leads with the pick ("Pick 14"), then the dollar figure, the range, a value sparkline, a provenance sentence, the level's basis and server-written drivers. Below 10 games it shows "N more games needed" and no dollar figure. On phones it sits directly under the header; from `lg` up it tops the right-hand rail.
-- **Season line** — a stat grid, a "Scoring by game" chart and a traits radar.
-- **Game entry** — one row per game, built for back-filling a season quickly: Enter saves from any field, the date carries forward, "Copy last game" pre-fills the previous row, and the number fields use a numeric keypad on phones.
-- **Games table** — newest first, with in-place Edit and a two-click Remove.
-- **Compared with NBA rookies** — three comparables with similarity percentages and links to their player pages, plus "Drafted at pick N".
-
-With no season yet, the page opens straight onto the "Start your first season" form. All data comes from `GET /v1/me/become-pro` in one request. See [Become Pro](../become-pro/index.md) for why each part works the way it does.
-
-### Admin (`/admin`) — `ADMIN` role required
-
-Not a public/demo-able screen, but real and substantial: ingestion batch review (approve/reject a `PENDING_REVIEW` pull before its data goes live), per-event corrections with preview/apply/undo and a required-reason audit trail, and API consumer/key management. See [Demo Guide](../demo-guide.md#9e-what-you-wont-see-without-an-admin-account) for what it does in detail.
+![Profile](../assets/ui/profile-desktop.jpg)
 
 ## Visual design
 
-Two palettes, both defined as Tailwind `@theme` custom properties in `index.css`. The dark "hardwood court" app shell was the only theme through Sprint 1; the lighter "locker" language was introduced for the landing page and has since spread to every other page, most recently Compare and Teams in Sprint 2 (the last two holdouts on the dark shell).
+Colours are Tailwind `@theme` custom properties in `index.css`. Charts (Recharts) use the same variables, so they follow the theme.
 
-**Dark app shell** — a warm near-black hardwood-court palette with an NBA-ball orange accent (this replaced an earlier cool blue accent; if you see `#3b82f6`/`#0b0e14` referenced anywhere else in the docs, that's the value this table superseded):
-
-| Token | Value | Use |
-|---|---|---|
-| `--color-surface-base` | `#120d09` | Page background |
-| `--color-surface-raised` | `#1c140d` | Card backgrounds |
-| `--color-surface-nav` | `#2b2015` | Navbar background |
-| `--color-border-subtle` | `#3a2a19` | Borders/divider |
-| `--color-brand-accent` | `#f97316` | Active nav, links, primary buttons, chart accents |
-| `--color-text-primary` / `-secondary` / `-muted` | `#f7f1e8` / `#baa88f` / `#8a7862` | Text hierarchy |
-
-**Locker (light)** — built on the landing page's palette rather than the dark shell, deliberately, so signing in reads as walking further into the same building instead of into a different product:
+The "locker" palette is a light, warm grey with a leather accent. It was introduced on the landing page and now covers every page, so signing in feels like going further into the same building rather than into another product.
 
 | Token | Value | Use |
 |---|---|---|
-| `--color-locker-surface` | `#e3e0dc` | Page/card background |
-| `--color-locker-leather` | `#a4441c` | Accent/active state — 4.66:1 on `locker-surface`, used for small text and controls (`--color-landing-accent` measures only 2.45:1, hero-scale type only) |
+| `--color-locker-surface` | `#e3e0dc` | Page and card background |
+| `--color-locker-leather` | `#a4441c` | Accent and active state. 4.66:1 contrast on the surface, so it is safe for small text. |
 | `--color-locker-ink-muted` | `#4a423b` | Secondary text |
-| `--color-locker-you` / `--color-locker-model` | `#c2410c` / `#1f6f9c` | Warm = the human's pick, cool = the Elo model's — validated as a colorblind-safe categorical pair (CVD ΔE 19.0 protan, ΔE 27.5 normal vision) |
-| `--color-locker-good` / `--color-locker-bad` | `#15733f` / `#a8202c` | Outcome colors — always paired with a glyph and a word, never the only channel, since red/green is the one CVD case re-stepping the hues can't fix |
+| `--color-locker-you` / `-model` | `#c2410c` / `#1f6f9c` | Your pick against the model's, checked as a colour-blind-safe pair |
+| `--color-locker-good` / `-bad` | `#15733f` / `#a8202c` | Outcomes. Always shown with a glyph and a word, never colour alone. |
 
-Charts (Recharts — `RadarChart`, `LineChart`) are themed against these CSS variables rather than hardcoded colours on both palettes.
+The header stays dark (`--color-landing-ink`, `#14100c`) with the orange `#f97316` accent from the original palette.
+
+## Responsive design
+
+Layouts are mobile-first Tailwind with `sm`, `md`, `lg` and `xl` breakpoints. On a phone, tables keep their key columns and the navbar becomes a menu. The pages were checked at 390 px wide with no horizontal scrolling.
+
+<div class="grid" markdown>
+
+![Players on a phone](../assets/ui/players-phone.jpg){ width="300" }
+
+![Player profile on a phone](../assets/ui/player-profile-phone.jpg){ width="300" }
+
+</div>
 
 ## Accessibility
 
-- Skip-to-content link for keyboard navigation
-- `tabIndex={-1}` on `<main>` for focus management
-- `aria-label` on primary navigation
-- Responsive layouts with mobile/tablet/desktop breakpoints
-- `axe-core` automated accessibility checks run in component tests (`src/test/accessibility.ts`) across the players list, home page, optimizer, and predictions pages — merged into `main` 2026-09-11 (PR #92)
+- **Lighthouse Accessibility 100** on Home, Teams, Players and Admin (mobile, 2026-09-29). See [Performance](performance.md).
+- `axe-core` checks run in the component tests (`src/test/accessibility.ts`) for Players, Home, Optimizer and Predictions.
+- Skip-to-content link, with `tabIndex={-1}` on `<main>` so focus lands there.
+- Labelled navigation, with visible focus states.
+- Text contrast is measured, and colour is never the only signal.
+- Read aloud on every page.
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5] (2026-09-23: added the four missing pages, corrected the stale OAuth-in-production claim, added the market-odds detail), Claude-Code[Claude Opus 5.5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5], Claude-Code[Claude Sonnet 5], Claude-Code[Claude Opus 5.5]*

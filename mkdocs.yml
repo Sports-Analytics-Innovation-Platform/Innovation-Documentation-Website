@@ -1,5 +1,6 @@
 site_name: NBA Analytics & Optimisation Engine
 site_description: Documentation for the COMS3011A NBA Analytics & Optimisation Engine
+site_url: https://sports-analytics-innovation-platform.github.io/Innovation-Documentation-Website/
 repo_url: https://github.com/Sports-Analytics-Innovation-Platform/Innovation-Documentation-Website.git
 edit_uri: edit/main/docs/
  
@@ -42,8 +43,13 @@ plugins:
 markdown_extensions:
   - admonition
   - attr_list
+  - md_in_html
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.highlight
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
@@ -58,7 +64,7 @@ extra:
       link: https://sportsanalytics.pages.dev/
       name: Live Webapp (Cloudflare Pages)
     - icon: material/api
-      link: https://sportsanalytics-api.onrender.com/health
+      link: https://sportsanalytics-api.onrender.com/api/docs
       name: Live API (Render)
     - icon: fontawesome/brands/git
       link: https://sdp.ms.wits.ac.za/innovation/sportsanalytics
@@ -67,56 +73,59 @@ extra:
       link: https://sdp.ms.wits.ac.za/innovation/sportsanalytics/projects/8
       name: Project Board (Gitea)
 
+# Built but kept out of the nav: the meetings overview and the aids for writing minutes.
+not_in_nav: |
+  meetings/index.md
+  meetings/_template.md
+  meetings/how-to-summarize.md
+
 nav:
   - Home:
       - Overview: index.md
-      - Demo Guide: demo-guide.md
       - Rubric Quick Links: rubric-links.md
-  - Getting Started: getting-started.md
+      - Demo Guide: demo-guide.md
+      - Getting Started: getting-started.md
+  - Product:
+      - Feature Tiers: design/feature-tiers.md
+      - UI Overview: design/wireframes.md
+      - Become Pro:
+          - Overview: become-pro/index.md
+          - Valuation Model: become-pro/valuation-model.md
+      - Player Archetypes: player-archetypes/index.md
+      - Roadmap: design/roadmap.md
   - Architecture:
       - Overview: design/architecture.md
       - ERD: design/erd.md
       - Data Ingestion: design/ingestion.md
       - API Design: design/api-design.md
-      - API Reference (Swagger): api-reference.md
-      - UI Overview: design/wireframes.md
+      - API Reference: api-reference.md
       - Performance: design/performance.md
-      - Feature Tiers: design/feature-tiers.md
-      - Roadmap: design/roadmap.md
-  - Become Pro:
-      - Overview: become-pro/index.md
-      - Valuation Model: become-pro/valuation-model.md
-  - Player Archetypes:
-      - Overview: player-archetypes/index.md
-      - Archetype Model: player-archetypes/model.md
+      - Tech Stack: tech-stack.md
+      - Security: security.md
+      - Decisions (ADRs):
+          - Index: decisions/index.md
+          - "ADR-001: Database": decisions/adr-001-database.md
+          - "ADR-002: Auth": decisions/adr-002-auth.md
+          - "ADR-003: Hosting Topology": decisions/adr-003-hosting-topology.md
+          - "ADR-004: Caching Strategy": decisions/adr-004-caching-strategy.md
+          - "ADR-005: Play-by-play Storage": decisions/adr-005-play-by-play-storage.md
   - Process:
       - Methodology: methodology.md
       - Sprint Log: sprint-log.md
+      - Scrum Meetings: meetings/scrum/index.md
       - Git Methodology: git-methodology.md
       - Definition of Done: definition-of-done.md
       - Coding Conventions: coding-conventions.md
       - CI/CD Pipeline: ci-cd.md
       - Testing: testing.md
-      - Stakeholder Interactions: stakeholder-interactions.md
-      - Requirements Traceability: requirements.md
       - AI Usage Ledger: ai-usage.md
-  - User Feedback:
-      - Methodology: user-feedback-methodology.md
-      - Survey Instrument: feedback-survey.md
-      - User Interviews: user-interviews.md
-      - Improvements Made: improvements.md
-  - Decisions (ADRs):
-      - Index: decisions/index.md
-      - "ADR-001: Database": decisions/adr-001-database.md
-      - "ADR-002: Auth": decisions/adr-002-auth.md
-      - "ADR-003: Hosting Topology": decisions/adr-003-hosting-topology.md
-      - "ADR-004: Caching Strategy": decisions/adr-004-caching-strategy.md
-      - "ADR-005: Play-by-play Storage": decisions/adr-005-play-by-play-storage.md
-  - Tech Stack: tech-stack.md
-  - Security: security.md
-  - Meetings:
-      - Overview: meetings/index.md
+  - Users & Stakeholders:
+      - Stakeholder Log: stakeholder-interactions.md
       - Client Meetings: meetings/client/index.md
-      - Scrum Meetings: meetings/scrum/index.md
-      - Meeting Template: meetings/_template.md
-      - How to Summarise: meetings/how-to-summarize.md
+      - User Feedback:
+          - Survey: feedback-survey.md
+          - User Interviews: user-interviews.md
+          - Improvements Made: improvements.md
+
+extra_css:
+  - stylesheets/extra.css

@@ -1,0 +1,248 @@
+========================================================================
+CHAT EXPORT
+Analysed the first 7 survey responses and wrote the User Feedback
+Methodology page
+Date: 14 September 2026
+Author: Adrian Draxl
+Tool: Qoder (desktop IDE), model Qoder Auto or Qoder Efficient
+Qoder session: task-7d6
+========================================================================
+
+HOW THIS FILE WAS PRODUCED: exported by a script from the log Qoder
+keeps for each chat (.qoder/cache/projects/<workspace>/conversation-
+history/<task-id>/<task-id>.jsonl). It keeps the user's prompts and
+every message the assistant wrote, in order. Qoder's injected memories
+and system reminders, the contents of attached files and the screenshots
+are left out; attached file names are kept. The log records no tool
+calls and no timestamps, so the date is the date of the log folder.
+Email addresses are replaced with [redacted].
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+[attached: NBA Analytics Tool_ User Feedback Survey (Responses).xlsx]
+​NBA Analytics Tool_ User Feedback Survey (Responses).xlsx​ hello these are the 7 responses we have got so far.  with them can you implpement the required user feedback section thaat the rubric needs?
+
+ASSISTANT:
+I'll start by retrieving the relevant memories about the feedback survey requirements and rubric, and look at the existing feedback-survey docs page.
+
+ASSISTANT:
+I have good context now. The remaining work for the User Feedback criterion was: collect responses, then write findings plus a feedback-to-change traceability table. Let me look at the current state of the relevant docs pages.
+
+ASSISTANT:
+Now let me check the testing.md user-feedback section and the sprint log to understand what needs to be updated.
+
+ASSISTANT:
+Now let me check the roadmap and feature tiers so the feedback-to-action table can map onto real planned work.
+
+ASSISTANT:
+I've analyzed all 7 responses against the rubric requirement ("Extensive user testing with formal feedback collection" — which needs evidence of both collection **and** integration). Per the project's ask-first rule, here's what I found and what I propose to change.
+
+## What the 7 responses say
+
+**Respondent profile:** 5/7 not at all familiar with basketball, 6/7 never played fantasy, 5/7 answered on phones — a novice-heavy sample (a limitation worth stating honestly, but valuable because it stress-tested the novice experience).
+
+**Quantitative highlights (n=7):**
+
+| Measure | Avg | Read |
+|---|---|---|
+| Landing page visual appeal (Q5) | 4.86 / 5 | 6 of 7 gave the max score |
+| Dashboard usefulness (Q6b) | 4.57 / 5 | Strong |
+| Overall satisfaction (Q18) | 4.43 / 5 | Strong — no score below 4 |
+| Optimiser usefulness & clarity (Q15/Q16) | 4.0 / 5 both | Solid |
+| **Prediction confidence (Q12)** | **3.71 / 5** | **Lowest score — nobody above 4** |
+| Likelihood to return (Q19) | 3.57 / 5 | Gap vs satisfaction (audience-fit effect) |
+
+**Key findings:**
+- **7/7 correctly identified the tool's purpose** from the landing page; **zero bugs** reported
+- Top feature: fantasy lineup optimiser (3 votes), then game predictions and player browsing (2 each)
+- **Trust is the gap**: top request for predictions is "show historical accuracy" (4/7, incl. one "all of the above except methodology"). Notably the Model Accuracy Ledger (PR #94) and "How it works" explainer (PR #95) shipped the same week — the survey screenshots likely predated them, so this is partly a discoverability finding
+- **Novice readability**: one respondent couldn't read stat labels without zooming and wants hover-over explanations of RPG/APG/TS%; also flagged "wordy, LLM-esque" copy; asked for a beginner's guide
+- **Optimiser requests** (100% answered Q17): custom constraints (3) and projected points per player (3) tie
+- Distinctive requests: fuzzy name search ("manon" → "Chris Mañón"), player position shown in stats, all-time stat leaders, randomised daily Beat the Model games
+- 2 respondents volunteered emails for follow-up interviews (good Sprint 3 "extensive testing" evidence)
+- Interesting split: one non-fan rated satisfaction 5 but return-likelihood 1 — quality is high even outside the target audience; retention tracks audience fit
+
+## Proposed changes (4 files, docs site only)
+
+1. **`docs/feedback-survey.md`** — add a **Survey Results & Analysis** section: response overview, respondent profile, full quantitative table, strengths / issues, honest limitations (small novice-skewed sample, screenshot-based rather than hands-on), a **feedback → action traceability table** (each finding mapped to "already shipped (PR #xx)" / "backlog — to file as Gitea issue" / "Sprint 3 plan"), and the Sprint 3 follow-up plan (interviews with the 2 volunteers, hands-on testing, second round)
+2. **`docs/testing.md`** — user-feedback status Drafted → Collected (7 responses, 2026-09-14); update the note box that promised findings would be documented
+3. **`docs/rubric-links.md`** — update the Sprint 2 and Sprint 3 User Feedback rows to point at the documented findings + traceability table
+4. **`docs/sprint-log.md`** — add one Week of 8 Sep row: fielded survey, 7 responses, findings documented (owner: Adrian Draxl — correct me if it should be someone else)
+
+Then verify with `python -m mkdocs build --strict`. The two email addresses will **not** be published — only counted as follow-up volunteers.
+
+ASSISTANT:
+Both approved — implementing now. First, the redacted raw-responses CSV:
+
+ASSISTANT:
+The nested directory likely doesn't exist yet. Let me create it first:
+
+ASSISTANT:
+Odd error. Let me check whether the file actually exists now:
+
+ASSISTANT:
+The file exists (5308 bytes) — the first write actually succeeded despite the error report. Let me verify the content is complete:
+
+ASSISTANT:
+CSV is intact with all 7 rows and redacted emails. Now the main edit — adding the results section to feedback-survey.md:
+
+ASSISTANT:
+The edit applied. Let me verify the formatting around a couple of spots (the diff looked like it might have compacted a blank line before "### Limitations"):
+
+ASSISTANT:
+Formatting is correct. Now updating testing.md's user-feedback process section:
+
+ASSISTANT:
+Now rubric-links.md — updating the gap warning, the Sprint 2 and Sprint 3 User Feedback rows, and the Milestone 3 Improvement row:
+
+ASSISTANT:
+Last file — adding the sprint-log entry to the Week of 8 Sep table:
+
+ASSISTANT:
+All changes are in. Now verifying with the strict MkDocs build (per this repo's CI rule):
+
+ASSISTANT:
+Build passed — "Documentation built in 5.48 seconds" with only the known Material advisory (no link errors, so the CSV link and anchors all resolved). Quick check that the CSV is copied into the deployable site output:
+
+ASSISTANT:
+The CSV deploys with the site. Let me update the project memory to reflect the new state (post-operation reflection):
+
+ASSISTANT:
+Done — the User Feedback rubric evidence is fully implemented and the strict build passes. Here's what changed:
+
+## Changes made (5 files)
+
+**1. `docs/feedback-survey.md`** — the core deliverable. New **Survey Results and Analysis** section containing:
+- Respondent profile + honest note on the novice-heavy sample
+- Full quantitative table (all 10 rating questions with averages, ranges, distributions) + categorical breakdowns
+- **What worked well** (landing page sells the product 7/7, optimiser is the headline feature, zero bugs, personalisation lands) and **What needs work** (prediction trust 3.71 is the lowest score, novice readability/jargon, retention-vs-audience-fit gap, middling Beat the Model engagement)
+- **Limitations** stated plainly (n=7, novice-skewed, not hands-on)
+- **Feedback-to-action traceability table (F1–F15)** — every finding mapped to "Shipped (PR #xx) — deepen in Sprint 3", "Backlog — file as Gitea issue", or "Verify", which is the *integration* half the rubric wants
+- Sprint 3 next steps: file the backlog items, interview the 2 volunteers, hands-on sessions, re-run the survey as the Milestone 3 *Improvement* before/after comparison
+
+**2. `docs/assets/survey-responses/user-feedback-survey-responses-2026-09-14.csv`** (new) — raw response export with both emails replaced by `[redacted]`; confirmed it deploys with the site.
+
+**3. `docs/testing.md`** — survey status Drafted → **Collected (7 responses)**; added follow-up interviews and hands-on testing as planned Sprint 3 methods; replaced the "page will be created once collected" note with a "Findings published" note.
+
+**4. `docs/rubric-links.md`** — Sprint 2 User Feedback row now cites the collected responses, findings, and traceability table; Sprint 3 row describes round 2; User Feedback removed from the open-gaps warning; the Improvement row now points at the survey baseline plan.
+
+**5. `docs/sprint-log.md`** — one Week of 8 Sep row for fielding the survey and publishing findings (owner: Adrian Draxl — say the word if that should be someone else).
+
+`python -m mkdocs build --strict` → **built in 5.48 seconds**, no broken links.
+
+One thing worth knowing for the team: several requests (historical accuracy, methodology explainer, per-slot projected points, team recent games) map to features that shipped in the same final-week window as the survey (PR #94/#95/#111/#123) — the docs frame these honestly as discoverability gaps to be disambiguated in the Sprint 3 interviews rather than pretending they're unbuilt.
+
+Sprint 2 is due tomorrow (2026-09-15) — would you like me to commit and push these docs changes to `main` so they're live on the docs site before the deadline? I can also leave git entirely to you.
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+commit and push
+
+ASSISTANT:
+The `site/` build output is partially tracked in this repo — I need to understand how deployment works before deciding what to stage. Let me check:
+
+ASSISTANT:
+CI builds the site itself on push (`mkdocs build --strict` in the workflow), so the source docs are what matters for deployment. The `site/` directory is gitignored, but 68 site files are still *tracked* from before the ignore rule — my local rebuild modified 3 of them. The repo precedent (commit `86d7c3d`) treats site rebuilds as a separate `chore:` commit.
+
+Let me stage the docs work and run the secrets scan per the team workflow:
+
+ASSISTANT:
+Now scanning the staged diff for sensitive data (the survey contained two real student emails — they must not appear):
+
+ASSISTANT:
+Scan is clean: **no email addresses** in the staged diff (both respondent emails confirmed as `[redacted]` — 2 markers found), and the only "secret-like" hits are false positives ("trade secret" in a respondent quote, "passWithNoTests" in a pre-existing line).
+
+Per the team git workflow, here's what I propose before committing:
+
+**Commit 1** (staged, the actual work — 5 files, +119/−10):
+```
+docs: publish user feedback survey findings and traceability
+```
+
+**Commit 2** (optional, follows repo precedent from `86d7c3d`): the local `mkdocs build --strict` run also updated 3 *tracked* site artifacts (`site/ai-usage/index.html`, `site/search/search_index.json`, `site/sitemap.xml.gz`) —
+```
+chore: rebuild site with latest doc updates
+```
+
+Then push to `origin main` (CI rebuilds and deploys the site itself, so the live pages update regardless of commit 2).
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+we need to add a user feedback methodolology page 
+Description: Create a doc page on the MkDocs site describing the feedback collection process: what was asked, how it was distributed, response count, key findings, and what changes were made based on feedback. This is the "evidence of integration" the rubric requires.
+
+Acceptance Criteria:
+• Page added to docs site under a new "User Feedback" or "Testing" section
+• Includes survey methodology, distribution plan, and findings
+• Shows how feedback was integrated into development
+
+Branch: feedback-docs-page
+Rubric: User Feedback (10%) + Testing Documentation (5%)
+
+ASSISTANT:
+Got it. Let me first commit the staged feedback analysis work, then create the new methodology page.
+
+ASSISTANT:
+Now creating the new branch and methodology page:
+
+ASSISTANT:
+Now creating the methodology page:
+
+ASSISTANT:
+Now updating mkdocs.yml to add the new page and create a dedicated User Feedback section:
+
+ASSISTANT:
+Now updating rubric-links.md to reference the new methodology page:
+
+ASSISTANT:
+Now updating testing.md to reference the new methodology page:
+
+ASSISTANT:
+Now verifying the build passes:
+
+ASSISTANT:
+Build passed. Now staging the changes and scanning for sensitive data:
+
+ASSISTANT:
+No sensitive data found. Committing:
+
+ASSISTANT:
+Push failed — the GitHub credentials (`AdrianDDraxl`) don't have push access to the `Sports-Analytics-Innovation-Platform/Innovation-Documentation-Website` repo.
+
+The branch `feedback-docs-page` is committed locally with both changes:
+- `b39c965` on main: feedback analysis work
+- `4315538` on feedback-docs-page: methodology page
+
+You'll need to push manually from your terminal (where you likely have different credentials), or let me know if you'd like to push to a different remote/fork.
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+try the push again i will choose correctly this time
+
+ASSISTANT:
+Pushed successfully. The branch `feedback-docs-page` is now on GitHub.
+
+GitHub suggests creating a pull request at:
+https://github.com/Sports-Analytics-Innovation-Platform/Innovation-Documentation-Website/pull/new/feedback-docs-page
+
+Would you like to:
+1. Open a PR for team review (recommended per the team workflow)
+2. Merge directly to main (given the Sprint 2 deadline tomorrow)
+3. Leave it on the branch for now
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+bro i thought you pushed to main. just push everything to main
+
+ASSISTANT:
+Done. Both commits are now on `main` and pushed to GitHub:
+
+- `b39c965` — feedback analysis and traceability
+- `4315538` — user feedback methodology page
+
+The CI will build and deploy the site automatically. The new User Feedback section is live with the methodology page and survey instrument.

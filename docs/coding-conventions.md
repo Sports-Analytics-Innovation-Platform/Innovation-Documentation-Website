@@ -37,10 +37,10 @@ Adhere to Create / Read / Update / Delete separation when designing functions an
 ## Enforcement
 
 - Linting is run in CI on every push and PR and must pass before merge — **ESLint 10** (flat config, `apps/api/eslint.config.js`) for the API, **oxlint** (`.oxlintrc.json`) for the web app, alongside a typecheck of each app. See [CI/CD Pipeline](ci-cd.md) for the full pipeline and [Git Methodology](git-methodology.md) for where it sits in the PR flow.
-- The API config turns off two rules on purpose (`no-undef` for TS files, `no-empty-object-type` in `.d.ts`) — both are documented in [CI/CD Pipeline](ci-cd.md#the-api-eslint-config). Don't re-enable them without reading why.
+- The API config turns off two rules on purpose. `no-undef` is off for TS files, where it only flags Node globals and type names that TypeScript already checks. `no-empty-object-type` is off in `.d.ts` files, because the Express declaration that types `req.user` is an empty interface by design.
 - Naming and structure issues that tooling can't catch are a normal part of code review — call them out on the PR rather than after merge.
+- Code written, edited or reviewed with AI is declared in the [AI Usage Ledger](ai-usage.md), however small the AI's part.
 
-!!! note "AI-assisted code"
-    If any code on a PR was generated, edited, or reviewed with AI assistance, it must be declared per the [AI Usage Ledger](ai-usage.md) and the course [AI policy](ai-usage.md) — this applies regardless of how small the AI contribution was.
+---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Opus 5.5]*

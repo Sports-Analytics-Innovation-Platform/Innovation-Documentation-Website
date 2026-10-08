@@ -86,9 +86,7 @@ hide:
     - The team reviewed the survey responses (3 so far) and discussed distributing more widely. Owen and Kiran will share on their WhatsApp statuses.
     - Josh noted the Supabase egress might reset at the end of the month — team will monitor.
 
-    ??? note "Raw transcript (Craig)"
-        [2026-09-14-team-meeting-6.txt](../../transcripts/meeting-transcripts/2026-09-14-team-meeting-6.txt)
-
+    **Raw transcript (Craig):** [2026-09-14-team-meeting-6.txt](../../transcripts/meeting-transcripts/2026-09-14-team-meeting-6.txt)
 
 ??? note "2026-09-10 — Scrum"
 
@@ -141,16 +139,13 @@ hide:
     - Kiran estimated all UI pages would be done by Sunday; Josh aimed to finish the predictions page that day.
     - Team agreed to announce tasks in the group chat to avoid duplicate work.
 
-    ??? note "Raw transcript (Craig)"
-        [2026-09-10-team-meeting-5.txt](../../transcripts/meeting-transcripts/2026-09-10-team-meeting-5.txt)
-
+    **Raw transcript (Craig):** [2026-09-10-team-meeting-5.txt](../../transcripts/meeting-transcripts/2026-09-10-team-meeting-5.txt)
 
 ??? note "2026-09-07 — Scrum"
 
     **Attendees:** Owen, Adrian, Josh, Daniel, Sanele
 
     ## Agenda
-
 
     - Sprint 2 progress review and rubric status walkthrough
     - CI test fixes and new loading animation
@@ -159,9 +154,7 @@ hide:
     - Scheduling client meetings with Kovendan
     - Remaining Sprint 2 tasks and documentation status
 
-
     ## Decisions
-
 
     - Cards on the board stay in review/testing until the day before the deadline — don't move to Done early, so the team can track what's actually sprint-complete vs carry-over.
     - User feedback will use **Google Forms** distributed via WhatsApp rather than an in-app survey — simpler, no database management needed.
@@ -173,9 +166,7 @@ hide:
     - Team confirmed the app uses **real NBA data** (not mock).
     - Sanele wants to add **postseason data** with separate regular/postseason views — Owen said go for it if he can do it right.
 
-
     ## Actions
-
 
     | Action | Owner | Due |
     |---|---|---|
@@ -184,9 +175,7 @@ hide:
     | Add postseason data with separate views | Sanele | Sprint 2–3 |
     | Merge Owen's CI test fix PR | Owen / Team | ASAP |
 
-
     ## Notes
-
 
     - The team walked through the Sprint 2 rubric checklist. Most items are in a solid position: core features done, tests fixed, API exists (needs expansion), bug tracker built, database documentation current. The main gaps are the user feedback survey and scheduling more client meetings.
     - Owen added a basketball bouncing loading animation and fixed CI tests that hadn't been passing.
@@ -196,17 +185,13 @@ hide:
     - The team discussed a "coach mode" idea (from Kiran, post-client-meeting) where users could submit their own stats and get compared to pro players with an estimated draft number — team responded positively.
     - Testing documentation, third-party docs, and Swagger/OpenAPI docs were noted as needing updates but not considered difficult.
 
-
-    ??? note "Raw transcript (Craig)"
-    [2026-09-07-scrum.txt](../../transcripts/meeting-transcripts/2026-09-07-scrum.txt)
-
+    **Raw transcript (Craig):** [2026-09-07-scrum.txt](../../transcripts/meeting-transcripts/2026-09-07-scrum.txt)
 
 ??? note "2026-08-23 — Scrum"
 
     **Attendees:** Owen, Adrian, Josh, Kiran, Sanele
 
     ## Agenda
-
 
     - Sprint 1 rubric walkthrough and readiness check
     - Code coverage status in CI
@@ -218,9 +203,7 @@ hide:
     - Documentation updates needed
     - AI transcript collection
 
-
     ## Decisions
-
 
     - The team agreed the methodology will be updated to describe the process as a **dynamic, initiative-based Scrum adaptation** rather than a planned sprint with pre-assigned tasks. Team members communicate which features they intend to work on and pull work based on capacity.
     - The **Sprint Review ceremony** is replaced with a **Sprint Reflection** using the Sprint Log — a week-by-week tabulated record of what each person completed, serving as evidence of individual contribution.
@@ -231,9 +214,7 @@ hide:
     - Auth is called via **session cookies** — the NestJS API runs on port 4000, and the frontend proxies `/api/*` to it. Users authenticate through Google OAuth and the session cookie is sent with subsequent requests.
     - The team will **not** remove the docs folder from the project repo until all AI transcripts are confirmed moved to the docs site.
 
-
     ## Actions
-
 
     | Action | Owner | Due |
     |---|---|---|
@@ -245,9 +226,7 @@ hide:
     | Add remaining AI transcripts to docs site transcripts folder | Owen, Josh, Kiran, Sanele | 2026-08-25 |
     | Ensure all team members are familiar with the tech stack for marking questions | All | 2026-08-25 |
 
-
     ## Notes
-
 
     - The team walked through every Sprint 1 rubric criterion against the actual project state. Most criteria scored at Advanced level. The two gaps identified were: (1) auth features (sign-up, password reset, account deletion) not yet implemented, and (2) project plan documentation needed to show forward planning.
     - Code coverage in CI covers `apps/api` and `apps/web` only — the Python services (ingestion, predictor, optimizer) have no test files. The team accepted this as not critical for Sprint 1 but noted it for Sprint 2.
@@ -259,10 +238,7 @@ hide:
     - Josh and Owen handed off additional AI transcript files to Adrian for inclusion in the docs site.
     - The team noted that Supabase is explicitly listed in the brief as a disallowed auto-API system — the docs should make it explicit that Supabase's auto-generated APIs are deliberately unused.
 
-
-    ??? note "Raw transcript (Craig)"
-    [2026-08-23-team-standup.txt](../../transcripts/meeting-transcripts/2026-08-23-team-standup.txt)
-
+    **Raw transcript (Craig):** [2026-08-23-team-standup.txt](../../transcripts/meeting-transcripts/2026-08-23-team-standup.txt)
 
 ??? note "2026-08-12 — Scrum"
 
@@ -325,8 +301,7 @@ hide:
     - The team expressed some uncertainty about exactly what the project currently entails. The immediate approach is to establish the core system first and build on it.
     - For the game component, possible ideas discussed included a house/area-based concept, a card-based concept, and a medieval/dungeon-crawler concept. The card idea was questioned because the project requires three levels. A dungeon-crawler was discussed, but boss AI was identified as too difficult for the scope.
 
-    ??? note "Raw transcript (Craig)"
-    [2026-08-12-scrum.txt](../../transcripts/meeting-transcripts/2026-08-12-scrum.txt)
+    **Raw transcript (Craig):** [2026-08-12-scrum.txt](../../transcripts/meeting-transcripts/2026-08-12-scrum.txt)
 
 ---
 

@@ -1,80 +1,39 @@
 # Roadmap
 
-!!! note "Updated 2026-09-23"
-    See [Feature Tiers](feature-tiers.md) for the current, brief-grounded tier breakdown (rewritten 2026-09-23 — the version this page originally pointed to described a different, ML-first framing that predates most of what's actually been built). The ML-quality goals below are real, live planning from actual client meetings and are kept as written; this page's Sprint 3 section adds what was actually delivered, which turned out to be mostly the event-sourcing/submission/dataset-release work instead.
+The plan for each sprint, what was delivered, and what is left. Task-by-task detail, with owners, is in the [Sprint Log](../sprint-log.md); how the work maps to the brief is in [Feature Tiers](feature-tiers.md).
 
-## Sprint 1 — infra & foundation (due 2026-08-25) — COMPLETE
+## Plan and delivery
 
-Sprint 1 delivered a working increment across the full stack:
+| Sprint | Planned | Delivered | Not delivered |
+|---|---|---|---|
+| **1: Foundation** (to 25 Aug) | Stack, auth, NBA data, a first prediction model, hosting, CI | NestJS API with BetterAuth (Google); `nba_api` ingestion; Elo and Four Factors game predictor; lineup optimizer; Teams, Predictions, game detail and Optimizer pages; CI with coverage; API on Render and web app on Cloudflare Pages; this docs site | Password reset, later ruled not needed ([ADR-002](../decisions/adr-002-auth.md)) |
+| **2: Real data and features** (to 15 Sep) | Full-league data, API documentation, a keep-awake pinger, accessibility checks, the signed-in home page, UI polish | Three seasons of real data; live Swagger UI; pinger; axe-core checks in CI; postseason views and advanced stats; player comparison; player matchup projections (planned for Sprint 3, merged 12 Sep); signed-in Home (Beat the Model, watchlist, saved items, model-accuracy card, leaderboard); response caching and indexes ([Performance](performance.md)) | Redis and BullMQ: not needed ([Tech Stack](../tech-stack.md#considered-and-not-used)) |
+| **3: Model maturity** (to 29 Sep) | Player-level predictions, a defensible model, 75–80% accuracy (64% as the baseline) | The brief's event-sourcing requirements (review before publication, corrections with undo, the pull worker, versioned dataset releases, API keys with rate limits, custom statistics, API versioning); [Become Pro](../become-pro/index.md); read-aloud and screen-reader support; user survey and a hands-on interview; Lighthouse audit | 75–80% accuracy: the live model is at 65.8% (below) |
+| **Submission** (11 Oct) | Polish and final documentation | [Player Archetypes](../player-archetypes/index.md); this documentation pass | — |
 
-**Backend & data**
-- NestJS/Prisma/Postgres API with BetterAuth (Google OAuth) migration
-- `nba_api` ingestion service (`apps/ingestion`) — fetches teams, rosters, games, and box scores
-- GamePrediction model + predictor service (Elo win probability, Four Factors margin)
-- `GET /v1/games/:id/prediction` endpoint with e2e tests
-- Fantasy-lineup optimizer (`apps/optimizer`) with MILP solve
-- Player and team search endpoints
-- Authenticated route and API protection (predictions, games, optimizer)
-- Real team logos and player headshots from nba.com's CDN
-- Player bio fields from CommonPlayerInfo endpoint
+The first plan also had an **ML recommendation layer** as the advanced tier. It was dropped when the brief's event-sourcing requirements became the priority in Sprint 3; the client had advised that the last weeks could be touch-ups if the ML wasn't ready.
 
-**Frontend**
-- React/Vite/Tailwind frontend with TanStack Query + shadcn/ui
-- Teams list and profile pages
-- Predictions page with court view visualisation
-- Game detail page with win probability and predicted top scorers
-- Optimizer page (auth-gated)
-- Top navbar replacing sidebar navigation
-- Landing page with hero section
+## Prediction accuracy
 
-**Infrastructure & CI/CD**
-- Gitea Actions CI pipeline (lint, typecheck, test coverage)
-- Code coverage reporting with combined HTML dashboard
-- ADR-003: hosting topology decided (Cloudflare Pages + Render + Supabase)
-- API deployed to Render, frontend deployed to Cloudflare Pages
-- Gitea → GitHub mirror for auto-deploy
+The client set a target of 75–80%, with 64% as an achievable baseline (21 Aug), and said 60% was acceptable if the model was deployed (7 Sep). On 3 Oct, the live model-accuracy route reported:
 
-**Documentation**
-- MkDocs documentation site with GitHub Pages deploy
-- Full audit of all doc pages against actual codebase
-- AI/Codex usage transcripts added
+| Measure | Value |
+|---|---|
+| Games evaluated | 3,781 |
+| Accuracy | **65.8%** |
+| Always picking the home team | 54.8% |
+| Brier score (lower is better) | 0.213 |
 
-See the [Sprint Log](../sprint-log.md) for the complete task-by-task record.
+The model is calibrated: in each confidence band, the predicted and actual win rates are within about 3 percentage points.
 
-## Sprint 2 — real data + expanded features (due 2026-09-15)
+## After submission
 
-- ✅ `nba_api` ingestion flowing with real full-league data into Supabase — three full seasons seeded as of the 2026-09-10 team meeting
-- ✅ Swagger/OpenAPI setup for API documentation, live at `/api/docs` (PR #86, merged 2026-09-11)
-- ✅ Hosting topology pinger (per client meeting 2026-08-21) — cron-job.org, `/health` every 10 minutes
-- ✅ `axe-core` accessibility checks in CI (PR #92, merged 2026-09-11)
-- ✅ Postseason views (play-in/playoffs/finals) and advanced player stats (true shooting%, eFG%, plus-minus, usage%, ratings) — not in the original Sprint 2 plan, pulled in as intermediate-tier work once the basic tier was stable (PR #89, #90, merged 2026-09-11)
-- ✅ Player comparison page and endpoint (PR #53, merged 2026-09-02)
-- 🔶 Database integration with signup functionality — Google OAuth sign-up/sign-in exists; credential-based password reset still open (client accepted ~80% for auth without it, per 2026-09-07 client meeting; Daniel building a simple on-page reset)
-- ✅ Signed-in home dashboard wired to real endpoints (PR #94, merged 2026-09-11) — the shell from PR #87 now reads live data through a new user-owned personalisation layer: Beat the Model, a watchlist with per-player scouting notes, followed-team results, and saved comparisons and lineups, plus a public model-accuracy ledger and accuracy leaderboard
-- Redis/BullMQ — not needed; the ingestion pipeline hasn't required batch/scheduled processing. Zod is in use after all, validating request bodies on the write routes added in PR #94
-- ✅ Database round-trip reduction (PR #124, 13 September 2026) — an in-process response cache, query consolidation, frontend cache defaults, a session cookie cache and new indexes, with measured before/after query counts. Not in the original Sprint 2 plan; pulled in once the personalisation layer made the per-request query volume visible. See [Performance](performance.md) and [ADR-004](../decisions/adr-004-caching-strategy.md)
-- Frontend polish and responsiveness pass — ongoing per the 2026-09-10 team meeting (Figma-based UI redesign in progress, profile page planned)
+In rough order of importance:
 
-## Sprint 3 — model maturity (due 2026-09-29)
-
-- **Intermediate-tier** prediction: player-level predictions, predicted-vs-actual accuracy view — ✅ the predicted-vs-actual accuracy view landed early, in Sprint 2 (PR #94), published against an always-pick-home baseline; player-level predictions are still to come
-- This is the sprint the client flagged as the realistic target for "a working ML model" — treat this as the sprint where prediction quality actually needs to be defensible in a review, not just present
-- Target accuracy: 75–80% (per client meeting), with 64% as an achievable baseline
-- Refine prediction model beyond Elo + Four Factors as real data accumulates
-- ✅ **Become Pro** (PR #192, merged and deployed; production model trained 2026-09-27) — a user logs their own games and gets a projected NBA draft pick, a rookie-scale value and the NBA rookies their line most resembles, private to each user. Not in the original Sprint 3 plan. It adds a trained model (`apps/valuation`) that records its own fit statistics on every model row (in-sample MAE 10.9 picks, rank correlation 0.54), in the same spirit as the prediction model's published accuracy. See [Become Pro](../become-pro/index.md) and [Valuation Model](../become-pro/valuation-model.md)
-
-**What actually landed this sprint (as of 2026-09-23), separate from the ML goals above:** the platform's core event-sourcing/submission requirements — an admin event-corrections workflow with preview/apply/undo, a queued ingestion pull worker, versioned dataset releases with reproducible checksums and a diff/changes feed, mandatory API keys with rate limits and quotas, analyst-defined custom statistics, point-in-time queries, and an API deprecation path with a contract test (roughly 35 PRs, see [Sprint Log](../sprint-log.md#week-of-15-sep-intermediate-advanced-tier-event-sourcing-sprint-3)). Two real bugs were found and fixed auditing this work against the brief (review not gating publication; a batch-resume durability gap) — both sitting in open PRs, not yet merged. Player-level ML predictions and the 75–80% accuracy target above are still open and should stay a priority for whatever's left of this sprint.
-
-## Submission (due 2026-10-11)
-
-- **Advanced-tier** recommendation layer, if time allows — this is explicitly the highest-risk, most-optional item; the client's own guidance ("last two weeks are mostly touch-ups if ML isn't ready") suggests treating this as a stretch goal, not a commitment
-- Polish, responsiveness/accessibility pass, final documentation pass
-- Review client's reference project ([RaceIQ](https://github.com/Race1q/RaceIQ)) for inspiration
-
-## Still open
-
-- Whether the advanced-tier recommendation layer is a real commitment or an explicit stretch goal — worth deciding as a team rather than leaving implicit
-- Individual ownership of Sprint 2/3 work (Sprint 1 was completed with initiative-based task selection per the [Methodology](../methodology.md))
+1. **Backups.** The free database has none, so user data can't be recovered ([ADR-003](../decisions/adr-003-hosting-topology.md#open-questions)).
+2. **Fresh data without a person.** Pulls still need someone to run the pull worker at home.
+3. **CI gaps:** secret scanning, the Python tests and a build step ([CI/CD](../ci-cd.md#not-in-ci-yet)).
+4. **A better model,** towards the client's 75–80% target.
 
 ---
 

@@ -44,9 +44,7 @@ hide:
     - The team asked about the STP test date — client confirmed it was swapped to 2026-10-06 (moved earlier due to credit adjustments).
     - Client was happy overall: "I'm happy. There's nothing left. See you guys."
 
-    ??? note "Raw transcript (Craig)"
-        [2026-09-27-client.txt](../../transcripts/meeting-transcripts/2026-09-27-client.txt)
-
+    **Raw transcript (Craig):** [2026-09-27-client.txt](../../transcripts/meeting-transcripts/2026-09-27-client.txt)
 
 ??? note "2026-09-07 — Client meeting"
 
@@ -54,15 +52,12 @@ hide:
 
     ## Agenda
 
-
     - Sprint 2 progress update and feature demo
     - Rubric clarification (cross-group API, password reset, user testing survey, event-level data)
     - ML model accuracy and deployment status
     - Performance/load time measurement
 
-
     ## Decisions
-
 
     - Client is **happy with progress so far** — team is essentially done with the core product, remaining work is documentation and surveys.
     - ML model at **60% accuracy** is acceptable — client confirmed "Brendan's not going to care if it's wrong" as long as it's deployed and functional on the live site.
@@ -74,9 +69,7 @@ hide:
     - **Event-level data requirement** (stats derived from event data): Sanele's approach of calculating last-five-games stats from event-level data on player profiles is acceptable. Client said "check with Brandon" since this is a newer requirement the team didn't have last year.
     - **Bug tracker** doesn't need to be elaborate — client's own group just used GitHub Issues (27 issues total). Simple is fine.
 
-
     ## Actions
-
 
     | Action | Owner | Due |
     |---|---|---|
@@ -85,9 +78,7 @@ hide:
     | Consider Lighthouse performance audit (target: 80+ scores) | Team | Sprint 2 |
     | Speak to Brendan about password reset approach (Google OAuth vs email/password) | Team | Next class |
 
-
     ## Notes
-
 
     - The team demonstrated progress: basketball loading animation (Owen), player comparison page (Sanele), editable prediction parameters (Owen).
     - Kiran mentioned he is doing a full UI redesign in Figma — still in progress, no rush.
@@ -96,10 +87,7 @@ hide:
     - Josh asked about bug tracker rigour — client showed his group's tracker was just GitHub Issues (27 issues), nothing elaborate.
     - After the client left, the team discussed remaining work: mostly documentation and surveys. Josh plans to focus on ML backtesting documentation. Adrian reviewed feature tiers for basic → intermediate → advanced progression. Kiran proposed a "coach mode" feature (submit your own stats, compare to pros, get estimated draft number) — team responded very positively.
 
-
-    ??? note "Raw transcript (Craig)"
-    [2026-09-07-client.txt](../../transcripts/meeting-transcripts/2026-09-07-client.txt)
-
+    **Raw transcript (Craig):** [2026-09-07-client.txt](../../transcripts/meeting-transcripts/2026-09-07-client.txt)
 
 ??? note "2026-08-21 — Client meeting"
 
@@ -107,22 +95,17 @@ hide:
 
     ## Agenda
 
-
     - Progress update and feature review
     - Discussion of upcoming features and ML goals
 
-
     ## Decisions
-
 
     - The search bar feature is complete.
     - The team will implement a second API to expand functionality, using buckets to pull data.
     - Swagger will be used alongside the documentation site for API documentation.
     - The ML predictive model target accuracy is 75–80%, with 64% as a baseline.
 
-
     ## Actions
-
 
     | Action | Owner | Due |
     |---|---|---|
@@ -134,9 +117,7 @@ hide:
     | Set up Swagger for API documentation | Team | Sprint 2 |
     | Review the client's reference project for inspiration | Team | Sprint 2 |
 
-
     ## Notes
-
 
     - The team demonstrated completed work including the search bar functionality.
     - The client discussed hosting topology and suggested implementing a pinger.
@@ -147,26 +128,20 @@ hide:
     - The team's API should consume another API as part of the architecture.
     - Swagger should be used alongside the documentation site for API documentation.
 
-
 ??? note "2026-08-18 — Client meeting"
 
     **Attendees:** Adrian, Owen, Josh, Sanele, Kovendan Raman (client)
 
     ## Agenda
 
-
     - Review of progress so far
     - Features to be implemented in the coming week
 
-
     ## Decisions
-
 
     - The team identified the following features as priorities for the current week.
 
-
     ## Actions
-
 
     | Action | Owner | Due |
     |---|---|---|
@@ -176,14 +151,11 @@ hide:
     | Create project diagrams (architecture, ERD, etc.) | Team | 2026-08-24 |
     | Set up and maintain a project board | Team | 2026-08-24 |
 
-
     ## Notes
-
 
     - The team presented a progress update to the client covering what had been completed so far.
     - The client outlined the key features that still need to be implemented: a custom API, database integration for API data, code coverage in Gitea actions, diagrams, and a project board.
     - All action items are due by 2026-08-24.
-
 
 ??? note "2026-08-13 — Client meeting"
 
@@ -192,7 +164,6 @@ hide:
     **Absentees:** Kiran, Daniel, stuck in traffic
 
     ## Agenda
-
 
     - Sprint 1 scope and expectations
     - Current project progress and MVP
@@ -204,9 +175,7 @@ hide:
     - Machine learning and AI-assisted development
     - Ongoing client meetings and project demonstrations
 
-
     ## Decisions
-
 
     - Sprint 1 will focus primarily on establishing the project's infrastructure and completing the requirements in the Sprint 1 rubric. Additional features can be implemented where time allows.
     - The team will use an NBA API rather than the previously considered football API. The team identified `NBA_API` as a free, unofficial API that is reportedly well maintained and widely used.
@@ -218,9 +187,7 @@ hide:
     - The machine-learning component does not need to be completed in Sprint 1. The client indicated that a working ML model would more realistically be expected around Sprint 3, with the final submission providing limited time for additional fixes.
     - The team will show the client what has been implemented and discuss any difficulties or ideas during future meetings. The client indicated that the team does not need to go through every rubric requirement with him individually.
 
-
     ## Actions
-
 
     | Action | Owner | Due |
     |---|---|---|
@@ -236,9 +203,7 @@ hide:
     | Assign the existing GitHub/GitTea issues to team members | Sanele | Sprint 1 |
     | Ensure issues are assigned and closed throughout development rather than only immediately before presentation | Team | Ongoing |
 
-
     ## Notes
-
 
     - The client reviewed the team's current state and saw a basic UI using mock data, a preliminary database schema, the documentation website, and the beginnings of the project structure.
     - The current MVP is not yet fully implemented; the UI is still using mock data.
@@ -259,9 +224,7 @@ hide:
     - The client advised against making the interface excessively purple because he associates purple styling with AI-generated interfaces.
     - The client described the team's topic positively and said it appeared to be a good project to work on.
 
-
-    ??? note "Raw transcript (Craig)"
-    [2026-08-13-client.txt](../../transcripts/meeting-transcripts/2026-08-13-client.txt)
+    **Raw transcript (Craig):** [2026-08-13-client.txt](../../transcripts/meeting-transcripts/2026-08-13-client.txt)
 
 ---
 

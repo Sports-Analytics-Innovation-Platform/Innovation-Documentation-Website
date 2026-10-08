@@ -1,40 +1,29 @@
 # NBA Analytics & Optimisation Engine
 
-COMS3011A — Sport Analytics Tool project documentation.
+COMS3011A Sport Analytics Tool: project documentation. The code lives in the team's Gitea organisation. This site is built from the `docs/` folder of this repository and deploys on every push to `main`.
 
-This site is the public documentation for the project, covering architecture, API reference,
-process, and decision records. Source code lives in the team's Gitea organisation; this site
-is built from the `docs/` folder in this repository and deployed automatically on every push
-to `main`.
-
-## Live links
-
-- [:material-web: **Live Webapp**](https://sportsanalytics.pages.dev/){ .md-button .md-button--primary } — deployed frontend on Cloudflare Pages
-- [:material-api: **Live API**](https://sportsanalytics-api.onrender.com/health){ .md-button } — backend on Render (try `/health`)
-- [:material-server: **Gitea Source Repo**](https://sdp.ms.wits.ac.za/innovation/sportsanalytics) — the team's code repository
-- [:material-view-dashboard: **Project Board**](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/projects/8){ .md-button } — Gitea Projects (requires Gitea authorisation)
+- [:material-web: **Live Webapp**](https://sportsanalytics.pages.dev/){ .md-button .md-button--primary } frontend on Cloudflare Pages
+- [:material-api: **Live API**](https://sportsanalytics-api.onrender.com/api/docs){ .md-button } Swagger UI on Render
+- [:material-server: **Source repo**](https://sdp.ms.wits.ac.za/innovation/sportsanalytics) on Gitea
+- [:material-view-dashboard: **Project board**](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/projects/8) on Gitea (needs a Gitea login)
 
 ## Start here
 
-- [Getting Started](getting-started.md) — run the project locally
-- [Architecture Overview](design/architecture.md) — system design
-- [Methodology](methodology.md) — how we work
-- [Decisions](decisions/index.md) — why we chose what we chose
-- [Rubric Quick Links](rubric-links.md) — marking a milestone? Start here
-
-!!! tip "Marking tutor? Start here"
-    The fastest path through the project:
-
-    1. **[Demo Guide](demo-guide.md)** — a 10-minute step-by-step walkthrough of the live app, mapped to the rubric
-    2. **[Rubric Quick Links](rubric-links.md)** — every rubric criterion linked to its evidence
-    3. **[Live Webapp](https://sportsanalytics.pages.dev/)** — try it yourself
-    4. **[Live API](https://sportsanalytics-api.onrender.com/health)** — check `/health` for a quick backend verification
+1. **[Demo Guide](demo-guide.md):** a 10-minute walkthrough of the live app.
+2. **[Rubric Quick Links](rubric-links.md):** every rubric criterion linked to its evidence.
+3. **[Getting Started](getting-started.md):** run the project locally.
 
 ## Status
 
-Sprint 1 and Sprint 2 are both complete; Sprint 3 (due 2026-09-29) is under way. Beyond the Sprint 1 base — NestJS API with BetterAuth (Google OAuth), React frontend with player/team browsing and search, game listings, predictions with Elo win-probability and Four Factors scoring, a fantasy-lineup optimizer, `nba_api` ingestion service, CI/CD pipeline (Gitea Actions), and production deployment on Cloudflare Pages (frontend), Render (API), and Supabase (Postgres) — Sprint 2 added player comparisons, postseason views with advanced per-game stats, a bug tracker, `axe-core` accessibility checks in CI, a live Swagger/OpenAPI UI, and a response cache/query-consolidation pass. The Sprint 2 user feedback survey was fielded (7 responses collected; findings published, see [User Feedback](user-feedback-methodology.md)).
+Sprints 1–3 are complete and the project is being submitted as finished.
 
-Sprint 3 has landed the platform's core Intermediate/Advanced-tier event-sourcing work: an admin event-corrections workflow (preview/apply/undo with validation), a queued ingestion pull worker, versioned dataset releases with reproducible checksums, mandatory API keys with rate limits/quotas, and analyst-defined custom statistics over the event schema — see [Feature Tiers](design/feature-tiers.md) for what's actually done versus still open per brief tier, including two real bugs found and fixed on 2026-09-23 (review not gating publication; a batch-resume durability gap), both merged to `main` (PRs #184 and #186). It has also added [Become Pro](become-pro/index.md): a signed-in user logs their own games and gets a projected NBA draft pick, a rookie-scale value and the real NBA rookies their line most resembles, from a model trained on NBA rookie seasons. See the [Sprint Log](sprint-log.md) for the full record and the [Roadmap](design/roadmap.md) for what's next.
+| | What was built |
+|---|---|
+| **Sprint 1** | NestJS API with Google sign-in, React frontend for players and teams, `nba_api` ingestion, Elo and Four Factors predictions, MILP fantasy optimizer, CI/CD, deployment on Cloudflare Pages, Render and Supabase |
+| **Sprint 2** | Player comparison, postseason views and advanced stats, bug tracker, accessibility checks in CI, Swagger UI, response caching, first user survey (11 responses) |
+| **Sprint 3** | Admin event corrections with an audit trail, reviewed ingestion with a pull worker, versioned dataset releases, API keys with rate limits and quotas, custom statistics, [Become Pro](become-pro/index.md), and improvements driven by user feedback |
+
+[Feature Tiers](design/feature-tiers.md) maps this to the brief's tiers. The [Sprint Log](sprint-log.md) has the detail, and the [Roadmap](design/roadmap.md) covers what's next.
 
 ---
 

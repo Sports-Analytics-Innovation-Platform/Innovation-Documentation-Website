@@ -1,13 +1,13 @@
 # Getting Started
 
-This page should get a new contributor from a clean clone to a running app in under 15 minutes. If it doesn't, that's a bug in this page — fix it, don't just work around it.
+From a clean clone to a running app in about 15 minutes.
 
 ## Prerequisites
 
-- **Node.js** (LTS, v24+) and **npm** — for both `apps/api` (NestJS) and `apps/web` (React + Vite)
-- **Docker** and **Docker Compose** — runs Postgres locally
-- **Git**, with access to the project's Gitea repository
-- **Python 3** — only if you're working on the `nba_api` ingestion piece (`apps/ingestion`), the predictor (`apps/predictor`), the optimizer (`apps/optimizer`), or the Become Pro valuation model (`apps/valuation`, see [Valuation Model](become-pro/valuation-model.md#operating-it) for training it)
+- **Node.js 24** and npm, for `apps/api` (NestJS) and `apps/web` (React and Vite)
+- **Docker** with Compose, for Postgres
+- **Git**, with access to the Gitea repository
+- **Python 3**, only for the data jobs: ingestion, predictor, optimizer, or the [Become Pro model](become-pro/valuation-model.md#operating-it)
 
 ## 1. Clone the repo
 
@@ -22,7 +22,7 @@ cd sportsanalytics
 cp apps/api/.env.example apps/api/.env
 ```
 
-Fill in the values `.env.example` documents. The required variables are:
+Fill in the values:
 
 | Variable | Purpose |
 |---|---|
@@ -31,24 +31,15 @@ Fill in the values `.env.example` documents. The required variables are:
 | `WEB_ORIGIN` | CORS origin for the frontend (default: `http://localhost:5173`, comma-separated for multiple) |
 | `BETTER_AUTH_SECRET` | Generate with `openssl rand -base64 32` |
 | `BETTER_AUTH_URL` | API origin (default: `http://localhost:4000`) |
-| `GOOGLE_CLIENT_ID` | Google OAuth client ID — create at [Google Cloud Console](https://console.cloud.google.com/apis/credentials) |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID, from the [Google Cloud Console](https://console.cloud.google.com/apis/credentials) |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
-| `VITE_API_BASE_URL` | (frontend, if needed) API base URL for production builds |
-| `PRISMA_LOG_QUERIES` | Optional. `true` logs every SQL statement the API issues — used to count queries before and after a change ([Performance](design/performance.md)) |
-| `API_CACHE_DISABLED` | Optional. `true` turns off the in-process response cache, to confirm a result is genuinely cached rather than coincidentally fast |
-| `INGESTION_MODE` | Optional. Set to `"queue"` to force ingestion pulls through the queue/worker flow locally instead of running `ingest.py` directly |
-| `SUPABASE_URL` / `SUPABASE_SECRET_KEY` / `SUPABASE_AVATARS_BUCKET` | Only needed for avatar uploads (Supabase Storage, server-side only). Everything else works without these set |
+| `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_AVATARS_BUCKET` | Profile picture uploads only |
+| `PRISMA_LOG_QUERIES`, `API_CACHE_DISABLED` | Optional, for [measuring performance](design/performance.md#measuring-it-yourself) |
+| `INGESTION_MODE` | Optional. `queue` sends local pulls through the queue and pull worker |
 
-Never commit the filled-in `.env` files. See [Security](security.md) for why.
+Then `cp apps/web/.env.example apps/web/.env`. Public data needs an API key, which the dev proxy adds from `SITE_PROXY_API_KEY`. Without it, signed-out pages get `401 API_KEY_REQUIRED`; signed-in pages work, because a session is enough. To set it, sign in once (step 6), create a key under **Profile → API Keys**, paste it into `apps/web/.env`, and restart the web app. Only a hash of each key is stored, so it can't be inserted into the database by hand.
 
-!!! warning "Also needed: apps/web/.env, since mandatory API keys landed (added 2026-09-23)"
-    `cp apps/web/.env.example apps/web/.env` and set `SITE_PROXY_API_KEY`. Since API keys became mandatory for public reads (`OptionalSessionGuard` + `ApiKeyGuard` on players/games/teams/analytics/datasets), a **signed-out** visitor to `http://localhost:5173` — e.g. the landing page's live-match widget — needs this key set, or every request 401s with `API_KEY_REQUIRED`. If you're testing signed-in only, you can skip this step at first (a session bypasses the key requirement) — but you'll hit it eventually, so it's worth doing now:
-
-    1. Sign in once via Google OAuth (step 6 below).
-    2. Go to Profile → API Keys, issue a self-service key.
-    3. Paste it into `apps/web/.env` as `SITE_PROXY_API_KEY` and restart `npm run dev` in `apps/web`.
-
-    There's no way to shortcut this with a raw database insert — only a SHA-256 hash of the key is ever stored, so the key has to come from the actual issuance flow.
+Never commit a filled-in `.env` ([Security](security.md#secrets)).
 
 ## 3. Start Postgres
 
@@ -56,7 +47,7 @@ Never commit the filled-in `.env` files. See [Security](security.md) for why.
 docker compose up -d
 ```
 
-This brings up Postgres locally so both apps can connect to it. Confirm it's running with `docker compose ps`.
+This starts Postgres 16 on port 55432, and a throwaway test database on 55433.
 
 ## 4. Set up the database
 
@@ -75,7 +66,7 @@ npx prisma db seed   # loads mock NBA seed data
 npm run start:dev
 ```
 
-The NestJS API should now be running at `http://localhost:4000`. The health check at `/health` should return `{ "status": "ok" }`.
+The API runs at `http://localhost:4000`; `http://localhost:4000/v1/health` returns `{"status":"ok"}`.
 
 ## 6. Run the frontend
 
@@ -87,21 +78,21 @@ npm install
 npm run dev
 ```
 
-Vite's dev server will print the local URL (default `http://localhost:5173`). The Vite config proxies `/api/*` to `http://localhost:4000`, so the frontend reaches the backend transparently.
+The app runs at `http://localhost:5173`. Vite forwards `/api` and `/auth` to the API, as Cloudflare does in production.
 
 ## 7. Run tests
 
 ```bash
-# from apps/api (Vitest + Supertest, integration tests run against a real disposable Postgres DB)
+# from apps/api (Vitest and Supertest; end-to-end tests use the test database)
 npm run test
 
-# from apps/web (Vitest + React Testing Library)
+# from apps/web (Vitest and React Testing Library)
 npm run test
 ```
 
 ## 8. Run the same checks CI runs
 
-Before pushing, run locally what [CI](ci-cd.md) will run on your branch — a failure here is a failure there:
+Before pushing, run what [CI](ci-cd.md) runs:
 
 ```bash
 # apps/api
@@ -120,16 +111,14 @@ npx tsc -b --noEmit     # -b is required: tsconfig.json is solution-style
 
 | Problem | Likely cause |
 |---|---|
-| API can't connect to Postgres | Docker Compose isn't running, or the connection string in `apps/api/.env` doesn't match the Compose service | 
-| Prisma migration fails | Database not reachable yet — wait a few seconds after `docker compose up -d` before migrating, or check `docker compose logs` |
-| Frontend shows no data / requests to `/api/...` 404 or fail with a CORS error | Confirmed working via `vite.config.ts`'s `/api` → `http://localhost:4000` proxy — if you're still seeing this, check the backend is actually running on port 4000. |
-| Google sign-in fails locally | Check `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` are set in `apps/api/.env` and the redirect URI (`http://localhost:4000/auth/callback/google`) is registered in the Google Cloud console. |
-| `tsc` reports "Cannot find module" errors in `apps/api` for packages that *are* in `package.json` | Stale local install. Run `npm ci && npm run prisma:generate` in `apps/api`. |
-| Every `/api` and `/auth` call returns **502** from the Vite dev server | The API isn't running — usually because it crashed at boot, not because the proxy is misconfigured. Check the API's own startup log first. A known cause: `apps/api/.env` being overwritten with a copy of `.env.example`, which leaves `GOOGLE_CLIENT_ID`/`SECRET` empty and `SUPABASE_URL` as the `<project-ref>` placeholder that Supabase rejects at startup. Vite reports this as 502 because nothing is listening on port 4000. |
-| `train_valuation_model.py` fails with "DATABASE_URL is not set" even though the root `.env` has one | Deliberate. `apps/valuation/db.py` reads only `apps/valuation/.env` (copy it from `.env.example`), or a `DATABASE_URL` already set in the environment. The root `.env` points at production, and a bare `load_dotenv()` would have walked up to it and trained against production by accident. |
-
-If you hit something not covered here, add it to this table once you've solved it — that's the point of this page.
+| API can't connect to Postgres | Docker isn't running, or `DATABASE_URL` doesn't point at port 55432 |
+| Prisma migration fails | Postgres is still starting; wait a few seconds, or check `docker compose logs` |
+| Signed-out pages show no data | `SITE_PROXY_API_KEY` isn't set in `apps/web/.env` (step 2) |
+| Google sign-in fails | Check the Google variables, and that `http://localhost:4000/auth/callback/google` is a registered redirect URI |
+| `tsc` can't find modules that are in `package.json` | Run `npm ci && npm run prisma:generate` in `apps/api` |
+| Every `/api` and `/auth` call returns **502** | The API crashed at startup; check its log. A common cause is a `.env` still holding `.env.example`'s placeholder `SUPABASE_URL` |
+| `train_valuation_model.py` says `DATABASE_URL` is not set | Deliberate: it reads only `apps/valuation/.env`, because the root `.env` points at production |
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Sonnet 5] (2026-09-23: added the now-required `apps/web/.env` / `SITE_PROXY_API_KEY` step), Claude-Code[Claude Opus 5.5]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Claude-Code[Claude Sonnet 5], Claude-Code[Claude Opus 5.5]*

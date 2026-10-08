@@ -1,73 +1,77 @@
 # Feature Tiers
 
-!!! note "Rewritten 2026-09-23 against the brief's own tier language"
-    The previous version of this page described a different framing (an ML-prediction-and-recommendation product) that predates the direction the codebase actually took. The brief for this project (COMS3011A Project 3, "Sport Analytics Tool") is specific: every tier is built around **event-derived statistics** — submission, schema validation, review-before-publication, correction propagation, versioned dataset releases, and (at the advanced tier) analyst-defined custom statistics over the event schema. That's what actually got built, in detail, across Sprints 1–3. The Elo/Four Factors predictor and the fantasy-lineup optimizer are real, working, additional functionality — kept below as bonus work, not the core tier structure, because the brief doesn't ask for them.
+How the platform meets each tier of the brief (COMS3011A Project 3, "Sport Analytics Tool"). Every tier is built around statistics derived from individual events, so that is how this page is organised. The prediction model, optimizer and other extras are listed separately under [Beyond the brief](#beyond-the-brief).
 
-Status legend: ✅ done · ⚠️ partially done, with the gap named · ❌ not done · 🔀 implemented, sitting in an open PR not yet merged to `main`
+✅ done · ⚠️ partly done, gap named · ❌ not built
 
-## Basic tier (MVP)
+## Basic tier
 
-> "Every statistic it publishes should be derived from a record of the individual events... Only approved submitters should be able to submit... A submission... should be checked against the platform's event schema before it is accepted... Every published statistic should be traceable back to the events and the submission behind it." — brief §1.1.1
+> "Every statistic it publishes should be derived from a record of the individual events... Only approved submitters should be able to submit... A submission... should be checked against the platform's event schema before it is accepted... Every published statistic should be traceable back to the events and the submission behind it." (§1.1.1)
 
-- ✅ **Event-derived statistics.** For games with stored play-by-play, `GameEvent` (real per-play NBA data) is what `PlayerGameStat` is computed from — `apps/ingestion/derive_player_game_stats.py` and its TypeScript mirror `apps/api/src/admin/derive-player-game-stats.ts`. Nothing is typed in as a total. **Scope:** play-by-play is stored for 2025-26 only, because of the database's 500 MB free-plan limit. The 2023-24 and 2024-25 seasons are box scores only, so their statistics trace back to each game's box score rather than to individual plays ([ADR-005](../decisions/adr-005-play-by-play-storage.md)).
-- ✅ **Correcting an event brings dependent statistics back in line automatically.** `AdminEventsService.correctEvent` re-derives exactly the affected player(s)' stats in the same transaction as the edit — no manual re-entry (`apps/api/src/admin/{admin-events.service.ts, plan-stat-recompute.ts}`). Available for 2025-26 games, the ones with stored plays ([ADR-005](../decisions/adr-005-play-by-play-storage.md)).
-- ✅ **Schema-validated submissions with an explanatory rejection.** `apps/ingestion/event_validation.py` checks every incoming action against the platform's event schema and collects every problem (not just the first) into `IngestionBatch.rejectionSummary`, surfaced to admins rather than failing silently.
-- ✅ **Traceability.** Every `GameEvent` carries the `IngestionBatch` that wrote it; every manual edit is recorded on `EventCorrection` with who/when/why.
-- ✅ **API reads fixtures, events, and derived statistics**, narrowed and paginated: `GET /v1/games`, `GET /v1/games/:id/events`, `GET /v1/players/:id/stats`, `GET /v1/players/leaders`, `GET /v1/players/aggregates`, all filterable, all paginated (`{ data, page, pageSize, total }`).
-- ✅ **Stable identifiers.** Every public id is a UUID (`@default(uuid())`), never reused.
-- ✅ **Export a filtered slice as a file.** `GET /v1/players/export`, `GET /v1/games/export`, `GET /v1/datasets/:version/download` — all CSV.
+| Requirement | | How |
+|---|---|---|
+| Statistics derived from events | ✅ | Box-score lines are summed from stored plays (`derive_player_game_stats.py`, mirrored in TypeScript for corrections). Play-by-play is kept for 2025-26 only; older seasons are box scores, because of the 500 MB database limit ([ADR-005](../decisions/adr-005-play-by-play-storage.md)). |
+| Only approved submitters | ✅ | Data enters only through ingestion. On the site, only an `ADMIN` can start a pull. |
+| Checked against the event schema, with reasons | ✅ | `event_validation.py` checks every play and counts each rejection by reason on its batch ([Data Ingestion](ingestion.md#batches)). |
+| Traceable to events and submission | ✅ | Every stored play points to the batch that wrote it; every manual edit is recorded in `EventCorrection` with who, when and why. |
+| A corrected event updates its statistics | ✅ | A correction re-derives the affected players' lines in the same transaction. |
+| API for fixtures, events and statistics, filtered and paged | ✅ | `/v1/games`, `/v1/games/:id/events`, `/v1/players/:id/stats`, `/v1/players/leaders`, `/v1/players/aggregates` ([API Reference](../api-reference.md)). |
+| Stable identifiers | ✅ | Every public id is a UUID, never reused. |
+| Export a filtered slice | ✅ | CSV from `/v1/players/export`, `/v1/games/export` and dataset releases. |
 
-**Basic tier: essentially complete.**
+**Basic tier: complete.**
 
 ## Intermediate tier
 
-> "A batch should be staged and validated before it lands... Resubmitting a batch should not double-count anything, and a batch that fails part way through should resume rather than restart. Submissions should pass a review before publication... a change to the event data should only cause the figures that depend on it to be recomputed... Queries should meet a stated response time... The API should be versioned, should issue keys... and hold them to rate limits and quotas... with repeated reads served from cache... datasets should become releases... versioned snapshots published with their schema, a description of every field, and a checksum." — brief §1.1.2
+> "A batch should be staged and validated before it lands... Resubmitting a batch should not double-count anything, and a batch that fails part way through should resume rather than restart. Submissions should pass a review before publication... a change to the event data should only cause the figures that depend on it to be recomputed... Queries should meet a stated response time... The API should be versioned, should issue keys... and hold them to rate limits and quotas... with repeated reads served from cache... datasets should become releases..." (§1.1.2)
 
-- ✅ **Idempotent resubmission.** Ingestion upserts `GameEvent` on `(gameId, sequence)` — a re-run overwrites the same rows, never double-counts (`apps/ingestion/play_by_play.py`).
-- ✅ **Batch resume survives a real crash, not just a graceful one.** The resume mechanism itself (`IngestionBatch.resumeAfterSequence`) was real, but only committed once per ~40-minute phase — a crash could silently roll back every already-successful game and the failing game's own resume marker along with it. Fixed to commit per game and before re-raising on failure; merged to `main` on 2026-09-23 (PR #186). See [Data Ingestion](ingestion.md#how-one-games-batch-runs).
-- ✅ **Review actually gates publication**, not just labels a batch. Until this fix, a `PENDING_REVIEW`/`REJECTED` batch's events and derived stats were already live on the public API the moment ingestion wrote them — the status was an audit label, not a gate. Now `PUBLISHED_GAME_FILTER` excludes a game from every public read while any of its batches (other than deleted ones) is pending, running, failed or rejected. Merged to `main` on 2026-09-23 (PR #184). See [Data Ingestion](ingestion.md#review-and-publication).
-- ✅ **Validation catches impossible/conflicting data**, and **corrections leave a history.** `event-correction-rules.ts` validates a correction (e.g. rejects one that leaves a play's credit on the wrong player); `EventCorrection` is an append-only audit trail, and undo is a *new* correction reverting a prior one, never a delete.
-- ✅ **Incremental recompute, not full recompute.** `plan-stat-recompute.ts` only recomputes the players who actually appear in the corrected game — never the whole roster, never other games.
-- ⚠️ **Figures checked against reference results.** Exact-value unit tests exist and pin real formulas (e.g. `stats.service.spec.ts` against a real Finals boxscore, matched to 3 decimal places against `BoxScoreAdvancedV3`). What's missing: a committed, automated "golden" regression test replaying one real game's full play-by-play against that game's own externally-published box score.
-- 🔀 **Performance at the brief's stated scale.** Indexing is real and deliberately reasoned (see `Game`/`PlayerGameStat`/`GameEvent` index comments in `schema.prisma`), but nothing measured response time under load until now. `apps/api/scripts/load-test.mjs` (`npm run load-test`) benchmarks the hot read paths against a stated target (p95 < 300ms, p99 < 800ms). **Open PR, not yet run against a real at-scale database** (`add-api-load-test`) — this closes the "stated target" half of the requirement; someone still needs to run it and record the number.
-- ✅ **API versioning is real machinery, not just a URL prefix.** `/v1/` enforced by `api-version.guard.ts`; `@DeprecateEndpoint` + `deprecation.interceptor.ts` emit real `Deprecation`/`Sunset`/`Link` headers (one live example: `GET /health` deprecated in favour of `GET /v1/health`).
-- ✅ **API keys, rate limits, quotas — correctly separate from session auth.** `apps/api/src/common/api-key.guard.ts` enforces a DB-backed sliding-window rate limit and daily quota per `ApiConsumer`; self-service keys are issued from the profile page (`ApiKeysSection.tsx`), admin-issued keys from the admin Consumers tab. A signed-in session and an API key are two independent ways to authenticate the same public read routes.
-- ✅ **Repeated reads served from cache.** `apps/api/src/cache/response-cache.service.ts` — single-flight, TTL-tiered by data volatility, invalidated on writes. See [Performance](performance.md) for the query-count side of this (a related but separate optimisation pass).
-- ✅ **Dataset releases: versioned, schema-documented, checksummed, reproducible.** `DatasetRelease` snapshots a CSV at publish time with a per-field schema description and a SHA-256 checksum; a later correction marks the affected release stale rather than silently rewriting it under the same version name.
+| Requirement | | How |
+|---|---|---|
+| Batches staged and validated | ✅ | Each game's run is an `IngestionBatch`, validated before its plays are saved. |
+| Resubmission doesn't double count | ✅ | Plays are upserted on game and sequence number. |
+| A failed batch resumes | ✅ | Each batch keeps a checkpoint and each game commits as it finishes (PR #186). |
+| Review before publication | ✅ | A game is hidden from every public read while any of its batches is pending, running, failed or rejected (PR #184; [Data Ingestion](ingestion.md#review-and-publication)). |
+| Only dependent figures recomputed | ✅ | A correction recomputes only the players in the corrected game (`plan-stat-recompute.ts`). |
+| Impossible data caught; corrections keep a history | ✅ | Correction rules refuse, for example, credit left on the wrong player. Corrections are append-only; an undo is a new correction. |
+| Figures checked against reference results | ⚠️ | Unit tests match the NBA's published advanced stats to three decimal places. There is no automated test replaying a whole game against its published box score. |
+| A stated response time | ⚠️ | Target: P95 under 300 ms for data reads, not measured on production. Repeat reads of public data issue no database statements, and Lighthouse scores the live pages 88–95 ([Performance](performance.md)). |
+| Versioned API | ✅ | `/v1/`, `Accept-Version`, and `Deprecation`/`Sunset` headers ([API Design](api-design.md)). |
+| Keys, rate limits and quotas | ✅ | Per-minute limits and daily quotas per key, counted in the database. |
+| Repeated reads from cache | ✅ | An in-memory cache with lifetimes by how often data changes ([ADR-004](../decisions/adr-004-caching-strategy.md)). |
+| Dataset releases | ✅ | Each release stores its CSV, a description of every field and a SHA-256 checksum. A later correction marks it stale instead of rewriting it. |
 
-**Intermediate tier: substantially complete.** The two real gaps (review-gating, resume durability) were fixed and merged on 2026-09-23 (PRs #184 and #186). Load testing has tooling but no recorded result yet.
+**Intermediate tier: complete except the response-time target.**
 
 ## Advanced tier
 
-> "An analyst should be able to define a new statistic over the event schema itself... validated before they run, contained... and versioned... the platform should also accept a feed from a fixture in progress, and should cope with events that arrive late or out of order... say what a statistic was as of a given date... let a consumer see what changed between two dataset releases... hand large requests off as jobs... offer a feed of changes... retiring versions along a published deprecation path, testing its own contracts, and showing each consumer what it has used... flagging events that look wrong against the history, reconciling submitters that disagree." — brief §1.1.3
+> "An analyst should be able to define a new statistic over the event schema itself... the platform should also accept a feed from a fixture in progress, and should cope with events that arrive late or out of order... say what a statistic was as of a given date... let a consumer see what changed between two dataset releases... hand large requests off as jobs... offer a feed of changes... retiring versions along a published deprecation path, testing its own contracts, and showing each consumer what it has used... flagging events that look wrong against the history, reconciling submitters that disagree." (§1.1.3)
 
-- ✅ **Analyst-defined custom statistics.** `apps/api/src/custom-statistics/` — a hand-rolled expression parser (no `eval`, division-by-zero rejected), versioned per edit, role-gated to `ANALYST`/`ADMIN`. Evaluates over 7 event-derived fields (points, rebounds, assists, steals, blocks, turnovers, minutes) — "over the event schema" holds transitively, since those fields are themselves event-derived, rather than exposing arbitrary `GameEvent` field predicates directly.
-- ✅ **Point-in-time queries.** `GET /v1/players/:id/stats?asOf=` — only games completed by that timestamp contribute.
-- ✅ **Diff / changes-since feed between dataset releases.** `GET /v1/datasets/diff?from=&to=` and `GET /v1/datasets/changes?since=` — a real cursor feed, not a stub.
-- ✅ **Deprecation path with a lightweight self-contract test.** `apps/api/test/openapi-contract.e2e-spec.ts` snapshot-tests the API's public surface against its own generated OpenAPI document. Worth being precise: this guards against the team's *own* API silently changing shape — it is not Pact-style consumer-driven contract testing (no external client's own expectations are verified against).
-- ⚠️ **Per-consumer usage.** The data exists (`ApiUsageLog`, every keyed request logged with endpoint + timestamp) but the UI only ever shows a raw lifetime count, not a per-endpoint or time-series breakdown.
-- ⚠️ **Flagging events that look wrong.** `apps/api/src/admin/stat-anomalies.ts` catches internally-impossible lines (negative stats, made-3s exceeding made-FGs, an invalid rebound split) — genuinely useful, but explicitly not statistical outlier detection against historical baselines, which is what "against the history" implies.
-- ✅ **Corrections propagate through downstream aggregates and releases.** Game-level and season aggregates update immediately; a `DatasetRelease` is marked stale in the same transaction as the correction, and a stale release without a stored file refuses to silently rebuild under the old version name.
-- ✅ **Live/in-progress feed, late/out-of-order events.** Ingestion reorders late-arriving events within one fetch (PR #148), and a live game event feed is available (PR #161). Ingestion is still batch-per-game, run after the fact — not a real-time streaming feed from a fixture in progress. `event_validation.py` actively *rejects* an out-of-order or duplicate action from a different source rather than merging it in. Explicitly out of scope per the schema's own doc comment: this project has one automated "submitter" (the pipeline itself), not a multi-human-submitter workflow, so there is nothing to reconcile between disagreeing submitters either.
-- ❌ **Async jobs for large consumer requests.** No 202-Accepted/job-id pattern exists for any endpoint — every response, including dataset publication, runs synchronously. The only job/claim-style pattern in the codebase (`IngestionRequest`/`pull_worker.py`) is internal to the ingestion pipeline, not reachable by an external API consumer.
+| Requirement | | How |
+|---|---|---|
+| Analyst-defined statistics | ✅ | Formulas over seven event-derived fields, parsed without `eval`, versioned on each edit, for `ANALYST` and `ADMIN` only. |
+| Statistics as of a date | ✅ | `GET /v1/players/:id/stats?asOf=` counts only games finished by then. |
+| Differences between releases; a change feed | ✅ | `GET /v1/datasets/diff` and `GET /v1/datasets/changes?since=`. |
+| Corrections reach aggregates and releases | ✅ | Season figures update at once; affected releases are marked stale in the same transaction. |
+| Deprecation path and contract tests | ✅ | `GET /health` retires on 31 Mar 2027. A test compares the API with its own OpenAPI document; it isn't consumer-driven. |
+| A feed from a game in progress | ⚠️ | `GET /v1/games/:id/live` returns new plays since a sequence number (PR #161), but plays arrive only when ingestion runs, after the game. |
+| Late or out-of-order events | ⚠️ | Late plays are reordered within a pull (PR #148). A conflicting play from another source is rejected, not merged. |
+| Showing each consumer its usage | ⚠️ | Every keyed request is logged, but the UI shows only a total count. |
+| Flagging events that look wrong | ⚠️ | Impossible lines are flagged (for example, more threes than field goals), but not outliers against a player's history. |
+| Large requests as jobs | ❌ | Consumer requests run to completion; only admin pulls are queued. |
+| Reconciling disagreeing submitters | ❌ | There is one automated submitter, so there is nothing to reconcile. |
 
-**Advanced tier: strong but genuinely partial.** Custom statistics, point-in-time queries, dataset diffing, and the live event feed with late-event reordering are real, working advanced-tier features — a meaningfully large share of this tier is done. The multi-submitter reconciliation piece is a deliberate scope cut (documented in the schema itself), and async jobs for consumers is the one clean gap with no groundwork laid yet.
+**Advanced tier: 5 done, 4 partly done, 2 not built.**
 
-## Bonus, beyond the brief
+## Beyond the brief
 
-Not required by the brief, but real, working, and worth presenting:
-
-- **Prediction**: Elo-based home win probability + Four Factors-based predicted margin (`apps/predictor`), with model versioning (`GamePredictionRun`) so a past prediction stays reproducible after the model changes, and a real accuracy ledger (`GET /v1/analytics/model-accuracy`) measured against an always-pick-home baseline.
-- **Fantasy-lineup optimizer**: `apps/optimizer` solves a 5-player salary-capped lineup via MILP (PuLP/CBC).
-- **Market odds**: a second external API integration (The Odds API), a real de-vigged, bookmaker-averaged win probability shown alongside the model's own prediction — a genuinely demanding baseline ("does our model beat the market") rather than a coin flip.
-- **Personalisation layer**: watchlists, followed teams/players, saved comparisons/lineups, a "Beat the Model" pick game with a public leaderboard.
-- **Become Pro** — ✅ built (PR #192, 27 September 2026). A signed-in user logs their own per-game box scores; the API derives their season line with the same code as NBA players, projects the draft pick that line most resembles with a least-squares model trained on real NBA rookie seasons (`apps/valuation`), prices the pick on the published 2026-27 rookie salary scale, and shows the three most similar real NBA rookies. Private to each user: no leaderboard, no comparison between users, and so nothing a user enters needs verifying. Its box-score check reuses the admin anomaly checker (`stat-anomalies.ts`) above. The page states what the figure can't claim — the model answers "which pick's rookie year does this line most resemble", not "where would this player be drafted". See [Become Pro](../become-pro/index.md).
-- **Player archetypes** — 🔀 in review (branch `player-archetypes`, pushed 2026-09-27). Groups every player with enough minutes into nine playing-style archetypes, clustered (K-Means) from 15 box-score rate statistics. The player profile shows up to three archetypes per player with closeness bars, a style map of the whole league, and the five players most alike in style (explicitly not in quality). Fitted on 2025-26 only. The archetype names are assigned by hand and must be re-done before the first write to production. See [Player Archetypes](../player-archetypes/index.md).
-
-## Still open
-
-- Run `npm run load-test` against a database populated at the brief's stated scale and record the actual number here.
-- Decide whether to invest further in the two Advanced-tier gaps (async consumer jobs, per-consumer usage dashboard) given remaining sprint time, or treat them as explicit stretch goals for the submission milestone.
+| Feature | What it does |
+|---|---|
+| **Game predictions** | Elo win probability and a Four Factors margin, with every model run kept. **65.8%** accurate over 3,781 games, against 54.8% for always picking the home team ([Roadmap](roadmap.md#prediction-accuracy)). |
+| **Betting-market odds** | Bookmakers' averaged win probability (The Odds API), shown next to the model's. |
+| **Lineup optimizer** | The best five-player fantasy lineup under a salary cap, solved as an integer program. |
+| **Personal features** | Beat the Model picks with a leaderboard, followed players and teams, saved comparisons and lineups. |
+| **[Become Pro](../become-pro/index.md)** | A user logs their own games and sees the NBA draft pick their season most resembles, its rookie salary, and the three most similar NBA rookies. Private to each user. |
+| **[Player Archetypes](../player-archetypes/index.md)** | Nine playing styles found by clustering 2025-26 box-score rates, with a league style map. |
 
 ---
 

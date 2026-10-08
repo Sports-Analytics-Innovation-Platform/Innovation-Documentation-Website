@@ -1,0 +1,1073 @@
+========================================================================
+CHAT EXPORT
+Sprint 2 planning: checked the project against the brief, planned the
+user feedback survey and wrote the Sprint 2 backlog as Gitea issues
+Date: 2 September 2026
+Author: Adrian Draxl
+Tool: Qoder (desktop IDE), model Qoder Auto or Qoder Efficient
+Qoder session: task-3df
+========================================================================
+
+HOW THIS FILE WAS PRODUCED: exported by a script from the log Qoder
+keeps for each chat (.qoder/cache/projects/<workspace>/conversation-
+history/<task-id>/<task-id>.jsonl). It keeps the user's prompts and
+every message the assistant wrote, in order. Qoder's injected memories
+and system reminders, the contents of attached files and the screenshots
+are left out; attached file names are kept. The log records no tool
+calls and no timestamps, so the date is the date of the log folder.
+Email addresses are replaced with [redacted].
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+[attached: project_briefs (1).pdf]
+hey I need to make a survey for the user feeback. I think that is the easiest idea. we are now in sprint 2.
+​project_briefs (1).pdf​ how would we do this and what are we currently missing so far????
+
+ASSISTANT:
+Let me look at your current project state to understand what you have and what's missing for Sprint 2.
+
+ASSISTANT:
+Now I have a full picture. Let me give you a breakdown of what you're missing for Sprint 2 and then we'll plan the user feedback survey.
+
+ASSISTANT:
+Here's the full picture. The **User Feedback** criterion (10%) is completely missing — no survey or feedback mechanism exists anywhere in the app. Good news: building one is very doable and ticks multiple boxes.
+
+---
+
+## How to Build the User Feedback Survey
+
+The rubric wants **"formal feedback collection processes, evidence of collection and integration"**. Here's the simplest path that hits all three:
+
+### 1. In-App Feedback Form (Frontend)
+Add a feedback page/modal to the web app with questions like:
+- Overall satisfaction (1-5 rating)
+- Ease of use (1-5)
+- Which features are most useful?
+- What features are missing or need improvement?
+- Performance/load time rating
+- Any bugs or issues encountered?
+- Open-ended comments
+
+### 2. API Endpoint (Backend)
+A simple `POST /v1/feedback` endpoint that stores responses in a new `Feedback` table (Prisma model). This also counts toward your API criterion.
+
+### 3. Documentation (Docs Site)
+Add a doc page describing your feedback collection methodology, what you collected, and how you integrated it — this satisfies the "evidence of collection **and integration**" part.
+
+---
+
+## What You're Missing for Sprint 2 (Summary)
+
+| Priority | Gap | Weight |
+|---|---|---|
+| **High** | Real full-league data in Supabase (not mock seed) | 25% |
+| **High** | Swagger/OpenAPI docs for your API | 15% |
+| **High** | User feedback survey + formal process | 10% |
+| **Medium** | More recent stakeholder interaction evidence | 10% |
+| **Low** | Testing documentation page | 5% |
+| **Low** | Ensure bug tracker is actively used | 5% |
+
+---
+
+Want me to go ahead and implement the feedback survey? I can scaffold:
+1. The Prisma `Feedback` model
+2. The NestJS feedback controller + service
+3. A React feedback form page/modal
+4. A doc page for the feedback methodology
+
+Just say the word and I'll build it out.
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+okay lets add these to the product backlog. can you give all the nessesary tasks to me in a format that is easy to implement onto gitea projects.
+
+ASSISTANT:
+Here's your **Sprint 2 Product Backlog** formatted for Gitea. Each block is one issue — copy the **Title** and **Body** directly into Gitea's new issue form.
+
+ASSISTANT:
+There's your full Sprint 2 backlog — **13 issues** ordered by rubric weight impact. Here's a quick summary of how to use them:
+
+## How to add to Gitea
+
+1. Go to your Gitea repo → **Issues** → **New Issue**
+2. Copy the **title** as the issue title
+3. Copy the **body** (everything in the issue card) as the description
+4. Add the matching **labels** (feat, docs, test, chore, style)
+5. Set the **milestone** to "Sprint 2"
+6. Assign owners from your team
+
+## Priority order (by rubric weight)
+
+| # | Issue | Weight it protects |
+|---|---|---|
+| 1 | Full-league data ingestion | 25% (Core Features) |
+| 2 | Swagger/OpenAPI docs | 15% (API) |
+| 5 | User feedback survey + API | 10% (User Feedback) |
+| 6 | Feedback methodology doc page | 10% + 5% |
+| 7 | Stakeholder interaction logs | 10% (Stakeholder Reviews) |
+| 3 | Topology pinger | Client-requested |
+| 4 | Signup DB integration | Key requirement |
+| 8 | axe-core in CI | 10% (Testing) |
+| 10 | Frontend responsiveness pass | 25% quality bar |
+| 9, 11, 12, 13 | Docs + housekeeping | 5% each |
+
+Issues **#1, #2, and #5** are your highest-ROI tasks — they directly address the three biggest missing rubric categories (25% + 15% + 10% = 50% of the grade). Want me to start implementing any of these?
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+one of our teasmmembers also said this 
+Need to update the checks for the auto deploy he set up the things
+Do the changing the data thing 
+And customisation
+
+not sure where this falls under or if it can be added.
+
+ASSISTANT:
+Those messages are pretty vague — let me try to map them to rubric categories based on what I know about your project. Here's my best interpretation:
+
+ASSISTANT:
+Based on your CI/CD docs and project context, here's my best interpretation of those vague teammate messages:
+
+---
+
+## Interpreting Teammate's Messages
+
+### 1. "Need to update the checks for the auto deploy"
+This likely refers to **CI/CD pipeline improvements**. Your CI docs list several open items that aren't implemented yet:
+
+| What's Missing | Rubric Impact |
+|---|---|
+| No build step in CI (only lint/typecheck/test) | Tools (5%) |
+| No coverage threshold gating | Testing (8%) |
+| No secret scanning (gitleaks/trufflehog) | Tools (5%) |
+| No axe-core accessibility checks | Testing (5%) |
+
+**This maps to:** Could be a new issue like:
+> **`chore: harden CI/CD pipeline with build verification and coverage gating`**
+> - Add build step to CI for both api and web
+> - Add coverage threshold (fail below X%)
+> - Add secret scanning step
+> - Rubric: Tools (5%) + Testing (8%)
+
+### 2. "Do the changing the data thing"
+This is vague but likely means **CRUD operations** — your project brief (Project 3: Sport Analytics Tool) says:
+> *"allow approved users to submit and manage the statistics for players"*
+
+Right now your app is mostly **read-only** (viewing stats, predictions). This could mean:
+- Adding ability to manually submit/edit player stats
+- Admin panel for data management
+- Or it could refer to the ingestion pipeline needing to handle data updates
+
+**This maps to:** A core feature issue like:
+> **`feat: add CRUD endpoints for player/team stat management`**
+> - POST/PUT/DELETE for player stats
+> - Admin-only endpoints (role-gated)
+> - Rubric: Core Features (25%) + Key Requirements
+
+### 3. "And customisation"
+This likely means **user preferences/customization** — things like:
+- Dashboard layout preferences
+- Favorite teams/players
+- Theme/display settings
+- Notification preferences
+
+**This maps to:** A feature issue like:
+> **`feat: add user customization and preferences`**
+> - User can set favorite teams/players
+> - Dashboard layout preferences
+> - Persist preferences in DB
+> - Rubric: Core Features (25%) + User Experience (5%)
+
+---
+
+## Should These Be Added?
+
+**Yes, but I'd recommend clarifying with the teammate first.** These are vague enough that they could mean different things. Here's what I'd suggest:
+
+| Teammate Said | My Interpretation | Priority | Add to Backlog? |
+|---|---|---|---|
+| "Update checks for auto deploy" | CI/CD hardening (build step, coverage gate, secrets) | Medium | ✅ Yes — #14 |
+| "Changing the data thing" | CRUD for stats management | High (matches project brief) | ✅ Yes — #15 |
+| "Customisation" | User preferences/favorites | Medium | ✅ Yes — #16 |
+
+Want me to add these as issues #14, #15, #16 to the backlog widget? Or should you clarify with the teammate first what exactly they meant?
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+yes add them but don't remake the widget just gimme thge text I need to copy. 
+also we have been told that the runners have been replaced and we may need to review whether ours were effected. sending the email we revcieved now:
+
+
+Skip to content
+Using University of the Witwatersrand, Johannesburg Mail with screen readers
+
+1 of 4,235
+COMS3011A-SDP-SM2-2026: Gitea Action Runners
+Inbox
+
+Brendan Griffiths (via MS) <[redacted]>
+Tue 1 Sept, 13:32 (1 day ago)
+to Adrian
+
+COMS3011A-SDP-SM2-2026 » Forums » Announcements » Gitea Action Runners
+Brendan Griffiths	
+Gitea Action Runners
+by Brendan Griffiths - Tuesday, 1 September 2026, 12:19 PM
+ 	
+Hi everyone,
+
+I have setup two runners on gitea that everyone has access to. They have been tested and should work for relatively simple flows.
+If you have something more complex and are encountering issues, please send me an email to my staff account.
+These runners are sdp-runner-1 and sdp-runner-2
+
+A few notes on these runners.
+- They are shared across every group so they may be occupied at the exact time of your job. You will be queued and then auto-processed.
+- They are resource and time limited: 4GB of memory and timeout after 3hs (I may reduce this to 30 minutes in the future depending on load)
+
+However, you can setup your own runners (this is a really good idea to practice some ci/cd infrastructure and maintenance)
+Your own runners can be scoped to just your repos so only you / your group uses them.
+I will post a guide (similar to the PAT) asap to set this up for yourself however it will be a bit of a crash course on tools such as docker.
+
+If you do register your own runners, please be aware I can see them and their names...
+image%20%283%29.png
+Please try using something descriptive such as "<group-name>-runner-<id>" so I know where they came from.
+
+Some of you have already setup your own runners, well done, but I may disable and remove them on occasion for admin / security reasons. The guide will have a way to re-register / delete the runner safely.
+
+See this post in context
+Change your forum digest preferences
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+try again maybe?
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+how about now
+
+ASSISTANT:
+Let me check your current CI config to see if you're affected by the runner changes.
+
+ASSISTANT:
+Here's everything you need to copy into Gitea:
+
+---
+
+## Issue #14 — CI/CD Hardening
+
+**Title:**
+```
+chore: harden CI pipeline with build verification and coverage gating
+```
+
+**Body:**
+```
+**Description:**
+Add missing CI stages identified in the CI/CD docs open items. The pipeline currently only runs lint, typecheck, and tests — it does not verify builds, gate on coverage, or scan for secrets.
+
+**Acceptance Criteria:**
+- Add build step to both `api` and `web` jobs (`npm run build`)
+- Add coverage threshold — fail the `coverage` job below an agreed floor (e.g. 60%)
+- Add secret scanning step (gitleaks or trufflehog) as a PR check
+- Verify all steps work on the new shared runners (`sdp-runner-1` / `sdp-runner-2`)
+
+**Branch:** `ci-harden-pipeline`
+
+**Rubric:** Tools (5%) + Testing (8%)
+```
+
+---
+
+## Issue #15 — CRUD for Stats Management
+
+**Title:**
+```
+feat: add CRUD endpoints for player and team stat management
+```
+
+**Body:**
+```
+**Description:**
+The project brief (Project 3: Sport Analytics Tool) states the platform needs to "allow approved users to submit and manage the statistics for players (or teams)". Currently the app is read-only. Add write endpoints for stat management.
+
+**Acceptance Criteria:**
+- POST/PUT/DELETE endpoints for player game stats
+- Admin-only endpoints gated by role (existing `RolesGuard`)
+- Input validation via DTOs (Zod or class-validator)
+- Frontend form for authorized users to submit/edit stats
+- E2E tests for all new endpoints
+
+**Branch:** `crud-stat-management`
+
+**Rubric:** Core Features (25%) — matches project brief key requirement
+```
+
+---
+
+## Issue #16 — User Customization
+
+**Title:**
+```
+feat: add user customization and preferences
+```
+
+**Body:**
+```
+**Description:**
+Allow users to personalize their experience — favorite teams/players, dashboard preferences, display settings. Preferences persist in the database.
+
+**Acceptance Criteria:**
+- User can set favorite teams and players
+- Preferences stored in DB (new `UserPreference` model or JSON field)
+- GET/PUT /v1/user/preferences endpoints
+- Frontend UI for managing preferences (settings page or inline)
+- Favorites shown prominently on home page or navbar
+
+**Branch:** `user-customization`
+
+**Rubric:** Core Features (25%) + App User Experience (5%)
+```
+
+---
+
+## Issue #17 — Runner Migration (NEW — from the email)
+
+**Title:**
+```
+chore: migrate CI workflow to new shared Gitea runners
+```
+
+**Body:**
+```
+**Description:**
+Lecturer email (2026-09-01) announced new shared runners: `sdp-runner-1` and `sdp-runner-2`. Our CI workflow currently uses `runs-on: default` which was the label registered by the old runner. Need to verify and update.
+
+**Impact Assessment:**
+- All 3 jobs (`api`, `web`, `coverage`) use `runs-on: default`
+- The old runner may have been removed or replaced
+- New runners are shared across all groups (queued, not dedicated)
+- Resource limits: 4GB RAM, 3h timeout (may reduce to 30min)
+
+**Acceptance Criteria:**
+- Test if `runs-on: default` still resolves to a working runner
+- If not, update to `runs-on: sdp-runner-1` (or both for load balancing)
+- Verify all 3 jobs (api, web, coverage) complete successfully
+- Verify Postgres service container works on new runners
+- Verify artifact upload (v3.2.2) still works
+- Document the change in the CI/CD docs page
+
+**Branch:** `runner-migration`
+
+**Rubric:** CI/CD (key requirement §2.1) + Tools (5%)
+
+**Priority:** HIGH — if CI is broken, nothing else can merge
+```
+
+---
+
+## Are You Affected?
+
+**Yes, likely.** Your CI uses `runs-on: default` everywhere. The email says the lecturer set up two new shared runners (`sdp-runner-1`, `sdp-runner-2`) and mentioned *"Some of you have already setup your own runners... I may disable and remove them on occasion."*
+
+**What to check:**
+1. Go to your Gitea repo → **Settings** → **Actions** → **Runners** (or ask the lecturer)
+2. Check if `default` label still exists or if it was removed
+3. Push a test commit and see if the CI queue processes or hangs
+
+**Quick fix if broken:** Change `runs-on: default` to `runs-on: sdp-runner-1` in all 3 jobs in `ci.yml`. The new runners are shared so jobs will queue, but they should work.
+
+**Heads up on the 4GB limit:** Your `coverage` job runs a Postgres service container + two test suites. That's memory-hungry. If it starts OOM-ing, you may need to split it or set up your own dedicated runner (the lecturer's email mentions this is an option).
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+hey I just placed an updated copy of the sportsanalytics repo in here for you to check out. it might have updated stuff
+
+ASSISTANT:
+I can see updates! Here's what changed:
+
+## CI/CD Updates (ci.yml)
+Your team added **fetch timeout/retry handling** for the shared runners:
+- `npm ci` now has `--fetch-timeout=60000 --fetch-retries=5` flags
+- Each install step has `timeout-minutes: 5`
+- Comments explain the shared runner can stall registry connections
+
+This addresses the runner reliability issue — good fix.
+
+## New Frontend Files
+A **landing page system** was added:
+
+| File | Purpose |
+|---|---|
+| `pages/LandingPage.tsx` | New dedicated landing page |
+| `pages/LandingPage.spec.tsx` | Tests for it |
+| `components/landing/LandingHeader.tsx` | Landing page header |
+| `components/landing/LandingMatchWidget.tsx` | Match widget component |
+| `components/landing/Marquee.tsx` | Scrolling marquee |
+| `components/landing/SectionPhoto.tsx` | Photo section |
+| `components/landing/FlameBallLogo.tsx` | Logo component |
+| `components/landing/ScreenshotPlaceholder.tsx` | Screenshot placeholder |
+| `components/AppLayout.tsx` | App layout wrapper |
+
+## Updated Files
+- `auth/auth.config.ts` — grew from 40 → 136 lines (significant auth changes)
+- `main.ts` — grew from 46 → 53 lines
+- Several spec files updated (App.spec.tsx, AuthStatus.spec.tsx)
+
+---
+
+## Does This Affect the Backlog?
+
+**Runner migration (#17):** The CI changes show your team is already adapting to the shared runners (timeout handling). But `runs-on: default` is still there — you still need to verify it works with the new `sdp-runner-1`/`sdp-runner-2` labels.
+
+**Landing page:** This is a nice UI addition but doesn't directly address any Sprint 2 rubric gaps. It's polish, not a missing requirement.
+
+**Auth changes:** The expanded `auth.config.ts` might relate to issue #4 (signup DB integration) — worth checking if that's now partially done.
+
+Want me to look at the auth changes or landing page in more detail?
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+no how do I see the webiste on local host again?
+
+ASSISTANT:
+To run both the frontend and API locally:
+
+## 1. Start the API (backend)
+```powershell
+cd c:\Users\adria\MyGit\InnovationUni\sportsanalyticsCOPY\apps\api
+npm run dev
+```
+This runs the NestJS API on **http://localhost:4000** (with nodemon auto-reload).
+
+## 2. Start the Web app (frontend)
+```powershell
+cd c:\Users\adria\MyGit\InnovationUni\sportsanalyticsCOPY\apps\web
+npm run dev
+```
+This runs Vite on **http://localhost:5173** (with hot reload).
+
+---
+
+## Prerequisites
+Make sure you have:
+- A running **Postgres** database (or Docker: `docker run --rm -d --name nba-db -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=nba_analytics postgres:16-alpine`)
+- The `.env` files configured in both `apps/api/.env` and `apps/web/.env` (or `.env.local`)
+- Run `npm run prisma:generate` in the API folder first if you get type errors
+
+---
+
+## Quick one-liner (two terminals)
+**Terminal 1 — API:**
+```powershell
+cd c:\Users\adria\MyGit\InnovationUni\sportsanalyticsCOPY\apps\api; npm run dev
+```
+
+**Terminal 2 — Web:**
+```powershell
+cd c:\Users\adria\MyGit\InnovationUni\sportsanalyticsCOPY\apps\web; npm run dev
+```
+
+Then open **http://localhost:5173** in your browser.
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+PS C:\Users\adria\MyGit\InnovationUni\sportsanalyticsCOPY\apps\api> npm run dev
+
+> @nba-analytics/api@1.0.0 dev
+> nodemon --watch src --ext ts --exec "npm run build && node dist/main.js"
+
+'nodemon' is not recognized as an internal or external command,
+operable program or batch file.
+
+ASSISTANT:
+Nodemon isn't installed globally. Two options:
+
+## Option 1: Use npx (no install needed)
+```powershell
+npx nodemon --watch src --ext ts --exec "npm run build && node dist/main.js"
+```
+
+## Option 2: Install nodemon globally
+```powershell
+npm install -g nodemon
+```
+Then `npm run dev` will work.
+
+---
+
+## Or skip nodemon entirely — just build and run:
+```powershell
+npm run build
+node dist/main.js
+```
+This won't auto-reload on changes, but it works immediately.
+
+---
+
+**Recommended:** Use `npx nodemon` — it uses the local devDependency without needing a global install.
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+whoops go on
+
+ASSISTANT:
+Here's the full setup sequence if you haven't done it yet:
+
+## Full Local Setup
+
+### 1. Install dependencies (if not done)
+```powershell
+cd c:\Users\adria\MyGit\InnovationUni\sportsanalyticsCOPY\apps\api
+npm install
+```
+
+### 2. Generate Prisma client
+```powershell
+npm run prisma:generate
+```
+
+### 3. Start a local Postgres database (if not running)
+```powershell
+docker run --rm -d --name nba-db -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=nba_analytics postgres:16-alpine
+```
+
+### 4. Check your `.env` file
+Make sure `apps/api/.env` has:
+```
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/nba_analytics?schema=public
+BETTER_AUTH_SECRET=local-dev-secret
+BETTER_AUTH_URL=http://localhost:4000
+WEB_ORIGIN=http://localhost:5173
+```
+
+### 5. Run database migrations
+```powershell
+npm run prisma:migrate
+```
+
+### 6. Now start the API
+```powershell
+npx nodemon --watch src --ext ts --exec "npm run build && node dist/main.js"
+```
+
+---
+
+## Then in a second terminal — start the web app:
+```powershell
+cd c:\Users\adria\MyGit\InnovationUni\sportsanalyticsCOPY\apps\web
+npm install
+npm run dev
+```
+
+Open **http://localhost:5173** and you should see the app.
+
+---
+
+Did you hit an error somewhere, or were you just telling me to continue with the instructions?
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+eish its okay lets just develop the survey now.
+
+ASSISTANT:
+Let me check the current codebase patterns first, then build the full survey system.
+
+ASSISTANT:
+Now I have the full picture. Let me build the entire feedback survey system — Prisma model, API endpoint, and frontend form.
+
+ASSISTANT:
+Now add the relation on the User model:
+
+ASSISTANT:
+Now create the API module, controller, and service:
+
+ASSISTANT:
+Now wire it into AppModule:
+
+ASSISTANT:
+Now the frontend. First, let me add a POST helper to the API client:
+
+ASSISTANT:
+Now create the feedback form page:
+
+ASSISTANT:
+Now add the route and nav link:
+
+ASSISTANT:
+Now add the "Feedback" link to the navigation:
+
+ASSISTANT:
+Now let me add the e2e test. Let me check the existing test pattern:
+
+ASSISTANT:
+Done! Here's everything that was built:
+
+## What was created
+
+### Backend (API)
+| File | Purpose |
+|---|---|
+| `apps/api/prisma/schema.prisma` | Added `Feedback` model with ratings + open text fields |
+| `apps/api/src/feedback/feedback.module.ts` | NestJS module |
+| `apps/api/src/feedback/feedback.controller.ts` | `POST /v1/feedback` endpoint with validation |
+| `apps/api/src/feedback/feedback.service.ts` | Service layer with rating validation |
+| `apps/api/src/app.module.ts` | Wired in `FeedbackModule` |
+| `apps/api/test/feedback.e2e-spec.ts` | 6 e2e tests (valid, anonymous, validation errors) |
+
+### Frontend (Web)
+| File | Purpose |
+|---|---|
+| `apps/web/src/pages/FeedbackPage.tsx` | Survey form with ratings, feature picker, open text |
+| `apps/web/src/lib/apiClient.ts` | Added `postJson()` helper |
+| `apps/web/src/App.tsx` | Added `/feedback` route |
+| `apps/web/src/components/landing/LandingHeader.tsx` | Added "Feedback" nav link |
+
+### Survey Questions
+1. **Overall satisfaction** (1-5 rating)
+2. **Ease of use** (1-5 rating)
+3. **Performance/load times** (1-5 rating)
+4. **Most useful features** (multi-select chips)
+5. **Missing features** (open text)
+6. **Bugs or issues** (open text)
+7. **General comments** (open text)
+
+---
+
+## Before you can run it
+
+You need to apply the Prisma migration to create the `Feedback` table:
+
+```powershell
+cd c:\Users\adria\MyGit\InnovationUni\sportsanalyticsCOPY\apps\api
+npx prisma migrate dev --name add-feedback
+```
+
+Then start both the API and web app as normal. The feedback form will be at **http://localhost:5173/feedback** and accessible from the nav bar.
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+wait wait which branch is this on?
+
+ASSISTANT:
+You're on **`main`** — all the feedback survey changes were made directly on main.
+
+According to your [git methodology](file:///c:/Users/adria/MyGit/InnovationUni/sportsanalyticsCOPY/docs/GIT_METHODOLOGY.md), you should **never commit directly to main**. You need to:
+
+1. Create a branch first
+2. Commit there
+3. Open a PR on Gitea
+4. Get team review
+5. Merge into main
+
+Want me to create a branch and move the changes over? Something like:
+
+```powershell
+git checkout -b user-feedback-survey
+```
+
+Then all the uncommitted changes will come along with it, and you can commit + PR from there.
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+well. this is the doc site right. we still ned to plan how we are gonna do the survey since this folder we are in only has a copy of the sportsanalytics app.
+
+ASSISTANT:
+You're right — let me clarify the situation:
+
+| Folder | What it is | Status |
+|---|---|---|
+| `Innovation-Documentation-Website/` | Your **public docs site** (MkDocs, deployed to GitHub Pages) | ✅ This is the real one |
+| `sportsanalyticsCOPY/` | A **copy** of your actual sports analytics app | ⚠️ Not the live repo |
+
+The code I wrote (Prisma model, API endpoint, React form) is in the **copy**. To get it into the real app, someone needs to:
+
+1. Create a `user-feedback-survey` branch in the **real** Gitea repo
+2. Apply these same changes there
+3. PR → review → merge
+
+---
+
+## What we CAN do right now (in this workspace)
+
+The **docs site** is the real one. We should add the **feedback methodology documentation** here — that's what the rubric actually needs for the "evidence of collection and integration" part.
+
+Want me to create a doc page on the MkDocs site covering:
+- Survey methodology (what questions, why)
+- How it was distributed
+- How feedback will be collected and integrated
+- This satisfies the **User Feedback (10%)** + **Testing Documentation (5%)** rubric criteria
+
+That way even before the code hits the real repo, you already have the documentation piece done and deployed.
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+i was under the impression that we would make the survey on some survey website. and then share the survey on whatsapp and then review the feedback from the survey somewhere.
+
+ASSISTANT:
+Oh that's way simpler! You're right — just use an external survey tool. Here's the plan:
+
+## Survey Plan
+
+### 1. Create the Survey
+Use one of these (pick what your team has access to):
+- **Google Forms** (free, easy)
+- **Microsoft Forms** (free with Wits student account)
+- **SurveyMonkey** (free tier)
+
+### 2. Survey Questions
+Here's what to include:
+
+| # | Question | Type |
+|---|---|---|
+| 1 | Overall satisfaction with the platform | Rating 1-5 |
+| 2 | Ease of use | Rating 1-5 |
+| 3 | Performance / load times | Rating 1-5 |
+| 4 | Which features do you find most useful? | Multi-select |
+| 5 | What features are missing or need improvement? | Open text |
+| 6 | Any bugs or issues you've encountered? | Open text |
+| 7 | Anything else you'd like to share? | Open text |
+
+### 3. Distribute via WhatsApp
+- Share the survey link in your group chats
+- Ask friends/classmates to try the app and fill it out
+- Maybe share in COMS3011A student groups for more responses
+
+### 4. Document Everything (on the docs site)
+This is what gets you the marks — create a doc page covering:
+- **Methodology**: How the survey was designed and why
+- **Distribution**: How it was shared (WhatsApp, etc.)
+- **Results**: Summary of responses (charts, averages)
+- **Integration**: What changes were made based on feedback
+
+---
+
+Want me to:
+1. **Create the doc page** on the MkDocs site now (the methodology/results template)?
+2. **Draft the survey questions** in a format you can copy into Google Forms?
+
+Then you just need to create the actual form and share the link!
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+im in a meeting rn could you explain each of these concepts and why they are important really simpplify them
+
+ASSISTANT:
+Sure, here's the simple version:
+
+---
+
+## Sprint 2 Backlog — Simplified
+
+### 1. Full-league data ingestion (25%)
+**What:** Get real NBA data (all 30 teams, players, games) flowing into your Supabase database instead of fake/seed data.
+**Why:** Your app is a sports analytics tool. If it shows fake data, it doesn't work. This is the biggest chunk of marks — without real data, nothing else matters.
+
+---
+
+### 2. Swagger/OpenAPI docs (15%)
+**What:** Auto-generated documentation page that shows all your API endpoints — what they do, what they return, how to use them.
+**Why:** The rubric says your API must be "available externally with documentation." Right now your API works but has no docs for outsiders. Swagger generates this automatically.
+
+---
+
+### 3. User feedback survey (10%)
+**What:** Create a survey (Google Forms), share it on WhatsApp, collect responses from people who try your app.
+**Why:** Rubric requires "formal feedback collection processes." You need proof that real users tried your app and you listened to what they said.
+
+---
+
+### 4. Feedback methodology doc page (10% + 5%)
+**What:** A page on your docs site explaining: what you asked, how you shared it, what people said, and what you changed because of it.
+**Why:** Collecting feedback isn't enough — you need to show you **used** it. This page is the evidence.
+
+---
+
+### 5. Stakeholder interaction logs (10%)
+**What:** Document every meeting/conversation with your client (tutor). Show dates, what was discussed, and what you did with their feedback.
+**Why:** Rubric wants "extensive evidence of regular stakeholder interaction." If you talked to your client but didn't write it down, it didn't happen.
+
+---
+
+### 6. Topology pinger (client-requested)
+**What:** A health check that pings all your services (API, DB, frontend) and shows if they're up or down.
+**Why:** Your client specifically asked for this in a meeting. Ignoring client requests = lost marks on stakeholder reviews.
+
+---
+
+### 7. Signup DB integration (key requirement)
+**What:** Make sure user sign-up actually saves to the database — sign up, sign in, reset password, delete account.
+**Why:** The project brief says this is mandatory for ALL projects. It's a baseline requirement, not optional.
+
+---
+
+### 8. axe-core in CI (10%)
+**What:** Add automated accessibility scanning to your CI pipeline — checks if your app works for people with disabilities.
+**Why:** Rubric wants "UI and API testing — useful and extensive tests." Accessibility tests count. Also shows you care about inclusive design.
+
+---
+
+### 9. Frontend responsiveness pass (25% quality bar)
+**What:** Make sure every page looks good on mobile, tablet, and desktop. Fix any broken layouts.
+**Why:** Core features are marked on quality. If your app looks broken on a phone, it counts as a "severe bug" and drops you from Advanced to Basic.
+
+---
+
+### 10. Docs + housekeeping (5% each)
+- **Testing docs** — Write a page explaining your testing strategy
+- **Third-party docs** — List every library you use and explain why
+- **Bug tracker** — File bugs as Gitea issues, link them to PRs, close them when fixed
+
+**Why:** Each is 5% — small individually, but together that's 15% of your grade. Easy marks if you just document what you're already doing.
+
+---
+
+## TL;DR for your meeting
+
+| Priority | Do this | Marks at risk |
+|---|---|---|
+| 🔴 | Real data in DB | 25% |
+| 🔴 | API docs (Swagger) | 15% |
+| 🟡 | Survey on Google Forms + doc page | 15% |
+| 🟡 | Log client meetings | 10% |
+| 🟢 | Everything else | 35% combined |
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+1. done
+2. I will do (we didn't really discuss)
+3. I will do
+4. I will do when survey is done.
+5.need to do
+6. Done 
+7. Done weeks ago
+8. will be done in later sprints
+9.  not discussed
+10. I will do it. bug tracker has been made
+
+ASSISTANT:
+Here's where you stand:
+
+## Sprint 2 Status
+
+| # | Item | Status | Notes |
+|---|---|---|---|
+| 1 | Full-league data ingestion | ✅ Done | |
+| 2 | Swagger/OpenAPI docs | 🟡 You'll do | Haven't discussed yet |
+| 3 | User feedback survey | 🟡 You'll do | Google Forms + WhatsApp |
+| 4 | Feedback methodology doc | ⏳ Waiting on #3 | Will do after survey |
+| 5 | Stakeholder interaction logs | 🔴 Need to do | |
+| 6 | Topology pinger | ✅ Done | |
+| 7 | Signup DB integration | ✅ Done | Done weeks ago |
+| 8 | axe-core in CI | ⏳ Later sprint | |
+| 9 | Frontend responsiveness | 🟡 Not discussed | |
+| 10 | Docs + housekeeping | 🟡 You'll do | Bug tracker made |
+
+---
+
+## What's left to tackle
+
+**High priority:**
+- **#5 Stakeholder logs** — Document your client meetings (dates, topics, feedback, actions taken)
+- **#2 Swagger docs** — Add to the API
+- **#3 Survey** — Create Google Form, share it
+
+**Medium priority:**
+- **#9 Responsiveness** — Mobile/tablet check
+- **#4 Feedback doc** — After survey results come in
+
+---
+
+Want me to help with any of these now? I can:
+- Draft the **stakeholder interaction log** template for your docs site
+- Write the **Swagger setup** code/instructions
+- Draft the **survey questions** for Google Forms
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+okay I am on google forms now. I am thinking we take screen shots of the app and put them on the survey so we can get feedback on the way those look and feel and what could extra be added and also have a link to the webabb for more feedback
+
+ASSISTANT:
+That's a smart approach! Screenshots let anyone give visual feedback even if they don't sign up. Here's a suggested structure for your Google Form:
+
+---
+
+## Survey Structure
+
+### Section 1: Intro
+- Brief description of what the app does
+- Link to the live webapp: `https://sportsanalytics.pages.dev/`
+- "Try it out if you can, otherwise we'll show screenshots below"
+
+### Section 2: Screenshots + Visual Feedback
+Show screenshots of key pages, then ask:
+- **Landing page** — screenshot → "What do you think of this design?" (rating + comment)
+- **Players list** — screenshot → "Is this easy to read/navigate?"
+- **Predictions page** — screenshot → "Does this make sense? Would you use it?"
+- **Optimizer page** — screenshot → "Is this useful? What's missing?"
+
+### Section 3: Overall Ratings
+- Overall satisfaction (1-5)
+- Ease of use (1-5)
+- Visual appeal (1-5)
+- Performance expectation (1-5)
+
+### Section 4: Features
+- Which features look most useful? (multi-select)
+- What features would you want added? (open text)
+- Any bugs or issues you noticed? (open text)
+
+### Section 5: Final Thoughts
+- Anything else? (open text)
+- Optional: email if they want to be contacted for follow-up
+
+---
+
+## Tips
+- Use the **"Images" block** in Google Forms to add screenshots
+- Use **"Section breaks"** to group related questions
+- Keep it under **10 questions** — longer surveys get abandoned
+- Add the live link in the **intro AND at the end** for easy access
+
+Want me to write the exact question text you can copy-paste into Google Forms?
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+the thing is our UI isn't even finalized yet.
+
+ASSISTANT:
+That's actually fine — just frame the survey differently. Instead of "rate our finished design," make it **"help us shape the direction."**
+
+## Adjusted Approach
+
+### Frame it as "Work in Progress"
+- Intro: *"We're building a sports analytics platform. The design is still evolving — help us figure out what works and what doesn't before we finalize it."*
+- This sets expectations and gets **honest directional feedback** rather than polish critiques
+
+### What to ask about screenshots
+Instead of "rate this design," ask:
+- "What's the first thing you notice?" (open text)
+- "Does this look like something you'd use? Why/why not?" (rating + comment)
+- "What feels confusing or missing?" (open text)
+- "What would make you want to explore more?" (open text)
+
+### Focus on **function over form**
+Since the UI isn't done, prioritize questions about:
+- **Clarity** — Can you tell what this page does?
+- **Usefulness** — Would you actually use this feature?
+- **Navigation** — Does the layout make sense?
+- **Missing pieces** — What would you expect to see here?
+
+---
+
+## Why this is actually better
+Getting feedback **before** finalizing means you can actually **use it** to make design decisions. That's stronger rubric evidence — "we collected feedback and integrated it into the final design" beats "we collected feedback on a finished product."
+
+Want me to draft the survey questions with this "work in progress" framing?
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+well its whatever I 'll move onto the other things for now I have a lot to get through since i am the document guy. make a handoff doc for the next qoder convo I will copy paste it into the next convo
+
+ASSISTANT:
+Here you go — copy-paste this into the next conversation:
+
+---
+
+## Handoff Doc — Next Qoder Session
+
+### Project Context
+- **Project:** Sport Analytics Tool (Project 3) for COMS3011A at Wits
+- **Workspace:** `c:\Users\adria\MyGit\InnovationUni`
+  - `Innovation-Documentation-Website/` — MkDocs docs site (deployed to GitHub Pages) — **this is the real docs repo**
+  - `sportsanalyticsCOPY/` — a local copy of the sports analytics app (NOT the live Gitea repo)
+- **Tech stack:** NestJS API, React/Vite/Tailwind frontend, Prisma/Supabase, BetterAuth, Gitea Actions CI, Cloudflare Pages + Render deployment
+- **Current milestone:** Sprint 2 (due 2026-09-15)
+- **My role:** I'm the documentation guy on a 6-person team
+
+### Sprint 2 Rubric Status
+
+| # | Task | Weight | Status | Who |
+|---|---|---|---|---|
+| 1 | Full-league data ingestion | 25% | ✅ Done | Team |
+| 2 | Swagger/OpenAPI docs | 15% | 🟡 Not started | Me |
+| 3 | User feedback survey (Google Forms + WhatsApp) | 10% | 🟡 Not started | Me |
+| 4 | Feedback methodology doc page | 10% + 5% | ⏳ Waiting on #3 | Me |
+| 5 | Stakeholder interaction logs | 10% | 🔴 Not started | Me |
+| 6 | Topology pinger | Client req | ✅ Done | Team |
+| 7 | Signup DB integration | Key req | ✅ Done | Team |
+| 8 | axe-core in CI | 10% | ⏳ Later sprint | — |
+| 9 | Frontend responsiveness pass | 25% quality | 🟡 Not discussed | Team |
+| 10 | Testing docs + third-party docs + bug tracker | 5% each | 🟡 In progress | Me (bug tracker made) |
+
+### What I Need Help With Next Session (Documentation Tasks)
+
+**Priority order:**
+
+1. **Stakeholder interaction logs (10%)** — Need a doc page on the MkDocs site documenting all client meetings with dates, attendees, topics discussed, feedback received, and actions taken. Existing meeting transcripts are in `docs/transcripts/` and `docs/meetings/`.
+
+2. **Swagger/OpenAPI setup (15%)** — Need instructions/code for adding `@nestjs/swagger` to the NestJS API. This goes in the real sportsanalytics repo (not the copy).
+
+3. **Testing documentation page (5%)** — Need a doc page on MkDocs covering: automated testing procedure (unit, integration, e2e), user feedback process, and test policy.
+
+4. **Third-party code documentation (5%)** — Audit and update the tech-stack doc to ensure every library/service is listed with a motivation for why it was chosen.
+
+5. **Feedback methodology doc page (10% + 5%)** — After the Google Forms survey is done, need a doc page describing: survey methodology, distribution plan, findings, and how feedback was integrated.
+
+### Key Files
+- Docs site config: `Innovation-Documentation-Website/mkdocs.yml`
+- Docs content: `Innovation-Documentation-Website/docs/`
+- Sprint log: `Innovation-Documentation-Website/docs/sprint-log.md`
+- Roadmap: `Innovation-Documentation-Website/docs/design/roadmap.md`
+- Feature tiers: `Innovation-Documentation-Website/docs/design/feature-tiers.md`
+- Tech stack: `Innovation-Documentation-Website/docs/tech-stack.md`
+- CI/CD docs: `Innovation-Documentation-Website/docs/ci-cd.md`
+- Meeting notes: `Innovation-Documentation-Website/docs/meetings/`
+
+### Important Notes
+- The `sportsanalyticsCOPY/` folder is a copy — code changes made here won't affect the real repo
+- An in-app feedback form (React + NestJS + Prisma) was already built in this copy but NOT deployed to the real repo
+- The real app is at `https://sportsanalytics.pages.dev/` (frontend) and `https://sportsanalytics-api.onrender.com` (API)
+- The docs site is at `https://sports-analytics-innovation-platform.github.io/Innovation-Documentation-Website/`
+- Git methodology: branch off main, PR required, team review before merge, CalVer versioning
+- Gitea runners were recently replaced — CI uses `runs-on: default`, shared runners are `sdp-runner-1` and `sdp-runner-2`
+
+---
+
+Good luck with your meeting!
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+graet before I go what is the survey for again?
+
+ASSISTANT:
+The survey is for the **User Feedback** rubric criterion — **10% of your Sprint 2 grade**.
+
+The rubric requires: **"Extensive user testing — formal feedback collection processes, evidence of collection and integration."**
+
+**Your plan:**
+1. Create a Google Forms survey with screenshots of the app + rating questions + open text
+2. Share the link on WhatsApp to get people's feedback
+3. Include a link to the live app (`sportsanalytics.pages.dev`) for those who want to try it
+4. Later, document the results on your docs site (that's the "evidence of collection and integration" part)
+
+That's it — go crush your meeting!

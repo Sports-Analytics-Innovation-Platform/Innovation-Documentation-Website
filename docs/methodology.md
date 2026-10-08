@@ -1,43 +1,39 @@
 # Methodology
 
-We follow a **dynamic Scrum adaptation across three sprints**, agreed at the first team standup (2026-08-12), plus a fourth milestone for final submission and polish. Rather than assigning work to individuals during sprint planning, team members pull tasks based on initiative and capacity — anyone can pick up any unassigned issue from the backlog and start working on it.
+The team ran a **Scrum adaptation with three sprints**, agreed at the first standup (12 Aug), each ending on a course milestone. A fourth period, **Milestone 4**, ran from the end of Sprint 3 (29 Sep) to submission (11 Oct); the meeting minutes call it "Sprint 4". Work wasn't assigned at planning: team members picked up unassigned issues from the backlog as they had capacity.
 
-## Why Scrum, not Kanban or XP
+## Why Scrum
 
-- **Kanban** suits continuous flow with no fixed deadlines. Our project has three hard milestone dates set by the course, so working in timeboxed sprints with a planning and review cycle around each one maps directly onto how we're actually graded — rather than a continuous board with no natural checkpoint for a retro.
-- **Extreme Programming (XP)** practices like pair programming and test-driven development are heavier than a six-person, part-time, three-sprint student project can sustain alongside the rest of the coursework. We adopt some XP-adjacent habits (small commits, code review as a gate) without adopting the full XP process.
-- **Scrum**, adapted down from its usual weekly/two-weekly sprint cadence to match the course's three milestone windows, gives us sprint planning, a working increment at the end of each sprint, and a retrospective to actually adjust before the next one — which is what the milestone-based rubric rewards.
+- **Kanban** suits continuous work with no fixed deadlines. The course sets three hard milestone dates, so timeboxed sprints with planning around each one match how the project is marked.
+- **Extreme Programming (XP):** pair programming and test-driven development are more than a six-person, part-time team could sustain alongside other courses. We kept two XP habits: small commits, and code review as a gate.
+- **Scrum**, with sprints stretched to the course's milestone windows, gives sprint planning and a working increment at the end of each sprint.
 
-Reference: [Scrum Guide (scrumguides.org)](https://scrumguides.org) — our ceremonies below are a lightweight adaptation of the roles/events it defines, not a literal implementation (sprint length is set by the course rather than chosen by the team). We do have a dedicated Scrum Master (see [Sprint Log](sprint-log.md#team)), though the role is lighter than the guide's full description since this is a student project.
+This is a lightweight version of the [Scrum Guide](https://scrumguides.org): the course sets the sprint length, and Adrian Draxl is the Scrum Master in a lighter role than the guide describes.
 
 ## Ceremonies
 
-| Ceremony | Cadence | What happens |
-|---|---|---|
-| **Standup** | Weekly | Quick sync in person (Tuesday/Friday labs) or on WhatsApp: what's done, what's next, what's blocking. Whoever's starting a new feature announces it so two people don't build the same thing. In [Scrum Meetings](https://sports-analytics-innovation-platform.github.io/Innovation-Documentation-Website/meetings/scrum/) |
-| **Sprint planning** | Start of each sprint | Team reviews the sprint's rubric weighting, agrees the scope for the sprint, and turns it into sized issues on the product backlog. Work is not pre-assigned — team members self-select tasks based on initiative and capacity throughout the sprint. In [Roadmap](https://sports-analytics-innovation-platform.github.io/Innovation-Documentation-Website/design/roadmap/) and [Project Board](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/projects/8) |
-| **Client/tutor check-in** | Weekly | Meeting with the client tutor to validate direction and surface blockers — minuted in [Client Meetings](meetings/client/index.md). |
-| **Sprint reflection (Sprint Log)** | End of each sprint | A tabulated record of every task completed during the sprint, grouped by week and owner, documenting *what was done, by whom, and when*. This supplements the retrospective by providing a concrete performance picture — see [Sprint Log](#sprint-log) below. |
-| **Retrospective** | End of each sprint | What worked, what didn't, one or two concrete changes for the next sprint. Informed by the Sprint Log data. Minuted alongside the sprint reflection. |
+| Ceremony | When | What happens | Record |
+|---|---|---|---|
+| **Standup** | Weekly, in the Tuesday or Friday lab or on WhatsApp | What's done, what's next, what's blocking. Whoever starts a feature says so, so two people don't build the same thing. | [Scrum Meetings](meetings/scrum/index.md) |
+| **Sprint planning** | Start of each sprint | The team reads the sprint's rubric weights, agrees the scope and turns it into issues on the board. | [Roadmap](design/roadmap.md), [project board](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/projects/8) |
+| **Client check-in** | Weekly | The client tutor checks the direction and raises blockers. | [Client Meetings](meetings/client/index.md), [Stakeholder Interactions](stakeholder-interactions.md) |
+| **Rubric check** | Before each milestone | The team walks through the milestone's rubric against the project, for example on 23 Aug and 7 Sep. | [Scrum Meetings](meetings/scrum/index.md) |
+| **Sprint Log** | End of each sprint | Every completed task, by week, type (`feat`, `fix`, `docs` and so on) and person. | [Sprint Log](sprint-log.md) |
+
+The team held no separate retrospectives. Process changes were agreed in standups when a problem came up: on 7 Sep, for example, the team agreed that cards stay in review until the day before a deadline, so the board shows what is really finished.
 
 ## Work tracking
 
-**Gitea Projects and Gitea Issues** are the work tracker. This was a change from the initial plan at the first standup (2026-08-12), which proposed GitHub Projects/Issues — the team moved to Gitea's built-in tracker once it was clear the codebase itself would live on Gitea, per the university's version-control requirement, to keep code and issue tracking on the same platform. The **product backlog** holds all issues for the current sprint; tasks are not pre-assigned to individuals during planning. Instead, team members take initiative by self-selecting and claiming issues as they have capacity, which encourages ownership and flexibility. Issues are closed throughout the sprint rather than in a batch immediately before the deadline.
+Work is tracked in **Gitea Issues** on the [project board](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/projects/8). The first standup planned to use GitHub Projects; the team moved to Gitea's tracker once the code was on Gitea, the university's required host, to keep code and issues together. Issues are closed as the work finishes, not in a batch before the deadline.
 
-## How we split work
+## How work is split
 
-Rather than horizontal layers (one person "does the backend," another "does the frontend"), we build **feature-by-feature, vertically** — one person takes a feature from schema/API through to UI where practical. Sprint 1 is the exception: because the foundational work (schema, docs site, CI/CD, methodology, auth) has to exist before vertical feature ownership makes sense, Sprint 1 is split by the six things it's actually marked on instead — see [Coding Conventions](coding-conventions.md) and [Git Methodology](git-methodology.md) for the process pieces that came out of that split.
-
-## Sprint Log
-
-At the end of each sprint the team produces a **Sprint Log** — a week-by-week, tabulated record of every task that was completed, categorised by type (`feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `style`) and attributed to the team member who did the work. The Sprint Log serves as a **sprint reflection**: it supplements the retrospective with hard evidence of who contributed what and when, giving a clear picture of individual and team performance across the sprint.
-
-The Sprint Log is maintained at [Sprint Log](sprint-log.md) in this documentation site.
+Features are built **vertically**: where practical, one person takes a feature from the schema and API through to the UI, instead of one person owning the backend and another the frontend. Sprint 1 was the exception. The foundations (schema, docs site, CI/CD, methodology, auth) had to exist first, so Sprint 1 was split by the six things it was marked on. [Git Methodology](git-methodology.md) and [Coding Conventions](coding-conventions.md) cover how code reaches `main`.
 
 ## Versioning
 
-We use **date-based versioning** rather than semantic version numbers, since Gitea's commit history and Actions runs already provide a detailed record of when and what changed, and a semantic version adds overhead without a corresponding release process to justify it.
+Versions are identified by date, not semantic version numbers. The commit history and CI runs already record what changed and when, and there is no release process that a version number would serve.
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder[Qoder Lite]*
+*AI Declaration: The preceding document was generated with the assistance of the following: Claude-Web[Claude Sonnet 5], Qoder[Qoder Lite], Claude-Code[Claude Opus 5.5]*

@@ -1,274 +1,57 @@
 # Stakeholder Interaction Log
 
-This page is a consolidated record of every formal interaction with the project's client/stakeholder — **Kovendan Raman** (tutor/client) — across both sprints. It documents dates, attendees, topics discussed, feedback received from the client, and the actions the team took in response. Raw transcripts are linked where available.
-
-The purpose of this log is to evidence the **Stakeholder Interaction** rubric criterion (10%) by showing that the team engaged the client regularly, acted on his feedback, and can trace decisions back to specific conversations.
+What the client asked for at each meeting and what the team did about it. The full minutes, with links to the raw transcripts, are on [Client Meetings](meetings/client/index.md) and [Scrum Meetings](meetings/scrum/index.md).
 
 ## Stakeholders
 
-| Role | Name | Interaction channel |
+| Role | Name | Channel |
 |---|---|---|
-| Client / Tutor | Kovendan Raman | Weekly in-person meetings (Tue/Fri labs), WhatsApp |
-| Scrum Master | Adrian Draxl | Internal scrum meetings, WhatsApp |
-| Team | Owen Pace, Josh Sawyer, Kiran Soodyall, Daniel Passos, Sanele H. | Internal scrum meetings, WhatsApp, Gitea |
+| Client and tutor | Kovendan Raman | In-person meetings in lab sessions, WhatsApp |
+| Scrum Master | Adrian Draxl | Scrum meetings, WhatsApp |
+| Team | Owen Pace, Josh Sawyer, Kiran Soodyall, Daniel Passos, Sanele H. | Scrum meetings, WhatsApp, Gitea |
 
----
+## Meetings
 
-## Sprint 1 interactions
-
-### 2026-08-12 — Internal Scrum (Sprint 1 kickoff)
-
-| | |
-|---|---|
-| **Type** | Internal team standup |
-| **Attendees** | Adrian, Daniel, Owen, Sanele, Kiran, Josh |
-| **Duration** | Full team meeting |
-
-**Agenda:** Sprint 1 requirements, documentation, Git methodology, coding conventions, feature implementation strategy, work tracker setup, and stakeholder meeting preparation.
-
-**Key decisions:**
-
-- Adopted **CalVer (date-based) versioning** for easier historical tracking
-- Agreed on a **Scrum adaptation** with three sprints and initiative-based task allocation
-- Confirmed **Gitea Projects + Issues** as the work tracker
-- Decided to build features **vertically** (full-stack per feature) rather than in horizontal layers
-- Team members must announce which feature they're working on in WhatsApp to avoid conflicts
-
-**Actions taken:**
-
-| Action | Owner | Completed? |
+| Sprint | Client meetings | Internal scrums |
 |---|---|---|
-| Maintain documentation site and incorporate project documents | Adrian | ✅ |
-| Assist with documentation diagrams | Owen, Josh | ✅ |
-| Keep work tracker accurate and assign tasks | Sanele | ✅ |
-| Implement CI/CD workflow (YAML, coverage, linting, testing) | Kiran | ✅ |
-| Maintain repository hygiene and Git/coding conventions | Josh | ✅ |
-| Push project overview and additional documents to repo | Owen | ✅ |
-| Arrange tutor meeting | Daniel | ✅ |
+| Sprint 1 | 13, 18 and 21 Aug | 12 and 23 Aug |
+| Sprint 2 | 7 Sep | 7, 10 and 14 Sep |
+| Sprint 3 | 27 Sep | 28 Sep |
 
----
+## Client feedback and what the team did
 
-### 2026-08-13 — Client meeting (Sprint 1 scope alignment)
-
-| | |
-|---|---|
-| **Type** | Client meeting |
-| **Attendees** | Adrian, Kovendan Raman (client), Pace, Sanele, Josh |
-| **Absent** | Kiran, Daniel (stuck in traffic) |
-
-**Agenda:** Sprint 1 scope, MVP status, database schema, external API integration, documentation, Git workflow, hosting/deployment, front-end design, ML expectations, and ongoing meeting cadence.
-
-**Client feedback received:**
-
-| # | Feedback / guidance | How the team responded |
-|---|---|---|
-| 1 | Sprint 1 should focus on **infrastructure and rubric requirements**; additional features where time allows | Team prioritised pipeline, API, auth, docs site, and CI over visual polish |
-| 2 | Use an **NBA API** rather than the previously considered EPL football API | Team adopted `nba_api` (Python) as the data source — confirmed free, MIT-licensed, well-maintained |
-| 3 | Database schema should **correspond closely with the external API structure** | Schema was aligned with `nba_api` response shapes (players, teams, games, events) |
-| 4 | Deploy documentation site using **static web hosting** | Docs deployed to GitHub Pages via MkDocs |
-| 5 | Demonstrate **ongoing progress** during meetings rather than waiting until deadline | Team has demonstrated work at every subsequent meeting |
-| 6 | Core functionality and infrastructure take priority over **visual polish** in Sprint 1 | Team focused on working features over design refinement |
-| 7 | **AI-assisted development is encouraged** ("vibe coding"), but review generated components like schema and env config | Team logged all AI usage per the [AI Usage Ledger](ai-usage.md) and reviewed generated code |
-| 8 | ML component not needed in Sprint 1 — expect it around **Sprint 3** | ML/prediction work deferred; Sprint 1 focused on data pipeline and API |
-| 9 | Set up a **basic API as a safety net** — previous groups received credit for this even when not explicitly in the rubric | NestJS API was built and deployed to Render |
-| 10 | Aim beyond minimum rubric requirements — **80–100% coverage mindset** | Team adopted this as a guiding principle |
-| 11 | Documentation-focused contributions are **valid team contributions** | Adrian's documentation role was confirmed and formalised |
-| 12 | ML deployment can be **substantially harder** than running locally — be aware of backend deployment challenges | Team planned separate Python services rather than embedding ML in the Node API |
-| 13 | Front-end design looked good — **satisfied with current direction** | No design changes required |
-| 14 | No testing requirement in Sprint 1, but AI useful for generating test cases later | Testing planned for Sprint 2 |
-| 15 | Avoid **excessively purple** interfaces (associates purple with AI-generated UIs) | Team used teal colour scheme instead |
-
-**Actions from this meeting:**
-
-| Action | Owner | Completed? |
-|---|---|---|
-| Continue project infrastructure, database, hosting, core functionality | Team | ✅ |
-| Investigate and integrate NBA API | Pace / Team | ✅ |
-| Align database schema with API structure | Team | ✅ |
-| Prepare basic API functionality | Team | ✅ |
-| Build documentation site and required docs | Team (Adrian) | ✅ |
-| Deploy docs via static hosting | Team | ✅ |
-| Continue front-end development from mock-data implementation | Team | ✅ |
-| Demonstrate progress at future client meetings | Team | ✅ |
-| Assign Gitea issues to team members | Sanele | ✅ |
-
-!!! note "Raw transcript"
-    [2026-08-13-client.txt](transcripts/meeting-transcripts/2026-08-13-client.txt)
-
----
-
-## Sprint 2 interactions
-
-### 2026-08-18 — Client meeting (Sprint 2 priorities)
-
-| | |
-|---|---|
-| **Type** | Client meeting |
-| **Attendees** | Adrian, Owen, Josh, Sanele, Kovendan Raman (client) |
-
-**Agenda:** Review of progress so far; features to be implemented in the coming week.
-
-**Client feedback received:**
-
-| # | Feedback / guidance | How the team responded |
-|---|---|---|
-| 1 | Key Sprint 2 priorities identified: **custom API, database integration, code coverage, diagrams, project board** | All five items were addressed during the week of 18 Aug |
-| 2 | All action items due by **2026-08-24** | Team completed all items before the deadline |
-
-**Actions from this meeting:**
-
-| Action | Owner | Completed? |
-|---|---|---|
-| Implement the team's own API | Team | ✅ — NestJS API with full CRUD endpoints |
-| Download and use API data from a database | Team | ✅ — `nba_api` ingestion into Supabase Postgres |
-| Set up code coverage reporting in Gitea Actions | Team | ✅ — `coverage` job with v8 provider, merged HTML report |
-| Create project diagrams (architecture, ERD, etc.) | Team | ✅ — Architecture, ERD, wireframes on docs site |
-| Set up and maintain a project board | Team | ✅ — Gitea Projects board with issues assigned |
-
----
-
-### 2026-08-21 — Client meeting (Feature review and Sprint 2 direction)
-
-| | |
-|---|---|
-| **Type** | Client meeting |
-| **Attendees** | Adrian, Josh, Daniel, Sanele, Kovendan Raman (client) |
-
-**Agenda:** Progress update and feature review; discussion of upcoming features and ML goals.
-
-**Client feedback received:**
-
-| # | Feedback / guidance | How the team responded |
-|---|---|---|
-| 1 | **Search bar feature is complete** — confirmed | Team moved on to next priorities |
-| 2 | Implement a **second API** to expand functionality, using buckets to pull data | Team planned the ingestion pipeline as the second data source |
-| 3 | **Swagger** should be used alongside the documentation site for API documentation | Swagger/OpenAPI setup planned for Sprint 2 (in progress) |
-| 4 | ML predictive model target accuracy: **75–80%**, with 64% as a baseline | Team's Four Factors model and Elo predictor target this range |
-| 5 | Implement a **hosting topology pinger** to show all services are healthy | Pinger implemented — see [Architecture](design/architecture.md) |
-| 6 | **Signup functionality** must be integrated with the database | Sign-up, sign-in, password reset, and account deletion implemented with BetterAuth + Prisma |
-| 7 | Database must include **real API data** (not just seed data) | Full-league NBA data ingested into Supabase |
-| 8 | Review the client's **reference project** ([RaceIQ](https://github.com/Race1Q/RaceIQ)) for inspiration | Team reviewed the project for UX and feature ideas |
-
-**Actions from this meeting:**
-
-| Action | Owner | Completed? |
-|---|---|---|
-| Add a pinger to the hosting topology | Team | ✅ |
-| Implement the predictive ML model (target: 75–80% accuracy) | Team | ⏳ Sprint 3 |
-| Have the team's API consume another API | Team | ✅ — `nba_api` ingestion service |
-| Integrate signup functionality with the database | Team | ✅ |
-| Ensure the database includes API data | Team | ✅ — full-league ingestion |
-| Set up Swagger for API documentation | Team | ⏳ In progress |
-| Review client's reference project (RaceIQ) | Team | ✅ |
-
----
-
-### 2026-08-23 — Internal Scrum (Sprint 1 readiness check)
-
-| | |
-|---|---|
-| **Type** | Internal team standup |
-| **Attendees** | Owen, Adrian, Josh, Kiran, Sanele |
-
-**Agenda:** Sprint 1 rubric walkthrough and readiness check; code coverage status; API structure; Google Auth login issue; methodology documentation; auth requirements gap; documentation updates; AI transcript collection.
-
-**Key decisions:**
-
-- Methodology updated to describe the process as a **dynamic, initiative-based Scrum adaptation** (not planned sprints with pre-assigned tasks)
-- **Sprint Review** replaced with a **Sprint Reflection** using the Sprint Log (week-by-week tabulated record)
-- A **project plan** maintained from Sprint Log + roadmap to show forward planning
-- **Gitea project board** confirmed as the work tracker evidence
-- Two critical Sprint 1 gaps identified: (1) Google Auth login broken on hosted site, (2) credential-based sign-up/password reset/account deletion not yet implemented
-
-**Actions taken:**
-
-| Action | Owner | Completed? |
-|---|---|---|
-| Fix Google Auth login (404 on hosted site) | Daniel / Team | ✅ |
-| Implement credential-based sign-up, password reset, account deletion | Daniel (Sanele backup) | ✅ |
-| Update documentation site to reflect current project state | Adrian | ✅ |
-| Replace/update diagrams on docs site | Adrian | ✅ |
-| Assign Gitea project board tasks to team members | Sanele | ✅ |
-| Add remaining AI transcripts to docs site | Owen, Josh, Kiran, Sanele | ✅ |
-| Ensure all team members familiar with tech stack for marking | All | ✅ |
-
-!!! note "Raw transcript"
-    [2026-08-23-team-standup.txt](transcripts/meeting-transcripts/2026-08-23-team-standup.txt)
-
----
-
-### 2026-09-07 — Client meeting (Sprint 2 progress and rubric clarification)
-
-| | |
-|---|---|
-| **Type** | Client meeting |
-| **Attendees** | Adrian, Owen, Josh, Kiran, Daniel, Sanele, Kovendan Raman (client) |
-
-**Agenda:** Sprint 2 progress update and feature demo; rubric clarification on cross-group API, password reset, user testing survey, and event-level data requirements; ML model accuracy and deployment status; performance measurement.
-
-**Client feedback received:**
-
-| # | Feedback / guidance | How the team responded |
-|---|---|---|
-| 1 | **Happy with progress** — team essentially done with core product | Team focused remaining effort on documentation and user feedback survey |
-| 2 | ML model at **60% accuracy is acceptable** as long as it's deployed | Model already live at [predictions page](https://sportsanalytics.pages.dev/predictions) |
-| 3 | **Images from NBA API** (not buckets) is fine — stats stored locally meets the requirement | No change needed; images remain API-sourced |
-| 4 | Use **Chrome Lighthouse** for performance measurement, target 80+ | Team to run Lighthouse audit |
-| 5 | **Cross-group API**: must use another group's API or have them use yours; can be simple | Team to contact other groups about API collaboration |
-| 6 | **Password reset** missing — ~80% for auth subsection without it; speak to Brendan | Team to discuss with Brendan at next class |
-| 7 | **User testing survey** should link to webapp; simple format is fine; screenshots optional | Team creating Google Forms survey |
-| 8 | **Event-level data**: calculating last-five-games stats from event data is acceptable; check with Brendan | Sanele's player profile approach confirmed as reasonable |
-| 9 | **Bug tracker** doesn't need to be elaborate — simple issue list is fine | Custom Gitea issue form already built and confirmed adequate |
-
-**Actions from this meeting:**
-
-| Action | Owner | Completed? |
-|---|---|---|
-| Create and distribute user testing survey | Team (Adrian) | ⏳ In progress |
-| Contact other groups about cross-group API collaboration | Team | ⏳ Pending |
-| Run Lighthouse performance audit (target: 80+) | Team | ⏳ Pending |
-| Speak to Brendan about password reset approach | Team | ⏳ Pending |
-
----
-
-## Summary of client feedback and team responses
-
-This table traces every piece of significant client feedback to the concrete action the team took, demonstrating that stakeholder input directly shaped the project.
-
-| Date | Client feedback | Team action | Evidence |
+| Date | The client said | What the team did | Evidence |
 |---|---|---|---|
-| 13 Aug | Use NBA API, not EPL | Adopted `nba_api` as data source | [Tech Stack](tech-stack.md), ingestion service |
-| 13 Aug | Schema should match API structure | Aligned Prisma schema with `nba_api` shapes | [ERD](design/erd.md) |
-| 13 Aug | Deploy docs via static hosting | MkDocs → GitHub Pages | [Docs site](https://sports-analytics-innovation-platform.github.io/Innovation-Documentation-Website/) |
-| 13 Aug | Set up basic API as safety net | Built NestJS API, deployed to Render | [API health check](https://sportsanalytics-api.onrender.com/health) |
-| 13 Aug | AI use encouraged, but review generated code | AI Usage Ledger maintained | [AI Usage](ai-usage.md) |
-| 13 Aug | ML not needed until Sprint 3 | Deferred ML; focused on data pipeline | [Roadmap](design/roadmap.md) |
-| 18 Aug | Code coverage in CI required | Added `coverage` job to Gitea Actions | [CI/CD](ci-cd.md) |
-| 18 Aug | Project diagrams needed | Architecture, ERD, wireframes created | [Architecture](design/architecture.md) |
-| 18 Aug | Project board needed | Gitea Projects board set up | [Project board](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/projects/8) |
-| 21 Aug | Hosting topology pinger needed | Pinger service implemented | [Architecture](design/architecture.md) |
-| 21 Aug | Signup must integrate with DB | BetterAuth + Prisma sign-up/delete delivered — **reset was not**, and still isn't as of 2026-09-23; see the 07 Sep row below and [ADR-002](decisions/adr-002-auth.md) | Sprint 2 deliverables |
-| 21 Aug | Swagger for API docs | `@nestjs/swagger` setup planned | [API Reference](api-reference.md) |
-| 21 Aug | ML target: 75–80% accuracy | Four Factors + Elo model in development | [Predictions](https://sportsanalytics.pages.dev/predictions) |
-| 21 Aug | Review RaceIQ reference project | Team reviewed for UX inspiration | — |
-| 07 Sep | **Happy with progress** — core product essentially done | Team focused on documentation and user feedback survey | — |
-| 07 Sep | ML at 60% accuracy acceptable if deployed | Model already live on predictions page | [Predictions](https://sportsanalytics.pages.dev/predictions) |
-| 07 Sep | Images from NBA API fine; buckets not required | No change needed | — |
-| 07 Sep | Use Chrome Lighthouse for performance, target 80+ | Team to run audit | — |
-| 07 Sep | Cross-group API required — can be simple | Team to contact other groups | — |
-| 07 Sep | Password reset missing — ~80% for auth without it | Team to speak to Brendan | — |
-| 07 Sep | User testing survey: link to webapp, simple format | Google Forms survey being created | — |
-| 07 Sep | Event-level data: last-five-games approach acceptable | Sanele's player profile implementation confirmed | — |
-| 07 Sep | Bug tracker doesn't need to be elaborate | Custom Gitea issue form confirmed adequate | [Gitea Issues](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/issues) |
+| 13 Aug | Put infrastructure and the rubric first; polish later | Pipeline, API, sign-in, docs site and CI came first | [Sprint Log](sprint-log.md) |
+| 13 Aug | Use an NBA API, not the football API considered earlier | Adopted `nba_api` (free, MIT-licensed) | [Data Ingestion](design/ingestion.md) |
+| 13 Aug | Model the schema on the external API | The Prisma schema follows `nba_api`'s players, teams, games and events | [ERD](design/erd.md) |
+| 13 Aug | Host the docs as a static site | MkDocs on GitHub Pages | This site |
+| 13 Aug | Build a basic API as a safety net | NestJS API on Render | [API Reference](api-reference.md) |
+| 13 Aug | Use AI, but review what it generates | Every AI session logged and its output reviewed | [AI Usage Ledger](ai-usage.md) |
+| 13 Aug | ML can wait until Sprint 3, and deploying it is harder than running it locally | ML runs as separate Python services that write to Postgres | [Architecture](design/architecture.md#python-services) |
+| 13 Aug | Avoid a purple, "AI-looking" interface | A warm dark theme with an orange accent | [UI Overview](design/wireframes.md) |
+| 18 Aug | By 24 Aug: our own API, database integration, code coverage, diagrams and a project board | All five done | [CI/CD](ci-cd.md), [Architecture](design/architecture.md), [project board](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/projects/8) |
+| 21 Aug | Load real API data, not only seed data | Three NBA seasons ingested into Supabase | [Data Ingestion](design/ingestion.md) |
+| 21 Aug | Integrate sign-up with the database | Google sign-up, sign-in and account deletion with BetterAuth and Prisma. **No password reset:** Google sign-in leaves no password to reset | [ADR-002](decisions/adr-002-auth.md) |
+| 21 Aug | Add a pinger to show the services are up | cron-job.org calls [`/v1/health`](https://sportsanalytics-api.onrender.com/v1/health) every 10 minutes | [Architecture](design/architecture.md#backend-appsapi) |
+| 21 Aug | Document the API with Swagger | Swagger UI generated from the code | [Swagger UI](https://sportsanalytics-api.onrender.com/api/docs) |
+| 21 Aug | Aim for 75–80% prediction accuracy, with 64% as a baseline | Elo and Four Factors predictor; live accuracy on the Home page's Model accuracy card | [Improvements Made](improvements.md) |
+| 21 Aug | Look at the client's reference project, RaceIQ | Reviewed for UX ideas | — |
+| 7 Sep | 60% accuracy is acceptable if the model is deployed | Model live on the Predictions page | [Predictions](https://sportsanalytics.pages.dev/predictions) |
+| 7 Sep | Measure performance with Lighthouse, aiming for 80+ | See 27 Sep | [Performance](design/performance.md#lighthouse-scores-2026-09-29) |
+| 7 Sep | Use another group's API, or have one use ours | Not done: later confirmed as not needed, because it isn't in the rubric | — |
+| 7 Sep | Password reset is missing (about 80% for authentication without it); ask Brendan | Not built: Brendan said it isn't needed | [ADR-002](decisions/adr-002-auth.md) |
+| 7 Sep | Send a simple user survey with a link to the web app | Google Forms survey, 8–15 Sep, 11 responses | [User Feedback Survey](feedback-survey.md) |
+| 7 Sep | Deriving last-five-games stats from event data is acceptable | Kept that approach on player profiles | — |
+| 7 Sep | The bug tracker can be simple | Gitea issues with a bug-report form and labels | [Testing](testing.md#bug-tracking) |
+| 7 Sep | Player images from the NBA CDN are fine; stats must be stored | No change: images come from the CDN, stats are in Postgres | — |
+| 27 Sep | Run Lighthouse on data-heavy pages, not only the landing page | Home, Teams, Players and Admin scored 88–95 for performance on mobile and 100 for accessibility | [Performance](design/performance.md#lighthouse-scores-2026-09-29) |
+| 27 Sep | Re-test the API now that keys are required, including rate limits | Live API tested with a consumer key: missing and invalid keys and rate limits | [AI Usage Ledger](ai-usage.md) (27 Sep) |
+| 27 Sep | Stress-test the API | One 10-user run (29 Sep) sent no API key, so it measured only the health route. Lighthouse and query counts are the performance evidence instead | [Performance](design/performance.md) |
+| 27 Sep | Ship and document at least one change that came from user feedback | Seven shipped, each with before and after | [Improvements Made](improvements.md) |
 
-## Meeting cadence
-
-| Period | Frequency | Format |
-|---|---|---|
-| Sprint 1 (4–25 Aug) | 3 client meetings + 2 internal scrums | In-person at Tue/Fri labs + WhatsApp coordination |
-| Sprint 2 (26 Aug – 15 Sep) | Weekly client meetings + weekly scrums | Same format; meetings documented as they occur |
-| Sprint 3 (16 Sep – 29 Sep) | ⚠️ Not documented here as of 2026-09-23 | [Client meetings](meetings/client/index.md) run to 2026-09-07, [Scrum meetings](meetings/scrum/index.md) to 2026-09-10 — both before Sprint 3 even started, so nothing from this sprint's roughly 35-PR week of admin-corrections/dataset-release/API-key work (see [Sprint Log](sprint-log.md)) has a logged meeting behind it yet. This table specifically hasn't been extended to reflect that either row exists |
+At the 27 Sep meeting the client said the docs site needed no changes and the Git and meeting process was being followed, and closed with "I'm happy. There's nothing left."
 
 ---
 
-*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude-Code[Claude Sonnet 5] (2026-09-23: corrected a false "password reset delivered" claim, added the Sprint 3 meeting-cadence gap)*
+*AI Declaration: The preceding document was generated with the assistance of the following: Qoder[Qoder Lite], Claude-Code[Claude Sonnet 5], Claude-Code[Claude Opus 5.5]*

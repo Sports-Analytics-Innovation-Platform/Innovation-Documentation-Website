@@ -1,213 +1,165 @@
 # Sprint Log
 
+What each member delivered, week by week, taken from the Gitea repo history. PR numbers refer to Gitea pull requests. How the sprints are run is in [Methodology](methodology.md).
 
-## Team
-
-| Name ||
-|---|---|
-| Owen Pace 
-| Josh Sawyer 
-| Adrian Draxl | Scrum Master|
-| Kiran Soodyall
-| Daniel Passos 
-| Sanele H. 
+**Team:** Owen Pace, Josh Sawyer, Adrian Draxl (Scrum Master), Kiran Soodyall, Daniel Passos, Sanele H.
 
 ---
 
-## Sprint 1 — Project Setup & Direction
+## Sprint 1: Project setup and direction
 
 ### Week of 4 Aug
 
 | Task | Type | Owner |
 |---|---|---|
-| Scaffold the NBA analytics platform base project | `feat` | Josh Sawyer |
-| Migrate the API backend from Express to NestJS | `refactor` | Owen Pace |
-| Replace Passport auth with BetterAuth (Google OAuth) | `feat` | Owen Pace |
-| Build Teams pages, TanStack Query, shadcn/ui, court theme | `feat` | Owen Pace |
-| Write backend + frontend test suites with real-Postgres integration tests | `test` | Owen Pace |
-| Stand up GitLab CI pipeline with a coverage dashboard | `chore` | Owen Pace |
-| Log AI chat transcript for course attribution requirement | `docs` | Owen Pace |
-| Stand up MkDocs documentation site with GitHub Pages deploy workflow | `chore` | Adrian Draxl |
+| Scaffold the base project | `feat` | Josh Sawyer |
+| Move the API from Express to NestJS | `refactor` | Owen Pace |
+| Replace Passport with BetterAuth (Google OAuth) | `feat` | Owen Pace |
+| Teams pages, TanStack Query, shadcn/ui and the court theme | `feat` | Owen Pace |
+| API and web test suites, with integration tests against real Postgres | `test` | Owen Pace |
+| First CI pipeline with a coverage dashboard | `chore` | Owen Pace |
+| Log the AI chat transcript | `docs` | Owen Pace |
+| MkDocs site with a GitHub Pages deploy workflow | `chore` | Adrian Draxl |
 
 ### Week of 11 Aug
 
 | Task | Type | Owner |
 |---|---|---|
-| Implement landing page with hero section and navigation | `feat` | Kiran Soodyall |
-| Draft git methodology, project methodology, and project overview docs | `docs` | Owen Pace |
-| Add games endpoint, top navbar, and hero redesign | `feat` | Owen Pace |
-| Build prediction-model + MILP lineup optimizer | `feat` | Owen Pace |
-| Move docs from the marketing site into the repo; normalize AI usage ledger | `docs` | Adrian Draxl |
-| Reconcile frontend branch — merge hero/navbar with a11y patterns, clean up optimizer | `refactor` | Owen Pace |
-| Merge duplicate AI usage ledgers | `chore` | Owen Pace |
-| Ship public landing page + top navigation (PR #10) | `feat` | Kiran Soodyall |
-| Add CI configuration and ESLint setup for API and Web (PR #32) | `feat` | Kiran Soodyall |
-| Add Docker runner setup for CI | `chore` | Kiran Soodyall |
-| Match navbar/hero layout to reference mockup | `style` | Owen Pace |
-| Remove dead GitLab CI leftovers, add apps/api ESLint config | `chore` | Owen Pace |
-| Fix stale "what's not done yet" list in README; add Postgres service to CI | `fix` | Owen Pace |
-| Fix API tests to reach Postgres by service name, not localhost | `fix` | Owen Pace |
-| Organize meeting docs (client vs. standup), clean up meeting page TOC | `docs` | Adrian Draxl |
-| Write core docs site content — coding conventions, git/project methodology, definition of done, requirements traceability, tech stack, security, getting started, architecture overview, ERD, API design, UI overview, ADR-001 (database), ADR-002 (auth) | `docs` | Adrian Draxl |
-| Fix broken internal doc links breaking the strict MkDocs build | `fix` | Owen Pace |
-| Update CI/CD documentation with pipeline details | `docs` | Kiran Soodyall |
-| Correct docs site to match the real repo (Gitea not GitLab, BetterAuth not Passport); fix stale CI claims and an orphaned meetings page | `fix` | Owen Pace |
+| Landing page and top navigation (PR #10) | `feat` | Kiran Soodyall |
+| CI configuration, ESLint for API and web (PR #32), and a Docker runner | `chore` | Kiran Soodyall |
+| Games endpoint, navbar and hero redesign | `feat` | Owen Pace |
+| Prediction model and MILP lineup optimizer | `feat` | Owen Pace |
+| Git and project methodology drafts; merge the duplicate AI ledgers | `docs` | Owen Pace |
+| Fix CI: Postgres service, reach it by service name, remove GitLab leftovers | `fix` | Owen Pace |
+| Core docs site pages: conventions, methodology, DoD, requirements, tech stack, security, getting started, architecture, ERD, API design, UI overview, ADR-001, ADR-002 | `docs` | Adrian Draxl |
+| Organise the meeting docs into client and stand-up | `docs` | Adrian Draxl |
+| Document the CI/CD pipeline | `docs` | Kiran Soodyall |
+| Correct the docs to match the repo (Gitea, BetterAuth); fix the strict build | `fix` | Owen Pace |
 
 ### Week of 18 Aug
 
 | Task | Type | Owner |
 |---|---|---|
-| Build ingestion service scaffold with team fetching | `feat` | Josh Sawyer |
-| Add roster, game, and boxscore ingestion | `feat` | Josh Sawyer |
-| Add ingestion orchestrator + README (PR #34) | `feat` | Josh Sawyer |
-| Add GamePrediction model + predictor service (Elo win probability, Four Factors margin) | `feat` | Josh Sawyer |
-| Add GET /v1/games/:id/prediction endpoint + e2e tests | `feat` | Josh Sawyer |
-| Fix future-game data leaking into historical predictions | `fix` | Josh Sawyer |
-| Add Predictions page and game detail page (win probability, predicted top scorers) | `feat` | Josh Sawyer |
-| Add court view visualizing predicted top scorers by position | `feat` | Josh Sawyer |
-| Show real team logos + player headshots from nba.com's CDN (PR #37) | `feat` | Josh Sawyer |
-| Join predictions into GET /v1/games — kill the one-request-per-game pattern | `fix` | Josh Sawyer |
-| Add coverage reporting to Gitea Actions (PR #40) | `chore` | Daniel Passos |
-| Fix regression training-data leakage | `fix` | Daniel Passos |
-| Add player and team search (PR #42) | `feat` | Daniel Passos |
-| Protect authenticated routes and API endpoints (PR #44) | `feat` | Daniel Passos |
-| Write ADR-003 (hosting topology); evaluate Azure, pivot to Cloudflare Pages + Render + Supabase | `docs` | Adrian Draxl |
-| Deploy API to Render, web to Cloudflare Pages; fix Render Blueprint, build, and tsconfig issues (PR #45) | `feat` | Adrian Draxl |
-| Sync BetterAuth trustedOrigins with CORS allowed origins; fix CI test timeouts; restore VITE_API_BASE_URL | `fix` | Adrian Draxl |
-| Harden npm ci against CI runner network stalls; land CORS trusted-origins fix (PR #46) | `fix` | Owen Pace |
-| Pull player bio fields from the CommonPlayerInfo endpoint; fix seed.ts player IDs and frontend mocks | `feat` | Sanele H. |
-| Migrate ADR docs from project repo to doc site; resolve MkDocs strict-mode build failures | `fix` | Adrian Draxl |
-| Add AI/Codex usage transcripts to docs site (PR #1, PR #2) | `docs` | Daniel Passos |
-| Diagnose Google OAuth `statemismatch` failures on slow sign-ins; add self-service account deletion | `fix` | Sanele H. |
-| Unify the redesigned landing-page header across all app routes (PR #50) | `feat` | Daniel Passos |
-| Publish deployment, ERD, class, and sequence diagrams (PlantUML → SVG) to the docs site with click-to-zoom | `docs` | Josh Sawyer |
-| Standardise AI declaration format across all docs pages; add live links, demo guide, and Sprint 1 rubric update | `docs` | Adrian Draxl |
-| Link documentation site from README; fix stale scaffold status | `docs` | Owen Pace |
-| Correct stale "not yet built" claims in getting-started.md | `docs` | Adrian Draxl |
-| Set up a cron-job.org pinger to keep the free-tier Render API instance warm | `chore` | Sanele H. |
+| Ingestion service: teams, rosters, games, box scores and an orchestrator (PR #34) | `feat` | Josh Sawyer |
+| Game predictions (Elo win probability, Four Factors margin) and `GET /v1/games/:id/prediction` | `feat` | Josh Sawyer |
+| Fix future games leaking into historical predictions | `fix` | Josh Sawyer |
+| Predictions page, game detail page and court view | `feat` | Josh Sawyer |
+| Team logos and player headshots from the nba.com CDN (PR #37) | `feat` | Josh Sawyer |
+| Join predictions into `GET /v1/games` to remove one request per game | `fix` | Josh Sawyer |
+| Coverage reporting in Gitea Actions (PR #40) | `chore` | Daniel Passos |
+| Fix training-data leakage in the regression | `fix` | Daniel Passos |
+| Player and team search (PR #42) | `feat` | Daniel Passos |
+| Protect authenticated routes and endpoints (PR #44) | `feat` | Daniel Passos |
+| One landing-page header across all routes (PR #50) | `feat` | Daniel Passos |
+| Add AI transcripts to the docs site | `docs` | Daniel Passos |
+| ADR-003: evaluate Azure, choose Cloudflare Pages, Render and Supabase | `docs` | Adrian Draxl |
+| Deploy the API to Render and the web app to Cloudflare Pages (PR #45) | `feat` | Adrian Draxl |
+| Sync BetterAuth trusted origins with CORS; fix CI timeouts | `fix` | Adrian Draxl, Owen Pace |
+| Move the ADRs to the docs site; standard AI declaration on every page; Demo Guide | `docs` | Adrian Draxl |
+| Player bio fields from `CommonPlayerInfo` | `feat` | Sanele H. |
+| Diagnose slow-sign-in `state_mismatch` failures; self-service account deletion | `fix` | Sanele H. |
+| A cron-job.org pinger to keep the Render API warm | `chore` | Sanele H. |
+| Deployment, ERD, class and sequence diagrams on the docs site | `docs` | Josh Sawyer |
 
 ---
 
-## Sprint 2 — Feature Expansion & Documentation
+## Sprint 2: Feature expansion and documentation
 
 ### Week of 25 Aug
 
 | Task | Type | Owner |
 |---|---|---|
-| Update methodology.md to reflect current process | `docs` | Owen Pace |
-| Add outstanding AI transcripts and ledger entries | `docs` | Sanele H., Josh Sawyer |
-| Re-land player bio fields after an earlier revert; run Prisma migrations automatically on API start (PR #52) | `fix` | Sanele H. |
-| Add per-game season averages and a player-compare endpoint; build the player comparison page (PR #53) | `feat` | Sanele H. |
-| Show minutes and free-throw attempts on player profiles, with a link into the comparison page | `feat` | Sanele H. |
-| Document the player comparisons feature and its data audit | `docs` | Sanele H. |
+| Update the methodology page | `docs` | Owen Pace |
+| Outstanding AI transcripts and ledger entries | `docs` | Sanele H., Josh Sawyer |
+| Re-land player bio fields; run migrations on API start (PR #52) | `fix` | Sanele H. |
+| Season averages, a compare endpoint and the comparison page (PR #53) | `feat` | Sanele H. |
+| Minutes and free-throw attempts on profiles | `feat` | Sanele H. |
 
 ### Week of 1 Sep
 
 | Task | Type | Owner |
 |---|---|---|
-| Add bouncing basketball loading animation (PR #80) | `feat` | Owen Pace |
-| Let users temporarily edit a stat and see the effect on related numbers, then reset (PR #81, #85) | `feat` | Owen Pace |
-| Set up bug tracking with a custom Gitea issue template and label scheme (PR #82) | `chore` | Sanele H. |
-| Fix player age not appearing on all player comparisons | `fix` | Sanele H. |
-| Switch CI to the course-provided `sdp-runner-1`; target the `ubuntu-latest` label the Wits runners actually register; move the disposable CI Postgres off the default port/hostname | `fix` | Owen Pace |
-| Add season type and playoff round to games; ingest play-in, playoff, and finals games; keep postseason games out of prediction/optimizer models | `feat` | Sanele H. |
-| Filter player and game endpoints by season type; add season-segment views to the web app; seed a mock postseason for local dev and tests (→ PR #89) | `feat` | Sanele H. |
-| Store plus-minus, usage, and player ratings per game; derive true shooting%, eFG%, and assist-to-turnover; surface advanced stats on profile, splits, and comparison pages (→ PR #90) | `feat` | Sanele H. |
-| Add Swagger/OpenAPI documentation to the API (→ PR #86) | `feat` | Adrian Draxl |
-| Add testing, stakeholder interactions, and API reference pages; audit tech stack; update rubric quick links; draft the user feedback survey; sync docs site with actual codebase state | `docs` | Adrian Draxl |
+| Loading animation (PR #80) | `feat` | Owen Pace |
+| Edit a stat temporarily to see the effect on related figures (PRs #81, #85) | `feat` | Owen Pace |
+| Move CI to the course runner `sdp-runner-1` | `fix` | Owen Pace |
+| Bug tracking: a Gitea issue template and labels (PR #82) | `chore` | Sanele H. |
+| Play-in, playoff and finals games, kept out of the models; season-segment views (PR #89) | `feat` | Sanele H. |
+| Plus-minus, usage, ratings, TS%, eFG% and AST/TO on profile, splits and compare (PR #90) | `feat` | Sanele H. |
+| Swagger UI for the API (PR #86) | `feat` | Adrian Draxl |
+| Testing, stakeholder and API reference pages; draft the user survey | `docs` | Adrian Draxl |
 
 ### Week of 8 Sep
 
 | Task | Type | Owner |
 |---|---|---|
-| Build the signed-in home dashboard shell ("The Locker") with placeholder data — watchlist, followed teams, jump-back-in rail (PR #87); wired to real endpoints later in the sprint by PR #94 | `feat` | Kiran Soodyall |
-| Fix CI Postgres container startup, reachability, and concurrency handling | `fix` | Kiran Soodyall |
-| Protect the personalised home login flow (PR #91) | `fix` | Daniel Passos |
-| Add axe-core automated accessibility checks (PR #92) | `test` | Daniel Passos |
-| Hold team meeting 5: agreed on a profile page (account settings, password reset, data deletion), a "coach mode" self-upload stats feature, deferring Row Level Security to sprint-end, and scheduled final Sprint 2 review for 2026-09-14 | `docs` | Adrian Draxl |
-| Merge postseason-view (#89) and advanced-player-stats (#90) into main, resolving the stacked-branch history between them | `chore` | Sanele H. |
-| Resolve a real merge conflict in `players.controller.ts` between the Swagger decorators and the season-type work, then merge swagger-openapi (#86) into main | `fix` | Owen Pace |
-| Update landing-page hero photos and add a real home-page screenshot to the hero cascade (PR #88) | `feat` | Kiran Soodyall |
-| Found and removed a live Gitea runner registration token (`ci-runner/data/.runner`, accidentally committed on PR #88) before merging; token rotation on the server is still pending | `fix` | Owen Pace |
-| Pre-warm the API with a `/health` ping on mount to reduce Render cold-start failures during Google sign-in — the OAuth state row's 10-minute expiry is hardcoded in `better-auth` with no config option (confirmed up to the latest 1.7.4) | `fix` | Owen Pace |
-| Build the user-owned personalisation layer behind the signed-in home page: one migration (`20260910134345_home_personalization`) adding seven tables and a `PickOutcome` enum with zero ALTERs on any NBA-data table, 15 new `/v1/analytics/*` and `/v1/me/*` routes, and the Beat the Model, watchlist, followed-team results, model-accuracy ledger, leaderboard and saved-shelf features (PR #94) | `feat` | Kiran Soodyall |
-| Add `OriginCheckGuard` as a global `APP_GUARD` and shared Zod body validation (`parseBody`) alongside the API's first write routes; scope every `/v1/me/*` query to the session user id so one user can never read or delete another's rows (PR #94) | `feat` | Kiran Soodyall |
-| Remove the "Add to Locker" and "Jump Back In" home sections — both were layout with nothing behind them — and add an "Add to watchlist" control to the player profile page as the new entry point into the watchlist (PR #94) | `refactor` | Kiran Soodyall |
-| Ingest two more historical seasons (2023-24, 2024-25 — ~3,780 games total), fix a trade-attribution bug that misjoined a traded player's past boxscores onto their current team, retune Elo's K-factor (20→25) and home-court advantage (75→40), and add a season-boundary rating reset, each validated by chronological train/validation splits (PR #95) | `feat` | Josh Sawyer |
-| Overhaul the Predictions page — model highlights, recent-results track record, "Top 5 to watch" player cards, and a "How it works" explainer (PR #95) | `feat` | Josh Sawyer |
-| Revert the saved-comparisons/lineups merge (#94) after it conflicted with the parallel home-page personalisation work still in flight (PR #98) | `fix` | Kiran Soodyall |
-| Add onboarding (username, favorite team, suggested players to follow) and a Profile page (avatar upload, followed-players list, hard account deletion); new `GET/PATCH /v1/me`, `/v1/me/avatar`, `/v1/me/followed-players/:playerId` routes (PR #96, completed in #99) | `feat` | Josh Sawyer |
-| Make read-only game endpoints public so the signed-out landing page can load live matches; refresh shared auth, protected-route, error, and loading states (PR #99) | `feat` | Josh Sawyer |
-| Stop requiring the OAuth state cookie on cross-domain sign-in — Safari, Firefox, and Brave's stricter third-party cookie handling was silently dropping it before Google's callback redirect could read it back, causing intermittent `state_mismatch` failures (PR #100) | `fix` | Owen Pace |
-| Enforce an 80% coverage threshold (statements/branches/functions/lines) across API and web; add the API-client tests needed to clear it (PR #101, #102) | `test` | Owen Pace |
-| Full landing page redesign — full-bleed responsive photos, scroll-triggered reveal animations, marquee bands, an animated "How We Predict" explainer; unify `AuthBootScreen` so the boot loader no longer plays twice on protected routes (PR #103) | `feat` | Josh Sawyer |
-| Keep Google OAuth pointed at the deployed Render API when `VITE_API_BASE_URL` is unset, instead of silently falling back to a broken origin (PR #104) | `fix` | Owen Pace |
-| Add per-opponent matchup projections (`GET /v1/players/:id/matchup-projection`, shrunk toward each player's overall rate) and a player-page overhaul with scroll animations (PR #105, shipped to `main` in #106) | `feat` | Josh Sawyer |
-| Let users temporarily edit a stat on their own profile page to see the ripple effect on related numbers, then reset back to the real values (PR #107) | `feat` | Owen Pace |
-| Diagnose and fix Google sign-in for Safari/Firefox/Brave: the OAuth CSRF state cookie was set via a cross-origin `fetch()`, which strict third-party cookie policies silently drop before it can be read back on Google's callback; switch CI to the course-provided `sdp-runner-1` runner and move the disposable CI Postgres off the default port/hostname so it stops colliding with other groups' runs (PR #107) | `fix` | Owen Pace |
-| Proxy `/api` and `/auth` through same-origin Cloudflare Pages Functions so the session cookie set during the OAuth callback is first-party instead of genuinely cross-site — closes the sign-in failure the state-cookie fix above got past but didn't fully resolve (PR #108) | `fix` | Owen Pace |
-| Add saved lineups end-to-end — snapshot the optimizer board's per-slot predictions/salary and derived totals at save time, with solver-mirroring validation (exactly 5 players, position minimums, salary cap, no duplicates) (PR #111) | `feat` | Josh Sawyer |
-| Remove duplicate coverage thresholds left in the web vite config (PR #110) | `fix` | Josh Sawyer |
-| Move the Cloudflare Pages Functions proxy from `apps/web/functions/` to the repo root — the Pages project's configured root directory never found them there, so `/auth/get-session` was returning the SPA's HTML shell instead of a proxied response (PR #112) | `fix` | Owen Pace |
-| Add a test for `meApi`'s suggested-players query-string branch to bring web branch coverage back over the enforced 80% threshold (PR #113) | `test` | Owen Pace |
-| Dedupe two conflicting `SavedLineup` type declarations left behind by the home-page merge, unblocking the `tsc -b` web build (PR #114) | `fix` | Josh Sawyer |
-| Retry `prisma migrate deploy` in the e2e test suite's global setup to absorb an intermittent CI failure with no corresponding code change (PR #116) | `fix` | Owen Pace |
-| Trigger a Cloudflare Pages rebuild after removing a stale `VITE_API_BASE_URL` override that was silently bypassing the same-origin proxy fix and baking a direct cross-origin API URL into the build (PR #117) | `chore` | Owen Pace |
-| Fix lint errors on the home-page backend branch ahead of merge (PR #119) | `fix` | Kiran Soodyall |
-| Restyle Compare and Teams — the last two pages still on the original dark app-shell theme — to match the locker design system (PR #118) | `style` | Owen Pace |
-| Add filtering, sorting, Elo ratings, records, and recent-form/follow-team controls to the Teams directory; add team profile pages and a team-records API; add player suggestions to comparison search and improve the radar visualisation (PR #123) | `feat` | Josh Sawyer |
-| Cut database round trips: an in-process response cache for public reads (single-flight, never caches errors or nulls, bounded, disabled under Vitest), five redundant-query consolidations (splits 5→2, compare 8→2 for four players, stats 3→2, prediction 2→1, leaderboard counts 3→2), a 5-minute React Query `staleTime` with no refetch on window focus, a BetterAuth session cookie cache removing the per-request `Session`/`User` read, and new indexes on `Game`, `PlayerGameStat` and `Player`. Measured: most public endpoints drop to zero queries on a repeat call. `PredictionsService` deleted as dead code (PR #124) | `perf` | Kiran Soodyall |
-| Fix Beat the Model and the leaderboard: the card kept showing the game just called while the next loaded, replayed a called game after navigating back, and stuck on a 409; it now drops the called game immediately, loads the next behind the graded result, always revalidates on mount, and skips an already-called game. The server breaks same-date ties on id so "next game" is stable, and two same-named users no longer swap leaderboard rows (PR #124) | `fix` | Kiran Soodyall |
-| Fix onboarding follow/unfollow persistence, block finishing onboarding while a preference save is still pending, add error feedback for failed writes, and refresh profile/watchlist/favourite-team locker data after changes (PR #125, closes #67) | `fix` | Daniel Passos |
-| Build an admin page (Teams/Players editing, user role management and deletion) behind the RBAC guard infrastructure (`RolesGuard`, `@Roles()`, the `ADMIN` role) that already existed in the schema but had no endpoint using it — the API's first write access to `Team`/`Player` rows (PR #120, open) | `feat` | Owen Pace |
-| Add model versioning to `GamePrediction` — a `modelVersion` column plus an append-only `GamePredictionRun` history table, so a prediction stays reproducible after the Elo/Four Factors model changes instead of being silently overwritten; first step of a series closing rubric gaps identified in the predictions feature (PR #126, open) | `feat` | Owen Pace |
-| Field the Sprint 2 user feedback survey (Google Forms via WhatsApp), collect 11 responses (7 by the Sprint 2 deadline, 4 more the next day while the form stayed open), and publish the findings, quantitative analysis, and feedback-to-action traceability table on the docs site; raw responses archived with emails redacted | `docs` | Adrian Draxl |
+| Signed-in Home shell (PR #87) | `feat` | Kiran Soodyall |
+| Home personalisation: Beat the Model, watchlist, followed teams, model accuracy, leaderboard and saved items; 7 tables and 15 routes (PR #94) | `feat` | Kiran Soodyall |
+| Global origin check and Zod body validation; every `/v1/me/*` query scoped to the session user (PR #94) | `feat` | Kiran Soodyall |
+| Response cache, fewer queries per endpoint, new indexes, and a session cookie cache (PR #124) | `perf` | Kiran Soodyall |
+| Fix Beat the Model replaying or sticking on a called game (PR #124) | `fix` | Kiran Soodyall |
+| CI Postgres fixes; landing hero photos (PR #88); lint fixes (PR #119) | `fix` | Kiran Soodyall |
+| Protect the Home login flow (PR #91) | `fix` | Daniel Passos |
+| axe-core accessibility checks (PR #92) | `test` | Daniel Passos |
+| Fix onboarding follow state and save errors (PR #125) | `fix` | Daniel Passos |
+| Two more seasons ingested; fix a traded-player attribution bug; retune Elo (PR #95) | `feat` | Josh Sawyer |
+| Predictions page overhaul (PR #95) | `feat` | Josh Sawyer |
+| Onboarding and the Profile page (PRs #96, #99) | `feat` | Josh Sawyer |
+| Public game reads for the landing page (PR #99) | `feat` | Josh Sawyer |
+| Landing page redesign (PR #103) | `feat` | Josh Sawyer |
+| Per-opponent matchup projections (PRs #105, #106) | `feat` | Josh Sawyer |
+| Saved lineups (PR #111) | `feat` | Josh Sawyer |
+| Teams filters, Elo, records and team profiles (PR #123) | `feat` | Josh Sawyer |
+| Merge postseason (#89) and advanced stats (#90) | `chore` | Sanele H. |
+| Remove a committed runner token before merge | `fix` | Owen Pace |
+| Fix Google sign-in on Safari, Firefox and Brave: same-origin proxy for `/api` and `/auth` (PRs #100, #104, #107, #108, #112, #117) | `fix` | Owen Pace |
+| 80% coverage threshold on API and web (PRs #101, #102, #113) | `test` | Owen Pace |
+| Admin page with role-based access (PR #120) | `feat` | Owen Pace |
+| Prediction model versioning (PR #126) | `feat` | Owen Pace |
+| Restyle Compare and Teams to the locker design (PR #118) | `style` | Owen Pace |
+| Team meeting 5 | `docs` | Adrian Draxl |
+| Sprint 2 user survey: 11 responses, findings and traceability | `docs` | Adrian Draxl |
 
 ---
 
+## Sprint 3: Event sourcing, Become Pro and user feedback
 
-## Sprint 3 — Event Sourcing, Become Pro & User Feedback Round 2
+### Week of 15 Sep
 
-### Week of 15 Sep — Intermediate & Advanced tier event-sourcing (Sprint 3)
-
-The largest batch of work in the project so far — roughly 35 merged PRs, mostly landing the brief's own Intermediate/Advanced-tier requirements (submission review, dataset releases, API maturity, custom statistics) rather than adjacent features. Backfilled from `git log` since this window's own AI usage/docs entries were behind by over a week.
-
-| Task | Type | Owner |
-|---|---|---|
-| Submission review workflow, API keys, an audit trail, career stats and dataset releases — the first big drop of Intermediate-tier work (`intermediate-brief-features` branch, PRs #136, #138, #140, #141) | `feat` | Owen Pace |
-| Delete API consumers/keys (PR #151); user-owned API keys made mandatory for public reads (PRs #171, #172) | `feat` | Owen Pace |
-| Fix play-by-play action-type translation drift against NBA's live feed vocabulary (PR #167); tolerate a pooled `DATABASE_URL` in the ingestion db helper (PR #168); route the dataset download link through the API proxy (PR #169); allow only one ingestion pull at a time (PR #170) | `fix` | Owen Pace |
-| Read-aloud and screen reader accessibility (PR #166) | `feat` | Owen Pace |
-| Re-derive stats on correction and support an on-demand game replay (PR #139) | `feat` | Adrian Draxl |
-| Flag basic sanity-check failures in `PlayerGameStat` rows (negative stats, impossible shooting splits) — internal-consistency anomaly detection, not statistical-baseline outlier detection (PR #142) | `feat` | Adrian Draxl |
-| API deprecation path, public API contract checks, and version negotiation (PRs #144, #145, #146) | `feat` | Daniel Passos |
-| Dataset release diffing, a change feed, and marking a release stale after a correction (PRs #147, #150, #155) | `feat` | Daniel Passos |
-| Reorder late-arriving game events within one ingestion fetch (PR #148) | `feat` | Daniel Passos |
-| Player aggregate queries and point-in-time (`asOf`) player stats (PRs #149, #154) | `feat` | Daniel Passos |
-| Async ingestion jobs and resumable ingestion batches (PRs #156, #157) | `feat` | Daniel Passos |
-| Filtered games CSV export and a live/in-progress game event feed (PRs #158, #161) | `feat` | Daniel Passos |
-| Analyst-defined custom statistics over the event schema (sandboxed expression evaluator, versioned) (PRs #159, #173) | `feat` | Daniel Passos |
-| UI animation/tap-feedback polish, scroll-reveal fix (PR #174) | `fix` | Josh Sawyer |
-| Move API keys from their own page into profile (PR #178); dataset sorting/downloads; admin batch date filters and pull-range controls (PRs #179, #180) | `feat`/`refactor` | Sanele H. |
-| Fix play-by-play action-type drift after the vocabulary changed again; disable pull scheduling where ingestion is unavailable (PR #181) | `fix` | Sanele H. |
-| **Admin event-corrections workflow**: game lookup + resolved-credit play-by-play, a preview/apply/undo flow with validation, incremental per-player stat recompute after a correction (PR #182) | `feat` | Sanele H. |
-| Fix teammate-credit resolution: disambiguate teammates sharing a surname/initial, match the name prefix NBA's own feed writes (PR #183) | `fix` | Sanele H. |
-| Audited this week's work against the brief and found two real bugs: review didn't actually gate publication (a `PENDING_REVIEW` batch's data was already live), and a batch's resume mechanism could be silently defeated by a crash mid-phase. Fixed both (PRs #184, #186, merged to `main` on 2026-09-23), added a load-test script against a stated performance target (not yet run at scale), backfilled the AI usage ledger and this log, and corrected a week of stale documentation across the docs site | `fix`/`docs` | Owen Pace |
-
-### Week of 22 Sep
+About 35 merged PRs, mostly the brief's Intermediate and Advanced requirements.
 
 | Task | Type | Owner |
 |---|---|---|
-| Build Become Pro: a private `/become-pro` page where a signed-in user logs their own seasons and per-game box scores, with fast entry, in-place edit and two-click remove, a derived season line, scoring chart and traits radar, and a Become Pro card on Home and Profile (PR #192) | `feat` | Kiran Soodyall |
-| Add session-guarded `/v1/me/become-pro` routes and the `ProspectSeason`, `ProspectGame`, `ProspectValuation` and `ProspectValuationModel` tables (migration `20260923000000_add_become_pro`); extract `deriveSeasonAverages` so a user's line and an NBA player's are computed by identical code (PR #192) | `feat` | Kiran Soodyall |
-| Validate box scores with the same anomaly checker the admin correction tools use — impossible lines block the save, mismatched points only warn (PR #192) | `feat` | Kiran Soodyall |
-| Add `apps/valuation`: a least-squares model fitted on real NBA rookie seasons (rookie season taken from `draftYear`, published games only), priced on the published 2026-27 rookie scale, with judgement-based competition-level factors; the API applies it on every write and re-values on a newer model (PR #192) | `feat` | Kiran Soodyall |
-| Re-scope Become Pro to private, you-versus-NBA only: remove the value leaderboard and "#N" badge, public profiles and directory, evidence uploads, reliability score and admin evidence-review queue | `refactor` | Kiran Soodyall |
-| Fix bugs found in the 65-check live browser run: a rookie scale 11% high and a year stale, an unclamped value range, repeated value-history points, a duplicated level sentence, and a phone layout that buried the value card | `fix` | Kiran Soodyall |
-| Train the production valuation model (140 rookie seasons from the 2023–2025 draft classes, MAE 10.9 picks, rank correlation 0.54) | `chore` | Kiran Soodyall |
-| Document Become Pro on the docs site and log the AI transcript | `docs` | Kiran Soodyall |
-| Extend the Sprint 2 user feedback survey analysis to the full 11 responses (the form stayed open past the deadline and collected 4 more), recompute the quantitative findings, and extend the feedback-to-action traceability table (F16–F19) | `docs` | Adrian Draxl |
-| Conduct the first Sprint 3 follow-up interview — a hands-on walkthrough of the live app with a survey volunteer — and publish the session findings and twelve new feedback items (F20–F31) on the docs site | `docs` | Adrian Draxl |
+| Submission review, API keys, audit trail, career stats and dataset releases (PRs #136, #138, #140, #141) | `feat` | Owen Pace |
+| Delete consumers and keys (PR #151); API keys required for public reads (PRs #171, #172) | `feat` | Owen Pace |
+| Read aloud and screen reader support (PR #166) | `feat` | Owen Pace |
+| Ingestion and download fixes (PRs #167–#170) | `fix` | Owen Pace |
+| Brief audit: review now gates publication, resumable batches survive a crash (PRs #184, #186) | `fix` | Owen Pace |
+| Re-derive stats after a correction; on-demand game replay (PR #139) | `feat` | Adrian Draxl |
+| Flag impossible box-score rows (PR #142) | `feat` | Adrian Draxl |
+| API deprecation, contract checks and version negotiation (PRs #144–#146) | `feat` | Daniel Passos |
+| Dataset diffs, change feed and stale marking (PRs #147, #150, #155) | `feat` | Daniel Passos |
+| Late-event reordering, aggregate and `asOf` stats, async and resumable ingestion (PRs #148, #149, #154, #156, #157) | `feat` | Daniel Passos |
+| Games CSV export and live event feed (PRs #158, #161) | `feat` | Daniel Passos |
+| Custom statistics with a sandboxed, versioned evaluator (PRs #159, #173) | `feat` | Daniel Passos |
+| Animation polish (PR #174) | `fix` | Josh Sawyer |
+| API keys moved into Profile; dataset sorting; admin batch filters (PRs #178–#180) | `feat` | Sanele H. |
+| Admin event corrections with preview, validation and undo (PR #182) | `feat` | Sanele H. |
+| Fix play-by-play vocabulary drift (PR #181) and teammate credit for shared surnames (PR #183) | `fix` | Sanele H. |
+
+### Week of 22 Sep (to the Sprint 3 deadline, 29 Sep)
+
+| Task | Type | Owner |
+|---|---|---|
+| Become Pro: private seasons and box scores, derived line, valuation model, NBA comparables (PR #192) | `feat` | Kiran Soodyall |
+| Re-scope Become Pro to private only; fix bugs from a 65-check live browser run | `fix` | Kiran Soodyall |
+| Train the valuation model (140 rookie seasons, MAE 10.9 picks) | `chore` | Kiran Soodyall |
+| Past-season ingestion without overwriting rosters; career tab kept to one segment (PRs #196–#198) | `fix` | Sanele H. |
+| Player Archetypes and the style map | `feat` | Sanele H. |
+| Database, ingestion and archetypes docs | `docs` | Sanele H. |
+| Live API test transcript | `docs` | Daniel Passos |
+| Survey analysis at 11 responses; first follow-up interview (F20–F31) | `docs` | Adrian Draxl |
+| Load test, Lighthouse audit and the Improvements page | `docs` | Adrian Draxl |
+| Full docs-site consistency audit | `docs` | Owen Pace |
 
 ---
 

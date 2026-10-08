@@ -1,0 +1,128 @@
+========================================================================
+CHAT EXPORT
+Asked where Qoder keeps its conversation logs and how to export them
+Date: 3 October 2026
+Author: Adrian Draxl
+Tool: Qoder (desktop IDE), model Qoder Auto or Qoder Efficient
+Qoder session: task-6a6
+========================================================================
+
+HOW THIS FILE WAS PRODUCED: exported by a script from the log Qoder
+keeps for each chat (.qoder/cache/projects/<workspace>/conversation-
+history/<task-id>/<task-id>.jsonl). It keeps the user's prompts and
+every message the assistant wrote, in order. Qoder's injected memories
+and system reminders, the contents of attached files and the screenshots
+are left out; attached file names are kept. The log records no tool
+calls and no timestamps, so the date is the date of the log folder.
+Email addresses are replaced with [redacted].
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+yo where can I find the transcript for this conversation and otehrs like it?
+
+ASSISTANT:
+I'll check the docs and memory for where transcripts live.
+
+ASSISTANT:
+Let me check the ledger that indexes these transcripts to give you the full picture.
+
+ASSISTANT:
+Let me also check how Qoder/Cursor-style transcripts get exported and where the naming convention is documented.
+
+ASSISTANT:
+Short version: transcripts live in the docs repo, indexed by a ledger. Here's the layout:
+
+**Canonical location (published on the docs site)**
+- [Innovation-Documentation-Website/docs/transcripts/ai_transcripts/](file:///c:/Users/adria/MyGit/InnovationUni/Innovation-Documentation-Website/docs/transcripts/ai_transcripts) — all AI session exports (.txt and .jsonl), ~42 files. Claude, ChatGPT, Codex, and Qoder sessions all go here.
+- Meeting recordings are kept separate in `docs/transcripts/meeting-transcripts/`.
+
+**The index / ledger**
+- [docs/ai-usage.md](file:///c:/Users/adria/MyGit/InnovationUni/Innovation-Documentation-Website/docs/ai-usage.md) — the AI Usage Ledger table (`Date | Author | Tool | Model | Purpose | Files/Docs Affected | Link | Transcript`). Every session should have a row with a relative link into `ai_transcripts/`. It's the fastest way to find a specific conversation.
+
+**Staging copy in the code repo**
+- [sportsanalytics/AI Chat Docs/](file:///c:/Users/adria/MyGit/InnovationUni/sportsanalytics/AI%20Chat%20Docs) — a working subset (Josh Sawyer's, Owen's, and Kiran's Claude chats). The docs-site folder is the complete, permanent home.
+
+**Naming convention for Qoder sessions** (per the ledger): `YYYY-MM-DD-<author>-qoder-<topic>.jsonl`, e.g. `2026-08-21-adrian-qoder-fix-broken-links.jsonl`.
+
+One caveat about **this** conversation: it won't be in there unless someone exports it. Qoder sessions in the ledger were exported as `.jsonl` and dropped into `ai_transcripts/`, then registered with a row in `ai-usage.md` (no `mkdocs.yml` change needed for transcripts — the folder is auto-included). Want me to export/register this session's transcript once we finish, or set that up now?
+
+------------------------------------------------------------------------
+USER
+------------------------------------------------------------------------
+so this is what I was actually asking about. how do i export this convo
+
+ASSISTANT:
+Good question — the `.jsonl` exports must come from somewhere local. Let me dig into how Qoder stores this conversation on your machine.
+
+ASSISTANT:
+Now let me find where the actual conversation data lives.
+
+ASSISTANT:
+Found a promising lead: `globalStorage\aicoding.aicoding-agent`. Let me look inside.
+
+ASSISTANT:
+Not there. Let me check the format of a previous Qoder export to reverse-engineer where they come from.
+
+ASSISTANT:
+The format is cleaned up (`role` + `message.content`), not raw internal storage — so something converts it. Let me check if there's a script in the repo and look for native export data in Qoder's cache.
+
+ASSISTANT:
+Found the smoking gun: `SharedClientCache\cache\workingSpace\` contains `uuid__2026-08-19-adrian-qoder-render-deploy.jsonl` — the exact files that ended up in the docs repo. Let me confirm the export flow.
+
+ASSISTANT:
+The format matches exactly. Let me get the full inventory of that workingSpace folder to confirm the export pattern.
+
+ASSISTANT:
+Interesting — that workingSpace folder is actually just a file cache (agent-read file snapshots), not the export source. Let me check the CLI session logs, which look much more promising.
+
+ASSISTANT:
+The CLI logs are raw session logs — but the published exports use a cleaner `role`/`message` format. Let me check how those were produced: git history and Qoder's own export docs.
+
+ASSISTANT:
+Key lead: Qoder CLI has a `/export` command. Let me read the docs and the forum thread about IDE chat export.
+
+ASSISTANT:
+The forum confirms Qoder Desktop has no built-in export button (staff said so), but the CLI does — and there's a `C:\Users\adria\.qoder` config dir that stores session logs. Let me explore it.
+
+ASSISTANT:
+Both project dirs exist. Let me look inside for session logs — including possibly this very conversation.
+
+ASSISTANT:
+Ooh — there's a folder literally named `transcript`. Let me see inside these.
+
+ASSISTANT:
+Let me find where today's session (this conversation) is being recorded.
+
+ASSISTANT:
+Found it — this session is `task-6a6`, and there's a `conversation-history` store. Let me inspect the structure and format.
+
+ASSISTANT:
+This is the answer. `conversation-history\task-6a6\task-6a6.jsonl` contains **this exact conversation** — already in the published export format. Let me verify the mapping to previously published exports.
+
+ASSISTANT:
+Found it. There's **no export button** in Qoder's UI (a Qoder staff member confirmed on the forum that Desktop chat export isn't a feature yet), but the IDE **auto-records every conversation locally** — and the recordings are already in the exact format the team publishes.
+
+## Where this conversation lives right now
+
+```
+C:\Users\adria\.qoder\cache\projects\InnovationUni-861345fb\conversation-history\task-6a6\task-6a6.jsonl
+```
+
+I verified it — it contains this exact conversation ("yo where can I find the transcript...") in the same `{"role":..., "message":{"content":[...]}}` format as the files in `ai_transcripts/`. That's why the published exports match the repo format exactly: they're copies of these files.
+
+**The pattern:** `%USERPROFILE%\.qoder\cache\projects\<WorkspaceName>-<hash>\conversation-history\<task-id>\<task-id>.jsonl`. Each chat session gets its own `task-*` folder; attachments (screenshots, etc.) land in a sibling `assets\` folder.
+
+## To "export" it
+
+1. Finish the conversation (the file lives updates as we talk — copy it at the end for the complete version)
+2. Copy it out and rename per the team convention: `2026-10-03-adrian-qoder-<topic>.jsonl`
+3. Drop it into [docs/transcripts/ai_transcripts/](file:///c:/Users/adria/MyGit/InnovationUni/Innovation-Documentation-Website/docs/transcripts/ai_transcripts)
+4. Add a row to [docs/ai-usage.md](file:///c:/Users/adria/MyGit/InnovationUni/Innovation-Documentation-Website/docs/ai-usage.md)
+
+## Caveats
+
+- **Text only** — tool calls/results aren't in this file. If you want the full-fidelity session log (every tool call included), those are at `C:\Users\adria\.qoder\projects\c-Users-adria-MyGit-InnovationUni\` as `task-*.session.execution.jsonl`, plus under `AppData\Roaming\Qoder\SharedClientCache\cli\projects\...` for older sessions.
+- Earlier sessions confirm the same workflow — e.g. `task-903` is the Sep 27 survey-results session and `task-2e7` is the Sep 14 handoff session.
+
+Want me to export this one now (copy + rename + ledger row), or wait until we wrap up the session?
