@@ -7,6 +7,7 @@ How fast the live app is, and how the API keeps database work down. Most of the 
 | [Lighthouse](#lighthouse-scores-2026-09-29), mobile, 29 Sep | Performance **88–95**, Accessibility **100** on Home, Teams, Players and Admin |
 | [Query counts](#measured-result) | Most public routes issue **0** data queries on a repeat request |
 | [Production timings](#production-timings-8-oct), 8 Oct | Public data reads took **2.6–4.7 s**, against a 300 ms target, because of the API-key check |
+| [Key check in memory](#the-api-key-check-without-the-database-9-oct), 9 Oct | The key check no longer queries the database on each request (PR #204). Not re-measured on production yet. |
 
 ## Lighthouse scores (2026-09-29)
 
@@ -129,7 +130,17 @@ Repeat requests per route from Johannesburg, through the site's own proxy, leavi
 | `GET /v1/players?pageSize=25` | 3.6–4.3 s |
 | `GET /v1/games/:id/events?pageSize=200` | 4.3–4.7 s |
 
-The health route shows that the network and the proxy account for about half a second. The other two seconds or more come from the API-key check's database round trips through the Supabase pooler, which run before the response cache is consulted. The fix ([PR #204](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/204), in review) keeps resolved keys and rate-limit counts in memory and batches the usage-log writes, so a cached read touches the database not at all.
+The health route shows that the network and the proxy account for about half a second. The other two seconds or more came from the API-key check's database round trips through the Supabase pooler, which ran before the response cache was consulted.
+
+## The API-key check without the database (9 Oct)
+
+[PR #204](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/204), merged on 9 Oct, takes those round trips out of the request path. A cached read no longer touches the database at all:
+
+- **Key lookup.** A resolved key is cached in memory for 60 seconds. Revoking, purging or editing a key through the API removes it from the cache at once. Unknown or revoked keys are never cached, so a new key works on its first request (`api-key-lookup.service.ts`).
+- **Rate limits and quotas.** Each consumer's counts for the last minute and for today are loaded from `ApiUsageLog` the first time the process sees that consumer, then kept in memory. A restart therefore doesn't reset a quota. The counts belong to one process, so a second Render instance would need a shared store (`consumer-rate-limiter.service.ts`).
+- **Usage log.** Rows and each key's `lastUsedAt` are written in batches every 5 seconds, or sooner once 500 are waiting. A failed write is logged and dropped. An unclean shutdown can lose up to 5 seconds of usage rows (`api-usage-recorder.service.ts`).
+
+The production timings above were taken before this change and haven't been re-measured since.
 
 ## The staleness contract
 

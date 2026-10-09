@@ -8,7 +8,7 @@ The web app as it stands at submission. The team skipped low-fidelity wireframes
 
 One header (`LandingHeader`) on every page:
 
-- Links: **Home**, **Players**, **Compare**, **Teams**, **Datasets**, **Optimizer**, **Predictions** and **Become Pro**, plus **Admin** for an admin.
+- Links: **Home**, **Players**, **Compare**, **Teams**, **Datasets**, **Optimizer**, **Predictions**, **Become Pro** and **Live**, plus **Admin** for an admin.
 - Sign in or out on the right.
 - Below the `xl` breakpoint the links move into a drawer behind a menu button.
 - A skip-to-content link comes first in the tab order.
@@ -25,6 +25,8 @@ One header (`LandingHeader`) on every page:
 | `/teams` | Public | A card per team: record, win %, Elo and last five results. Filter by conference or division, sort by Elo. | `GET /v1/teams`, `/v1/teams/records` |
 | `/teams/:teamId` | Public | Record, win %, Elo and roster | `GET /v1/teams/{id}` |
 | `/datasets` | Public | Versioned releases with schema, CSV download and a checksum check | `GET /v1/datasets`, `/{version}/download` |
+| `/live` | Public | Live, upcoming (next 24 hours) and recent (last 18 hours) NBA games | `GET /v1/live/games` |
+| `/live/:gameId` | Public | One live or recent game's box score, and its last five minutes of plays while it is live | `GET /v1/live/games/{gameId}` |
 | `/home` | Signed in | Dashboard (see below) | `/v1/me/*`, `/v1/analytics/*` |
 | `/predictions` | Signed in | Games with Elo win probability and Four Factors margin | `GET /v1/games` |
 | `/games/:gameId` | Signed in | Prediction, bookmaker probability from The Odds API, and predicted top scorers on a court view | `GET /v1/games/{id}` |
@@ -101,6 +103,20 @@ Only the signed-in user sees this page. [Become Pro](../become-pro/index.md) exp
 ### Profile
 
 ![Profile](../assets/ui/profile-desktop.jpg)
+
+### Live
+
+Added on 8 Oct (PR #201). Three sections: **Live**, **Upcoming** and **Recent**, each with an empty message when there are no games. A game card opens `/live/:gameId`, which has each team's box score and, while the game is on, the plays from its last five minutes.
+
+The data comes straight from the NBA's public live feed (`cdn.nba.com`), including preseason, and none of it is stored. The list refreshes every 15 seconds while a game is live or past its start time, and every minute otherwise. A game page refreshes every 15 seconds while its game is live. If the feed is down, the page says so (`503 LIVE_DATA_UNAVAILABLE`).
+
+The live routes need no session or API key. Each request would otherwise cost a key check and a usage-log row, and viewers polling every 15 seconds would use up the site proxy's shared key quota. The API caches each feed file instead, and only ever requests games that are on the schedule.
+
+## Page tutorials
+
+Added on 8 Oct (PRs #202, #203). Every page except the landing page and Live has a short walkthrough. It opens by itself the first time a signed-in user reaches the page. The dialog shows a sketch of the page with numbered steps, and has **Next**, **Back**, **Skip** (this page), **Skip all** (every page) and **Exit**. A **?** button on the page replays it.
+
+Seen tutorials are stored on the account (`UserSeenTutorial`, `PUT /v1/me/seen-tutorials/{tutorialId}`), so a tutorial doesn't reopen on another browser. **Skip all** sets `User.autoOpenTutorials` to false. Each tutorial is plain data in `apps/web/src/components/tutorial/definitions/`, so giving a page a tutorial needs no migration.
 
 ## Visual design
 

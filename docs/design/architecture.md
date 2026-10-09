@@ -17,12 +17,12 @@ Why these hosts: [ADR-003: Hosting Topology](../decisions/adr-003-hosting-topolo
 
 ![Deployment diagram](diagrams/deployment.svg)
 
-Regenerated against the current source on 3 Oct 2026. The production path is Cloudflare Pages → Pages Functions proxy → Render → Supabase. The proxy serves `/api` and `/auth` on the web app's own origin, so the session cookie is first-party, and it adds a first-party `X-API-Key` so a signed-out browser can still read public routes. Ingestion runs on a team member's machine because stats.nba.com blocks cloud networks: the API queues a pull and the pull worker runs it ([Data Ingestion](ingestion.md)). Ingestion is the only Python job with any trigger; the predictor, optimizer and valuation jobs are run by hand when the game data changes.
+Regenerated against the current source on 3 Oct 2026. The production path is Cloudflare Pages → Pages Functions proxy → Render → Supabase. The proxy serves `/api` and `/auth` on the web app's own origin, so the session cookie is first-party, and it adds a first-party `X-API-Key` so a signed-out browser can still read public routes. Ingestion runs on a team member's machine because stats.nba.com blocks cloud networks: the API queues a pull and the pull worker runs it ([Data Ingestion](ingestion.md)). The Live tab is the exception: the API reads the NBA's live feed on `cdn.nba.com` directly, and that CDN doesn't block Render. Ingestion is the only Python job with any trigger; the predictor, optimizer and valuation jobs are run by hand when the game data changes.
 
 ## Frontend (`apps/web`)
 
 - **React 19 and Vite**, **Tailwind CSS v4** (theme tokens in `index.css`) and shadcn/ui components.
-- **React Router** with 16 routes. The [UI Overview](wireframes.md#pages) lists them.
+- **React Router** with 18 routes. The [UI Overview](wireframes.md#pages) lists them.
 - **TanStack Query** for fetching and caching. Every call goes through one wrapper in `lib/apiClient.ts`, with `credentials: "include"` for the session cookie.
 - **Recharts** for the traits radar and the points trend.
 
@@ -33,13 +33,15 @@ Regenerated against the current source on 3 Oct 2026. The production path is Clo
 - **Guards:** public reads need a session or an `X-API-Key`; `/v1/me/*` and the optimizer need a session; `/v1/admin/*` needs the `ADMIN` role (`RolesGuard`). The [API Reference](../api-reference.md#authentication) has the details.
 - **One error envelope** for every error response ([API Design](api-design.md)).
 - **An in-process response cache** for public reads ([ADR-004](../decisions/adr-004-caching-strategy.md), [Performance](performance.md)).
+- **API keys and rate limits checked in memory**, with usage rows written in batches (PR #204, [Performance](performance.md#the-api-key-check-without-the-database-9-oct)).
+- **A live-games module** (`apps/api/src/live/`) that reads the NBA's public live feed on `cdn.nba.com` and never touches the database. Each feed file is cached for 10 seconds to 24 hours, depending on how fast it changes ([UI Overview](wireframes.md#live)).
 - **Health check** at [`/v1/health`](https://sportsanalytics-api.onrender.com/v1/health). A pinger keeps the free Render instance warm.
 
 ### Class diagram
 
 ![Backend class diagram](diagrams/class-diagram.svg)
 
-Regenerated on 3 Oct 2026 from the 15 feature modules under `apps/api/src/`. Controllers depend on their services, and every service goes through `PrismaService`. Each controller is labelled with its guards: `SessionAuthGuard` for signed-in routes, `OptionalSessionGuard` and `ApiKeyGuard` for public reads, and `SessionAuthGuard` with `RolesGuard` for the nine `/v1/admin/*` controllers (`ADMIN`). `CustomStatisticsController` requires `ANALYST` or `ADMIN`. `TeamsModule` uses `PlayersService` and `StatsService` directly, and both modules import `GamesModule`.
+Regenerated on 3 Oct 2026 from the 15 feature modules under `apps/api/src/`, so it doesn't show the live-games module (PR #201) or the API-key services (PR #204), both added later. Controllers depend on their services, and every service goes through `PrismaService`. Each controller is labelled with its guards: `SessionAuthGuard` for signed-in routes, `OptionalSessionGuard` and `ApiKeyGuard` for public reads, and `SessionAuthGuard` with `RolesGuard` for the nine `/v1/admin/*` controllers (`ADMIN`). `CustomStatisticsController` requires `ANALYST` or `ADMIN`. `TeamsModule` uses `PlayersService` and `StatsService` directly, and both modules import `GamesModule`.
 
 ### Sequence diagram: `GET /v1/games/:id/prediction`
 
@@ -61,7 +63,7 @@ Kept for the record, from before the admin corrections, datasets, custom statist
 
 | Service | What it does | Writes to |
 |---|---|---|
-| `apps/ingestion` | Pulls teams, rosters, games, box scores and play-by-play with `nba_api`. Can land a batch for admin review (`--review`). `pull_worker.py` runs pulls queued from the admin page. | NBA data and ingestion tables |
+| `apps/ingestion` | Pulls teams, rosters, games, box scores and play-by-play with `nba_api`. Can land a batch for admin review (`--review`). `pull_worker.py` runs pulls queued from the admin page, without saving their plays (PR #200). | NBA data and ingestion tables |
 | `apps/predictor` | Elo win probability and Four Factors margin for each game | `GamePrediction`, `GamePredictionRun` |
 | `apps/optimizer` | Projects fantasy points and picks five players under a salary cap with MILP (PuLP/CBC) | `PlayerPrediction`, `Lineup`, `LineupSlot` |
 | `apps/valuation` | Fits the Become Pro draft-slot model on real NBA rookie seasons. The API applies it whenever a user's season changes. | `ProspectValuationModel` |

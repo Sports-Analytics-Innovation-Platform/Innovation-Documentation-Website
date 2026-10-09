@@ -34,9 +34,9 @@ How the platform meets each tier of the brief (COMS3011A Project 3, "Sport Analy
 | Only dependent figures recomputed | ✅ | A correction recomputes only the players in the corrected game (`plan-stat-recompute.ts`). |
 | Impossible data caught; corrections keep a history | ✅ | Correction rules refuse, for example, credit left on the wrong player. Corrections are append-only; an undo is a new correction. |
 | Figures checked against reference results | ⚠️ | Unit tests match the NBA's published advanced stats to three decimal places. There is no automated test replaying a whole game against its published box score. |
-| A stated response time | ⚠️ | Target: P95 under 300 ms for data reads. Measured on production on 8 Oct, public data reads took 2.6–4.7 s, even when cached: the API-key check ran three database queries before the cache was consulted ([Performance](performance.md#production-timings-8-oct)). The fix is in review ([PR #204](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/204)). |
+| A stated response time | ⚠️ | Target: P95 under 300 ms for data reads. Measured on production on 8 Oct, public data reads took 2.6–4.7 s, even when cached: the API-key check ran three database queries before the cache was consulted ([Performance](performance.md#production-timings-8-oct)). The fix ([PR #204](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/204), merged 9 Oct) takes the key check off the database; production hasn't been re-measured since. |
 | Versioned API | ✅ | `/v1/`, `Accept-Version`, and `Deprecation`/`Sunset` headers ([API Design](api-design.md)). |
-| Keys, rate limits and quotas | ✅ | Per-minute limits and daily quotas per key, counted in the database. |
+| Keys, rate limits and quotas | ✅ | Per-minute limits and daily quotas per key, counted in memory and restored from the usage log after a restart. |
 | Repeated reads from cache | ✅ | An in-memory cache with lifetimes by how often data changes ([ADR-004](../decisions/adr-004-caching-strategy.md)). |
 | Dataset releases | ✅ | Each release stores its CSV, a description of every field and a SHA-256 checksum. A later correction marks it stale instead of rewriting it. |
 
@@ -53,7 +53,7 @@ How the platform meets each tier of the brief (COMS3011A Project 3, "Sport Analy
 | Differences between releases; a change feed | ⚠️ | `GET /v1/datasets/diff` reports which release fields differ (checksum, row counts, field schema), not which rows changed. `GET /v1/datasets/changes?since=` lists the releases published since a date, so a consumer learns that a new release exists rather than pulling only the changed rows. |
 | Corrections reach aggregates and releases | ✅ | Season figures update at once; affected releases are marked stale in the same transaction. |
 | Deprecation path and contract tests | ✅ | `GET /health` retires on 31 Mar 2027. A test compares the API with its own OpenAPI document; it isn't consumer-driven. |
-| A feed from a game in progress | ⚠️ | `GET /v1/games/:id/live` returns new plays since a sequence number (PR #161), but plays arrive only when ingestion runs, after the game. |
+| A feed from a game in progress | ⚠️ | `GET /v1/games/:id/live` returns new plays since a sequence number (PR #161), but plays arrive only when ingestion runs, after the game. The Live tab (PR #201) shows scores, box scores and recent plays while a game is on, but it reads the NBA's live feed directly and doesn't ingest it as events. |
 | Late or out-of-order events | ⚠️ | Late plays are reordered within a pull (PR #148). A conflicting play from another source is rejected, not merged. |
 | Showing each consumer its usage | ⚠️ | Every keyed request is logged, but the UI shows only a total count. |
 | Flagging events that look wrong | ⚠️ | Impossible lines are flagged (for example, more threes than field goals), but not outliers against a player's history. |
@@ -71,7 +71,9 @@ How the platform meets each tier of the brief (COMS3011A Project 3, "Sport Analy
 | **Lineup optimizer** | The best five-player fantasy lineup under a salary cap, solved as an integer program. |
 | **Personal features** | Beat the Model picks with a leaderboard, followed players and teams, saved comparisons and lineups. |
 | **[Become Pro](../become-pro/index.md)** | A user logs their own games and sees the NBA draft pick their season most resembles, its rookie salary, and the three most similar NBA rookies. Private to each user. |
-| **[Player Archetypes](../player-archetypes/index.md)** | Nine playing styles found by clustering 2025-26 box-score rates, with a league style map. |
+| **[Player Archetypes](../player-archetypes/index.md)** | Nine playing styles found by clustering 2025-26 box-score rates, with a league style map (PR #195). |
+| **[Live games](wireframes.md#live)** | Live, upcoming and recently finished NBA games, with box scores and the last five minutes of plays, from the NBA's live feed (PR #201). |
+| **[Page tutorials](wireframes.md#page-tutorials)** | A short walkthrough that opens the first time a signed-in user reaches each page (PRs #202, #203). |
 
 ---
 

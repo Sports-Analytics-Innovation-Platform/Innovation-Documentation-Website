@@ -5,7 +5,7 @@ The NBA Analytics API is a NestJS service hosted at **[sportsanalytics-api.onren
 - **Swagger UI:** [/api/docs](https://sportsanalytics-api.onrender.com/api/docs). Every operation, its parameters and response shapes, with "Try it out".
 - **OpenAPI JSON:** [/api-json](https://sportsanalytics-api.onrender.com/api-json).
 
-This page summarises the conventions every route shares and lists all 106 live operations, grouped by area. The spec comes from `@nestjs/swagger` decorators (`@ApiTags`, `@ApiOperation`, `@ApiQuery`, `@ApiResponse`) on each controller, wired up in `apps/api/src/main.ts`.
+This page summarises the conventions every route shares and lists all 109 live operations, grouped by area. The spec comes from `@nestjs/swagger` decorators (`@ApiTags`, `@ApiOperation`, `@ApiQuery`, `@ApiResponse`) on each controller, wired up in `apps/api/src/main.ts`. Since 9 Oct (PR #205) the spec also names the response models for the public reads (teams, players, games with predictions and odds, play-by-play, player stats, dataset releases, each list's page wrapper, and the error envelope), documents the games and stats filters, and registers the `X-API-Key` scheme, so Swagger UI's **Authorize** button can send a key.
 
 ---
 
@@ -26,7 +26,7 @@ There are three ways a request is authorised. The **Auth** column in the tables 
 - **Self-service:** created on the user's Profile page (`/v1/me/api-keys`). 60 requests per minute, 5,000 per day.
 - **Admin-issued:** created for an external `ApiConsumer` in the admin Consumers tab, with that consumer's own limits.
 
-Both limits are checked against the `ApiUsageLog` table on every keyed request, so they survive a server restart. Going over returns `429 RATE_LIMIT_EXCEEDED` (per minute) or `429 DAILY_QUOTA_EXCEEDED` (per day).
+Both limits are counted in memory and reloaded from the `ApiUsageLog` table after a server restart, so a restart doesn't reset them (since 9 Oct, PR #204). Going over returns `429 RATE_LIMIT_EXCEEDED` (per minute) or `429 DAILY_QUOTA_EXCEEDED` (per day).
 
 **Signed-out visitors on the web app** never hold a key. The site's Cloudflare Pages Function (`functions/api/[[path]].ts`) proxies their reads and attaches the server-held `SITE_PROXY_API_KEY`, which belongs to the consumer "NBA Analytics Web App (first-party)". See [Getting Started](getting-started.md).
 
@@ -159,7 +159,7 @@ Every `/v1/me/**` route reads the user from the session. None takes a user id, s
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
 | `GET` | `/v1/me` | Session | Profile, role, favourite team and followed players |
-| `PATCH` | `/v1/me` | Session | Change username and/or favourite team |
+| `PATCH` | `/v1/me` | Session | Change username, favourite team and/or whether page tutorials open by themselves (`autoOpenTutorials`) |
 | `POST` | `/v1/me/avatar` | Session | Upload an avatar image (multipart) |
 | `PUT` | `/v1/me/followed-players/{playerId}` | Session | Follow a player (idempotent) |
 | `DELETE` | `/v1/me/followed-players/{playerId}` | Session | Unfollow a player (idempotent) |
@@ -178,6 +178,7 @@ Every `/v1/me/**` route reads the user from the session. None takes a user id, s
 | `POST` | `/v1/me/api-keys` | Session | Create a key. The raw key is shown once. |
 | `DELETE` | `/v1/me/api-keys/{keyId}` | Session | Revoke a key (kept, marked inactive) |
 | `DELETE` | `/v1/me/api-keys/{keyId}/purge` | Session | Permanently delete a key |
+| `PUT` | `/v1/me/seen-tutorials/{tutorialId}` | Session | Mark a page tutorial as seen (idempotent) |
 
 ### Become Pro
 
@@ -291,7 +292,18 @@ Each uses the latest fitted season unless `season` is given. See [Player Archety
 | `GET` | `/v1/archetypes` | Key or session | The season's archetypes and their sizes |
 | `GET` | `/v1/archetypes/map` | Key or session | Every placed player's style-map position; `404` if no season has been fitted |
 
-The API also serves BetterAuth's own sign-in routes under `/auth/*`. They appear in Swagger as catch-all `/*splat` entries and are not counted above.
+### Live games
+
+Public, with **no key or session**: these routes read the NBA's live feed and never the database, so they skip the key check and its usage-log write. The API caches each feed file. See [UI Overview](design/wireframes.md#live).
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| `GET` | `/v1/live/games` | None | Games in progress, starting in the next 24 hours, and finished in the last 18 hours |
+| `GET` | `/v1/live/games/{gameId}` | None | One live or recent game's box score, and its last five minutes of plays while live. `404` for a game not on the board. |
+
+Both return `503 LIVE_DATA_UNAVAILABLE` when the NBA's feed can't be read.
+
+The API also serves BetterAuth's own sign-in routes under `/auth/*`. They are not counted above. Since PR #205 the catch-all 404 controller's `/*splat` entries are left out of the spec.
 
 ---
 

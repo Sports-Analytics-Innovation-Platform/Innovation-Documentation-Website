@@ -37,7 +37,7 @@ Fill in the values:
 | `PRISMA_LOG_QUERIES`, `API_CACHE_DISABLED` | Optional, for [measuring performance](design/performance.md#measuring-it-yourself) |
 | `INGESTION_MODE` | Optional. `queue` sends local pulls through the queue and pull worker |
 
-Then `cp apps/web/.env.example apps/web/.env`. Public data needs an API key, which the dev proxy adds from `SITE_PROXY_API_KEY`. Without it, signed-out pages get `401 API_KEY_REQUIRED`; signed-in pages work, because a session is enough. To set it, sign in once (step 6), create a key under **Profile → API Keys**, paste it into `apps/web/.env`, and restart the web app. Only a hash of each key is stored, so it can't be inserted into the database by hand.
+Then `cp apps/web/.env.example apps/web/.env`. Public data needs an API key, which the dev proxy adds from `SITE_PROXY_API_KEY`. Without it, signed-out pages get `401 API_KEY_REQUIRED`; signed-in pages work, because a session is enough. Seeding the database (step 4) creates one: `npx prisma db seed` prints a `SITE_PROXY_API_KEY=...` line to paste into `apps/web/.env`. The key is random on every run, and each run revokes the previous one, so paste the newest line. Only a hash of each key is stored, so a key can't be inserted into the database by hand.
 
 Never commit a filled-in `.env` ([Security](security.md#secrets)).
 
@@ -57,7 +57,7 @@ From `apps/api`:
 cd apps/api
 npm install
 npx prisma migrate dev
-npx prisma db seed   # loads mock NBA seed data
+npx prisma db seed   # loads mock NBA seed data and prints SITE_PROXY_API_KEY for apps/web/.env
 ```
 
 ## 5. Run the backend
@@ -113,7 +113,7 @@ npx tsc -b --noEmit     # -b is required: tsconfig.json is solution-style
 |---|---|
 | API can't connect to Postgres | Docker isn't running, or `DATABASE_URL` doesn't point at port 55432 |
 | Prisma migration fails | Postgres is still starting; wait a few seconds, or check `docker compose logs` |
-| Signed-out pages show no data | `SITE_PROXY_API_KEY` isn't set in `apps/web/.env` (step 2) |
+| Signed-out pages show no data | `SITE_PROXY_API_KEY` in `apps/web/.env` isn't the key the latest seed printed (step 4). Restart the web app after changing it. |
 | Google sign-in fails | Check the Google variables, and that `http://localhost:4000/auth/callback/google` is a registered redirect URI |
 | `tsc` can't find modules that are in `package.json` | Run `npm ci && npm run prisma:generate` in `apps/api` |
 | Every `/api` and `/auth` call returns **502** | The API crashed at startup; check its log. A common cause is a `.env` still holding `.env.example`'s placeholder `SUPABASE_URL` |

@@ -154,12 +154,42 @@ About 35 merged PRs, mostly the brief's Intermediate and Advanced requirements.
 | Re-scope Become Pro to private only; fix bugs from a 65-check live browser run | `fix` | Kiran Soodyall |
 | Train the valuation model (140 rookie seasons, MAE 10.9 picks) | `chore` | Kiran Soodyall |
 | Past-season ingestion without overwriting rosters; career tab kept to one segment (PRs #196–#198) | `fix` | Sanele H. |
-| Player Archetypes and the style map | `feat` | Sanele H. |
+| Player Archetypes and the style map (PR #195, merged 7 Oct) | `feat` | Sanele H. |
 | Database, ingestion and archetypes docs | `docs` | Sanele H. |
 | Live API test transcript | `docs` | Daniel Passos |
 | Survey analysis at 11 responses; first follow-up interview (F20–F31) | `docs` | Adrian Draxl |
 | Load test, Lighthouse audit and the Improvements page | `docs` | Adrian Draxl |
 | Full docs-site consistency audit | `docs` | Owen Pace |
+
+---
+
+## Submission week (to 11 Oct)
+
+### Merged to `main`
+
+| Task | Type | Owner |
+|---|---|---|
+| Player Archetypes merged (PR #195, 7 Oct) | `feat` | Sanele H. |
+| Live tab: live, upcoming and recent games from the NBA's live feed (PR #201, 8 Oct) | `feat` | Sanele H. |
+| The pull worker stops saving play-by-play (PR #200, 8 Oct) | `feat` | Sanele H. |
+| Page tutorials: Home first (PR #202), then every page except the landing page (PR #203), 8 Oct | `feat` | Kiran Soodyall |
+| READMEs describe the platform as built; the seed prints a local site-proxy key (PR #209, 8 Oct) | `docs` | Owen Pace |
+| API keys and rate limits checked in memory, usage logged in batches (PR #204, 9 Oct) | `perf` | Owen Pace |
+| OpenAPI response models, filters and key auth (PR #205, 9 Oct) | `docs` | Owen Pace |
+
+### In review on 9 Oct
+
+Open pull requests on Gitea, read from the branches mirrored from the app repository. A branch without a PR number links to the branch.
+
+| Task | Type | Owner | Branch |
+|---|---|---|---|
+| Keep every version of a custom statistic's formula ([PR #206](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/206)) | `feat` | Owen Pace | `custom-statistic-versions` |
+| Stop tracking the CI runner's registration file ([PR #207](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/207)) | `chore` | Owen Pace | `remove-runner-registration` |
+| Run the Python services' tests in CI ([PR #210](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/210)) | `ci` | Owen Pace | `python-tests-in-ci` |
+| Close Supabase's Data API to the `anon` and `authenticated` roles ([PR #211](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/211)) | `fix` | Owen Pace | `lock-down-supabase-data-api` |
+| POPIA basics: privacy notice, data download, retention job, no stored session IPs, usernames on the leaderboard, avatar deletion ([PR #212](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/212)) | `feat` | Owen Pace | `popia-privacy-basics` |
+| Load each page's code only when its route is visited | `perf` | Owen Pace | [`lazy-load-pages`](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/src/branch/lazy-load-pages) |
+| Show the biggest live game on the landing scoreboard | `feat` | Sanele H. | [`landing-live-scoreboard`](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/src/branch/landing-live-scoreboard) |
 
 ---
 

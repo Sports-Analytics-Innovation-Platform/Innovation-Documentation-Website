@@ -43,6 +43,7 @@ A developer can also run `ingest.py` by hand, and a locally running API starts `
 | `--review` | off | Batches finish as `PENDING_REVIEW`, so an admin must approve them. Pulls from the site always use it. |
 | `--season` | `2025-26` | Which season to pull |
 | `--from-date`, `--to-date` | none | Only games in that window (`YYYY-MM-DD`) |
+| `--skip-play-storage` | off | Derive each game's stats from its plays, then discard the plays instead of saving them to `GameEvent`. The pull worker always uses it (PR #200). |
 
 A full pull takes 35–45 minutes. Every write is an upsert on the NBA's own IDs, so re-running a pull refreshes data instead of duplicating it.
 
@@ -103,7 +104,7 @@ stats.nba.com **blocks cloud providers' networks** (well documented in the `nba_
 
 1. **On start,** it prints which database it is using and marks as `FAILED` any pull it claimed earlier but never finished.
 2. **Every minute,** it checks in (so the admin page shows it online) and claims the oldest queued pull with `FOR UPDATE SKIP LOCKED`, so two workers never take the same pull.
-3. **It runs** `ingest.py --review` with the pull's options, checking in every minute while it runs.
+3. **It runs** `ingest.py --review --skip-play-storage` with the pull's options, checking in every minute while it runs. Since PR #200 (8 Oct), a queued pull derives each game's stats from its plays but doesn't save the plays (about 250 KB a game). The admin play-by-play and corrections tools therefore have nothing to show for games that a queued pull writes; games that already have plays keep them. A pull the API runs directly (local development) still saves them.
 4. **It records** `SUCCEEDED` or `FAILED`, with the last 15 lines of output.
 
 The API picks the mode itself: if `ingest.py` and its virtual environment sit next to it (local development), it runs the pull directly; otherwise (Render) it queues it. `INGESTION_MODE="queue"` forces the queue locally.

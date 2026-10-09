@@ -53,7 +53,9 @@ The two older seasons were loaded as box scores to give the Elo model a history 
 
 `ingest_postseason.py --season <season> --skip-play-storage` (PR #197) downloads each game's plays to derive its box scores, then doesn't save them, so a postseason costs about 1.4 MB instead of 24 MB.
 
-**Don't run these against production for an older season:** `ingest.py --season` (including a pull queued on the site's Pull Data form), `ingest_historical_season.py`, or `ingest_postseason.py` without `--skip-play-storage`. Each saves the plays, and the first two would need more than the 108 MB left.
+Since PR #200 (8 Oct), a pull queued on the site's **Pull Data** form also runs with `--skip-play-storage`, for any season. It derives the stats but saves no plays, so new 2025-26 games pulled this way can't be corrected either.
+
+**Don't run these against production for an older season:** `ingest.py --season` run by hand without `--skip-play-storage`, `ingest_historical_season.py`, or `ingest_postseason.py` without `--skip-play-storage`. Each saves the plays, and the first two would need more than the 108 MB left.
 
 ### The next season
 

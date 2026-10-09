@@ -150,7 +150,7 @@ erDiagram
 | `CustomStatistic` | An analyst's formula | Unique `(authorId, name)`; `expression` checked by the API's own parser, never `eval`; `version` goes up on each edit |
 | `ApiConsumer` | A key holder | `rateLimit` per minute and `dailyQuota`; `userId` unique and set for a user's own consumer, empty for an external one |
 | `ApiKey` | A key | `keyHash` unique (SHA-256). The key itself is shown once and never stored. |
-| `ApiUsageLog` | One request made with a key | `(consumerId, calledAt)` index, used to enforce the limits. Nothing prunes it yet. |
+| `ApiUsageLog` | One request made with a key | `(consumerId, calledAt)` index. The API writes rows in batches and reads them to restore its in-memory rate limits after a restart (PR #204). Nothing prunes it yet. |
 
 ## Become Pro
 
@@ -200,14 +200,14 @@ Five indexes for the common queries (`Game` by date and by team, `PlayerGameStat
 
 ## Player archetypes
 
-Four tables: `Archetype`, `PlayerArchetype`, `PlayerArchetypeMembership` and `PlayerSimilarity`. [Player Archetypes](../player-archetypes/index.md#how-it-works) describes what they hold. They are defined by migration `20260922200000_add_player_archetypes` and written by `apps/similarity`, both on the app's `player-archetypes` branch, **which is not merged into `main`**.
+Four tables: `Archetype`, `PlayerArchetype`, `PlayerArchetypeMembership` and `PlayerSimilarity`. [Player Archetypes](../player-archetypes/index.md#how-it-works) describes what they hold. They are defined by migration `20260922200000_add_player_archetypes` and written by `apps/similarity`. Both reached `main` on 7 October 2026 (PR #195).
 
-The four tables already exist in the production database (found on 3 October 2026, recorded as migration `20261001111830_add_archetype_and_similarity`, which is not in any branch of the app repository). Their columns match the branch, but two things differ:
+The four tables already exist in the production database (found on 3 October 2026, recorded as migration `20261001111830_add_archetype_and_similarity`, which is not in any branch of the app repository). Their columns match the migration, but two things differ:
 
 - **Missing unique constraints.** Live, `Archetype` has no unique `(season, clusterId)` and `PlayerArchetype` has no unique `(playerId, season)`. Without them, a re-run can duplicate rows.
-- **Different delete behaviour.** `PlayerArchetypeMembership`'s two foreign keys are `RESTRICT` live and `CASCADE` on the branch.
+- **Different delete behaviour.** `PlayerArchetypeMembership`'s two foreign keys are `RESTRICT` live and `CASCADE` in the migration.
 
-Reconcile the live tables with the branch before merging `player-archetypes`.
+PR #195 merged the migration unchanged, and nothing in the app repository records whether the production tables were reconciled with it. To check, compare the two migration names in production's `_prisma_migrations` table and the constraints above.
 
 ## Open issues
 

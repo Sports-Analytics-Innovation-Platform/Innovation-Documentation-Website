@@ -35,7 +35,7 @@ The request flow for an authenticated route, `GET /v1/games/:id/prediction`, is 
 ## Not built
 
 - **Asynchronous jobs for consumers.** A consumer's request, including dataset publishing, runs to completion within the request; there is no "submit, then poll" pattern outside admin pulls.
-- **Real-time data.** The live feed only has new plays when ingestion runs, and games are ingested after they finish. The platform has one automated data source, not many competing submitters ([Feature Tiers](feature-tiers.md)).
+- **Real-time data in the database.** `GET /v1/games/:id/live` only has new plays when ingestion runs, and games are ingested after they finish. The Live tab (`/v1/live/games`, PR #201) shows games in progress, but it relays the NBA's live feed and stores nothing. The platform has one automated data source, not many competing submitters ([Feature Tiers](feature-tiers.md)).
 
 ---
 

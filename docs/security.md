@@ -37,7 +37,7 @@ The headers were checked on the live API on 3 Oct.
 | **HTTPS everywhere** | Cloudflare and Render provide TLS; the database connection uses TLS. |
 | **Security headers** | `helmet` sets Content-Security-Policy, Strict-Transport-Security, X-Frame-Options, X-Content-Type-Options and Referrer-Policy. |
 | **Cross-site request protection** | `OriginCheckGuard` refuses `POST`, `PUT`, `PATCH` and `DELETE` requests from origins other than the site's own. CORS alone isn't enough: the browser blocks the reply, not the write. |
-| **Rate limits** | Each API key has a per-minute limit and a daily quota, counted in the `ApiUsageLog` table so they survive a restart. Over the limit returns `429`. |
+| **Rate limits** | Each API key has a per-minute limit and a daily quota. Since 9 Oct (PR #204) they are counted in memory and reloaded from the `ApiUsageLog` table after a restart, so a restart doesn't reset them. Over the limit returns `429`. |
 | **Hashed keys** | An API key is shown once; only its SHA-256 hash is stored. |
 | **Validated input** | Write routes check their body with Zod. Play corrections have their own rules: a reason is required, and a correction that credits the wrong player is refused. |
 | **Private pictures** | Profile pictures sit in a private bucket and are served through links that expire after an hour. |

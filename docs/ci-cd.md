@@ -58,7 +58,7 @@ GitHub is only a deploy trigger: the code lives on Gitea, and CI runs there. Hos
 ## Not in CI yet
 
 - **No build step.** CI lints, typechecks and tests; the build itself is checked by the deploy.
-- **No Python tests.** The four Python services' `pytest` suites run locally only.
+- **No Python tests.** The five Python services' `pytest` suites run locally only. A CI job for them is in review ([PR #210](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/210)).
 - **No secret scanning.** [Security](security.md) relies on review and the pre-commit check.
 - **No npm cache** and **no `upload-artifact@v4`**, until the runner's cache server and the Gitea version allow them.
 
