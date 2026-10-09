@@ -78,16 +78,16 @@ Quotes below are as captured in the session minutes (lightly cleaned).
 
 | ID | Feedback (source) | Category | Action | Status |
 |---|---|---|---|---|
-| F20 | "Beat the Model" name and the model's win-probability label ("model GSW %") are opaque without explanation | UX / Copy | Rename the feature or add a one-line explainer on the card; label win probabilities in plain language | Backlog |
+| F20 | "Beat the Model" name and the model's win-probability label ("model GSW %") are opaque without explanation | UX / Copy | Rename the feature or add a one-line explainer on the card; label win probabilities in plain language | **Partly addressed:** the Home page tutorial (PR #202) explains the game and the model's win-probability bar; the name and the card's labels are unchanged |
 | F21 | Player headshots too small on desktop (fine on mobile) | UX | Desktop sizing pass on headshots | Backlog |
 | F22 | Leaderboard graphs don't reflect the user's search/filter selection | Feature | Wire the players-list leaderboard chart to the active selection | Backlog |
 | F23 | Teams list sorted by Elo confuses — expected favourite team first; "what's the difference between win percentage and Elo?" | UX / Feature | Sort/search controls (including "my teams first") plus a short Elo explainer; extends F13's standings request | Backlog |
-| F24 | Data set page purpose unclear — "what is this?", how is the data sorted, can it be downloaded | UX / Docs | Framing copy, sort explanation, and a clear download affordance | Backlog |
+| F24 | Data set page purpose unclear — "what is this?", how is the data sorted, can it be downloaded | UX / Docs | Framing copy, sort explanation, and a clear download affordance | **Partly addressed:** the Datasets tutorial (PR #203) says what a release is, how the sort works and how to download and check one; the page's own copy is unchanged |
 | F25 | A season that hasn't started is listed as if already ingested | Bug | File as a Gitea bug report (data integrity) | Backlog |
 | F26 | Season download fails after a stat is edited — the export can't be reproduced and nothing downloads | Bug | File as a Gitea bug report; likely an interaction with the editable-stats feature (PR #81/#85/#107) | Backlog |
-| F27 | Optimiser reads as "a minigame, not fantasy basketball" — "optimal lineup" unexplained, fantasy literacy assumed, editable budget isn't a real fantasy rule | UX / Scope | In-app onboarding copy plus a scope decision: model a real fantasy NBA format or reframe the feature honestly; extends F9 | Backlog |
+| F27 | Optimiser reads as "a minigame, not fantasy basketball" — "optimal lineup" unexplained, fantasy literacy assumed, editable budget isn't a real fantasy rule | UX / Scope | In-app onboarding copy plus a scope decision: model a real fantasy NBA format or reframe the feature honestly; extends F9 | **Partly addressed:** the Optimizer tutorial (PR #203) explains the optimal lineup, DraftKings-style fantasy points and that salaries aren't real; no scope decision yet |
 | F28 | Dropdowns and search controls on the predictions page are hard to see and read | UX / Accessibility | Contrast/readability pass on form controls; extends F7 | Backlog |
-| F29 | Become Pro page purpose unclear — "is this fantasy basketball? no. what is this?" | UX / Copy | Explainer and clearer labeling for the self-upload feature | Backlog |
+| F29 | Become Pro page purpose unclear — "is this fantasy basketball? no. what is this?" | UX / Copy | Explainer and clearer labeling for the self-upload feature | **Partly addressed:** the Become Pro tutorial (PR #203) explains what the page is for and that it is private; the page's labels are unchanged |
 | F30 | Player profiles not discoverable — the participant didn't know they existed until shown | UX / Discoverability | Make profile pages discoverable from the players list (explicit affordance on each card) | Backlog |
 | F31 | Public data behind login — "we need an API even for info that is not private" | API / Access | Verify public endpoint coverage (read-only game endpoints were made public in PR #99), document how to call the public API without an account, and evaluate what genuinely requires auth | Verify + evaluate |
 
@@ -100,7 +100,7 @@ Quotes below are as captured in the session minutes (lightly cleaned).
 
 ### Interview-sourced changes
 
-None shipped yet — all twelve items are queued for triage alongside the survey backlog (F3–F14, F16, F18) into Gitea issues, per the [integration process](feedback-survey.md#how-feedback-is-integrated).
+None shipped in full. Four are partly addressed by the page tutorials added on 8 Oct (PRs #202, #203), which explain each page the first time a signed-in user opens it ([UI Overview](design/wireframes.md#page-tutorials)): Beat the Model (F20), Datasets (F24), the Optimizer (F27) and Become Pro (F29). The rest are queued for triage alongside the survey backlog (F3–F14, F16, F18) into Gitea issues, per the [integration process](feedback-survey.md#how-feedback-is-integrated).
 
 ---
 
