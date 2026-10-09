@@ -84,7 +84,15 @@ The platform keeps personal information about signed-in users only: what Google 
 | Access, correction and deletion (s23, s24) | **Download my data** on the profile returns everything stored about the user as JSON, minus credentials; the profile edits the user's details; **Delete account** removes everything ([PR #212](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/212)). |
 | Cross-border transfer (s72) | Data is stored in Supabase's London region; the API runs on Render in the US and the site is served through Cloudflare. The notice says so. |
 
-Not covered: registering an Information Officer with the Information Regulator, and reviewing the hosting providers' data-processing terms as operator agreements. Those are paperwork rather than code, and fall to whoever runs the platform beyond the course.
+**Operator agreements (s20, s21).** Providers that hold or handle personal data for the platform must be bound in writing to keep it secure and process only on the platform's instructions. All three below cover this in their standard terms — no signature or enterprise plan needed, and each is reviewed to confirm it commits to both appropriate security measures and instructions-only processing.
+
+| Provider | What it handles | DPA |
+|---|---|---|
+| Supabase | The database and profile photos (London) | [Data Processing Addendum](https://supabase.com/legal/customer-resources/data-processing-addendum) |
+| Render | Runs the API; all requests and data pass through it | [DPA](https://render.com/dpa) |
+| Cloudflare | Serves the website and relays requests to the API | [Customer DPA](https://www.cloudflare.com/cloudflare-customer-dpa/) |
+
+**Information Officer (s55, s56).** Not yet registered. Every responsible party needs one, by default the head of the organisation, registered with the Information Regulator before taking up the role. For a course project it's unclear whether that responsibility sits with the team or with Wits — pending the lecturer's answer before registering anyone through the [Information Regulator's eServices portal](https://inforegulator.org.za/).
 
 ## Third-party data
 
