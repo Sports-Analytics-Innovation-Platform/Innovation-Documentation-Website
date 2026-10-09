@@ -7,7 +7,7 @@ From a clean clone to a running app in about 15 minutes.
 - **Node.js 24** and npm, for `apps/api` (NestJS) and `apps/web` (React and Vite)
 - **Docker** with Compose, for Postgres
 - **Git**, with access to the Gitea repository
-- **Python 3**, only for the data jobs: ingestion, predictor, optimizer, or the [Become Pro model](become-pro/valuation-model.md#operating-it)
+- **Python 3**, only for the data jobs: ingestion, predictor, optimizer, the [Become Pro model](become-pro/valuation-model.md#operating-it), or [Player Archetypes](player-archetypes/index.md) (`apps/similarity`)
 
 ## 1. Clone the repo
 

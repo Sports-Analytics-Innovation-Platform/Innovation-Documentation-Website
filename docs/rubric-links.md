@@ -40,7 +40,7 @@ Every rubric criterion in the COMS3011A brief, linked to its evidence, grouped b
 | User Feedback | 10% | [User Feedback Survey](feedback-survey.md) (11 responses) and a hands-on [User Interview](user-interviews.md) (2026-09-27) |
 | Automated Testing | 10% | [Testing](testing.md): 974 API and 717 web tests at the Become Pro hand-off, plus a 65-check live browser run, with an 80% coverage threshold in CI |
 | Feature Implementation | 20% | [Feature Tiers](design/feature-tiers.md): Basic complete, Intermediate largely complete, Advanced partial. Also [Become Pro](become-pro/index.md) and [Player Archetypes](player-archetypes/index.md). |
-| API Implementation | 20% | [API Reference](api-reference.md): 106 live operations, including admin, datasets, custom statistics, API keys and Become Pro |
+| API Implementation | 20% | [API Reference](api-reference.md): 109 live operations, including admin, datasets, custom statistics, API keys, Become Pro, archetypes and live games |
 | Performance | 5% | [Performance](design/performance.md): Lighthouse Performance 88–95 and Accessibility 100 on mobile, and caching with before/after query counts |
 | Improvement | 5% | [Improvements Made](improvements.md): seven shipped changes, each with a before/after and the feedback item that prompted it |
 | Documentation | 15% | This site, especially the [API Reference](api-reference.md), [ERD](design/erd.md) and [Architecture](design/architecture.md) |
@@ -50,7 +50,7 @@ Every rubric criterion in the COMS3011A brief, linked to its evidence, grouped b
 
 | Criterion | Area | Weight | Evidence |
 |---|---|---|---|
-| Data | Database | 3% | [ERD](design/erd.md): 39 tables and 7 enums on Supabase Postgres |
+| Data | Database | 3% | [ERD](design/erd.md): 40 tables and 7 enums on Supabase Postgres |
 | Deployment | Database | 2% | [ADR-003](decisions/adr-003-hosting-topology.md): Supabase, pooled connections over TLS |
 | Structure | Database | 5% | [ERD](design/erd.md), [ADR-001](decisions/adr-001-database.md), [ADR-005](decisions/adr-005-play-by-play-storage.md) |
 | Availability | API | 3% | [Live API](https://sportsanalytics-api.onrender.com/v1/health), kept warm by a pinger |
@@ -67,7 +67,7 @@ Every rubric criterion in the COMS3011A brief, linked to its evidence, grouped b
 | Responsiveness | App | 5% | [UI Overview](design/wireframes.md#responsive-design), with phone screenshots |
 | Structure | App | 5% | [Architecture](design/architecture.md) |
 | Git Methodology | Misc | 5% | [Git Methodology](git-methodology.md) |
-| Integration | Misc | 7% | `nba_api` through the [ingestion service](design/ingestion.md), and The Odds API for bookmaker lines ([Feature Tiers](design/feature-tiers.md#beyond-the-brief)) |
+| Integration | Misc | 7% | `nba_api` through the [ingestion service](design/ingestion.md), The Odds API for bookmaker lines ([Feature Tiers](design/feature-tiers.md#beyond-the-brief)), and the NBA's live feed for the [Live tab](design/wireframes.md#live) |
 | Testing | Misc | 8% | [Testing](testing.md) and [CI/CD Pipeline](ci-cd.md) |
 | Tools | Misc | 5% | [Tech Stack](tech-stack.md), [CI/CD Pipeline](ci-cd.md), [AI Usage Ledger](ai-usage.md) |
 

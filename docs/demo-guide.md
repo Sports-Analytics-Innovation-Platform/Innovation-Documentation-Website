@@ -130,7 +130,7 @@ These are built and live but need the `ADMIN` or `ANALYST` role. Ask the team fo
 
 - Check that it is up: [/v1/health](https://sportsanalytics-api.onrender.com/v1/health).
 - Browse every endpoint in [Swagger UI](https://sportsanalytics-api.onrender.com/api/docs).
-- The [API Reference](api-reference.md) lists all 106 operations with their auth rules.
+- The [API Reference](api-reference.md) lists all 109 operations with their auth rules.
 
 ---
 

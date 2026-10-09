@@ -10,7 +10,7 @@ Every runtime dependency in the app repo, with why it was chosen. Versions are f
 | **Express** | 5 | The HTTP server under NestJS. Version 5 is needed for the `*splat` wildcard routes (`/auth/*splat` and the 404 catch-all). |
 | **TypeScript** | 5.9 | Type checks against Prisma's generated client; NestJS's decorators need it. |
 | **reflect-metadata**, **RxJS** | –, 7 | Required by NestJS's dependency injection and interceptors. Not used directly. |
-| **Prisma** | 5.22 | One schema file (39 tables, 7 enums), generated TypeScript types, and migrations as reviewable SQL. See [ADR-001](decisions/adr-001-database.md). |
+| **Prisma** | 5.22 | One schema file (40 tables, 7 enums), generated TypeScript types, and migrations as reviewable SQL. See [ADR-001](decisions/adr-001-database.md). |
 | **PostgreSQL** | 16 locally | NBA data is relational (players, teams, games, plays), and season stats are aggregates, which SQL does well. Hosted on Supabase. |
 | **BetterAuth** | 1.3 | An established auth library, as the brief requires (§2.1). Google sign-in, with sessions in Postgres through its Prisma adapter; mounted at `/auth/*`. See [ADR-002](decisions/adr-002-auth.md). |
 | **Zod** | 4 | Validates every write route's request body and returns a readable reason when it rejects one. |
