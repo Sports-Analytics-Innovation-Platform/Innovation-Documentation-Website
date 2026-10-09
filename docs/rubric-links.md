@@ -42,7 +42,7 @@ Every rubric criterion in the COMS3011A brief, linked to its evidence, grouped b
 | Feature Implementation | 20% | [Feature Tiers](design/feature-tiers.md): Basic complete, Intermediate largely complete, Advanced partial. Also [Become Pro](become-pro/index.md) and [Player Archetypes](player-archetypes/index.md). |
 | API Implementation | 20% | [API Reference](api-reference.md): 109 live operations, including admin, datasets, custom statistics, API keys, Become Pro, archetypes and live games |
 | Performance | 5% | [Performance](design/performance.md): Lighthouse Performance 88–95 and Accessibility 100 on mobile, and caching with before/after query counts |
-| Improvement | 5% | [Improvements Made](improvements.md): seven shipped changes, each with a before/after and the feedback item that prompted it |
+| Improvement | 5% | [Improvements Made](improvements.md): eight shipped changes, each with a before/after and the feedback item that prompted it |
 | Documentation | 15% | This site, especially the [API Reference](api-reference.md), [ERD](design/erd.md) and [Architecture](design/architecture.md) |
 | Project Methodology | 15% | [Methodology](methodology.md) and the [Sprint Log](sprint-log.md) |
 

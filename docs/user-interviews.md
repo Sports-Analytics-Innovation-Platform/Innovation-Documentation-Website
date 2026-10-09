@@ -100,7 +100,7 @@ Quotes below are as captured in the session minutes (lightly cleaned).
 
 ### Interview-sourced changes
 
-None shipped in full. Four are partly addressed by the page tutorials added on 8 Oct (PRs #202, #203), which explain each page the first time a signed-in user opens it ([UI Overview](design/wireframes.md#page-tutorials)): Beat the Model (F20), Datasets (F24), the Optimizer (F27) and Become Pro (F29). The rest are queued for triage alongside the survey backlog (F3–F14, F16, F18) into Gitea issues, per the [integration process](feedback-survey.md#how-feedback-is-integrated).
+None shipped in full. Four are partly addressed by the page tutorials added on 8 Oct (PRs #202, #203), which explain each page the first time a signed-in user opens it ([Improvements Made](improvements.md#shipped)): Beat the Model (F20), Datasets (F24), the Optimizer (F27) and Become Pro (F29). The rest are queued for triage alongside the survey backlog (F3–F14, F16, F18) into Gitea issues, per the [integration process](feedback-survey.md#how-feedback-is-integrated).
 
 ---
 
