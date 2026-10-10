@@ -1,0 +1,2383 @@
+2026-09-16 — Owen Pace + Claude Code (Claude Sonnet 5)
+Deleting API consumers and keys in the admin panel, and fixing CI failures on the shared runner
+Sports Analytics Tool — COMS3011A Project 3
+
+AI Declaration: Claude Code, model claude-sonnet-5 ("Claude Sonnet 5"). Purpose: adding hard-delete for API consumers and keys (PR #151), and diagnosing and fixing test failures on the shared CI runner (PR #152).
+
+How to read this: generated from the saved session file. USER sections are what Owen typed and
+ASSISTANT sections are Claude's replies, both word for word. Each tool call Claude made is
+listed as one line saying what it did; the raw commands and their output are left out, as are
+Claude's internal reasoning, the contents of attached files and images, and sub-agent
+transcripts. The redaction pass found nothing to mask.
+
+================================================================================
+
+USER:
+# COMS3011A Sport Analytics Tool — Requirements Status
+
+*As of `main` @ `7ac1efc` (PR #139 merged), plus PR #142 (open, pending review).*
+
+Legend: ✅ Done · 🟡 In review (open PR) · ⚠️ Partial · ❌ Not done · N/A deliberately out of scope
+
+## Basic Tier (§1.1.1)
+
+| # | Requirement | Status | Notes |
+|---|---|---|---|
+| 1 | Event-driven data — every stat derived from events | ✅ Done | `derive_player_game_stats.py` + `GameEvent` → `PlayerGameStat` |
+| 2 | Correcting an event re-derives affected statistics | ✅ Done | (PR #139, merged) `correctEvent` now recomputes that game's stats in the same transaction |
+| 3 | Submission pipeline (file or API) for event data | ✅ Done | `play_by_play.py` + `IngestionBatch` |
+| 4 | Only approved submitters within defined competition parts | N/A | Single trusted data source (NBA API) by deliberate design — see `docs/PROJECT_OVERVIEW.md` |
+| 5 | Submissions validated against event schema, rejection tells submitter what's wrong | ✅ Done | `event_validation.py`, `IngestionBatch.rejectionSummary` |
+| 6 | Every statistic traceable to events + submission | ✅ Done | `GameEvent → IngestionBatch`, `PlayerGameStat → Game` |
+| 7 | REST API serving fixtures, events, derived statistics | ✅ Done | `/v1/games`, `/v1/players/:id/stats`, career stats, league averages |
+| 8 | Filtering, pagination, slicing | ✅ Done | `seasonType`, `teamId`, `position`, `search`, pagination |
+| 9 | Stable identifiers | ✅ Done | `nbaGameId`/`nbaPlayerId` + internal UUIDs |
+| 10 | Export filtered data as a file | ⚠️ Partial | Dataset CSV exports + player export exist; no on-demand filtered CSV download for arbitrary queries |
+
+## Intermediate Tier (§1.1.2)
+
+| # | Requirement | Status | Notes |
+|---|---|---|---|
+| 11 | Batch ingestion pipeline (stage, validate, report) | ✅ Done | `IngestionBatch` with accepted/rejected counts, statuses |
+| 12 | Resubmission is idempotent | ✅ Done | Upserts on `(gameId, sequence)` |
+| 13 | Failed batch resumes rather than restarts | ❌ Not done | Deliberately out of scope — batch staging/resume at whole-season scale wasn't attempted (see `docs/PROJECT_OVERVIEW.md`) |
+| 14 | Submissions pass review before publication | ✅ Done | `--review` flag + admin approve/reject workflow |
+| 15 | Validation rules catch impossible/conflicting data | ✅ Done | `event_validation.py` |
+| 16 | Corrections leave a history | ✅ Done | `EventCorrection` audit trail |
+| 17 | Career and competition-wide aggregates | ✅ Done | `stats.service.ts` career stats + league averages |
+| 18 | Incremental recomputation (only affected stats) | ✅ Done | (PR #139, merged) Same fix as #2 — only the corrected game's rows recompute |
+| 19 | Figures checked against reference results | 🟡 In review | (PR #142, open) Anomaly detection checks derived figures against basketball-arithmetic invariants (not a reference dataset) — **team should decide if this satisfies the requirement or if true reference-value validation is still wanted** |
+| 20 | Tested at scale (hundreds of fixtures × hundreds of events) | ✅ Done | 3 full seasons ingested (~3,700 games) |
+| 21 | API versioned | ⚠️ Partial | `/v1/` prefix only, no real version negotiation or deprecation path yet |
+| 22 | API keys issued to consumers | ✅ Done | `ApiConsumer`/`ApiKey`, SHA-256 hashed |
+| 23 | Rate limits and quotas per consumer | ✅ Done | `ApiKeyGuard` |
+| 24 | Repeated reads served from cache | ✅ Done | `ResponseCacheService` |
+| 25 | Datasets as versioned releases with schema/checksum | ✅ Done | `DatasetRelease` |
+
+## Advanced Tier (§1.1.3)
+
+| # | Requirement | Status | Notes |
+|---|---|---|---|
+| 26 | Analyst-defined custom statistics | ❌ Not done | Deliberately out of scope |
+| 27 | Custom definitions validated/sandboxed/versioned | ❌ Not done | Deliberately out of scope |
+| 28 | Live feed from fixture in progress | ❌ Not done | Deliberately out of scope — batch-only pipeline |
+| 29 | Handle late/out-of-order events | ⚠️ Partial | Rejects non-monotonic sequence; no buffering/reordering |
+| 30 | Replayable pipeline | ✅ Done | (PR #139, merged) `POST /v1/admin/games/:gameId/replay` |
+| 31 | Point-in-time queries ("stat as of date X") | ❌ Not done | Deliberately out of scope |
+| 32 | Diff between two dataset releases | ❌ Not done | — |
+| 33 | Aggregate queries (general, not just records) | ⚠️ Partial | Career/league aggregates exist; no general aggregate query API |
+| 34 | Async jobs for large requests | ❌ Not done | Everything synchronous |
+| 35 | Change feed for incremental updates | ❌ Not done | — |
+| 36 | API deprecation path | ❌ Not done | — |
+| 37 | API contract testing | ❌ Not done | Swagger docs exist, no automated contract tests |
+| 38 | Anomaly detection (flag suspicious events) | 🟡 In review | (PR #142, open) `GET /v1/admin/games/:gameId/anomalies` — threshold-based sanity checks, not statistical outlier modeling |
+| 39 | Reconcile disagreeing submitters | N/A | Single trusted source — no multi-submitter workflow, by design |
+| 40 | Corrections propagate to all downstream aggregates/releases | ⚠️ Partial | Propagates to `PlayerGameStat` automatically now (#139); a published `DatasetRelease` still needs manual republish |
+
+---
+
+**Notes for the team:**
+- PR #142 (anomaly detection) is open and passing CI but **not yet merged** — please review before
+treating it as done.
+- Clearest next pickups: #21/#36 (API versioning + deprecation path, related to each other), #35
+(change feed), #32 (dataset diff), #37 (contract testing).
+- #13 (resumable ingestion) and #4/#39 (multi-submitter) are marked deliberately out of scope in
+`docs/PROJECT_OVERVIEW.md` — worth a team discussion if priorities have changed before picking those
+up. this aparently what we have not completed from the scope/outline given to us. can you implement
+what you can to our application that wouldnt be too hard and that you think that you can do well.
+you shouldnt be changing what our application does.
+
+ASSISTANT:
+[Tool calls:
+  - Loaded the sdp skill]
+
+I'll ground this in the actual codebase before proposing a plan, since the codebase changes fast
+between sessions.
+
+[Tool calls:
+  - Ran: Check current branch and status
+  - Searched the code for '**/*.controller.ts'
+  - Searched the code for '**/PROJECT_OVERVIEW.md'
+  - Searched the code for 'apps/api/src/main.ts'
+  - Searched the code for 'apps/api/src/datasets/**/*.ts'
+  - Read docs/PROJECT_OVERVIEW.md
+  - Read apps/api/src/main.ts
+  - Read apps/api/src/datasets/datasets.controller.ts
+  - Read apps/api/src/datasets/datasets.service.ts]
+
+USER:
+[Request interrupted by user]
+
+[image attached]
+
+USER:
+can you just make sure that we are using most recent version of main. this is good but i would also
+like to be able to delete customers. are these admin api keys? because maybe users should also be
+able to genorate user ids?
+
+ASSISTANT:
+[Tool calls:
+  - Ran: Fetch latest and compare current branch against main
+  - Ran: Check remote config and local branch state without fetching
+  - Ran: Check configured git credential helper]
+
+Fetching from origin failed — Git Credential Manager's stored auth for `sdp.ms.wits.ac.za` has
+expired or is invalid (`Failed to authenticate user`). That's on your end to re-auth (e.g. re-
+trigger the GCM prompt or refresh your Gitea PAT); I can't fix stored credentials myself. Once
+you've re-authenticated I can pull main in. In the meantime let me dig into the API keys question
+using what's on disk.
+
+[Tool calls:
+  - Searched the code for 'apps/api/src/admin/admin-consumers*.ts'
+  - Searched the code for 'apps/web/src/**/*ApiKey*'
+  - Searched the code for 'apps/web/src/**/*Consumer*'
+  - Searched the code for 'ApiKeyGuard|ApiConsumer'
+  - Searched the code for 'API KEYS|Consumer name|GENERATE KEY|NEW CONSUMER'
+  - Read apps/api/src/admin/admin-consumers.controller.ts
+  - Read apps/api/src/admin/admin-consumers.service.ts
+  - Searched the code for 'Consumer|ApiKey|consumer|GENERATE KEY|NEW CONSUMER'
+  - Read apps/web/src/pages/AdminPage.tsx
+  - Searched the code for 'model ApiConsumer|model ApiKey|model ApiUsageLog'
+  - Searched the code for 'Delete|deletedAt|@Delete'
+  - Searched the code for 'deletedAt|deleteBatch|softDelete'
+  - Read apps/api/src/admin/admin-batches.controller.ts
+  - Searched the code for '@Delete|deletedAt|softDelete|deleteBatch'
+  - Read apps/api/src/admin/admin-users.controller.ts
+  - Searched the code for 'deleteUser|async delete'
+  - Searched the code for
+'fetchAdminConsumers|createAdminConsumer|createAdminApiKey|revokeAdminApiKey'
+  - Read apps/api/src/admin/admin-consumers.service.spec.ts]
+
+Let me check `adminApi.ts` (the lines around the consumer helpers) so the new delete function
+matches the existing style.
+
+[Tool calls:
+  - Read apps/web/src/lib/adminApi.ts
+  - Searched the code for 'confirm|Delete|delete'
+  - Read apps/web/src/pages/AdminPage.tsx]
+
+Now I have the full picture. Let me implement the delete-consumer feature end to end, starting with
+the backend.
+
+[Tool calls:
+  - Edited apps/api/src/admin/admin-consumers.service.ts
+  - Edited apps/api/src/admin/admin-consumers.controller.ts
+  - Edited apps/web/src/lib/adminApi.ts]
+
+Now wire it into `AdminPage.tsx`:
+
+[Tool calls:
+  - Edited apps/web/src/pages/AdminPage.tsx
+  - Edited apps/web/src/pages/AdminPage.tsx
+  - Edited apps/web/src/pages/AdminPage.tsx
+  - Searched the code for 'apps/api/src/admin/admin-consumers*.spec.ts'
+  - Read apps/api/src/admin/admin-consumers.service.mock.spec.ts]
+
+Now I'll add a `delete` mock and a `deleteConsumer` test block matching this style.
+
+[Tool calls:
+  - Edited apps/api/src/admin/admin-consumers.service.mock.spec.ts
+  - Edited apps/api/src/admin/admin-consumers.service.mock.spec.ts
+  - Read apps/web/src/pages/AdminPage.spec.tsx
+  - Searched the code for 'confirm|deleteIngestionBatch|window.confirm'
+  - Read apps/web/src/pages/AdminPage.spec.tsx
+  - Edited apps/web/src/pages/AdminPage.spec.tsx
+  - Edited apps/web/src/pages/AdminPage.spec.tsx
+  - Edited apps/web/src/pages/AdminPage.spec.tsx]
+
+Now let's run the relevant backend and frontend tests to confirm everything passes.
+
+[Tool calls:
+  - Ran: Run admin-consumers backend unit tests]
+
+This matches the known no-local-DB issue — global-setup tries to hit the real Postgres. Let me check
+the saved workaround.
+
+[Tool calls:
+  - Ran: Read the saved workaround for running tests without local Postgres
+  - Read apps/api/vitest.config.ts
+  - Edited apps/api/vitest.config.ts
+  - Ran: Run admin-consumers backend unit tests without global setup]
+
+All 27 pass. Now revert the vitest config bypass before moving on, and check TypeScript compiles
+cleanly.
+
+[Tool calls:
+  - Edited apps/api/vitest.config.ts
+  - Ran: Confirm vitest config bypass was fully reverted]
+
+Clean — no net diff on the config. Now let's typecheck the backend and run the frontend admin tests.
+
+[Tool calls:
+  - Ran: Typecheck the API]
+
+Clean typecheck. Now the frontend:
+
+[Tool calls:
+  - Ran: Run AdminPage frontend tests]
+
+All 19 pass (including the two new delete-consumer tests). Let's typecheck the frontend too.
+
+[Tool calls:
+  - Ran: Typecheck the web app]
+
+Clean. Let's confirm the full diff is scoped to what I intended, then check status.
+
+[Tool calls:
+  - Ran: Review changed files]
+
+Scoped to exactly what's needed, nothing stray. Delete-consumer is implemented, tested, and
+typechecked end-to-end. Now let me answer your two questions.
+
+**Git sync with main:** Blocked — `git fetch origin` fails with `Authentication failed for
+'sdp.ms.wits.ac.za'`, even though Git Credential Manager is configured. Your local `main` ref is
+stale (last synced 5 hours ago, at `3fbb699`/#135), well behind the `7ac1efc`+#139/#142 state the
+requirements doc describes. I can't fix stored credentials myself — please re-auth (refresh your
+Gitea PAT or re-trigger the GCM login), then I can fetch/pull.
+
+**Are these admin API keys?** Yes. `ApiConsumer`/`ApiKey` are credentials for *external*
+programmatic consumers of your public API (checked by `ApiKeyGuard` via an `X-API-Key` header) —
+this is requirement #22/#23 (API keys + per-consumer rate limits/quotas). They're unrelated to user
+login: creating a consumer, generating a key, and now deleting a consumer all require
+`SessionAuthGuard` + `ADMIN` role (`admin-consumers.controller.ts`), same as the rest of the Admin
+panel.
+
+**Delete customers** — done. Added `DELETE /v1/admin/consumers/:id` (hard delete;
+`ApiKey`/`ApiUsageLog` cascade per the schema, same convention as `AdminUsersController.deleteUser`,
+unlike batches which soft-delete for audit-trail reasons), a `Delete` button next to `Generate Key`
+with a confirm prompt, and tests on both sides — all passing, no type errors.
+
+**Should users self-generate their own keys?** That's a bigger call than "add delete" — it'd change
+who can mint API credentials, not just complete existing admin CRUD. Recommendation: keep issuance
+admin-only. The brief's requirement is "API keys issued to consumers," which reads as controlled
+issuance (matches your current design — you already log usage per consumer and rate-limit them), and
+open self-service raises abuse/quota-management questions you'd need to design for (who counts as a
+"consumer," default limits, revocation policy) rather than just wire up. Worth a quick gut-check
+with your team, not something to build silently — happy to build it if you decide you want it.
+
+USER:
+and i wee we van revoke keys which is good but can we also delete them? then can you create a pr
+
+ASSISTANT:
+Let me first check the team's git conventions before committing, and retry the fetch in case
+credentials got fixed.
+
+[Tool calls:
+  - Loaded the team-git-workflow skill
+  - Ran: Retry fetching from origin
+  - Ran: Check whether intermediate-brief-features is pushed and how branches relate to origin/main]
+
+Origin is reachable now — your credentials must have refreshed. Important finding: `intermediate-
+brief-features` is already fully merged into `main` (through PR #141), and `main` has moved on quite
+a bit since — four new PRs landed, including ones that look like teammates already picking up
+several of the "clearest next pickups" from the requirements table. Let me check whether any of
+those touched the files I just edited before I do anything else.
+
+[Tool calls:
+  - Ran: Check if teammates' merged PRs touched the admin consumer/key files
+  - Ran: Check for Gitea CLI and current working tree status]
+
+Now let me implement the "delete key" (hard delete) feature. First, the backend service and
+controller.
+
+[Tool calls:
+  - Read apps/api/src/admin/admin-consumers.controller.ts
+  - Edited apps/api/src/admin/admin-consumers.controller.ts
+  - Edited apps/api/src/admin/admin-consumers.service.ts]
+
+Now the backend test mocks:
+
+[Tool calls:
+  - Edited apps/api/src/admin/admin-consumers.service.mock.spec.ts
+  - Edited apps/api/src/admin/admin-consumers.service.mock.spec.ts]
+
+Now the frontend API client and `AdminPage.tsx`:
+
+[Tool calls:
+  - Edited apps/web/src/lib/adminApi.ts
+  - Edited apps/web/src/pages/AdminPage.tsx
+  - Edited apps/web/src/pages/AdminPage.tsx]
+
+Now update the key row rendering to add a Delete button alongside Revoke:
+
+[Tool calls:
+  - Read apps/web/src/pages/AdminPage.tsx
+  - Edited apps/web/src/pages/AdminPage.tsx
+  - Searched the code for 'within'
+  - Edited apps/web/src/pages/AdminPage.spec.tsx
+  - Edited apps/web/src/pages/AdminPage.spec.tsx
+  - Edited apps/web/src/pages/AdminPage.spec.tsx
+  - Edited apps/web/src/pages/AdminPage.spec.tsx]
+
+Now let's run the full test suite for these files with the local-DB bypass, then revert it.
+
+[Tool calls:
+  - Edited apps/api/vitest.config.ts
+  - Ran: Run backend admin-consumers tests]
+
+29 pass. Revert the config bypass and typecheck.
+
+[Tool calls:
+  - Edited apps/api/vitest.config.ts
+  - Ran: Confirm vitest bypass reverted and typecheck API]
+
+Clean, no diff on the config, no type errors. Now the frontend:
+
+[Tool calls:
+  - Ran: Run AdminPage frontend tests
+  - Ran: Typecheck the web app]
+
+Both sides typecheck cleanly and all tests pass. Let me also run lint since CI checks it.
+
+[Tool calls:
+  - Ran: Lint changed backend files
+  - Ran: Lint changed frontend files
+  - Ran: Run web app's own lint script
+  - Ran: Run API's own lint script]
+
+Clean across both apps. Now let's set up the branch and commits properly.
+
+[Tool calls:
+  - Ran: Check current working tree state before branching]
+
+I'll split this into two commits (consumer delete, then key delete) since they're independently
+useful. Let me temporarily back out the key-delete pieces, commit consumer-delete first, then
+restore them.
+
+[Tool calls:
+  - Edited apps/api/src/admin/admin-consumers.controller.ts
+  - Edited apps/api/src/admin/admin-consumers.service.ts
+  - Edited apps/api/src/admin/admin-consumers.service.mock.spec.ts
+  - Edited apps/api/src/admin/admin-consumers.service.mock.spec.ts
+  - Edited apps/web/src/lib/adminApi.ts]
+
+Now `AdminPage.tsx` — revert the key-delete import, mutation, and button:
+
+[Tool calls:
+  - Edited apps/web/src/pages/AdminPage.tsx
+  - Edited apps/web/src/pages/AdminPage.tsx
+  - Edited apps/web/src/pages/AdminPage.tsx]
+
+Now `AdminPage.spec.tsx` — revert the key-delete test and its mocks/imports:
+
+[Tool calls:
+  - Edited apps/web/src/pages/AdminPage.spec.tsx
+  - Edited apps/web/src/pages/AdminPage.spec.tsx
+  - Edited apps/web/src/pages/AdminPage.spec.tsx
+  - Edited apps/web/src/pages/AdminPage.spec.tsx]
+
+Now let's set up the branch off current main and commit consumer-delete first.
+
+[Tool calls:
+  - Ran: Fast-forward local main to origin/main
+  - Ran: Stash in-progress work, then fast-forward main]
+
+Main is now fully up to date. Let's create a fresh branch from it and reapply the stashed work.
+
+[Tool calls:
+  - Ran: Create new feature branch and reapply stashed changes
+  - Ran: Review diff for consumer-delete backend changes against new main baseline]
+
+Clean and exactly the intended consumer-delete diff. Let's check `AdminPage.tsx` too, since it had
+heavy teammate changes.
+
+[Tool calls:
+  - Ran: Review diff for frontend consumer-delete changes against new main baseline]
+
+Clean here too. Now let's rerun the full test/typecheck pass against this fresh main baseline before
+committing.
+
+[Tool calls:
+  - Edited apps/api/vitest.config.ts
+  - Ran: Run backend and frontend admin-consumers tests against new baseline]
+
+All pass. Revert the bypass and typecheck.
+
+[Tool calls:
+  - Edited apps/api/vitest.config.ts
+  - Ran: Confirm vitest bypass reverted, typecheck both apps
+  - Ran: Final review before proposing commit]
+
+No secrets, purely code — just the consumer-delete feature (the three untracked files are pre-
+existing and unrelated, I'll leave them alone). Here's the plan and first commit message:
+
+[Tool calls:
+  - Asked the user: I'll commit this as two units of work on a new branch `delete-api-consumers-and-
+keys` (off updated main): first "allow deleting API consumers" (done, ready to commit), then "allow
+deleting API keys" (I'll re-add that code next and commit separately). Proposed first commit
+message: `feat: allow deleting API consumers`. OK to commit?]
+
+USER:
+(answering Claude's questions)
+Your questions have been answered: "I'll commit this as two units of work on a new branch `delete-
+api-consumers-and-keys` (off updated main): first "allow deleting API consumers" (done, ready to
+commit), then "allow deleting API keys" (I'll re-add that code next and commit separately). Proposed
+first commit message: `feat: allow deleting API consumers`. OK to commit?"="Yes, commit as proposed
+(Recommended)". You can now continue with these answers in mind.
+
+ASSISTANT:
+[Tool calls:
+  - Ran: Stage consumer-delete feature files
+  - Ran: Commit consumer-delete feature]
+
+Now let's redo the key-delete additions and commit that separately.
+
+[Tool calls:
+  - Edited apps/api/src/admin/admin-consumers.controller.ts
+  - Edited apps/api/src/admin/admin-consumers.service.ts
+  - Edited apps/api/src/admin/admin-consumers.service.mock.spec.ts
+  - Read apps/api/src/admin/admin-consumers.service.mock.spec.ts
+  - Ran: Locate deleteConsumer describe block
+  - Read apps/api/src/admin/admin-consumers.service.mock.spec.ts
+  - Edited apps/api/src/admin/admin-consumers.service.mock.spec.ts]
+
+Now the frontend client and `AdminPage.tsx`:
+
+[Tool calls:
+  - Ran: Locate deleteAdminConsumer in adminApi.ts
+  - Read apps/web/src/lib/adminApi.ts
+  - Edited apps/web/src/lib/adminApi.ts]
+
+Now `AdminPage.tsx` — let me re-check current state around the import, mutations, and key row
+rendering before re-adding.
+
+[Tool calls:
+  - Ran: Locate insertion points in AdminPage.tsx
+  - Edited apps/web/src/pages/AdminPage.tsx
+  - Read apps/web/src/pages/AdminPage.tsx]
+
+Good, import placed correctly. Now the mutation and button:
+
+[Tool calls:
+  - Read apps/web/src/pages/AdminPage.tsx
+  - Edited apps/web/src/pages/AdminPage.tsx]
+
+Now the key row button:
+
+[Tool calls:
+  - Read apps/web/src/pages/AdminPage.tsx
+  - Read apps/web/src/pages/AdminPage.tsx
+  - Edited apps/web/src/pages/AdminPage.tsx]
+
+Now `AdminPage.spec.tsx` — re-add the key-delete test:
+
+[Tool calls:
+  - Ran: Locate insertion points in spec file
+  - Read apps/web/src/pages/AdminPage.spec.tsx
+  - Edited apps/web/src/pages/AdminPage.spec.tsx
+  - Edited apps/web/src/pages/AdminPage.spec.tsx
+  - Edited apps/web/src/pages/AdminPage.spec.tsx
+  - Read apps/web/src/pages/AdminPage.spec.tsx
+  - Edited apps/web/src/pages/AdminPage.spec.tsx]
+
+Now let's run tests and typecheck again before committing.
+
+[Tool calls:
+  - Edited apps/api/vitest.config.ts
+  - Ran: Run tests for key-delete feature]
+
+All pass (29 backend, 20 frontend). Revert bypass and typecheck.
+
+[Tool calls:
+  - Edited apps/api/vitest.config.ts
+  - Ran: Confirm vitest bypass reverted, typecheck both apps]
+
+Clean. Let's review the diff and commit the key-delete feature.
+
+[Tool calls:
+  - Ran: Review changes for second commit]
+
+No secrets, purely the key-delete code. Committing:
+
+[Tool calls:
+  - Ran: Stage and commit key-delete feature]
+
+Now let's push the branch and set up the PR.
+
+[Tool calls:
+  - Ran: Push new feature branch to origin
+  - Searched the code for '.gitea/**/*PULL_REQUEST*']
+
+Let me check the AI usage ledger convention — this being a course project, contributions from AI
+likely need to be logged there.
+
+[Tool calls:
+  - Ran: Check AI usage ledger conventions]
+
+This repo requires every AI-assisted change to be logged in `docs/ai-usage.md` (course brief §1.4) —
+every prior entry follows this. I'd like to add one for this session before opening the PR.
+
+[Tool calls:
+  - Asked the user: Add a row to docs/ai-usage.md logging this session's work (date 2026-09-16,
+Owen, Claude Code, Claude Sonnet 5, purpose: hard-delete for API consumers and API keys in the admin
+panel), as a third commit ("docs: log AI usage for API consumer/key deletion")? Every prior AI-
+assisted PR in this repo has one.]
+
+USER:
+(answering Claude's questions)
+Your questions have been answered: "Add a row to docs/ai-usage.md logging this session's work (date
+2026-09-16, Owen, Claude Code, Claude Sonnet 5, purpose: hard-delete for API consumers and API keys
+in the admin panel), as a third commit ("docs: log AI usage for API consumer/key deletion")? Every
+prior AI-assisted PR in this repo has one."="Yes, add and commit it (Recommended)". You can now
+continue with these answers in mind.
+
+ASSISTANT:
+[Tool calls:
+  - Read docs/ai-usage.md
+  - Ran: Check total line count of ai-usage.md
+  - Read docs/ai-usage.md
+  - Edited docs/ai-usage.md
+  - Ran: Stage and review ai-usage.md change]
+
+Clean, no secrets. Committing:
+
+[Tool calls:
+  - Ran: Commit AI usage ledger entry and push]
+
+Both pushes succeeded, and a PR already exists for this branch: **#151** —
+[https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/151](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/151)
+(likely auto-opened when you followed the link from the first push, since I have no `gh`/`tea` CLI
+for this Gitea instance and didn't create it myself). Worth checking its title/description match
+what's below — here's what I'd suggest if you want to edit it:
+
+**Title:** `Allow deleting API consumers and keys`
+
+**Body:**
+```
+## Summary
+- Admins can now permanently delete an API consumer (DELETE /v1/admin/consumers/:id) — hard delete, cascades to its keys and usage log per the existing schema
+- Admins can now permanently delete an individual API key (DELETE /v1/admin/consumers/:id/keys/:keyId/purge) as a separate action from the existing revoke (soft-delete)
+- Both add a confirm-guarded "Delete" button in the API Keys admin tab
+
+## Test plan
+- [x] Backend unit tests (admin-consumers.service.mock.spec.ts, admin-consumers.service.spec.ts) — 29 passing
+- [x] Frontend tests (AdminPage.spec.tsx) — 20 passing, including delete-consumer and delete-key flows
+- [x] tsc --noEmit clean on both apps
+- [x] eslint / oxlint clean on both apps
+```
+
+Three commits on the branch: `feat: allow deleting API consumers`, `feat: allow deleting API keys`,
+`docs: log AI usage for API consumer/key deletion`. Nothing merged to `main` — it's waiting on
+review per your team's workflow.
+
+USER:
+is it in 1 branch though?
+
+ASSISTANT:
+[Tool calls:
+  - Ran: Confirm all work is on a single branch]
+
+Yes — all three commits (consumer delete, key delete, AI usage log) are on the single branch
+`delete-api-consumers-and-keys`, pushed and up to date with origin, and that's the branch PR #151 is
+opened from. Nothing is split across separate branches.
+
+USER:
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯
+ FAIL  test/admin-anomalies.e2e-spec.ts > GET /v1/admin/games/:gameId/anomalies
+PrismaClientInitializationError: 
+Invalid `testPrisma.user.deleteMany()` invocation in
+/workspace/innovation/sportsanalytics/apps/api/test/admin-anomalies.e2e-spec.ts:44:27
+  41 });
+  42 
+  43 afterAll(async () => {
+→ 44   await testPrisma.user.deleteMany(
+Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ $n.handleRequestError node_modules/@prisma/client/runtime/library.js:121:7615
+ ❯ $n.handleAndLogRequestError node_modules/@prisma/client/runtime/library.js:121:6623
+ ❯ $n.request node_modules/@prisma/client/runtime/library.js:121:6307
+ ❯ l node_modules/@prisma/client/runtime/library.js:130:9633
+ ❯ test/admin-anomalies.e2e-spec.ts:44:5
+     42|
+     43|   afterAll(async () => {
+     44|     await testPrisma.user.deleteMany({ where: { id: ADMIN_USER_ID } });
+       |     ^
+     45|     await resetDatabase();
+     46|     await testPrisma.$disconnect();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯
+ FAIL  test/admin-auth.e2e-spec.ts > Admin endpoints — unauthenticated access
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/admin-auth.e2e-spec.ts:11:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯
+ FAIL  test/admin-auth.e2e-spec.ts > Admin endpoints — unauthenticated access
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/admin-auth.e2e-spec.ts:16:15
+     14|   afterAll(async () => {
+     15|     await testPrisma.$disconnect();
+     16|     await app.close();
+       |               ^
+     17|   });
+     18|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯
+ FAIL  test/admin-events.e2e-spec.ts > Admin event corrections and replay
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ Module.createTestApp test/create-test-app.ts:40:3
+ ❯ test/admin-events.e2e-spec.ts:56:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯
+ FAIL  test/admin-events.e2e-spec.ts > Admin event corrections and replay
+PrismaClientInitializationError: 
+Invalid `testPrisma.user.deleteMany()` invocation in
+/workspace/innovation/sportsanalytics/apps/api/test/admin-events.e2e-spec.ts:78:27
+  75 });
+  76 
+  77 afterAll(async () => {
+→ 78   await testPrisma.user.deleteMany(
+Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ $n.handleRequestError node_modules/@prisma/client/runtime/library.js:121:7615
+ ❯ $n.handleAndLogRequestError node_modules/@prisma/client/runtime/library.js:121:6623
+ ❯ $n.request node_modules/@prisma/client/runtime/library.js:121:6307
+ ❯ l node_modules/@prisma/client/runtime/library.js:130:9633
+ ❯ test/admin-events.e2e-spec.ts:78:5
+     76|
+     77|   afterAll(async () => {
+     78|     await testPrisma.user.deleteMany({ where: { id: ADMIN_USER_ID } });
+       |     ^
+     79|     await resetDatabase();
+     80|     await testPrisma.$disconnect();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯
+ FAIL  test/datasets.e2e-spec.ts > Datasets API
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/datasets.e2e-spec.ts:17:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯
+ FAIL  test/datasets.e2e-spec.ts > Datasets API
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/datasets.e2e-spec.ts:26:15
+     24|   afterAll(async () => {
+     25|     await testPrisma.$disconnect();
+     26|     await app.close();
+       |               ^
+     27|   });
+     28|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯
+ FAIL  test/health.e2e-spec.ts > GET /health
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/health.e2e-spec.ts:10:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/16]⎯
+ FAIL  test/health.e2e-spec.ts > GET /health
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/health.e2e-spec.ts:14:15
+     12|
+     13|   afterAll(async () => {
+     14|     await app.close();
+       |               ^
+     15|   });
+     16|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/16]⎯
+ FAIL  test/not-found.e2e-spec.ts > unmatched routes
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/not-found.e2e-spec.ts:10:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/16]⎯
+ FAIL  test/not-found.e2e-spec.ts > unmatched routes
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/not-found.e2e-spec.ts:14:15
+     12|
+     13|   afterAll(async () => {
+     14|     await app.close();
+       |               ^
+     15|   });
+     16|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/16]⎯
+ FAIL  test/openapi-contract.e2e-spec.ts > public OpenAPI contract
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/openapi-contract.e2e-spec.ts:27:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/16]⎯
+ FAIL  test/openapi-contract.e2e-spec.ts > public OpenAPI contract
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/openapi-contract.e2e-spec.ts:31:15
+     29|
+     30|   afterAll(async () => {
+     31|     await app.close();
+       |               ^
+     32|   });
+     33|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/16]⎯
+ FAIL  test/teams.e2e-spec.ts > Teams API
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/teams.e2e-spec.ts:25:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/16]⎯
+ FAIL  test/teams.e2e-spec.ts > Teams API
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/teams.e2e-spec.ts:34:15
+     32|   afterAll(async () => {
+     33|     await testPrisma.$disconnect();
+     34|     await app.close();
+       |               ^
+     35|   });
+     36|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/16]⎯
+ Test Files  8 failed | 48 passed (56)
+      Tests  620 passed | 41 skipped (661) um
+
+ASSISTANT:
+[Tool calls:
+  - Ran: Verify committed vitest.config.ts still has global setup enabled]
+
+This is CI output (Gitea Actions), not something from my session — let me check whether this is
+caused by my PR or a pre-existing infra issue.
+
+[Tool calls:
+  - Ran: Inspect CI workflow config]
+
+This isn't caused by my PR. A few reasons:
+
+- None of the 8 failing files (`admin-anomalies`, `admin-auth`, `admin-events`, `datasets`,
+`health`, `not-found`, `openapi-contract`, `teams` e2e specs) test anything I touched — my changes
+only have unit-mock coverage (`admin-consumers.service.spec.ts`/`.mock.spec.ts`), no e2e spec exists
+for that feature at all.
+- The error is `Can't reach database server` — a Postgres connectivity failure, not a test assertion
+failure. 48 test files passed first, then these 8 fail in a row, meaning the shared Postgres
+container was reachable early in the run and died or dropped off the network partway through.
+- `.gitea/workflows/ci.yml`'s own comments document this exact fragility at length: it's a self-
+hosted, shared runner (`network: host`, "shared across every group on the machine"), and the
+Postgres container gets started fresh per job with a fair bit of networking gymnastics to even
+become reachable. This class of failure has a documented history here (the comment block literally
+says three earlier attempts at a simpler setup "never went green").
+- My diff is ~230 lines across 7 files, none of them CI config, Docker config, or test infra —
+nothing in it plausibly kills a database container mid-suite.
+
+This looks like a transient infra flake on the shared runner (resource contention or the container
+getting reaped), not a real regression. I'd re-run the CI job from Gitea's Actions UI for PR #151
+rather than chase it — if it goes green on retry, that confirms it was transient. Want me to push an
+empty commit to retrigger it instead, or would you rather just hit re-run?
+
+USER:
+❯ test/openapi-contract.e2e-spec.ts (1 test | 1 skipped) 419ms
+     ↓ documents every stable public endpoint and its declared responses
+ ✓ src/common/pagination.spec.ts (7 tests) 24ms
+ ✓ src/datasets/datasets.service.spec.ts (7 tests) 13ms
+stderr | test/not-found.e2e-spec.ts
+2026-09-16T15:21:36.588Z WARN [Better Auth]: Social provider google is missing clientId or
+clientSecret
+ ❯ test/not-found.e2e-spec.ts (2 tests | 2 skipped) 299ms
+     ↓ returns a 404 with the standard error envelope for an unknown path
+     ↓ applies the catch-all to non-GET methods too
+stderr | src/admin/admin-batches.controller.spec.ts
+2026-09-16T15:21:39.577Z WARN [Better Auth]: Social provider google is missing clientId or
+clientSecret
+ ✓ src/admin/admin-batches.controller.spec.ts (5 tests) 12ms
+stderr | test/health.e2e-spec.ts
+2026-09-16T15:21:41.974Z WARN [Better Auth]: Social provider google is missing clientId or
+clientSecret
+ ❯ test/health.e2e-spec.ts (1 test | 1 skipped) 297ms
+     ↓ returns 200 with an ok status
+⎯⎯⎯⎯⎯⎯ Failed Suites 8 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/admin-anomalies.e2e-spec.ts > GET /v1/admin/games/:gameId/anomalies
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ Module.createTestApp test/create-test-app.ts:40:3
+ ❯ test/admin-anomalies.e2e-spec.ts:24:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯
+ FAIL  test/admin-anomalies.e2e-spec.ts > GET /v1/admin/games/:gameId/anomalies
+PrismaClientInitializationError: 
+Invalid `testPrisma.user.deleteMany()` invocation in
+/workspace/innovation/sportsanalytics/apps/api/test/admin-anomalies.e2e-spec.ts:44:27
+  41 });
+  42 
+  43 afterAll(async () => {
+→ 44   await testPrisma.user.deleteMany(
+Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ $n.handleRequestError node_modules/@prisma/client/runtime/library.js:121:7615
+ ❯ $n.handleAndLogRequestError node_modules/@prisma/client/runtime/library.js:121:6623
+ ❯ $n.request node_modules/@prisma/client/runtime/library.js:121:6307
+ ❯ l node_modules/@prisma/client/runtime/library.js:130:9633
+ ❯ test/admin-anomalies.e2e-spec.ts:44:5
+     42|
+     43|   afterAll(async () => {
+     44|     await testPrisma.user.deleteMany({ where: { id: ADMIN_USER_ID } });
+       |     ^
+     45|     await resetDatabase();
+     46|     await testPrisma.$disconnect();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯
+ FAIL  test/admin-auth.e2e-spec.ts > Admin endpoints — unauthenticated access
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/admin-auth.e2e-spec.ts:11:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯
+ FAIL  test/admin-auth.e2e-spec.ts > Admin endpoints — unauthenticated access
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/admin-auth.e2e-spec.ts:16:15
+     14|   afterAll(async () => {
+     15|     await testPrisma.$disconnect();
+     16|     await app.close();
+       |               ^
+     17|   });
+     18|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯
+ FAIL  test/admin-events.e2e-spec.ts > Admin event corrections and replay
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ Module.createTestApp test/create-test-app.ts:40:3
+ ❯ test/admin-events.e2e-spec.ts:56:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯
+ FAIL  test/admin-events.e2e-spec.ts > Admin event corrections and replay
+PrismaClientInitializationError: 
+Invalid `testPrisma.user.deleteMany()` invocation in
+/workspace/innovation/sportsanalytics/apps/api/test/admin-events.e2e-spec.ts:78:27
+  75 });
+  76 
+  77 afterAll(async () => {
+→ 78   await testPrisma.user.deleteMany(
+Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ $n.handleRequestError node_modules/@prisma/client/runtime/library.js:121:7615
+ ❯ $n.handleAndLogRequestError node_modules/@prisma/client/runtime/library.js:121:6623
+ ❯ $n.request node_modules/@prisma/client/runtime/library.js:121:6307
+ ❯ l node_modules/@prisma/client/runtime/library.js:130:9633
+ ❯ test/admin-events.e2e-spec.ts:78:5
+     76|
+     77|   afterAll(async () => {
+     78|     await testPrisma.user.deleteMany({ where: { id: ADMIN_USER_ID } });
+       |     ^
+     79|     await resetDatabase();
+     80|     await testPrisma.$disconnect();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯
+ FAIL  test/datasets.e2e-spec.ts > Datasets API
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/datasets.e2e-spec.ts:17:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯
+ FAIL  test/datasets.e2e-spec.ts > Datasets API
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/datasets.e2e-spec.ts:26:15
+     24|   afterAll(async () => {
+     25|     await testPrisma.$disconnect();
+     26|     await app.close();
+       |               ^
+     27|   });
+     28|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯
+ FAIL  test/health.e2e-spec.ts > GET /health
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/health.e2e-spec.ts:10:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/16]⎯
+ FAIL  test/health.e2e-spec.ts > GET /health
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/health.e2e-spec.ts:14:15
+     12|
+     13|   afterAll(async () => {
+     14|     await app.close();
+       |               ^
+     15|   });
+     16|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/16]⎯
+ FAIL  test/not-found.e2e-spec.ts > unmatched routes
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/not-found.e2e-spec.ts:10:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/16]⎯
+ FAIL  test/not-found.e2e-spec.ts > unmatched routes
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/not-found.e2e-spec.ts:14:15
+     12|
+     13|   afterAll(async () => {
+     14|     await app.close();
+       |               ^
+     15|   });
+     16|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/16]⎯
+ FAIL  test/openapi-contract.e2e-spec.ts > public OpenAPI contract
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/openapi-contract.e2e-spec.ts:27:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/16]⎯
+ FAIL  test/openapi-contract.e2e-spec.ts > public OpenAPI contract
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/openapi-contract.e2e-spec.ts:31:15
+     29|
+     30|   afterAll(async () => {
+     31|     await app.close();
+       |               ^
+     32|   });
+     33|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/16]⎯
+ FAIL  test/teams.e2e-spec.ts > Teams API
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/teams.e2e-spec.ts:25:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/16]⎯
+ FAIL  test/teams.e2e-spec.ts > Teams API
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/teams.e2e-spec.ts:34:15
+     32|   afterAll(async () => {
+     33|     await testPrisma.$disconnect();
+     34|     await app.close();
+       |               ^
+     35|   });
+     36|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/16]⎯
+ Test Files  8 failed | 48 passed (56) re ran it and still
+
+ASSISTANT:
+The fact it's reproducible — same 48/56 split, same port, same 8 files — rules out a one-off blip
+and points at something systemic in the runner's networking, not randomness. A few things worth
+separating out:
+
+**Still confident this isn't caused by my PR's code.** My 3 commits touch only `admin-
+consumers.controller.ts`, `admin-consumers.service.ts`, one mock spec, `adminApi.ts`,
+`AdminPage.tsx`/`.spec.tsx`, and `docs/ai-usage.md` — nothing in `.gitea/workflows/`, Docker config,
+`vitest.config.ts`, `global-setup.ts`, or the Prisma schema/migrations. None of the 8 failing files
+even touch the feature I added (no `admin-consumers.e2e-spec.ts` exists — that feature only has
+mock-unit coverage). A 230-line change to one unrelated admin sub-feature can't plausibly kill a
+shared Postgres container's network reachability partway through an unrelated 661-test run.
+
+**What the identical failure across two runs actually tells you:** the CI file's own comments (the
+`coverage` job's giant `Start disposable Postgres` step) describe a fragile, hand-rolled fallback:
+it tries to put Postgres on the job's own Docker network first, and only falls back to
+`HOSTGATEWAY:published-port` (which is the `172.17.0.1:xxxxx` shape you're seeing) when it *can't*
+determine the job's network. That fallback path is explicitly the "last resort" case the comments
+call out as depending on host-gateway NAT routing. If your runner is consistently landing in that
+fallback branch and something about that NAT path degrades after a fixed number of connections/time
+(conntrack timeout, userland-proxy issue, etc.), you'd see exactly this: an identical pass/fail
+split every run, not random flakiness.
+
+**I can't diagnose the runner itself** — I have no access to the Gitea Actions run logs beyond what
+you paste, no `tea`/`gh` CLI wired up for this instance, and no shell on the self-hosted runner.
+That part genuinely needs whoever administers it (the workflow comment even says "a runner we do not
+administer").
+
+**One useful check you can do that I can't:** does this also happen on `main`'s own last CI run, or
+on another currently-open PR? If yes, it's a repo-wide infra problem that predates and is unrelated
+to this PR, and it's worth flagging to the team/runner admin separately rather than blocking this PR
+on it. If only this PR's CI shows it, that would be surprising given the diff, but I'd want to look
+again. Can you check the Actions tab for main's latest run or another PR?
+
+USER:
+Run Post Checkout
+docker exec cmd=[node --preserve-symlinks-main
+/var/run/act/actions/c3fe249fe73091a17d6638fe1341e7bd0bcc3466ce52323c0688e83e2463a4ab/dist/index.js]
+user= workdir=
+[command]/usr/bin/git version
+git version 2.55.0
+***
+Temporarily overriding HOME='/tmp/1cda19a9-9e7b-437d-bbd8-210470fc7eae' before making global git
+config changes
+Adding repository directory to the temporary git global config as a safe directory
+[command]/usr/bin/git config --global --add safe.directory /workspace/innovation/sportsanalytics
+[command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+[command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-
+regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+[command]/usr/bin/git config --local --name-only --get-regexp
+http\.http\:\/\/gitea\:3000\/\.extraheader
+http.http://gitea:3000/.extraheader
+[command]/usr/bin/git config --local --unset-all http.http://gitea:3000/.extraheader
+[command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-
+regexp 'http\.http\:\/\/gitea\:3000\/\.extraheader' && git config --local --unset-all
+'http.http://gitea:3000/.extraheader' || :"
+[command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+[command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only
+--get-regexp remote.origin.url
+Success - Post Checkout
+Cleaning up container for job API and Web — test coverage
+Job failed
+job 'API and Web — test coverage' failed  ✓ src/datasets/datasets.controller.spec.ts (5 tests) 44ms
+ ✓ src/common/roles.guard.spec.ts (5 tests) 16ms
+ ✓ src/common/deprecation.interceptor.spec.ts (2 tests) 15ms
+stderr | test/openapi-contract.e2e-spec.ts
+2026-09-16T15:21:32.096Z WARN [Better Auth]: Social provider google is missing clientId or
+clientSecret
+ ❯ test/openapi-contract.e2e-spec.ts (1 test | 1 skipped) 419ms
+     ↓ documents every stable public endpoint and its declared responses
+ ✓ src/common/pagination.spec.ts (7 tests) 24ms
+ ✓ src/datasets/datasets.service.spec.ts (7 tests) 13ms
+stderr | test/not-found.e2e-spec.ts
+2026-09-16T15:21:36.588Z WARN [Better Auth]: Social provider google is missing clientId or
+clientSecret
+ ❯ test/not-found.e2e-spec.ts (2 tests | 2 skipped) 299ms
+     ↓ returns a 404 with the standard error envelope for an unknown path
+     ↓ applies the catch-all to non-GET methods too
+stderr | src/admin/admin-batches.controller.spec.ts
+2026-09-16T15:21:39.577Z WARN [Better Auth]: Social provider google is missing clientId or
+clientSecret
+ ✓ src/admin/admin-batches.controller.spec.ts (5 tests) 12ms
+stderr | test/health.e2e-spec.ts
+2026-09-16T15:21:41.974Z WARN [Better Auth]: Social provider google is missing clientId or
+clientSecret
+ ❯ test/health.e2e-spec.ts (1 test | 1 skipped) 297ms
+     ↓ returns 200 with an ok status
+⎯⎯⎯⎯⎯⎯ Failed Suites 8 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/admin-anomalies.e2e-spec.ts > GET /v1/admin/games/:gameId/anomalies
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ Module.createTestApp test/create-test-app.ts:40:3
+ ❯ test/admin-anomalies.e2e-spec.ts:24:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯
+ FAIL  test/admin-anomalies.e2e-spec.ts > GET /v1/admin/games/:gameId/anomalies
+PrismaClientInitializationError: 
+Invalid `testPrisma.user.deleteMany()` invocation in
+/workspace/innovation/sportsanalytics/apps/api/test/admin-anomalies.e2e-spec.ts:44:27
+  41 });
+  42 
+  43 afterAll(async () => {
+→ 44   await testPrisma.user.deleteMany(
+Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ $n.handleRequestError node_modules/@prisma/client/runtime/library.js:121:7615
+ ❯ $n.handleAndLogRequestError node_modules/@prisma/client/runtime/library.js:121:6623
+ ❯ $n.request node_modules/@prisma/client/runtime/library.js:121:6307
+ ❯ l node_modules/@prisma/client/runtime/library.js:130:9633
+ ❯ test/admin-anomalies.e2e-spec.ts:44:5
+     42|
+     43|   afterAll(async () => {
+     44|     await testPrisma.user.deleteMany({ where: { id: ADMIN_USER_ID } });
+       |     ^
+     45|     await resetDatabase();
+     46|     await testPrisma.$disconnect();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯
+ FAIL  test/admin-auth.e2e-spec.ts > Admin endpoints — unauthenticated access
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/admin-auth.e2e-spec.ts:11:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯
+ FAIL  test/admin-auth.e2e-spec.ts > Admin endpoints — unauthenticated access
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/admin-auth.e2e-spec.ts:16:15
+     14|   afterAll(async () => {
+     15|     await testPrisma.$disconnect();
+     16|     await app.close();
+       |               ^
+     17|   });
+     18|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯
+ FAIL  test/admin-events.e2e-spec.ts > Admin event corrections and replay
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ Module.createTestApp test/create-test-app.ts:40:3
+ ❯ test/admin-events.e2e-spec.ts:56:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯
+ FAIL  test/admin-events.e2e-spec.ts > Admin event corrections and replay
+PrismaClientInitializationError: 
+Invalid `testPrisma.user.deleteMany()` invocation in
+/workspace/innovation/sportsanalytics/apps/api/test/admin-events.e2e-spec.ts:78:27
+  75 });
+  76 
+  77 afterAll(async () => {
+→ 78   await testPrisma.user.deleteMany(
+Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ $n.handleRequestError node_modules/@prisma/client/runtime/library.js:121:7615
+ ❯ $n.handleAndLogRequestError node_modules/@prisma/client/runtime/library.js:121:6623
+ ❯ $n.request node_modules/@prisma/client/runtime/library.js:121:6307
+ ❯ l node_modules/@prisma/client/runtime/library.js:130:9633
+ ❯ test/admin-events.e2e-spec.ts:78:5
+     76|
+     77|   afterAll(async () => {
+     78|     await testPrisma.user.deleteMany({ where: { id: ADMIN_USER_ID } });
+       |     ^
+     79|     await resetDatabase();
+     80|     await testPrisma.$disconnect();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯
+ FAIL  test/datasets.e2e-spec.ts > Datasets API
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/datasets.e2e-spec.ts:17:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯
+ FAIL  test/datasets.e2e-spec.ts > Datasets API
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/datasets.e2e-spec.ts:26:15
+     24|   afterAll(async () => {
+     25|     await testPrisma.$disconnect();
+     26|     await app.close();
+       |               ^
+     27|   });
+     28|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯
+ FAIL  test/health.e2e-spec.ts > GET /health
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/health.e2e-spec.ts:10:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/16]⎯
+ FAIL  test/health.e2e-spec.ts > GET /health
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/health.e2e-spec.ts:14:15
+     12|
+     13|   afterAll(async () => {
+     14|     await app.close();
+       |               ^
+     15|   });
+     16|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/16]⎯
+ FAIL  test/not-found.e2e-spec.ts > unmatched routes
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/not-found.e2e-spec.ts:10:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/16]⎯
+ FAIL  test/not-found.e2e-spec.ts > unmatched routes
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/not-found.e2e-spec.ts:14:15
+     12|
+     13|   afterAll(async () => {
+     14|     await app.close();
+       |               ^
+     15|   });
+     16|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/16]⎯
+ FAIL  test/openapi-contract.e2e-spec.ts > public OpenAPI contract
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/openapi-contract.e2e-spec.ts:27:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/16]⎯
+ FAIL  test/openapi-contract.e2e-spec.ts > public OpenAPI contract
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/openapi-contract.e2e-spec.ts:31:15
+     29|
+     30|   afterAll(async () => {
+     31|     await app.close();
+       |               ^
+     32|   });
+     33|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/16]⎯
+ FAIL  test/teams.e2e-spec.ts > Teams API
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32825`
+Please make sure your database server is running at `172.17.0.1:32825`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/teams.e2e-spec.ts:25:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/16]⎯
+ FAIL  test/teams.e2e-spec.ts > Teams API
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/teams.e2e-spec.ts:34:15
+     32|   afterAll(async () => {
+     33|     await testPrisma.$disconnect();
+     34|     await app.close();
+       |               ^
+     35|   });
+     36|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/16]⎯
+ Test Files  8 failed | 48 passed (56)
+      Tests  620 passed | 41 skipped (661)
+   Start at  15:20:00
+   Duration  104.43s (transform 3.59s, setup 0ms, import 52.46s, tests 18.45s, environment 12ms)
+JSON report written to /workspace/innovation/sportsanalytics/apps/api/test-report.json
+##[error]Process completed with exit code 1. ❯ test/health.e2e-spec.ts (1 test | 1 skipped) 292ms
+     ↓ returns 200 with an ok status
+⎯⎯⎯⎯⎯⎯ Failed Suites 14 ⎯⎯⎯⎯⎯⎯
+ FAIL  test/admin-anomalies.e2e-spec.ts > GET /v1/admin/games/:gameId/anomalies
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32852`
+Please make sure your database server is running at `172.17.0.1:32852`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ Module.createTestApp test/create-test-app.ts:40:3
+ ❯ test/admin-anomalies.e2e-spec.ts:24:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/28]⎯
+ FAIL  test/admin-anomalies.e2e-spec.ts > GET /v1/admin/games/:gameId/anomalies
+PrismaClientInitializationError: 
+Invalid `testPrisma.user.deleteMany()` invocation in
+/workspace/innovation/sportsanalytics/apps/api/test/admin-anomalies.e2e-spec.ts:44:27
+  41 });
+  42 
+  43 afterAll(async () => {
+→ 44   await testPrisma.user.deleteMany(
+Can't reach database server at `172.17.0.1:32852`
+Please make sure your database server is running at `172.17.0.1:32852`.
+ ❯ $n.handleRequestError node_modules/@prisma/client/runtime/library.js:121:7615
+ ❯ $n.handleAndLogRequestError node_modules/@prisma/client/runtime/library.js:121:6623
+ ❯ $n.request node_modules/@prisma/client/runtime/library.js:121:6307
+ ❯ l node_modules/@prisma/client/runtime/library.js:130:9633
+ ❯ test/admin-anomalies.e2e-spec.ts:44:5
+     42|
+     43|   afterAll(async () => {
+     44|     await testPrisma.user.deleteMany({ where: { id: ADMIN_USER_ID } });
+       |     ^
+     45|     await resetDatabase();
+     46|     await testPrisma.$disconnect();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/28]⎯
+ FAIL  test/admin-auth.e2e-spec.ts > Admin endpoints — unauthenticated access
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32852`
+Please make sure your database server is running at `172.17.0.1:32852`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/admin-auth.e2e-spec.ts:11:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/28]⎯
+ FAIL  test/admin-auth.e2e-spec.ts > Admin endpoints — unauthenticated access
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/admin-auth.e2e-spec.ts:16:15
+     14|   afterAll(async () => {
+     15|     await testPrisma.$disconnect();
+     16|     await app.close();
+       |               ^
+     17|   });
+     18|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/28]⎯
+ FAIL  test/admin-events.e2e-spec.ts > Admin event corrections and replay
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32852`
+Please make sure your database server is running at `172.17.0.1:32852`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ Module.createTestApp test/create-test-app.ts:40:3
+ ❯ test/admin-events.e2e-spec.ts:56:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/28]⎯
+ FAIL  test/admin-events.e2e-spec.ts > Admin event corrections and replay
+PrismaClientInitializationError: 
+Invalid `testPrisma.user.deleteMany()` invocation in
+/workspace/innovation/sportsanalytics/apps/api/test/admin-events.e2e-spec.ts:78:27
+  75 });
+  76 
+  77 afterAll(async () => {
+→ 78   await testPrisma.user.deleteMany(
+Can't reach database server at `172.17.0.1:32852`
+Please make sure your database server is running at `172.17.0.1:32852`.
+ ❯ $n.handleRequestError node_modules/@prisma/client/runtime/library.js:121:7615
+ ❯ $n.handleAndLogRequestError node_modules/@prisma/client/runtime/library.js:121:6623
+ ❯ $n.request node_modules/@prisma/client/runtime/library.js:121:6307
+ ❯ l node_modules/@prisma/client/runtime/library.js:130:9633
+ ❯ test/admin-events.e2e-spec.ts:78:5
+     76|
+     77|   afterAll(async () => {
+     78|     await testPrisma.user.deleteMany({ where: { id: ADMIN_USER_ID } });
+       |     ^
+     79|     await resetDatabase();
+     80|     await testPrisma.$disconnect();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/28]⎯
+ FAIL  test/analytics.e2e-spec.ts > Analytics API
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32852`
+Please make sure your database server is running at `172.17.0.1:32852`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/analytics.e2e-spec.ts:121:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/28]⎯
+ FAIL  test/analytics.e2e-spec.ts > Analytics API
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/analytics.e2e-spec.ts:130:15
+    128|   afterAll(async () => {
+    129|     await testPrisma.$disconnect();
+    130|     await app.close();
+       |               ^
+    131|   });
+    132|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/28]⎯
+ FAIL  test/datasets.e2e-spec.ts > Datasets API
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32852`
+Please make sure your database server is running at `172.17.0.1:32852`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/datasets.e2e-spec.ts:17:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/28]⎯
+ FAIL  test/datasets.e2e-spec.ts > Datasets API
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/datasets.e2e-spec.ts:26:15
+     24|   afterAll(async () => {
+     25|     await testPrisma.$disconnect();
+     26|     await app.close();
+       |               ^
+     27|   });
+     28|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/28]⎯
+ FAIL  test/games.e2e-spec.ts > Games API
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32852`
+Please make sure your database server is running at `172.17.0.1:32852`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/games.e2e-spec.ts:37:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/28]⎯
+ FAIL  test/games.e2e-spec.ts > Games API
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/games.e2e-spec.ts:46:15
+     44|   afterAll(async () => {
+     45|     await testPrisma.$disconnect();
+     46|     await app.close();
+       |               ^
+     47|   });
+     48|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/28]⎯
+ FAIL  test/health.e2e-spec.ts > GET /health
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32852`
+Please make sure your database server is running at `172.17.0.1:32852`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/health.e2e-spec.ts:10:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/28]⎯
+ FAIL  test/health.e2e-spec.ts > GET /health
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/health.e2e-spec.ts:14:15
+     12|
+     13|   afterAll(async () => {
+     14|     await app.close();
+       |               ^
+     15|   });
+     16|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/28]⎯
+ FAIL  test/not-found.e2e-spec.ts > unmatched routes
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32852`
+Please make sure your database server is running at `172.17.0.1:32852`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/not-found.e2e-spec.ts:10:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/28]⎯
+ FAIL  test/not-found.e2e-spec.ts > unmatched routes
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/not-found.e2e-spec.ts:14:15
+     12|
+     13|   afterAll(async () => {
+     14|     await app.close();
+       |               ^
+     15|   });
+     16|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/28]⎯
+ FAIL  test/openapi-contract.e2e-spec.ts > public OpenAPI contract
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32852`
+Please make sure your database server is running at `172.17.0.1:32852`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/openapi-contract.e2e-spec.ts:27:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/28]⎯
+ FAIL  test/openapi-contract.e2e-spec.ts > public OpenAPI contract
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/openapi-contract.e2e-spec.ts:31:15
+     29|
+     30|   afterAll(async () => {
+     31|     await app.close();
+       |               ^
+     32|   });
+     33|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/28]⎯
+ FAIL  test/optimizer.e2e-spec.ts > Optimizer API
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32852`
+Please make sure your database server is running at `172.17.0.1:32852`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ Module.createTestApp test/create-test-app.ts:40:3
+ ❯ test/optimizer.e2e-spec.ts:42:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/28]⎯
+ FAIL  test/optimizer.e2e-spec.ts > Optimizer API
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/optimizer.e2e-spec.ts:57:15
+     55|   afterAll(async () => {
+     56|     await testPrisma.$disconnect();
+     57|     await app.close();
+       |               ^
+     58|   });
+     59|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/28]⎯
+ FAIL  test/picks.e2e-spec.ts > Picks API
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32852`
+Please make sure your database server is running at `172.17.0.1:32852`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ Module.createTestApp test/create-test-app.ts:40:3
+ ❯ test/picks.e2e-spec.ts:89:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/28]⎯
+ FAIL  test/picks.e2e-spec.ts > Picks API
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/picks.e2e-spec.ts:104:15
+    102|   afterAll(async () => {
+    103|     await testPrisma.$disconnect();
+    104|     await app.close();
+       |               ^
+    105|   });
+    106|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/28]⎯
+ FAIL  test/players.e2e-spec.ts > Players API
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32852`
+Please make sure your database server is running at `172.17.0.1:32852`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/players.e2e-spec.ts:122:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/28]⎯
+ FAIL  test/players.e2e-spec.ts > Players API
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/players.e2e-spec.ts:131:15
+    129|   afterAll(async () => {
+    130|     await testPrisma.$disconnect();
+    131|     await app.close();
+       |               ^
+    132|   });
+    133|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/28]⎯
+ FAIL  test/saved-lineups.e2e-spec.ts > Saved lineups API
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32852`
+Please make sure your database server is running at `172.17.0.1:32852`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ Module.createTestApp test/create-test-app.ts:40:3
+ ❯ test/saved-lineups.e2e-spec.ts:75:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/28]⎯
+ FAIL  test/saved-lineups.e2e-spec.ts > Saved lineups API
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/saved-lineups.e2e-spec.ts:91:15
+     89|   afterAll(async () => {
+     90|     await testPrisma.$disconnect();
+     91|     await app.close();
+       |               ^
+     92|   });
+     93|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/28]⎯
+ FAIL  test/teams.e2e-spec.ts > Teams API
+PrismaClientInitializationError: Can't reach database server at `172.17.0.1:32852`
+Please make sure your database server is running at `172.17.0.1:32852`.
+ ❯ t node_modules/@prisma/client/runtime/library.js:112:2488
+ ❯ Proxy.onModuleInit src/prisma/prisma.service.ts:20:5
+     18|
+     19|   async onModuleInit() {
+     20|     await this.$connect();
+       |     ^
+     21|   }
+     22|
+ ❯ callModuleInitHook node_modules/@nestjs/core/hooks/on-module-init.hook.js:43:5
+ ❯ NestApplication.callInitHook node_modules/@nestjs/core/nest-application-context.js:234:13
+ ❯ NestApplication.init node_modules/@nestjs/core/nest-application.js:100:9
+ ❯ createTestApp test/create-test-app.ts:40:3
+ ❯ test/teams.e2e-spec.ts:25:11
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/28]⎯
+ FAIL  test/teams.e2e-spec.ts > Teams API
+TypeError: Cannot read properties of undefined (reading 'close')
+ ❯ test/teams.e2e-spec.ts:34:15
+     32|   afterAll(async () => {
+     33|     await testPrisma.$disconnect();
+     34|     await app.close();
+       |               ^
+     35|   });
+     36|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/28]⎯
+ Test Files  14 failed | 42 passed (56)
+      Tests  469 passed | 192 skipped (661)
+   Start at  18:31:11
+   Duration  90.11s (transform 3.43s, setup 0ms, import 52.23s, tests 5.58s, environment 11ms) Run
+Post Checkout
+docker exec cmd=[node --preserve-symlinks-main
+/var/run/act/actions/c3fe249fe73091a17d6638fe1341e7bd0bcc3466ce52323c0688e83e2463a4ab/dist/index.js]
+user= workdir=
+[command]/usr/bin/git version
+git version 2.55.0
+***
+Temporarily overriding HOME='/tmp/c7fa41f2-da95-4270-9310-354b54759eed' before making global git
+config changes
+Adding repository directory to the temporary git global config as a safe directory
+[command]/usr/bin/git config --global --add safe.directory /workspace/innovation/sportsanalytics
+[command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+[command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-
+regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+[command]/usr/bin/git config --local --name-only --get-regexp
+http\.http\:\/\/gitea\:3000\/\.extraheader
+http.http://gitea:3000/.extraheader
+[command]/usr/bin/git config --local --unset-all http.http://gitea:3000/.extraheader
+[command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-
+regexp 'http\.http\:\/\/gitea\:3000\/\.extraheader' && git config --local --unset-all
+'http.http://gitea:3000/.extraheader' || :"
+[command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+[command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only
+--get-regexp remote.origin.url
+Success - Post Checkout
+Cleaning up container for job API and Web — test coverage
+Job failed
+job 'API and Web — test coverage' failed
+
+ASSISTANT:
+The second run is materially worse — 14 files failed (up from 8) and it started failing on *more*
+files, earlier in the run (`analytics`, `games`, `optimizer`, `picks`, `players`, `saved-lineups`
+all newly failed too), and the port changed (`32825` → `32852`, so that wasn't a fixed value, just
+coincidence in the first pair). That trend — same class of failure, but strictly worse three hours
+later — is the important signal: it points to the runner host **progressively degrading**, not a
+one-off blip and not anything in this PR.
+
+The likely mechanism: the workflow's own Postgres cleanup step (`docker rm -f "ci-postgres-${{
+github.run_id }}" || true`) only runs `if: always()` as part of *that job* finishing — but if the
+runner itself gets overloaded, a job's container can be killed by the host (OOM, resource
+starvation) before that step ever executes. Each time that happens, a dead/zombie `ci-postgres-*`
+container is left behind instead of being cleaned up. Across enough runs, those leaked containers
+pile up and consume more of the shared host's memory/network resources, making each subsequent job's
+Postgres reachability fail sooner — which is exactly the 8-failed → 14-failed trend between your two
+runs.
+
+I can't fix this from here — I have no shell access to the runner host, and this is explicitly infra
+the workflow's own comments say the team doesn't administer from CI config alone. What would
+actually confirm and fix it, for whoever *does* have access to that runner box:
+
+1. `docker ps -a --filter label=ci-postgres-for=nba-analytics` — check for accumulated leftover
+containers from past runs that never got cleaned up.
+2. `docker system df` and `free -h` / `docker stats` — check for disk/memory pressure building up on
+the host.
+3. If there's a pile of dead containers, `docker container prune` (or targeted `docker rm -f` on the
+leaked ones) and possibly restart the `act_runner` service.
+
+This is worth raising with whoever set up the self-hosted runner (Adrian did the deploy/infra work
+per `docs/ai-usage.md`) rather than something to chase from a feature PR — PR #151's own code has
+nothing that could cause this, and no amount of changing my branch will fix a degrading host. I'd
+hold off merging until someone confirms the runner's clean, then re-run.
+
+USER:
+the runner was set up by the lecturer...
+
+ASSISTANT:
+That changes who can act on it — the team doesn't have shell access to fix leaked containers
+themselves. Given that, the practical path is to report it to the lecturer rather than try to self-
+fix, since they're the only one who can prune/restart the runner.
+
+A couple of things that might help there:
+
+- The evidence is pretty strong for a support message: run 1 (8 files failed, 48 passed) vs. run 2
+three hours later (14 failed, 42 passed, more files failing and failing earlier) — a runner that's
+degrading over time, not flaky at random. Worth including both full logs if you report it, since the
+"getting worse" trend is the most convincing part.
+- Separately: the `api` and `web` lint/typecheck CI jobs are independent of the broken `coverage`
+job (they don't touch the database at all), so those likely still pass on PR #151 — worth checking
+the Actions tab to confirm, since that'd show the actual code is fine and only the DB-dependent job
+is blocked by infra.
+
+Want me to draft a short message to the lecturer describing the issue (with the two runs' evidence),
+or add a note on PR #151 itself flagging that the coverage job is blocked by known runner infra
+issues so your reviewers don't mistake it for a problem with the code? I'd rather not send anything
+myself without you seeing it first.
+
+USER:
+are you sure that this is not an issue on our end? think we might need to figure something out
+
+ASSISTANT:
+Fair pushback — let me actually check the teardown code instead of assuming it's purely external. A
+very common cause of "works for N files, then the DB becomes unreachable" is leaked database
+connections that never get released, which absolutely would be something in our code, not the
+runner.
+
+[Tool calls:
+  - Read apps/api/src/prisma/prisma.service.ts
+  - Ran: Inspect test app creation helper
+  - Ran: Inspect shared test-db helper
+  - Read apps/api/test/teams.e2e-spec.ts
+  - Ran: List afterAll hooks across all e2e spec files
+  - Ran: Count testPrisma.$disconnect calls per e2e spec file]
+
+You were right to push back — I looked too narrowly at "did my 3 commits touch this" and missed a
+real bug in the shared test infrastructure. Found it:
+
+`apps/api/test/test-db.ts` exports one **module-level singleton** `testPrisma` client, shared by
+every e2e spec file (correct — it's meant to be reused, same as a real app's single long-lived
+connection). But:
+
+[Tool calls:
+  - Ran: Show each file's disconnect call in context]
+
+That's it. **11 separate e2e spec files each call `testPrisma.$disconnect()` in their own
+`afterAll`** — but `testPrisma` is one shared module-level singleton reused across the whole suite
+(correct design), and all 15 e2e files run sequentially in a single worker (`fileParallelism:
+false`, `maxWorkers: 1`). So over one CI run, that one connection gets explicitly torn down and
+forced to reconnect **11 separate times**, each reconnect being a fresh TCP handshake through the
+exact NAT/host-gateway path the CI workflow's own comments already describe as hacky and fragile
+(`docker run -p 0.0.0.0::5432` + host-gateway routing, the "last resort" fallback documented at
+length in `.gitea/workflows/ci.yml`).
+
+That explains the whole pattern:
+- **Why it passes for a stretch then fails in a block**: each of the 11 reconnects is an independent
+roll of the dice against that fragile path. Once one genuinely fails, Prisma's client is left unable
+to recover, and every file after it — anything touching `testPrisma` via `resetDatabase()` in
+`afterEach`, or the app's own connect — fails too. That's the "wall" of failures you're seeing.
+- **Why which files fail differs between runs**: it's not a fixed resource ceiling being hit at the
+same point — it's which of the 11 independent reconnect attempts happens to hit the flaky moment,
+which varies run to run. That fits better than a "host slowly degrading" story.
+- **Why it's gotten worse recently**: PRs #136–147 added 5+ new e2e spec files, several of which
+also call `testPrisma.$disconnect()` — more files means more reconnect cycles, more chances to hit
+the flaky path.
+
+This is a real, fixable bug in the shared test suite — not something I introduced, but not the
+lecturer's infra either. `testPrisma` should only ever be disconnected once, when the whole suite
+finishes, not once per file. The minimal fix: remove the `await testPrisma.$disconnect();` line from
+each of those 11 files' `afterAll` (the process exiting at the end of the run closes it fine —
+nothing else needs it torn down mid-suite).
+
+Want me to make that fix? It's an 11-file, one-line-each change, separate from PR #151 (this is a
+pre-existing bug on `main`, unrelated to the consumer/key-delete feature) — I'd put it on its own
+branch/PR.
+
+USER:
+yeah fix it please
+
+ASSISTANT:
+[Tool calls:
+  - Ran: Check current git state before starting new fix branch]
+
+Clean working tree. Let's fetch latest main and branch off it for this separate fix.
+
+[Tool calls:
+  - Ran: Fetch latest main before branching for the fix
+  - Ran: Retry fetch
+  - Ran: Check what changed on main since last sync, focused on test dir
+  - Ran: Fast-forward main and create new branch for the fix]
+
+Now let's fix each of the 11 files. Let me get exact context for each.
+
+[Tool calls:
+  - Searched the code for 'testPrisma\\.\\$disconnect'
+  - Edited apps/api/test/admin-auth.e2e-spec.ts
+  - Edited apps/api/test/analytics.e2e-spec.ts
+  - Edited apps/api/test/games.e2e-spec.ts
+  - Edited apps/api/test/admin-anomalies.e2e-spec.ts
+  - Edited apps/api/test/datasets.e2e-spec.ts
+  - Edited apps/api/test/admin-events.e2e-spec.ts
+  - Edited apps/api/test/optimizer.e2e-spec.ts
+  - Edited apps/api/test/saved-lineups.e2e-spec.ts
+  - Edited apps/api/test/picks.e2e-spec.ts
+  - Edited apps/api/test/players.e2e-spec.ts
+  - Edited apps/api/test/teams.e2e-spec.ts]
+
+Let me check `global-setup.ts` to see if I should add a proper teardown there instead of leaving the
+connection to dangle.
+
+[Tool calls:
+  - Read apps/api/test/global-setup.ts]
+
+Let me check whether `testPrisma` is still used elsewhere in each file — `admin-auth.e2e-spec.ts`
+looked minimal and might now have an unused import.
+
+[Tool calls:
+  - Searched the code for 'testPrisma'
+  - Ran: Check testPrisma usage across all remaining files]
+
+Only `admin-auth.e2e-spec.ts` now has an unused `testPrisma` import — let me check its full content
+and fix it.
+
+[Tool calls:
+  - Read apps/api/test/admin-auth.e2e-spec.ts]
+
+Confirmed, `testPrisma` is now unused here. Remove the import:
+
+[Tool calls:
+  - Edited apps/api/test/admin-auth.e2e-spec.ts]
+
+Now let's typecheck and lint to confirm nothing's broken.
+
+[Tool calls:
+  - Ran: Typecheck the API after removing disconnect calls
+  - Ran: Lint the API after removing disconnect calls
+  - Ran: Lint the test directory directly since npm run lint only covers src]
+
+Clean — 0 errors, and the 2 pre-existing warnings in `players.e2e-spec.ts` are unrelated to this
+change. Let's review the full diff before committing.
+
+[Tool calls:
+  - Ran: Review all changes before committing]
+
+Exactly the 11 files, 12 line deletions (11 disconnect calls + 1 now-unused import), nothing else.
+Let's commit and push.
+
+[Tool calls:
+  - Ran: Final full diff review before commit]
+
+Clean, exactly as intended, no secrets. Committing and pushing:
+
+[Tool calls:
+  - Ran: Commit the fix
+  - Read docs/ai-usage.md
+  - Edited docs/ai-usage.md
+  - Ran: Stage, review, and commit the AI usage ledger entry]
+
+Now push the branch and get the PR link.
+
+[Tool calls:
+  - Ran: Push the fix branch]
+
+Pushed. No PR auto-created yet — here's the link:
+[https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/new/fix-shared-testprisma-
+disconnect](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/new/fix-shared-testprisma-
+disconnect)
+
+**Suggested title:** `Fix: stop disconnecting shared e2e test Prisma client per file`
+
+**Suggested body:**
+```
+## Summary
+- Root cause of the intermittent `PrismaClientInitializationError: Can't reach database server` failures wiping out large chunks of the e2e suite (varying files failing between runs, worsening over time): 11 e2e spec files each called `testPrisma.$disconnect()` on the one shared, module-level Prisma client in their own `afterAll`
+- Since all e2e specs run sequentially in one worker (`fileParallelism: false`, `maxWorkers: 1`), that's up to 11 forced reconnects per CI run, each a fresh TCP handshake through the runner's documented-as-fragile host-gateway NAT path (see the long comment block in `.gitea/workflows/ci.yml`'s `coverage` job) — one bad reconnect leaves the shared client unable to recover, cascading into every subsequent file failing too
+- Fix: removed the per-file `testPrisma.$disconnect()` calls (and one now-dead `testPrisma` import in `admin-auth.e2e-spec.ts`) — the shared client should only ever be torn down once, when the whole suite's worker process exits, not once per file
+- Not related to PR #151 (API consumer/key deletion) — this is a pre-existing bug in the shared test setup on `main`
+
+## Test plan
+- [x] tsc --noEmit clean
+- [x] eslint clean (0 errors; 2 pre-existing unrelated warnings in players.e2e-spec.ts)
+- [ ] Full e2e suite can't be verified locally (no local Postgres/Docker on this machine) — needs a green CI coverage run to confirm the fix actually holds up against the real runner
+```
+
+One commit for the fix (`fix: stop disconnecting the shared e2e test Prisma client per file`) plus
+the usual AI-usage ledger entry, both on `fix-shared-testprisma-disconnect`, branched off current
+`main` — independent of PR #151. Since I can't run the e2e suite locally, real proof this actually
+fixes it comes from watching the next CI run go green (or at least not fail in that same cascading
+pattern).
+
+USER:
+should i push this branch first and then the other
+
+ASSISTANT:
+Both branches are already pushed — `delete-api-consumers-and-keys` (PR #151) went up earlier, and I
+pushed `fix-shared-testprisma-disconnect` last turn too. Nothing left to push.
+
+I think what actually matters is **merge order**, not push order: land `fix-shared-testprisma-
+disconnect` first. It's small, independent of PR #151's code, and fixes something that affects every
+PR's CI, including #151's. Gitea Actions checks out the PR-vs-target merge ref for `pull_request`
+triggers, so once the fix is on `main`, re-running PR #151's CI should pick it up automatically — no
+need to rebase #151 by hand, just re-trigger its coverage job after the fix merges.
+
+Both still need your team's review/sign-off before merging per your usual workflow — I haven't
+merged either. Want me to open the PR for `fix-shared-testprisma-disconnect` now (same as I did for
+#151 — I'll give you the link/draft), or do you want to open it yourself first?
+
+[image attached]
+
+USER:
+then why is the second branch still red?
+
+USER:
+[Request interrupted by user]
+
+USER:
+i meant merge. do i merge 152 first then run the tests on the old one and merge that one?
+
+ASSISTANT:
+Yes, that's the right order: merge #152 (the fix) first, then re-run #151's CI, then merge #151.
+
+**Why #151 is still red:** its CI run happened before the fix existed anywhere — that run checked
+out #151's own branch content (no fix) plus whatever `main` was at the time (also no fix), so of
+course it hit the same disconnect bug. Nothing new wrong there, it's just running without the fix.
+
+**Before merging #152:** its own coverage check is still shown pending (yellow dot, not a green
+check yet) — worth waiting for that to actually finish and go green first. That run is the real
+proof the fix works, since it's the first time this exact hypothesis gets tested against the live
+runner.
+
+**Then for #151:** once #152 is merged into `main`, re-trigger #151's `pull_request`-triggered
+coverage job (the three checks currently "Waiting to run" in your screenshot) — those check out the
+PR-vs-`main` merge ref, so they should pick up the fix automatically without needing to rebase #151
+by hand. If they don't auto-start, a re-run button in Gitea's Actions tab (or pushing a trivial
+commit) will kick them off. If that run goes green, you've got double confirmation the fix holds.
+
+Both still need whoever's reviewing to actually look at the code and sign off before merging, per
+your usual process — green CI shows the fix works, it doesn't substitute for review.
+
+USER:
+ReferenceError: window is not defined
+ ❯ Object.cleanupBroadcastSetup node_modules/better-auth/dist/client/broadcast-channel.mjs:35:4
+ ❯ Object.cleanup node_modules/better-auth/dist/client/session-refresh.mjs:109:10
+ ❯ node_modules/better-auth/dist/client/session-atom.mjs:144:19
+ ❯ Timeout._onTimeout node_modules/nanostores/lifecycle/index.js:139:55
+ ❯ listOnTimeout node:internal/timers:685:17
+ ❯ processTimers node:internal/timers:618:7
+This error originated in "src/pages/ComparePage.spec.tsx" test file. It doesn't mean the error was
+thrown inside the file itself, but while it was running.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+ it passed and thien i pushed it to maina nd now main is failing. Run Post Checkout
+docker exec cmd=[node --preserve-symlinks-main
+/var/run/act/actions/c3fe249fe73091a17d6638fe1341e7bd0bcc3466ce52323c0688e83e2463a4ab/dist/index.js]
+user= workdir=
+[command]/usr/bin/git version
+git version 2.55.0
+***
+Temporarily overriding HOME='/tmp/0d4b46be-343e-4545-9bb6-42520c2e3c6f' before making global git
+config changes
+Adding repository directory to the temporary git global config as a safe directory
+[command]/usr/bin/git config --global --add safe.directory /workspace/innovation/sportsanalytics
+[command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+[command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-
+regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+[command]/usr/bin/git config --local --name-only --get-regexp
+http\.http\:\/\/gitea\:3000\/\.extraheader
+http.http://gitea:3000/.extraheader
+[command]/usr/bin/git config --local --unset-all http.http://gitea:3000/.extraheader
+[command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-
+regexp 'http\.http\:\/\/gitea\:3000\/\.extraheader' && git config --local --unset-all
+'http.http://gitea:3000/.extraheader' || :"
+[command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+[command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only
+--get-regexp remote.origin.url
+Success - Post Checkout
+Cleaning up container for job API and Web — test coverage
+Job failed
+job 'API and Web — test coverage' failed
+
+ASSISTANT:
+Main being red now is a bigger deal than a PR — let's figure out what's actually happening. Given
+the coverage job runs API tests then Web tests as sequential steps in one job, and Web tests never
+used to get reached (the API step always failed first) — this is likely a **pre-existing bug in the
+web suite that my fix just uncovered**, not something the fix broke. Let me check.
+
+[Tool calls:
+  - Ran: Check current git state
+  - Ran: Fetch latest main to see the merged fix
+  - Ran: Check web vitest config for test environment settings
+  - Ran: Check web test setup file
+  - Ran: Check authClient.ts for better-auth client setup
+  - Ran: Check how ComparePage.spec.tsx handles auth
+  - Ran: Check the shared render helper for auth-aware wrapping
+  - Ran: Find spec files that don't mock authClient but may transitively pull it in
+  - Ran: Check ComparePage.tsx imports for auth-related dependencies
+  - Ran: Find all source files that import authClient/useSession
+  - Ran: Check the dedicated authClient test file
+  - Ran: Check useMe hook]
+
+Let me try to reproduce this locally by running the full web suite — unlike the API e2e tests, these
+don't need a database.
+
+[Tool calls:
+  - Ran: Run full web test suite to try to reproduce the window error
+  - Ran: Find every method called on the authClient instance
+  - Ran: Check how ProfilePage.spec.tsx handles authClient]
+
+Let me check for any other file-local `better-auth/react` mocks that could conflict with a global
+one.
+
+[Tool calls:
+  - Ran: Find files that directly mock better-auth/react
+  - Read apps/web/src/test/setup.ts
+  - Edited apps/web/src/test/setup.ts]
+
+Now let's run the full suite again to make sure this doesn't break anything (especially
+`authClient.spec.ts` and the other files that already mock auth locally).
+
+[Tool calls:
+  - Ran: Run full web suite after adding global better-auth mock]
+
+All 56 files / 449 tests still pass, including `authClient.spec.ts` (its local mock correctly
+overrides the global one). Let's typecheck and lint too.
+
+[Tool calls:
+  - Ran: Typecheck the web app
+  - Ran: Lint the web app]
+
+Same pre-existing warnings, no new issues, 0 errors. Let's set up a new branch off updated main for
+this fix and commit.
+
+[Tool calls:
+  - Ran: Check working tree status
+  - Ran: Branch off updated main and reapply the fix]
+
+Now let's log the AI usage entry and commit both together.
+
+[Tool calls:
+  - Read docs/ai-usage.md
+  - Edited docs/ai-usage.md
+  - Ran: Stage and review changes before committing]
+
+Clean, no secrets. Committing:
+
+[Tool calls:
+  - Ran: Commit the authClient test leak fix
+  - Ran: Push the authClient fix branch]
+
+Pushed: [https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/new/fix-authclient-test-
+leak](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/new/fix-authclient-test-leak)
+
+**What happened:** it wasn't your PR fix breaking anything — the coverage job runs `Run API
+coverage` then `Run Web coverage` as sequential steps in one job. Before, the API step always failed
+first (the Prisma disconnect bug), so the job never got far enough to actually exercise the Web
+coverage step in CI. Once that got fixed and merged, the job ran `Run Web coverage` for real for
+possibly the first time in a while, exposing a second, unrelated, pre-existing bug: several web spec
+files never mock `@/lib/authClient`, so the real `better-auth` client's background session-refresh
+timer and cross-tab `BroadcastChannel` get created for real during those tests — and under CI's
+concurrent, resource-constrained execution, that timer can fire *after* the test file's jsdom
+environment is torn down, throwing `window is not defined` from inside `better-auth` itself,
+attributed to whatever file happened to be running at that moment (hence `ComparePage.spec.tsx`
+looking involved when it probably wasn't the actual source).
+
+**Fix:** one file, `apps/web/src/test/setup.ts` — a global mock for `better-auth/react`'s
+`createAuthClient` so no unit test ever instantiates the real client (no real timers, no real
+BroadcastChannel). `authClient.spec.ts`, which legitimately needs to test the real wrapper logic,
+keeps working because its own local mock override takes precedence for that file. Verified: full
+local suite (56 files / 449 tests) still passes, `authClient.spec.ts` included, plus clean typecheck
+and lint.
+
+Couldn't reproduce the race locally (ran the full suite twice, no failure) — expected, since it's
+timing-dependent on CI's specific load, so real confirmation needs a green CI run same as the other
+fix. This is also independent of #151 and #152 — merge it on its own whenever ready.
+
+[image attached]
+
+USER:
+can you make sure that you are working with the most recent version from main. then update this
+branch. it doent want to merge because it is out of date
+
+ASSISTANT:
+[Tool calls:
+  - Ran: Fetch latest from origin
+  - Ran: Inspect the force-updated branch and check if original commits survived
+  - Ran: Check working tree state before touching the shared branch
+  - Ran: Check what landed on main since the branch's current base, and whether it touches the same
+files]
+
+Good news — my `fix-authclient-test-leak` PR (#153) is already merged too. The team's also merged
+several new feature PRs since. Let's sync `delete-api-consumers-and-keys` to match the teammate's
+rebase, then rebase it onto current main.
+
+[Tool calls:
+  - Ran: Sync local branch to match teammate's rebased version on origin]
+
+Now on the branch matching the teammate's rebase. Let's rebase it onto the current `main` tip.
+
+[Tool calls:
+  - Ran: Rebase the branch onto current main
+  - Read docs/ai-usage.md]
+
+Simple append conflict — both rows are needed, just resolve by keeping both, in
+chronological/logical order.
+
+[Tool calls:
+  - Edited docs/ai-usage.md
+  - Ran: Mark conflict resolved and continue rebase]
+
+Rebase completed. Let's verify the result and run the full verification pass before pushing.
+
+[Tool calls:
+  - Ran: Verify rebase result]
+
+Clean, exactly 3 commits on top of current main. Now let's typecheck, lint, and re-run tests against
+this fresh base before pushing.
+
+[Tool calls:
+  - Ran: Typecheck both apps after rebase]
+
+Those 3 errors are because my local Prisma client is stale — the merged `custom-statistics` PR added
+a `CustomStatistic` model I haven't regenerated against. Let me fix that before trusting the
+typecheck.
+
+[Tool calls:
+  - Ran: Regenerate Prisma client against current schema
+  - Ran: Re-run API typecheck with real exit code after regenerating client]
+
+Clean now. Let's confirm the web typecheck's real exit code too, then lint both, then re-run the
+relevant tests.
+
+[Tool calls:
+  - Ran: Confirm web typecheck exit code
+  - Ran: Lint both apps with real exit codes]
+
+Both clean. Now let's run the relevant tests with the local-DB bypass for the API side.
+
+[Tool calls:
+  - Edited apps/api/vitest.config.ts
+  - Ran: Run admin-consumers unit tests]
+
+29/29 pass. Revert the bypass and confirm no net diff.
+
+[Tool calls:
+  - Edited apps/api/vitest.config.ts
+  - Ran: Confirm vitest bypass fully reverted]
+
+Now the web side:
+
+[Tool calls:
+  - Ran: Run AdminPage frontend tests]
+
+All verified. Let's check nothing stray is left (the regenerated Prisma client shouldn't be
+tracked), then push.
+
+[Tool calls:
+  - Ran: Final status check before force-pushing]
+
+Clean — the generated Prisma client is gitignored as expected. Now push the rebased branch. Since
+this rewrites history that a teammate already pushed once, I'll use `--force-with-lease` so it only
+overwrites if origin still matches what I just fetched.
+
+[Tool calls:
+  - Ran: Force-push the rebased branch safely]
+
+Done. `delete-api-consumers-and-keys` (PR #151) is now rebased on the current `main` tip (which
+includes both CI fixes plus all the teammates' newly-merged feature PRs), with the `ai-usage.md`
+conflict resolved and both rows kept. Verified before pushing:
+
+- Regenerated the Prisma client (stale locally after the new `custom-statistics` PR added a model) —
+typecheck was catching a real staleness issue, now clean on both apps.
+- Lint clean on both apps.
+- 29 backend + 20 frontend tests still passing.
+- Force-pushed with `--force-with-lease` so it would've refused if daniel-denial22 had pushed
+something new in the meantime.
+
+PR #151 should now show as mergeable rather than out-of-date — worth letting CI run once more on the
+fresh push to confirm green before merging.

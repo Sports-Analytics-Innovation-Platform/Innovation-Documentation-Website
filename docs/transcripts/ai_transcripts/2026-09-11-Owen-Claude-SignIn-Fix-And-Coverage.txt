@@ -1,0 +1,434 @@
+2026-09-11 — Owen Pace + Claude Code (Claude Sonnet 5)
+Diagnosing the intermittent "sign-in link expired" error and raising test coverage
+Sports Analytics Tool — COMS3011A Project 3
+
+AI Declaration: Claude Code, model claude-sonnet-5 ("Claude Sonnet 5"). Purpose: finding and fixing an intermittent Google sign-in failure, then raising test coverage towards the 80% CI threshold.
+
+How to read this: generated from the saved session file. USER sections are what Owen typed and
+ASSISTANT sections are Claude's replies, both word for word. Each tool call Claude made is
+listed as one line saying what it did; the raw commands and their output are left out, as are
+Claude's internal reasoning, the contents of attached files and images, and sub-agent
+transcripts. The redaction pass found nothing to mask.
+
+================================================================================
+
+USER:
+right now there is an issue with my loggin. it says that the loggin link expired but it is wierd it
+happens sometimes for some people and other times it does not. can you figure out whats wrong and
+fix it reliably
+
+ASSISTANT:
+I'll look into the login system to find where magic links are generated and validated.
+
+[Tool calls:
+  - Started a sub-agent: Find login/magic-link auth code]
+
+I've kicked off a search for the login-link code (generation, validation, timezone handling, email
+sending). I'll report back once it finds the relevant files — should just be a moment.
+
+[A background task finished and reported back]
+
+ASSISTANT:
+[Tool calls:
+  - Read apps/api/src/auth/auth.config.ts
+  - Ran: Locate better-auth cookies dist files
+  - Ran: List files in better-auth cookies dist folder
+  - Read apps/api/node_modules/better-auth/dist/cookies/index.mjs
+  - Ran: Search better-auth dist for state cookie and generation logic
+  - Ran: Check commit history and branch status for auth config file
+  - Ran: Check if auth fix commits are merged to main and compare google-auth-bug branch
+  - Ran: Search for deployment config files and NODE_ENV usage
+  - Read render.yaml
+  - Ran: Locate AuthStatus.tsx
+  - Read apps/web/src/components/AuthStatus.tsx
+  - Ran: Find authClient file
+  - Read apps/web/src/lib/authClient.ts
+  - Searched the code for 'pages\\.dev|onrender\\.com|BETTER_AUTH_URL|WEB_ORIGIN'
+  - Searched the code for 'pages\\.dev|onrender\\.com|BETTER_AUTH_URL|WEB_ORIGIN'
+  - Ran: Show matching lines with context in getting-started.md
+  - Ran: Search for production URLs in the untracked file
+  - Ran: Look for Cloudflare Pages/Wrangler config files
+  - Ran: Search CI workflow for domain references
+  - Searched the code for 'pages\\.dev|onrender\\.com|custom
+domain|CNAME|wits\\.ac\\.za|sportsanalytics\\.'
+  - Ran: Search better-auth client source for signIn.social implementation
+  - Ran: Find files referencing redirect logic in better-auth client dist
+  - Read apps/web/node_modules/better-auth/dist/client/fetch-plugins.mjs
+  - Read apps/api/node_modules/better-auth/dist/api/routes/sign-in.mjs
+  - Read apps/api/node_modules/better-auth/dist/api/routes/sign-in.mjs
+  - Ran: Search for storeStateStrategy option definitions
+  - Read apps/api/node_modules/better-auth/dist/state.mjs
+  - Read apps/api/node_modules/better-auth/dist/context/create-context.mjs
+  - Ran: Read the hosting topology ADR from git history
+  - Ran: Continue reading ADR-003 hosting topology doc]
+
+I found the actual mechanism. Before applying a fix, here's what's going on and the trade-off
+involved.
+
+**What's happening:** Your login uses Google OAuth via BetterAuth, and "login link expired" is
+BetterAuth's `state_mismatch` error (see
+[AuthStatus.tsx:10](apps/web/src/components/AuthStatus.tsx#L10)). Your frontend (Cloudflare Pages)
+and API (Render) are on different domains, so the sign-in flow depends on a short-lived `state`
+cookie surviving a cross-domain round trip through Google.
+
+Two earlier fix attempts already live in [auth.config.ts](apps/api/src/auth/auth.config.ts#L98-L134)
+(cookie lifetime widened to match the 10-min DB record; `SameSite=None` added for prod) — both
+correct, both already deployed via `main`. But there's a third cause neither fix touches:
+`authClient.signIn.social()` sets that cookie via a cross-origin `fetch()` call
+([authClient.ts:17](apps/web/src/lib/authClient.ts#L17), [fetch-
+plugins.mjs](apps/web/node_modules/better-auth/dist/client/fetch-plugins.mjs)), not a top-level page
+navigation. Browsers with stricter privacy defaults — Safari (blocks 3rd-party cookies by default),
+Firefox (Total Cookie Protection, on by default), Brave — silently refuse to persist a cookie set
+that way, or partition it separately from how it's read back later. Plain Chrome/Edge with default
+settings mostly still works. That lines up exactly with "some people, not others": it tracks
+browser/privacy settings, not anything random.
+
+**The reliable fix:** BetterAuth has a first-class escape hatch for this exact cross-domain scenario
+— `account.skipStateCookieCheck: true`. It stops requiring that cookie to validate the callback,
+relying instead on the random `state` value round-tripped through Google plus the 10-minute DB
+record (still checked, still single-use). The trade-off: it removes one defense-in-depth layer
+against a narrow "login CSRF" attack (tricking a victim into landing in the attacker's own Google
+session) — not credential theft, but worth you knowing about since this is a graded project.
+
+The fully "correct" alternative is putting the frontend and API on a shared custom domain (e.g.
+`app.example.com` / `api.example.com`) and using BetterAuth's `crossSubDomainCookies`, which keeps
+the cookie check working properly — your own [ADR-003](docs/decisions/ADR-003-hosting-topology.md)
+flags this domain question as still open. That needs DNS/infra work outside this repo.
+
+[Tool calls:
+  - Asked the user: Which fix do you want applied?]
+
+USER:
+(answering Claude's questions)
+Your questions have been answered: "Which fix do you want applied?"="skipStateCookieCheck
+(Recommended)". You can now continue with these answers in mind.
+
+ASSISTANT:
+I'll apply the `skipStateCookieCheck` fix to `auth.config.ts`.
+
+[Tool calls:
+  - Edited apps/api/src/auth/auth.config.ts
+  - Ran: Confirm skipStateCookieCheck is a typed option in better-auth
+  - Ran: Search for account config type definitions referencing these options
+  - Ran: Locate the type file declaring account.storeStateStrategy option
+  - Ran: Search all node_modules type declaration files for storeStateStrategy
+  - Ran: Show account options type definition context]
+
+Confirmed — `account.skipStateCookieCheck` is a documented, typed top-level option (with the
+library's own warning about security implications, matching what I told you). Let's verify the
+`account` key it lives under, and typecheck the change.
+
+[Tool calls:
+  - Ran: Confirm the parent config key wrapping these options]
+
+Confirmed it's nested under `account:`, matching what I wrote. Now let's typecheck the API to make
+sure nothing else broke.
+
+[Tool calls:
+  - Ran: Typecheck the API package after the auth config change]
+
+Typecheck passes clean. Let's view the final diff to confirm it's correct and well-placed.
+
+[Tool calls:
+  - Read apps/api/src/auth/auth.config.ts]
+
+Good, it's in place correctly. Now let's run the API's test suite to make sure nothing else depends
+on this behavior.
+
+[Tool calls:
+  - Ran: Check if any existing tests reference the auth config or state mismatch behavior
+  - Ran: Lint the modified auth config file]
+
+Lint is clean too.
+
+## Summary
+
+Root cause: your sign-in uses Google OAuth via BetterAuth across two different domains (Cloudflare
+Pages + Render). The flow depends on a short-lived `state` cookie surviving that cross-domain round
+trip, but it's set via a cross-origin `fetch()` call rather than a page navigation — so browsers
+with strict third-party-cookie defaults (Safari, Firefox, Brave) silently drop it, while plain
+Chrome/Edge don't. That's exactly why it looked random: it tracks the visitor's browser, not chance.
+Two earlier, correct fixes for related causes (cookie lifetime, `SameSite=None`) were already in
+place but couldn't fix this specific one.
+
+Fix applied in [auth.config.ts:69-95](apps/api/src/auth/auth.config.ts#L69-L95): set
+`account.skipStateCookieCheck: true`, a documented BetterAuth option for exactly this cross-domain
+scenario. Sign-in now validates purely via the random state value Google echoes back plus the
+10-minute, single-use Postgres record — no longer dependent on a cookie that some browsers won't
+keep. Typecheck and lint both pass.
+
+Worth knowing: this trades away one narrow defense-in-depth layer (a "login CSRF" edge case, not
+credential theft). The fully-defended long-term fix is putting the web app and API on a shared
+parent domain with `crossSubDomainCookies`, which your own ADR-003 already flags as an open question
+— worth revisiting if you set up custom domains later.
+
+USER:
+can you push this fix
+
+ASSISTANT:
+[Tool calls:
+  - Loaded the team-git-workflow skill
+  - Ran: Check current git status and diff stats]
+
+Two things to settle before I commit and push. First, the current branch (`local-stat-editing`)
+already has unrelated uncommitted changes sitting in the working tree (deleted docs, an untracked
+file) — I'll leave those alone and stage only `auth.config.ts`. Second, since this fix is unrelated
+to whatever `local-stat-editing` is about, I want to confirm where it should land.
+
+[Tool calls:
+  - Asked the user: Which branch should the auth fix commit go on?]
+
+USER:
+(answering Claude's questions)
+The user answered: "Which branch should the auth fix commit go on?"="new branch and make a pull
+request on that branch". Read the answers carefully — they may request clarification, changes, or
+that you not proceed — and follow what they actually say.
+
+ASSISTANT:
+[Tool calls:
+  - Ran: Check remote config and whether local main is current with origin
+  - Ran: Check credential helper config and retry remote connectivity
+  - Ran: Retry fetching main branch from origin]
+
+Good, that was transient. Fetch succeeded and pulled new commits on `origin/main`. Now let's set up
+an isolated worktree off the updated `main` so I don't disturb the dirty state on `local-stat-
+editing`.
+
+[Tool calls:
+  - Ran: Show commits on origin/main not yet in local main
+  - Ran: Create an isolated worktree on a new branch off origin/main
+  - Read auth.config.ts]
+
+This file is identical to the version I fixed on `local-stat-editing` (unaffected by the other
+merged work). I'll apply the same edit here.
+
+[Tool calls:
+  - Edited auth.config.ts
+  - Ran: Check worktree status and diff before committing
+  - Ran: Stage the auth config fix in the worktree
+  - Ran: Commit the auth fix with an explanatory message]
+
+Committed. Now pushing the new branch to origin.
+
+[Tool calls:
+  - Ran: Push the new branch to origin
+  - Ran: Check for gitea or github CLI tools
+  - Ran: Remove the temporary worktree now that the branch is pushed
+  - Ran: Confirm local-stat-editing working tree is unaffected]
+
+Confirmed — `local-stat-editing`'s working tree is exactly as it was, untouched.
+
+The fix is pushed on its own branch, isolated from `local-stat-editing`'s unrelated dirty state. I
+don't have a Gitea CLI or API token available in this environment, so I can't open the PR
+programmatically — you'll need to open it yourself here:
+
+**https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/new/fix-google-oauth-state-cookie**
+
+Branch `fix-google-oauth-state-cookie` (off `main`) is pushed with one commit containing just the
+`auth.config.ts` fix.
+
+USER:
+next can you increase the test coverage to get the overall above 80% and make sure the gitea or
+whatever actions shows that
+
+ASSISTANT:
+I'll start by checking the current test coverage setup and baseline numbers across the apps before
+deciding where to focus.
+
+[Tool calls:
+  - Ran: List all package.json files in the repo (apps)
+  - Ran: List package.json files under apps/
+  - Ran: Show package.json scripts for root, api, and web
+  - Ran: Show the coverage report build script
+  - Read .gitea/workflows/ci.yml
+  - Ran: Find vitest config files for api and web
+  - Read apps/api/vitest.config.ts
+  - Ran: Show web app's vite/vitest config
+  - Ran: Run web app test coverage to get baseline numbers
+  - Ran: Check docker-compose config and api's test env file
+  - Ran: Check docker availability and start the test postgres container
+  - Ran: Check if Docker is available via PowerShell
+  - Ran: List all API test spec files
+  - Ran: List files under the api test/ directory
+  - Ran: Check for a native PostgreSQL install or running service
+  - Ran: Run API test coverage against the local postgres-test service]
+
+Both apps individually already look high (web ~87%, API ~98%). Let me build the combined report to
+see the actual "overall" number the tooling produces.
+
+[Tool calls:
+  - Ran: Build the combined coverage report from root
+  - Ran: Show the coverage-data.mjs helper to see how combined totals are computed
+  - Ran: List all files in scripts and scripts/lib
+  - Ran: Show the rest of combineTotals function
+  - Ran: List web files below 80% line coverage with full paths
+  - Ran: Check line counts of the weak-coverage files
+  - Read apps/web/src/types/nba.ts
+  - Loaded the coding-conventions skill
+  - Read apps/web/src/pages/HomePage.tsx]
+
+Simple presentational page, no data fetching. Now let's look at TeamProfilePage.tsx and an existing
+spec for style reference.
+
+[Tool calls:
+  - Read apps/web/src/pages/TeamProfilePage.tsx]
+
+Now let's look at an existing analogous spec file (TeamsListPage.spec.tsx or
+PlayerProfilePage.spec.tsx) for the test setup conventions used in this repo.
+
+[Tool calls:
+  - Read apps/web/src/pages/TeamsListPage.spec.tsx
+  - Ran: Show the test helpers directory and renderWithProviders implementation
+  - Read apps/web/src/pages/PlayerProfilePage.spec.tsx
+  - Read apps/web/src/lib/nbaApi.ts
+  - Read apps/web/src/lib/nbaApi.spec.ts
+  - Ran: Check how AuthStatus.spec.tsx mocks authClient
+  - Ran: Find the BasketballSpinner component file
+  - Read apps/web/src/components/ui/basketball-spinner.tsx
+  - Wrote apps/web/src/pages/TeamProfilePage.spec.tsx
+  - Wrote apps/web/src/pages/HomePage.spec.tsx]
+
+Now let's extend the `nbaApi.spec.ts` to cover the remaining untested functions, and add a small
+`authClient.spec.ts`.
+
+[Tool calls:
+  - Edited apps/web/src/lib/nbaApi.spec.ts
+  - Edited apps/web/src/lib/nbaApi.spec.ts
+  - Wrote apps/web/src/lib/authClient.spec.ts
+  - Read apps/web/src/pages/PlayerProfilePage.tsx
+  - Read apps/web/vite.config.ts
+  - Edited apps/web/vite.config.ts]
+
+Now the API's vitest config:
+
+[Tool calls:
+  - Edited apps/api/vitest.config.ts]
+
+Now let's rerun the web test suite to make sure the new tests pass and check the updated numbers.
+
+[Tool calls:
+  - Ran: Rerun web test coverage with new tests and thresholds
+  - Ran: Check exact coverage numbers for the newly-tested files
+  - Ran: Confirm vitest exits 0 with the new coverage thresholds in place]
+
+Web passes cleanly with thresholds enforced. Now let's confirm the API side still passes with its
+new thresholds too.
+
+[Tool calls:
+  - Ran: Rerun API coverage with thresholds and check exit code]
+
+Good, API passes clean at exit 0 with thresholds enforced too. Now let's compute the new combined
+"overall" and rebuild the report.
+
+[Tool calls:
+  - Ran: Rebuild the combined coverage report with updated numbers]
+
+Now let's add a CI step that prints the coverage numbers directly into the Gitea Actions run
+summary, so it's visible without downloading the artifact.
+
+[Tool calls:
+  - Wrote scripts/print-coverage-summary.mjs
+  - Ran: Run the new coverage summary script locally to verify output]
+
+Works well. Now let's wire this into the CI workflow.
+
+[Tool calls:
+  - Edited .gitea/workflows/ci.yml]
+
+Let me verify the threshold enforcement actually works (not silently ignored) by temporarily setting
+an unreachable threshold and confirming it fails.
+
+[Tool calls:
+  - Ran: Temporarily set an unreachable threshold to confirm vitest enforces it]
+
+Confirmed — enforcement genuinely works (exit 1, clear error message). Now reverting to the real 80%
+threshold.
+
+[Tool calls:
+  - Ran: Revert the temporary threshold back to 80
+  - Ran: Typecheck the web app after adding new test files
+  - Ran: Lint the web app after adding new test files
+  - Ran: Typecheck the API app to confirm nothing broke
+  - Ran: Final verification run of web coverage with restored thresholds
+  - Ran: Rebuild final summary and check git status
+  - Ran: Check how much the touched files differ between local-stat-editing and origin/main
+  - Ran: Show the CI workflow as it currently exists on origin/main
+  - Ran: Try alternate git syntax to show file content from origin/main
+  - Ran: Show CI workflow from origin/main with MSYS path conversion disabled
+  - Ran: Show the rest of origin/main's CI workflow coverage job
+  - Ran: Create a fresh worktree off the latest origin/main for the coverage work
+  - Read .env.test
+  - Read .env.test.example
+  - Ran: Create a local .env.test in the new worktree pointing at the local Postgres service]
+
+Now let's install dependencies for both apps in the new worktree.
+
+[Tool calls:
+  - Ran: Install API dependencies in the coverage worktree
+  - Ran: Install web dependencies in the coverage worktree]
+
+Now let's generate the Prisma client and run the baseline coverage for the API against real `main`.
+
+[Tool calls:
+  - Ran: Generate Prisma client in the coverage worktree
+  - Ran: Run baseline API coverage against current main]
+
+USER:
+(sent while Claude was working)
+why
+
+ASSISTANT:
+That CI failure is almost certainly infrastructure flakiness on the shared runner, not caused by the
+auth fix itself. A few things point that way:
+
+- **Lint/typecheck on both apps passed clean** (green, ~1 min each) — same commit, same code. The
+`account.skipStateCookieCheck` change doesn't touch anything the coverage job's setup depends on.
+- Only the **coverage job** failed, and it's the one job that has to spin up a real, disposable
+Postgres via Docker-in-the-job before it can even start testing — the most fragile part of this
+pipeline (there's a long comment block in `.gitea/workflows/ci.yml` documenting three earlier failed
+attempts to get exactly this working reliably on this shared runner).
+- The failure pattern is the tell: **"Set up job" alone burned 14m42s** (almost the entire 20-minute
+job timeout) while showing green, and then **every single step after it — Checkout included — shows
+red at 0s**. Real command failures show real output and nonzero duration on the step that actually
+failed. Every step failing instantly like this means the job container itself was killed or never
+properly came up (runner overload, Docker daemon unreachable, or the shared course runner got
+reclaimed mid-job) — not that any of these commands actually ran and errored.
+
+I can't pull the raw log myself (no API token/CLI for this Gitea instance), so I can't name the
+exact trigger. Could you expand the **"Start disposable Postgres"** step (or "Set up job") in that
+UI and paste what it printed? That'll show whether it's the "no Docker daemon in the job" case the
+script explicitly checks for, or a plain runner crash — worth confirming before assuming it's just
+flakiness and re-running.
+
+One unrelated note: while digging into the coverage task you asked for next, my own local test run
+just hit a Node segfault mid-run in a scratch worktree — retrying that now, separate from your CI
+question above.
+
+USER:
+well how we fix tha
+
+ASSISTANT:
+[Tool calls:
+  - ToolSearch: select:WebFetch
+  - Fetched https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/100]
+
+Two things, in order:
+
+1. **Retry first.** Click "Re-run all jobs." Given lint/typecheck passed clean and only the Docker-
+dependent Postgres bootstrap step failed, this has the signature of the runner flakiness this
+project's CI has hit before (there's a whole comment block in `ci.yml` documenting three earlier
+rounds of exactly this). A lot of these clear on a plain retry.
+
+2. **If it fails the same way again** (long "Set up job" then everything else 0s), it's not random —
+expand "Start disposable Postgres" in the UI and paste me what it printed. I tried to pull the log
+myself but the PR page 404'd for me (likely needs your login session, which I don't have). The
+script has a specific check for this: if the job container can't reach a Docker daemon, it prints
+`::error title=No Docker daemon in the job::...this runner is likely configured with
+container.docker_host: "-"`. If that's what shows up, it's a runner configuration problem on the
+course's shared runner (`sdp-runner-1`) — not something fixable from this repo's side; someone would
+need to either get Docker socket access enabled for job containers on that runner, or we'd rewrite
+that step to install Postgres directly in the job via `apt-get` and talk to it over a unix socket
+instead (the script's own fallback suggestion, just not implemented).
+
+Paste the log text (or a screenshot of the expanded step) once you've retried, and I'll know which
+of those it actually is instead of guessing further.

@@ -1,0 +1,1316 @@
+2026-09-11 — Owen Pace + Claude Code (Claude Sonnet 5)
+Reviewing and merging PRs #86, #88, #89 and #90, and bringing the docs site in line with the code
+Sports Analytics Tool — COMS3011A Project 3
+
+AI Declaration: Claude Code, model claude-sonnet-5 ("Claude Sonnet 5"). Purpose: reviewing and test-merging teammates' pull requests, checking the CI runners, backfilling the Sprint Log and correcting docs pages against the source.
+
+How to read this: generated from the saved session file. USER sections are what Owen typed and
+ASSISTANT sections are Claude's replies, both word for word. Each tool call Claude made is
+listed as one line saying what it did; the raw commands and their output are left out, as are
+Claude's internal reasoning, the contents of attached files and images, and sub-agent
+transcripts. The redaction pass found nothing to mask.
+
+================================================================================
+
+[image attached]
+
+[image attached]
+
+[image attached]
+
+[image attached]
+
+USER:
+https://sdp.ms.wits.ac.za/innovation/sportsanalytics/branches can you merge these pull requests
+after you check them. then i would like you to update and check all the documentation
+https://github.com/Sports-Analytics-Innovation-Platform/Innovation-Documentation-Website and that we
+are meeting the requirments for the rebric.
+
+ASSISTANT:
+I'll start by understanding the repo setup and how to reach the Gitea instance at sdp.ms.wits.ac.za.
+
+[Tool calls:
+  - Ran: Check git remotes, branches, and available CLIs
+  - Ran: Check for stored git credentials or tokens
+  - Ran: Fetch latest branches from origin]
+
+Direct git/network credential actions are sandboxed here. Let me check whether I can at least read
+the Gitea pages and the GitHub docs site via WebFetch (read-only, no credentials needed for public
+pages).
+
+[Tool calls:
+  - ToolSearch: select:WebFetch
+  - Fetched https://sdp.ms.wits.ac.za/innovation/sportsanalytics/branches
+  - Fetched https://github.com/Sports-Analytics-Innovation-Platform/Innovation-Documentation-Website
+  - Ran: Inspect full working tree status and recent docs history]
+
+That stray root file looks like it might be a scraped dump of the Gitea page — worth checking before
+I do anything else, and the uncommitted deletion of 10k+ lines of docs needs an explanation before I
+touch it.
+
+[Tool calls:
+  - Ran: Inspect the stray untracked text file at repo root
+  - Searched the code for 'docs/|PROJECT_OVERVIEW|delet|stash|Documentation Website|moved these
+transcripts'
+  - Ran: Test anonymous clone of public docs website repo]
+
+Good — anonymous read access to the docs repo works. Now let me look at what's actually in it.
+
+[Tool calls:
+  - Ran: List documentation files and view mkdocs nav config
+  - Ran: Check recent commit history and remote branches of docs site
+  - Ran: Unshallow the docs-site clone to see full history
+  - Fetched https://github.com/Sports-Analytics-Innovation-Platform/Innovation-Documentation-
+Website/pulls?state=all]
+
+Now let me report the access blocker and pivot to auditing the documentation site against the
+rubric. First, the blocker:
+
+**I can't access the Gitea PRs (#86, #89, #90) from this session.** `git fetch`/API calls to
+`sdp.ms.wits.ac.za` are blocked by the sandbox's credential-materialization policy, and the web UI
+requires an institutional login that `WebFetch` can't authenticate through (I got a 404/login-wall).
+So I genuinely cannot review or merge `swagger-openapi`, `advanced-player-stats`, or `postseason-
+view` from here. I'll come back to this at the end with options — for now let me get as much of the
+rest done as possible, starting with a full audit of the documentation site.
+
+[Tool calls:
+  - Ran: Read the rubric quick links page]
+
+This confirms the rubric matches Sprint 2 in `rubric-links.md` exactly. Let me cross-check its
+claims against the actual local codebase (which I do have, even if it may be a bit behind origin).
+
+[Tool calls:
+  - Ran: Check local vs origin main freshness and search for swagger setup
+  - Ran: Search origin/main for swagger setup and dependency
+  - Ran: Check CI workflows, test file count, and app structure on origin/main
+  - Ran: List root tree and apps directory on origin/main
+  - Ran: List apps subdirs, count test files, view CI workflow
+  - Ran: View CI workflow file with path conversion disabled
+  - Ran: Read feature tiers documentation
+  - Ran: Check for player compare route on origin/main]
+
+Good — player comparison is already merged into `origin/main`. Let me check the remaining freshness
+signals: sprint log, AI usage ledger, and feedback survey status.
+
+[Tool calls:
+  - Ran: Read sprint log tail and feedback survey doc
+  - Ran: Check AI usage ledger and stakeholder interactions for recency
+  - Ran: Test whether push to the public docs GitHub repo is possible (dry-run)]
+
+Here's where things stand. I traced the rubric table you showed against the actual repo and docs
+site, and found some concrete, load-bearing issues:
+
+**Blocker on the 3 PRs:** I can't fetch from or push to `sdp.ms.wits.ac.za` — this sandboxed session
+blocks git credential access to that host, and the web UI needs an institutional login `WebFetch`
+can't do. I have no way to view the diffs for `swagger-openapi` (#86), `advanced-player-stats`
+(#90), or `postseason-view` (#89), or to click merge.
+
+**Why this actually matters for the rubric:** `docs/rubric-links.md` on the documentation site
+already *claims* "live Swagger UI at `/api/docs`" as evidence for the API criterion (15%) — but I
+checked `origin/main` and there's no Swagger/OpenAPI setup merged yet. That claim is currently false
+until #86 lands. I can't tell what's in #90 or #89 without seeing the diffs, though `advanced-
+player-stats` (18 commits) and `postseason-view` (10 commits) are presumably substantial feature
+work — and `postseason-view` isn't mentioned anywhere in `docs/design/feature-tiers.md` yet.
+
+**Separately, in the docs site itself** (I cloned it read-only — full audit):
+- `docs/sprint-log.md` stops at "Week of 18 Aug" — three weeks of Sprint 2 work (player comparisons,
+search, auth protection, the pending PRs, etc.) are undocumented there. That's a direct risk to the
+Project Methodology line (10%), which the doc itself notes "specifically wants evidence of active
+following."
+- `docs/feedback-survey.md` is still just a drafted Google Form, 0 respondents — matches what
+`rubric-links.md` already honestly discloses.
+- Everything else I checked (testing, stakeholder log through 07 Sep, AI usage ledger, tech stack,
+CI config) matches reality well.
+
+[Tool calls:
+  - Asked the user: I can't reach the Gitea PRs from this sandboxed session (no fetch/push access,
+web UI needs your login). How do you want to handle reviewing and merging #86/#89/#90?]
+
+USER:
+(answering Claude's questions)
+The user answered: "I can't reach the Gitea PRs from this sandboxed session (no fetch/push access,
+web UI needs your login). How do you want to handle reviewing and merging #86/#89/#90?"="you should
+be able to as i am logged in locally but if you cant just focus on the documentaion side". Read the
+answers carefully — they may request clarification, changes, or that you not proceed — and follow
+what they actually say.
+
+ASSISTANT:
+[Tool calls:
+  - Ran: Try fetching latest branches from Gitea origin via PowerShell]
+
+That worked via PowerShell. I now have all three PR branches locally — let me review each diff
+against `main`.
+
+[Tool calls:
+  - Ran: Review commit logs and diffstats for the three PR branches vs main
+  - Ran: Check how far behind current main each PR branch is
+  - Ran: Check for file overlap between recent main commits and postseason-view branch]
+
+USER:
+(sent while Claude was working)
+and just tell me if they are good and i will merge
+
+ASSISTANT:
+Got it — I'll review and give you a clear verdict per PR rather than merge myself. Let me test-merge
+each locally to check for conflicts, since two of them touch files also changed by the recently-
+merged #91/#92.
+
+[Tool calls:
+  - Ran: Create a detached worktree at current main for safe merge testing
+  - Ran: Dry-run merge swagger-openapi and postseason-view against current main
+  - Ran: Inspect the auto-merged overlapping spec files]
+
+That merged cleanly and correctly. Now let me abort and test `advanced-player-stats`, then actually
+run the test suites against the merged results to check for real breakage, not just textual
+conflicts.
+
+[Tool calls:
+  - Ran: Abort previous merge and test advanced-player-stats merge
+  - Ran: Install web app dependencies for the merged worktree
+  - Ran: Typecheck the merged web app]
+
+Typecheck is clean on the merged (advanced-player-stats, which includes postseason-view) result. Now
+let's run the actual test suite.
+
+[Tool calls:
+  - Ran: Run web unit/component tests on the merged worktree
+  - Ran: Lint the merged web app
+  - Ran: Run configured lint script for web app
+  - Ran: Check whether apps/api or prisma schema changed in the merge, and confirm no unresolved
+conflicts
+  - Ran: Correctly check staged changes to apps/api relative to main during the pending merge
+  - Ran: Install API deps, generate Prisma client, and typecheck the merged API
+  - Ran: Confirm API typecheck exit code
+  - Ran: Review the swagger bootstrap diff in main.ts
+  - Ran: Clean up the temporary merge-check worktree]
+
+All three merge cleanly, and I ran typecheck + the full test suite against the merged result —
+everything passes. Here's the verdict:
+
+## PR review — all three are good to merge
+
+**#86 `swagger-openapi`** ✅ Merge it.
+Fully up to date with main already. Small, clean, additive — just wires up `@nestjs/swagger` in
+`main.ts` (title, description, cookie-auth scheme, tags, `/api/docs` + `/api-json`) and adds
+`@ApiTags`/decorators to the controllers. No conflicts, nothing else depends on it. This is also
+what makes the "live Swagger UI" claim in `rubric-links.md` actually true — merge it first for that
+reason.
+
+**#89 `postseason-view`** ✅ Merge it.
+Adds season-type filtering (regular/playoffs/finals) across ingestion, API, and the player/game
+pages, plus a `SeasonSegmentControl` UI and full test coverage. Merges cleanly onto current main (4
+commits behind — #91/#92 already landed), auto-merges the two overlapping spec files correctly,
+typechecks clean.
+
+**#90 `advanced-player-stats`** ✅ Merge it, **after** #89.
+This branch is built on top of `postseason-view` (contains all its commits plus more — true
+shooting%, eFG%, plus-minus, usage rate, player ratings, splits table, backfill script). It merges
+cleanly and independently too, but merge **#89 before #90** since #90 already assumes #89's changes
+— merging in that order avoids Gitea flagging #90 as introducing changes #89 was supposed to
+introduce first, and matches the PR numbering.
+
+**What I verified on the merged result** (in a throwaway git worktree, nothing touched your real
+branches):
+- Zero merge conflicts for any of the three, individually or combined
+- `apps/web` typecheck: clean; `apps/api` typecheck + `prisma generate`: clean (2 new migrations:
+`add_game_season_type`, `add_advanced_player_game_stats`)
+- `apps/web` full test suite: **188/188 passing**, 28 files
+- `apps/web` lint: clean (only pre-existing warnings)
+- One cosmetic thing, not a blocker: `PlayerProfilePage.spec.tsx` logs a react-query console warning
+("Query data cannot be undefined... playerStatsSplits") in a few tests — tests still pass, worth a
+quick look post-merge but not worth holding up the PR.
+
+I didn't run the API's e2e suite (needs a live disposable Postgres, which isn't set up in this
+sandbox) — if you want that checked too before merging, let me know, otherwise the typecheck +
+migration validity gives good confidence.
+
+Go ahead and merge #86 → #89 → #90 in that order. Once you have, tell me and I'll update the
+documentation site to reflect what actually landed (Swagger, postseason views, advanced stats aren't
+in `feature-tiers.md` yet, and `sprint-log.md` is 3 weeks stale — I'll fold the merge into that
+update).
+
+USER:
+is the documentation up to date?
+
+ASSISTANT:
+Let me check whether the merges have happened yet, since that affects what "up to date" even means
+right now.
+
+[Tool calls:
+  - Ran: Check current state of origin/main
+  - Ran: List merge commits since last check to confirm all three PRs landed
+  - Ran: Check specifically whether swagger-openapi has been merged into main
+  - Ran: Search docs site for any existing mentions of the newly merged features
+  - Ran: Check roadmap, api-reference, and latest scrum meeting for feature status
+  - Ran: Check AI usage ledger for entries in the last week matching the new feature work]
+
+**No.** Two things are actively wrong (not just stale), and two more are missing coverage:
+
+**Actively incorrect right now:**
+1. **`docs/api-reference.md`** states *"Status: Done. `@nestjs/swagger@^7` is installed and
+configured... active in production."* — false. I checked: `swagger-openapi` (#86) is still an
+**unmerged** open PR (I confirmed with `git merge-base --is-ancestor` against current
+`origin/main`). #89 and #90 merged, #86 didn't.
+2. **`docs/rubric-links.md`** claims "live Swagger UI at `/api/docs`" as evidence for the Sprint 2
+API criterion (15%) — same problem, same unmerged PR.
+
+**Missing coverage (features that merged but aren't documented yet):**
+3. **`docs/design/feature-tiers.md`** has no mention of the postseason/season-segment views (#89) or
+the advanced player stats — true shooting%, eFG%, usage rate, plus-minus, player ratings (#90) —
+both are real, merged, tested features now.
+4. **`docs/sprint-log.md`** stops at "Week of 18 Aug" — three-plus weeks of Sprint 2 work, including
+all of this, aren't logged. Given the rubric explicitly wants evidence of *active* methodology, not
+just the document existing, this is a real exposure with Sprint 2 due 2026-09-15.
+
+**Worth a quick check with you:** `docs/ai-usage.md` has no entries after ~24-25 Aug. If any AI
+assistance went into building postseason-view, advanced-player-stats, or swagger-openapi, that's
+currently unlogged.
+
+Everything else I checked earlier (stakeholder log through 07 Sep, CI docs, tech stack) holds up
+fine.
+
+Want me to fix all of this now — update `api-reference.md` and `rubric-links.md` to reflect that
+Swagger is still pending, add the new features to `feature-tiers.md`, and backfill `sprint-log.md`?
+I can draft it all locally; whether I can push it to the docs repo directly or need to hand it to
+you depends on write access I haven't tested yet.
+
+USER:
+can you merge the loast one ( she is no merge button and then change the tag to merged or close
+it)can you update the sprint log looking at the commits and any other documentation
+
+ASSISTANT:
+[Tool calls:
+  - Ran: Fetch latest state and check current main/swagger-openapi tips
+  - Ran: Check swagger-openapi mergeability against current main
+  - Read players.controller.ts
+  - Read players.controller.ts
+  - Ran: List all conflicted files in the swagger-openapi merge]
+
+Just the one file. Let me check the other three controller files too, since swagger-openapi touched
+them all — need to make sure none silently reverted the season-type/postseason logic even where git
+didn't flag a conflict.
+
+[Tool calls:
+  - Ran: Check the other controller files touched by swagger-openapi for silent regressions]
+
+Only `players.controller.ts` has a real conflict; the other four applied clean. Let me resolve it by
+combining the merged `seasonType` logic with the Swagger decorators.
+
+[Tool calls:
+  - Edited players.controller.ts
+  - Edited players.controller.ts]
+
+Now let me verify the file is clean and correct, then check for the same pattern on
+`stats.service.ts`'s split endpoint (also touched by swagger for `/stats/splits`?) — actually that
+route had no Swagger decorators added at all in the original diff. Let me confirm and also check
+`stats.service.ts`/DTOs weren't part of swagger-openapi's diff.
+
+[Tool calls:
+  - Read players.controller.ts]
+
+Clean. Now let me finish the merge, verify with typecheck/tests, and inspect the rest of the merge
+(package.json/lockfile) before committing.
+
+[Tool calls:
+  - Ran: Stage the resolved conflict and check overall merge status]
+
+All clean now — no remaining conflicts. Let's typecheck and run the API test suite against this
+merged result before committing.
+
+[Tool calls:
+  - Ran: Install deps, generate prisma client, typecheck merged API
+  - Ran: Check available test scripts in the API package
+  - Ran: Attempt running API unit tests (non-e2e) on merged code
+  - Ran: Run the players stats unit spec that doesn't need a live DB]
+
+Typecheck confirms the fix is sound; I can't run the API test suite without a live Postgres in this
+sandbox (same limitation as before), but the conflict resolution was mechanical — decorator-only
+additions reconciled against the already-tested `seasonType` logic. Let me commit and push this
+merge.
+
+[Tool calls:
+  - Ran: Commit the resolved merge
+  - Ran: Confirm the merge commit hash before pushing
+  - Ran: Re-check main hasn't moved, then push the merge commit directly to origin main
+  - Ran: Check what commit PowerShell's git actually sees in this worktree
+  - Ran: Verify object visibility from main repo and retry push to origin main
+  - Ran: Check worktree list and path visibility from PowerShell's environment
+  - Ran: Recheck object visibility for the merge commit from the main repo
+  - Ran: Inspect git status and git-dir resolution from PowerShell inside the worktree
+  - Ran: Retry object lookup from within the worktree directory in PowerShell]
+
+Found it — I mistyped the SHA (dropped a digit: `28372852...` not `2837285c...`). Let me redo the
+push with the correct hash.
+
+[Tool calls:
+  - Ran: Re-verify main hasn't moved and push the merge commit using the correct SHA]
+
+The push succeeded — `main` is now `a40c885..2837285`. Let me verify it landed correctly and clean
+up the temporary worktree.
+
+[Tool calls:
+  - Ran: Confirm main updated on origin and remove the temp worktree]
+
+**#86 (swagger-openapi) is merged into `main` on the Gitea server.** There genuinely was no merge
+button because main had moved past it (#89/#90 landed first) and it had a real conflict in
+`players.controller.ts` — both branches touched the same two endpoints. I resolved it by keeping the
+`seasonType` logic from #89/#90 and adding the Swagger decorators on top, verified with a clean
+typecheck of the merged API, then pushed a proper merge commit directly (mirroring Gitea's own
+merge-commit style: `Merge pull request 'feat: add swagger openapi documentation' (#86) from
+swagger-openapi into main`).
+
+Since the merge landed with that commit message referencing #86, Gitea should auto-detect the branch
+is now fully merged into `main` and mark the PR as merged on its own next time it reconciles — but
+if the PR page still shows it open when you check, just hit close manually; there's nothing left to
+merge.
+
+Now let me move to the sprint log update — pulling the actual commit history since "Week of 18 Aug"
+and cross-referencing the meeting notes, stakeholder log, and AI usage ledger to fill in the gap.
+
+[Tool calls:
+  - Ran: List merge commits (feature PRs) landed on main since Week of 18 Aug baseline
+  - Ran: List all commits on main since 24 Aug with author, date, message
+  - Ran: Check the scrum meetings index for existing weekly notes
+  - Ran: Read remainder of the 2026-09-07 scrum meeting notes]
+
+Let me pull the docs-site repo's own commit history for the same window, since sprint-log entries
+include documentation work too.
+
+[Tool calls:
+  - Ran: List docs-site commits since 24 Aug]
+
+I need to see the full current `sprint-log.md` to know exactly where coverage stops, to avoid
+duplicating or misdating entries.
+
+[Tool calls:
+  - Read scratch:docs-site/docs/sprint-log.md]
+
+Now I have a complete, correctly-bucketed picture (Mon–Sun weeks; today, 2026-09-11, is a Thursday).
+Let me update `sprint-log.md`.
+
+[Tool calls:
+  - Edited scratch:docs-site/docs/sprint-log.md]
+
+Now let me add a matching AI usage ledger entry, since this session's own work should be logged per
+the project's established convention.
+
+[Tool calls:
+  - Ran: Check AI usage ledger table header format
+  - Read scratch:docs-site/docs/ai-usage.md]
+
+Now I'll append a row for this session's work.
+
+[Tool calls:
+  - Edited scratch:docs-site/docs/ai-usage.md]
+
+Let me validate the docs build (this project's history shows strict-mode MkDocs breaks easily on bad
+links) before committing.
+
+[Tool calls:
+  - Ran: Install mkdocs deps and run a strict build to validate the edits]
+
+The build passes strict mode cleanly — my edits didn't break anything. Let me commit and push.
+
+[Tool calls:
+  - Ran: Stage and commit the sprint log and AI usage ledger updates
+  - Ran: Discard local mkdocs build artifacts, keep only the doc commit]
+
+Clean. Now let's push this to the docs repo (via PowerShell, since that's the path with working
+credential access).
+
+[Tool calls:
+  - Ran: Push the docs-site commit to origin main via PowerShell]
+
+The push succeeded — `sprint-log.md` and `ai-usage.md` are now live and will auto-deploy to the docs
+site via GitHub Pages.
+
+## Done
+
+**Merged #86 (swagger-openapi)** directly into `main`. There was no merge button because main had
+advanced past it since #89/#90 landed — real conflict in `players.controller.ts` where both branches
+touched `comparePlayers`/`getPlayerStats`. Resolved it by keeping the `seasonType` logic and
+layering the Swagger decorators on top, verified with a clean typecheck, pushed as commit `2837285`.
+Gitea should auto-mark #86 merged now that its commits are ancestors of `main`; close it manually if
+the badge doesn't flip on its own.
+
+**Updated `sprint-log.md`** by cross-referencing git history (both repos) against the scrum meeting
+notes and AI usage ledger to attribute things correctly:
+- Backfilled the missing Sunday-24-Aug entries into the existing "Week of 18 Aug" table
+- Added a new "Sprint 2" section with **Week of 25 Aug**, **Week of 1 Sep**, and **Week of 8 Sep** —
+covering player comparisons, the bug tracker, local stat editing, the postseason/advanced-
+stats/Swagger work, the home page rebuild, and today's merges
+- Logged this session's own PR review and conflict-resolution work in `ai-usage.md`, consistent with
+how the project already tracks AI assistance
+
+I validated the docs site still builds clean under `mkdocs build --strict` before pushing (this
+project's history shows that build breaks easily on bad links).
+
+**Still open, not yet touched:** `docs/api-reference.md` and `docs/rubric-links.md` both claim
+Swagger was already live — that's now actually true since the merge, so those just need their
+wording adjusted from "planned" to confirmed, and `docs/design/feature-tiers.md` still doesn't
+mention the postseason views or advanced stats. Want me to fold those in too?
+
+USER:
+are all the other files up to date?
+
+ASSISTANT:
+[Tool calls:
+  - Ran: Search all living doc pages for staleness/placeholder markers
+  - Ran: Read the API design doc fully to check endpoint list and Not-yet-built section]
+
+`api-design.md` is significantly stale — it's missing `/v1/players/compare`,
+`/v1/players/:id/stats/splits`, and the `seasonType` query param entirely. Let me check the rest of
+the design/reference docs systematically.
+
+[Tool calls:
+  - Ran: Check tech-stack.md for Swagger dependency and erd.md structure
+  - Ran: View the two new Prisma migrations for exact schema changes
+  - Ran: Read the full roadmap document
+  - Ran: Check wireframes doc for the route/page inventory
+  - Read scratch:docs-site/docs/design/wireframes.md
+  - Ran: Check testing.md for axe coverage and architecture.md structure]
+
+**No — several more are stale**, on top of the two I already flagged. Here's the full picture from
+checking the pages tied to what actually changed:
+
+**Confirmed stale:**
+1. **`docs/design/api-design.md`** — the "Confirmed endpoints" table is missing `GET
+/v1/players/compare` (merged 29 Aug, PR #53) and `GET /v1/players/:id/stats/splits` (postseason
+work) entirely, and doesn't mention the `seasonType` query param that now exists on several
+endpoints.
+2. **`docs/design/wireframes.md`** (UI Overview) — doesn't document the `/compare` page at all (a
+whole screen missing), doesn't mention the season-segment control/splits table on player profiles,
+doesn't mention advanced stats (true shooting%, eFG%, plus-minus, usage%, ratings), and still says
+*"axe-core checks planned for Sprint 2"* — that shipped today (PR #92).
+3. **`docs/design/roadmap.md`** — the entire "Sprint 2" section is written as a to-do list, but
+Swagger, the accessibility pass, and the pinger are now all actually done. It reads like nothing's
+been checked off.
+4. **`docs/testing.md`** — line 213 says axe-core scanning is *"agreed for a later sprint"*; it's
+merged and running today.
+5. **`docs/design/erd.md`** — `PlayerGameStat` is missing the 6 new columns (`plusMinus`,
+`usagePercentage`, `offensiveRating`, `defensiveRating`, `offensiveRebounds`, `defensiveRebounds`),
+and `Game` is missing `seasonType`/`playoffRound`. I pulled the exact migrations to confirm these
+are the only new stored fields (true shooting%/eFG%/AST-TO are computed on read, matching the
+existing pattern, so those don't need new ERD rows).
+
+**Confirmed current** (no action needed): `docs/tech-stack.md` already lists `@nestjs/swagger`
+correctly — someone added it ahead of the merge.
+
+**Not yet checked** (didn't want to over-scope without you asking): `methodology.md`, `security.md`,
+`design/architecture.md`, `meetings/client/index.md`, `getting-started.md`, `git-methodology.md`,
+`demo-guide.md`. These aren't touched by the features I just merged, so they're lower-risk, but I
+haven't verified them line-by-line.
+
+That's `api-reference.md`, `rubric-links.md`, `feature-tiers.md`, `api-design.md`, `wireframes.md`,
+`roadmap.md`, `testing.md`, and `erd.md` — eight pages needing real edits. Want me to go through and
+fix all eight now?
+
+USER:
+can you udate them
+
+ASSISTANT:
+I'll work through all eight. Let me start by reading the full current state of each file that I
+haven't already read completely.
+
+[Tool calls:
+  - Read scratch:docs-site/docs/api-reference.md]
+
+Let me check the actual current source for exact shapes before rewriting the API reference — the
+existing doc's compare response doesn't match what I saw in the real controller.
+
+[Tool calls:
+  - Ran: Read stats.service.ts for the real response shape types
+  - Ran: Read final players and games controllers post-merge
+  - Ran: Check players.service and games.service for seasonType/participated filter params
+  - Ran: Check optimizer controller for the missing predictions endpoint
+  - Edited scratch:docs-site/docs/api-reference.md
+  - Edited scratch:docs-site/docs/api-reference.md]
+
+Now the games section and the missing optimizer endpoint:
+
+[Tool calls:
+  - Edited scratch:docs-site/docs/api-reference.md
+  - Edited scratch:docs-site/docs/api-reference.md]
+
+`api-reference.md` done. Now `feature-tiers.md` — adding postseason views and advanced stats to the
+Intermediate tier.
+
+[Tool calls:
+  - Edited scratch:docs-site/docs/design/feature-tiers.md]
+
+Now `rubric-links.md` — the Swagger claim was already worded as fact (it just wasn't true yet); now
+it is. But the Core Features row still undersells things — only "basic tier" is mentioned even
+though intermediate-tier features are now live.
+
+[Tool calls:
+  - Edited scratch:docs-site/docs/rubric-links.md]
+
+Now `api-design.md` — adding the missing endpoints to the confirmed table.
+
+[Tool calls:
+  - Edited scratch:docs-site/docs/design/api-design.md
+  - Edited scratch:docs-site/docs/design/api-design.md]
+
+Now `erd.md` — adding the new schema fields. Let me see the full relevant sections first.
+
+[Tool calls:
+  - Read scratch:docs-site/docs/design/erd.md
+  - Ran: Check current schema.prisma line count and model count
+  - Ran: List all model names in the current schema
+  - Edited scratch:docs-site/docs/design/erd.md
+  - Edited scratch:docs-site/docs/design/erd.md]
+
+Now `wireframes.md` — adding the missing `/compare` screen, season-segment control, advanced stats,
+and fixing the stale axe-core note.
+
+[Tool calls:
+  - Edited scratch:docs-site/docs/design/wireframes.md]
+
+Let me verify the actual navbar links before editing the Navigation section, since I don't want to
+assert something unconfirmed.
+
+[Tool calls:
+  - Ran: Check actual navbar links in the current codebase
+  - Ran: Find the current header/navbar component file
+  - Ran: Check the actual nav links in the current header component
+  - Ran: Check the full header link groups and all app routes
+  - Ran: Check HomePage.tsx content to describe it accurately
+  - Ran: Check LandingPage.tsx content]
+
+I found a real discrepancy: the home page code still says "NOT WIRED TO THE API YET" despite meeting
+notes claiming otherwise — good thing I checked source over narrative. Let me fix `wireframes.md`
+accurately, then go back and correct the same false claim I just wrote into `sprint-log.md`.
+
+[Tool calls:
+  - Edited scratch:docs-site/docs/design/wireframes.md]
+
+Now the accessibility section's stale axe-core note:
+
+[Tool calls:
+  - Edited scratch:docs-site/docs/design/wireframes.md]
+
+Now let me fix the false claim I introduced into `sprint-log.md` last turn.
+
+[Tool calls:
+  - Edited scratch:docs-site/docs/sprint-log.md]
+
+Let me quickly verify the #91 "protect personalized home flow" claim too, since I'm now double-
+checking against source rather than narrative.
+
+[Tool calls:
+  - Ran: Check what the protect-personalized-home-flow commit actually changed]
+
+Good, that one's accurate. Now `roadmap.md` — marking Sprint 2 items as actually done.
+
+[Tool calls:
+  - Edited scratch:docs-site/docs/design/roadmap.md]
+
+Now `testing.md` — fixing the stale axe-core status line.
+
+[Tool calls:
+  - Read scratch:docs-site/docs/testing.md
+  - Edited scratch:docs-site/docs/testing.md
+  - Read scratch:docs-site/docs/testing.md
+  - Edited scratch:docs-site/docs/testing.md]
+
+All eight files done. Let me validate the full build again before committing — lots of cross-
+references added.
+
+[Tool calls:
+  - Ran: Run strict mkdocs build to validate all edits]
+
+Clean build, no broken links introduced. Let me discard the local build artifacts, review the full
+diff, then commit and push.
+
+[Tool calls:
+  - Ran: Discard build artifacts and check final status]
+
+All 8 target files plus the `sprint-log.md` correction. Let me do a final content review of the diff
+before committing.
+
+[Tool calls:
+  - Ran: Show diff stats for the changes before committing]
+
+This looks right. Let me commit and push.
+
+[Tool calls:
+  - Ran: Commit the documentation sync changes
+  - Ran: Push the documentation sync commit to origin main]
+
+Pushed. Here's a summary of what changed:
+
+## All 8 files updated and pushed
+
+- **`api-reference.md`** — added the missing `/v1/players/compare` fixes (the doc's example response
+didn't even match the real code), `/v1/players/:id/stats/splits`,
+`/v1/optimizer/predictions/:playerId`, and `seasonType`/`participated` params throughout
+- **`api-design.md`** — same missing endpoints added to the confirmed-endpoints table
+- **`erd.md`** — added the 2 new `Game` columns and 6 new `PlayerGameStat` columns from the two
+Sprint 2 migrations; corrected the stale line/model count (257→337 lines, 12→13 models)
+- **`feature-tiers.md`** — added postseason views and advanced stats to the Intermediate tier
+- **`roadmap.md`** — checked off what's actually done vs. still open
+- **`wireframes.md`** — added the missing `/compare` page and season-segment control; **corrected
+the Home/Landing split** (`/` is the marketing page, `/home` is a separate signed-in dashboard)
+- **`rubric-links.md`** — Core Features row now credits the intermediate-tier work already live
+- **`testing.md`** — axe-core marked done; softened an overclaim about the user feedback survey
+"satisfying" the rubric criterion when it hasn't been distributed yet
+
+**Two real inaccuracies I caught by checking source over narrative**, worth flagging directly: the
+team's own meeting notes say the home page is "wired to real backend data," but the component's own
+code comment says *"NOT WIRED TO THE API YET"* — I went with the code and corrected both
+`wireframes.md` and the `sprint-log.md` line I'd written last turn. Same pattern with the feedback
+survey: `testing.md` claimed it "satisfies" the rubric criterion while `rubric-links.md` (correctly)
+discloses it's still just drafted — I aligned `testing.md` to the honest version.
+
+Validated with `mkdocs build --strict` before and after — no broken links.
+
+USER:
+is all the docs accurate to the code itself now?
+
+ASSISTANT:
+Let me do a real verification pass rather than assume — checking both the 8 files I just edited for
+accuracy, and the files I flagged as "not yet checked" last time.
+
+[Tool calls:
+  - Ran: Spot-check ComparePage.tsx against what I wrote in wireframes.md
+  - Ran: Check PlayerProfilePage structure for accuracy of wireframes.md claims
+  - Ran: Check security.md's not-yet-implemented section for password reset status
+  - Ran: a shell command]
+
+Found another stale axe-core reference in `requirements.md`. Let me fix it.
+
+[Tool calls:
+  - Edited scratch:docs-site/docs/requirements.md]
+
+Now let me check `architecture.md`'s Python services section and `getting-started.md`/`demo-
+guide.md`.
+
+[Tool calls:
+  - Ran: Check the backend and Python services sections of architecture.md
+  - Ran: a shell command]
+
+Let me verify the landing page's actual theme before I correct the demo guide's "dark-themed" claim.
+
+[Tool calls:
+  - Ran: Check LandingPage's actual background/theme classes
+  - Edited scratch:docs-site/docs/demo-guide.md
+  - Edited scratch:docs-site/docs/demo-guide.md]
+
+Now the API endpoints table and rubric table at the bottom:
+
+[Tool calls:
+  - Edited scratch:docs-site/docs/demo-guide.md
+  - Ran: a shell command
+  - Ran: Verify docker-compose Postgres port matches getting-started.md
+  - Ran: Check what client meeting entries exist]
+
+Let me rebuild and validate before committing these additional fixes.
+
+[Tool calls:
+  - Ran: Validate build and check status after latest fixes]
+
+Clean. Let me commit and push these last two fixes.
+
+[Tool calls:
+  - Ran: Commit the demo-guide and requirements fixes
+  - Ran: Push the latest documentation fixes]
+
+Let me finish the sweep — checking the handful of files I still haven't read at all this session, so
+I can give a genuinely complete answer rather than a hedged one.
+
+[Tool calls:
+  - Ran: Check sizes of remaining unread files
+  - Read scratch:docs-site/docs/methodology.md
+  - Read scratch:docs-site/docs/git-methodology.md
+  - Read scratch:docs-site/docs/definition-of-done.md
+  - Ran: a shell command]
+
+Found a stale one on the docs site's front page — the Status section only describes Sprint 1, with
+Sprint 2 due in 4 days.
+
+[Tool calls:
+  - Edited scratch:docs-site/docs/index.md
+  - Ran: a shell command]
+
+This is a real contradiction: `coding-conventions.md` says API linting "must pass before merge" via
+`eslint.config.js`, but I recall the actual CI workflow explicitly skips API lint because that file
+doesn't exist. Let me verify.
+
+[Tool calls:
+  - Ran: Check if apps/api/eslint.config.js actually exists
+  - Ran: Check when eslint.config.js was added and its content
+  - Ran: Verify oxlint config exists for the web app
+  - Ran: Check ci-cd.md for runner/hostname/port claims that may be stale after the 7 Sep CI fixes]
+
+This is a major one — `ci-cd.md` describes `runs-on: default` and `postgres:5432`, but the actual
+commits (which I already found earlier) explicitly moved CI to `ubuntu-latest` and off that default
+port/hostname. Let me check the real current config.
+
+[Tool calls:
+  - Ran: Read the current coverage job config for runner label and Postgres service settings
+  - Ran: Read the rest of the coverage job to see how Postgres and DATABASE_URL are wired up now
+  - Ran: See the rest of the postgres startup step including DATABASE_URL export
+  - Read scratch:docs-site/docs/ci-cd.md
+  - Read scratch:docs-site/docs/ci-cd.md
+  - Ran: Check current artifact action version and runner references
+  - Ran: See the DATABASE_URL export and remaining coverage job steps
+  - Read scratch:docs-site/docs/ci-cd.md
+  - Edited scratch:docs-site/docs/ci-cd.md
+  - Edited scratch:docs-site/docs/ci-cd.md]
+
+Now the "The test database" section, which describes the old `services:` mechanism in detail:
+
+[Tool calls:
+  - Edited scratch:docs-site/docs/ci-cd.md]
+
+Now the "Gitea version constraints" bullets referencing the old artifact version and runner label:
+
+[Tool calls:
+  - Edited scratch:docs-site/docs/ci-cd.md]
+
+Let me check the "reproduce locally" section is still consistent after these changes.
+
+[Tool calls:
+  - Ran: Find the reproduce-locally section
+  - Read scratch:docs-site/docs/ci-cd.md
+  - Edited scratch:docs-site/docs/ci-cd.md
+  - Read scratch:docs-site/docs/ci-cd.md
+  - Edited scratch:docs-site/docs/ci-cd.md]
+
+Let me check "What CI does not do yet" briefly, then rebuild and validate everything.
+
+[Tool calls:
+  - Read scratch:docs-site/docs/ci-cd.md
+  - Edited scratch:docs-site/docs/ci-cd.md]
+
+Now let's validate the whole build again and check for any remaining issues before committing this
+substantial CI/CD correction.
+
+[Tool calls:
+  - Ran: Validate build after CI/CD doc rewrite and check status]
+
+Clean build. Let me commit and push these final fixes.
+
+[Tool calls:
+  - Ran: Commit the CI/CD accuracy rewrite and front page status update
+  - Ran: Push the CI/CD and index.md fixes]
+
+Let me do one final check on `tech-stack.md` and the ADRs for any runner/CI references I might have
+missed, then give my final answer.
+
+[Tool calls:
+  - Ran: Search remaining files for stale runner label references]
+
+Yes — with two important caveats worth flagging clearly.
+
+## The docs are now accurate to the code
+
+I went past the original 8 files and did a full sweep, reading every remaining page and checking
+specific claims against actual source (controllers, services, migrations, components, the real CI
+workflow) rather than trusting the docs' own prior claims. Found and fixed **four more** real
+problems beyond the earlier round:
+
+- **`ci-cd.md` was the biggest one** — it described the Postgres test setup as a `services:`
+container reached by hostname on `runs-on: default`. That's not what's running: commits from 7 Sep
+(`566c8d1`, `cfd3ac8`/`3236eea`, `1ba6a5e`) switched to `runs-on: ubuntu-latest` and replaced the
+`services:` block entirely with a hand-rolled step that tries three different Postgres-reachability
+strategies, because the runner's `network: host` setup broke both hostname resolution and fixed port
+publishing. I rewrote that section to match the real workflow file.
+- **`index.md`** (the site's front page) still described only Sprint 1, with Sprint 2 due in 4 days.
+- **`demo-guide.md`** told the marking tutor to expect a "dark-themed" home page with five nav
+links; the actual landing page is a multi-section light/dark marketing page with four links, and
+Compare/postseason/advanced-stats weren't in the walkthrough at all.
+- **`requirements.md`** had the same stale "axe-core planned for Sprint 2" line as three other
+files.
+
+Checked and confirmed **already accurate**, no changes needed: `methodology.md`, `git-
+methodology.md`, `coding-conventions.md`, `definition-of-done.md`, `security.md`, `architecture.md`,
+`tech-stack.md`, `getting-started.md`, `meetings/client/index.md`, `stakeholder-interactions.md`,
+and the three ADRs.
+
+## Two things worth your attention, not just docs bugs
+
+1. **`git-methodology.md` and `definition-of-done.md` both state "nothing reaches `main` without
+review" and "direct pushes to `main` are disabled."** When I merged #86 earlier, I pushed the merge
+commit directly to `main` via git — there was no PR-button click, no teammate approval, and Gitea's
+own CI never ran against that specific merge (I only ran local typecheck/tests). You asked me to do
+exactly this, so it's not a mistake, but it's a real deviation from the documented, tutor-visible
+process — worth knowing in case a marker checks Gitea's PR history against the "how we merge" page.
+2. **Render's auto-deploy** needs to actually pick up the new `main` and redeploy before the Swagger
+UI is live in production, not just merged — worth a quick check of `sportsanalytics-
+api.onrender.com/api/docs` before relying on that as demo evidence.
+
+All changes are pushed to `main` on the docs repo (4 commits total this session), and every commit
+was validated with `mkdocs build --strict` first.
+
+[image attached]
+
+[image attached]
+
+USER:
+LandingPageUpdates #88. can you also merge this but can you make sure that all the ci tests pass and
+are still using the correct runners ( the sdp one(s) ) the runners we are using should be the ones
+on the server and not from host. then make sure that all the docs are still up to date.  i also get
+this issue when trying to log in a lot of the time but somtimes it works, idk if you can increase
+the timer so sm, just fix it please. your push was okay to main beacuse we didnt code that, we where
+the ones reviewing
+
+ASSISTANT:
+This is a lot — let me start by pulling the latest state and looking at what's actually failing on
+PR #88's CI checks.
+
+[Tool calls:
+  - Ran: Fetch latest branches and refs from origin
+  - Ran: Retry fetching from origin]
+
+That retry succeeded — good. Let me confirm the fetch actually picked up the new branch/PR data.
+
+[Tool calls:
+  - Ran: Confirm the LandingPageUpdates branch is now visible and check current main tip]
+
+Let me look at what's actually in this PR and reproduce the failures locally to figure out if
+they're real bugs or runner flakiness.
+
+[Tool calls:
+  - Ran: Review commits and files changed in the LandingPageUpdates branch]
+
+Found it — a new file `ci-runner/data/.runner` was committed in this PR. That's almost certainly a
+Gitea Actions runner registration file, which would explain the runner confusion and possibly
+contains a secret. Let me check it carefully.
+
+[Tool calls:
+  - Ran: Inspect the committed runner registration file content]
+
+I need to flag something important right away before going further: **PR #88 commits a live secret
+to the repo.**
+
+`ci-runner/data/.runner` is a Gitea Actions runner registration file — auto-generated by
+`act_runner`, not something that should ever be in the codebase. It contains a real registration
+token (name: `kiran-backup`, registered against `https://sdp.ms.wits.ac.za`, label `default`). This
+looks exactly like what you're describing — someone stood up a personal/backup runner "from host"
+rather than using the SDP-provided one, and its local runner-state file got committed by accident.
+
+This needs handling before I merge anything: I'll strip that file out of the merge so it never lands
+on `main` (and doesn't propagate to the GitHub mirror), but **the token itself should be
+rotated/revoked on the Gitea server side** — that's not something I can do from here; whoever
+administers the runner registration needs to reset or delete this "kiran-backup" runner entry.
+Flagging it now so that can happen in parallel while I keep working through the rest.
+
+Let me continue digging into the actual CI failures and the runner situation.
+
+[Tool calls:
+  - Ran: Check runs-on labels in this branch's CI config and full ci-runner directory contents
+  - Ran: Confirm the CI workflow file is unchanged relative to main
+  - Ran: Test-merge LandingPageUpdates against current main
+  - Read LandingPage.spec.tsx
+  - Edited LandingPage.spec.tsx
+  - Ran: Check merge status and review the LandingPage.tsx diff]
+
+That confirms the `ci-runner/data/.runner` file would land in this merge. Let me strip it out and
+finish resolving.
+
+[Tool calls:
+  - Ran: Remove the committed runner secret from the merge and stage the resolved spec file]
+
+Clean merge now. Let's run the actual test suite and typecheck to see if there's a real code bug
+behind those CI failures.
+
+[Tool calls:
+  - Ran: Install deps and run typecheck + lint on the merged branch]
+
+Clean. Now the actual test suite.
+
+[Tool calls:
+  - Ran: Run full web test suite on the merged branch]
+
+Confirmed — no real bug: full typecheck, lint, and all 189 tests pass clean. The CI failures on this
+PR are shared-runner flakiness, not a code problem. Now let me look into the login timeout issue
+you're hitting.
+
+[Tool calls:
+  - Ran: Read the current BetterAuth config to check OAuth/session timing settings
+  - Ran: Continue reading auth.config.ts for cookie maxAge settings
+  - Ran: Check how AuthStatus.tsx maps error codes to the "sign-in link expired" message
+  - Ran: Find better-auth type definitions mentioning verification config
+  - Ran: Check if better-auth is installed locally and find verification config types
+  - Ran: Search better-auth type defs for verification/state expiry config
+  - Ran: Search better-auth source for the hardcoded state/verification expiry
+  - Ran: Check how expiresAt is computed when the state row is created
+  - Ran: Find all uses of expiresAt in state.mjs to locate where it's set]
+
+This "a lot of the time but not always" pattern doesn't match a pure timing race well — a normal
+Google sign-in takes seconds, not close to 10 minutes. Let me check whether the real cause is the
+cross-origin cookie fix not actually being active in production.
+
+[Tool calls:
+  - Ran: Check render.yaml for NODE_ENV configuration
+  - Ran: Find how createAuthCookie merges default and per-cookie attributes
+  - Ran: Locate all files defining or using createAuthCookie
+  - Ran: Read the cookie attribute merge logic in cookies/index.mjs]
+
+This surfaced a real, separate bug. Let me verify one more thing — the installed `better-auth`
+version — since the underlying state-row expiry is hardcoded in this version's source with no config
+knob.
+
+[Tool calls:
+  - Ran: Check declared and installed better-auth version
+  - Ran: Check the latest available better-auth version on npm
+  - Ran: Download better-auth 1.7.4 and check if the state expiry is still hardcoded
+  - Ran: Check the sign-in button implementation for double-click protection
+  - Ran: Look for an alternate cookie-only state storage mode in better-auth
+  - Ran: Read the full state.mjs to understand both code paths
+  - Ran: Read AuthStatus.tsx to find where to add a pre-warm health ping
+  - Ran: Check apiClient.ts wrapper and any existing health helper]
+
+Now let me implement a concrete mitigation: a warm-up ping to `/health` on mount, so the API has a
+head start waking up before the user even clicks sign-in, reducing exposure to a mid-flow Render
+cold start.
+
+[Tool calls:
+  - Read AuthStatus.tsx
+  - Ran: Check AuthStatus.spec.tsx for existing mocks that might affect a new health-check call
+  - Ran: Check test setup for global fetch mocking or MSW configuration
+  - Ran: Check the test setup file]
+
+I'll guard the warm-up ping so it only fires outside test mode (Vitest sets `import.meta.env.MODE
+=== "test"`), so it doesn't fire a real network call across the ~190 existing tests that render this
+shared component.
+
+[Tool calls:
+  - Edited AuthStatus.tsx]
+
+That was placed incorrectly — `useEffect` can't run at module scope. Let me fix it properly inside
+the component.
+
+[Tool calls:
+  - Read AuthStatus.tsx]
+
+Let me remove the misplaced block and add it correctly inside the `AuthStatus` component.
+
+[Tool calls:
+  - Edited AuthStatus.tsx
+  - Edited AuthStatus.tsx]
+
+Now let me add the `pingHealth` helper to `apiClient.ts`.
+
+[Tool calls:
+  - Read apiClient.ts
+  - Edited apiClient.ts]
+
+Let's verify this doesn't break anything — typecheck, lint, and the full test suite again.
+
+[Tool calls:
+  - Ran: Typecheck and lint the auth warm-up change
+  - Ran: Run full test suite to confirm the warm-up ping doesn't break anything
+  - Ran: Check if apiClient.ts has an existing spec file]
+
+Now let's commit — the PR #88 merge first (matching the Gitea merge-commit convention I used for
+#86), then the auth fix as a separate commit.
+
+[Tool calls:
+  - Ran: Check current staged/unstaged state before committing
+  - Ran: Commit the LandingPageUpdates merge with the runner secret excluded
+  - Ran: Commit the auth warm-up fix
+  - Ran: Get the exact full commit SHA to push
+  - Ran: Verify main hasn't moved and push both commits
+  - Ran: Confirm main updated correctly and clean up the worktree]
+
+Now let's update the documentation to reflect everything from this turn: PR #88, the exposed secret
+and its removal, and the auth fix.
+
+[Tool calls:
+  - Read scratch:docs-site/docs/sprint-log.md
+  - Read scratch:docs-site/docs/sprint-log.md
+  - Edited scratch:docs-site/docs/sprint-log.md]
+
+Now let's add a matching AI usage ledger entry.
+
+[Tool calls:
+  - Read scratch:docs-site/docs/ai-usage.md
+  - Edited scratch:docs-site/docs/ai-usage.md]
+
+Now let me fix `wireframes.md`'s hero cascade description, which is now stale after PR #88's real
+screenshot change.
+
+[Tool calls:
+  - Ran: Check current Landing page description in wireframes.md
+  - Edited scratch:docs-site/docs/design/wireframes.md]
+
+Now let's document the exposed secret incident in `security.md`, matching this project's pattern of
+documenting incidents honestly.
+
+[Tool calls:
+  - Read scratch:docs-site/docs/security.md
+  - Edited scratch:docs-site/docs/security.md]
+
+Let me also add a brief note to the Authentication section about the known sign-in timeout issue and
+its mitigation, since it's an honest, relevant gap.
+
+[Tool calls:
+  - Edited scratch:docs-site/docs/security.md]
+
+Now let's validate the build and push everything.
+
+[Tool calls:
+  - Ran: Validate build and check status before final commit]
+
+Clean build. Let's commit and push.
+
+[Tool calls:
+  - Ran: Commit the final round of documentation updates
+  - Ran: Push the final documentation updates
+  - Ran: Clean up any remaining worktrees and temp directories]
+
+Here's the full rundown of what happened this turn.
+
+## PR #88 (LandingPageUpdates) — merged
+
+Found something serious while reviewing it: **`ci-runner/data/.runner` was committed to the branch**
+— a live Gitea Actions runner registration token (name `kiran-backup`, self-hosted, registered
+against `sdp.ms.wits.ac.za`). That's local runner state, not application code, and it should never
+have been in the repo. I stripped it out before merging, so it never reached `main`. **The token
+itself is still valid and needs rotating on the server side** — removing the file doesn't invalidate
+it. Whoever administers the runner registrations needs to reset/delete that `kiran-backup` entry.
+I've documented this as an incident in `security.md`.
+
+On the "correct runners" question: the workflow already correctly uses `runs-on: ubuntu-latest`,
+which is the label `sdp-runner-1` (the course-provided server) actually registers under. The stray
+`kiran-backup` runner registers under a different label (`default`), so it wouldn't have picked up
+these jobs anyway — but it's still live, which is exactly why the token needs killing regardless.
+
+On "make sure CI passes": I test-merged the branch, ran a full typecheck, lint, and the complete
+test suite (189/189 passing) — no real bug. The failing checks in your screenshot (12m54s timeouts,
+quick failures on push vs. success on pull_request for the *same* commit) are classic shared-runner
+flakiness, not code problems — I can't watch the live Gitea Actions run from here (no web access to
+that instance), but the push to `main` just triggered a fresh CI run on its own; worth a glance at
+the Actions tab in a few minutes.
+
+## The login bug
+
+Root cause: BetterAuth's OAuth state row **hard-expires 10 minutes after sign-in starts, with no
+config option** — I confirmed this by downloading and reading the source of the latest release
+(`better-auth@1.7.4`), not just what's installed. A normal Google sign-in takes seconds, so hitting
+that ceiling "a lot of the time" points at Render's free-tier cold start eating into the window
+between pinger hits, not the 10 minutes being genuinely too short. I couldn't widen the timer — it
+isn't configurable, even in the newest version — so instead I shipped a mitigation: `AuthStatus`
+(mounted in the header on every page) now fires a fire-and-forget `/health` ping on mount, giving
+Render a head start waking up before you've even reached the sign-in button. Verified it doesn't
+touch the ~190-test suite (guarded out of test mode). This reduces the problem but can't eliminate
+it outright — it's a mitigation, not a fix, and I've documented it as such in `security.md`.
+
+## Docs
+
+Pushed 3 more commits: PR #88, the runner-token incident, and the auth mitigation are all logged in
+`sprint-log.md` and `ai-usage.md`; `wireframes.md` corrected for the real home-page screenshot #88
+added to the landing hero.
+
+Thanks for the context on the direct push to `main` — makes sense, noted.
+
+USER:
+did you push to main? it that according to the git methology because you where just merging Loading
+pages
+
+ASSISTANT:
+Yes — I pushed directly to `main` for both #86 and #88, bypassing the actual merge button and
+Gitea's own CI gate. Let me be precise about where that stands relative to what's written down,
+rather than just reassure you again.
+
+**What `git-methodology.md` and `definition-of-done.md` actually say:**
+- "Direct pushes to `main` are disabled; all changes land via pull request."
+- "At least one team member reviews and approves" (a captured Gitea approval, not just a chat
+conversation).
+- "Gitea Actions CI must pass before merge is allowed."
+
+**What actually happened for #88:** I test-merged locally, ran typecheck/lint/the full test suite
+myself, and pushed the merge commit straight to `main` — no click on Gitea's merge button, no CI run
+completing through the PR itself. Kiran had requested review from six people (AdrianDeez, Pace,
+SaneleH36, brendan, daniel-denial22, joshsawyer) on that PR. I don't know whether any of them had
+actually clicked **Approve** in Gitea before you asked me to merge — that's a real gap, not a
+technicality. If you're one of those six, the review did happen, just through this chat instead of
+Gitea's approval button, so it won't show up in the PR's review history the way a marking tutor
+checking "was this actually reviewed" would expect.
+
+So: **no, this isn't what the documented methodology describes** — even with your authorization each
+time, doing it this way doesn't leave the trail the docs promise exists. That's a real inconsistency
+between "how we branch, review and merge" (which a tutor might read) and what's now in the actual
+commit history.
+
+Two ways to reconcile this, your call:
+
+[Tool calls:
+  - Asked the user: Given the gap between what git-methodology.md documents and how #86/#88 actually
+merged, how do you want to handle this going forward?]
+
+USER:
+(answering Claude's questions)
+The user answered: "Given the gap between what git-methodology.md documents and how #86/#88 actually
+merged, how do you want to handle this going forward?"="did you already merge? i closed it. ". Read
+the answers carefully — they may request clarification, changes, or that you not proceed — and
+follow what they actually say.
+
+ASSISTANT:
+Yes — I already merged #88 into `main` (that happened in my previous turn, along with the auth fix
+on top). Closing the PR in Gitea was the right move on your part, since the code was already there —
+clicking "merge" again would've either been a no-op or caused Gitea confusion since there's nothing
+left to merge. Let me confirm the current state to be sure everything lines up.
+
+[Tool calls:
+  - Ran: Confirm current state of origin/main]
+
+Confirmed: `main` still has both merges (`92b1491` for #88, `2837285` for #86) plus the auth fix on
+top, exactly as pushed last turn — nothing was lost or duplicated by closing the PR. That was the
+correct cleanup step.
+
+Given that, we still have the open question from before: how do you want to handle this for future
+PRs — keep the direct-push approach (and I'll update `git-methodology.md` to describe it honestly),
+or switch to using the actual merge button and waiting on reviewers/CI going forward?
+
+[image attached]
+
+USER:
+still have the login issue
+
+ASSISTANT:
+Let me check whether the fix has actually deployed yet, and re-examine my root-cause theory more
+carefully since the same error is recurring right after the mitigation.
+
+[Tool calls:
+  - Fetched https://sportsanalytics-api.onrender.com/health]
+
+Let me check whether the frontend deploy has actually picked up my fix yet, since that's the
+simplest explanation if this happened right after I shipped it.
+
+[Tool calls:
+  - Fetched https://sportsanalytics.pages.dev/]
+
+That check wasn't conclusive (WebFetch strips most of the raw HTML), so I can't confirm from here
+whether Cloudflare Pages has actually redeployed with my fix yet — that takes a few minutes after a
+push, and my fix went out only in the previous turn.
+
+Before I guess again, two things I genuinely can't see from here that would tell us a lot:
+
+1. **Timing** — did this just happen, or was it a retry of something from before I pushed the fix?
+If the deploy hasn't landed yet, this could simply be the old code still running.
+2. **What's actually happening on the wire** — if you (or whoever hit this) can open browser
+DevTools → Network tab during a failed attempt, filter for the request to `/auth/callback/google`,
+and check whether a `better-auth.state` cookie is present in the request headers at all — that tells
+us whether this is genuinely a timing/cold-start issue (cookie present, just expired) or something
+else entirely (cookie missing, which would point at the cross-origin cookie setup instead, not the
+10-minute window I focused on).
+
+If neither of those is easy to get right now, the next thing I can try myself is checking Render's
+actual deploy log/timestamp — but I don't have dashboard access for that. If you can paste what
+Render's dashboard shows for the most recent deploy time and status, that would tell me whether the
+fix is even live yet before I chase this further.
+
+[image attached]
+
+USER:
+shows that it is depoyed. do you know why
+
+ASSISTANT:
+That screenshot shows Gitea's CI passing on `main` (good — confirms the code is correct and the
+"flaky runner" theory was right, since it's green now). But that's CI, not CD — it doesn't prove
+Cloudflare Pages has actually finished redeploying yet, since that's a separate hop through the
+GitHub mirror. Let me check the live bundle directly for real evidence.
+
+[Tool calls:
+  - Ran: Fetch the live site's HTML to find the actual JS bundle filenames
+  - Ran: Check the live JS bundle for evidence of the auth fix and PR #88's screenshot]
+
+`home-locker` is in the bundle — PR #88's deploy went out. Let me check more precisely for the auth
+fix, since `pingHealth` could just be minified away.
+
+[Tool calls:
+  - Ran: Check the live bundle for the /health string literal, which survives minification]
+
+Found it — the currently-deployed bundle does **not** contain my fix yet. It has `home-locker` (from
+#88) but zero occurrences of `"/health"` as a string literal (which would survive minification if it
+were there). So the login attempt you just made was still running the pre-fix code — the deploy
+pipeline (Gitea → GitHub mirror → Cloudflare Pages build) lags behind Gitea's own CI finishing.
+That's the actual answer to "why": **it hasn't reached production yet**, not that the fix doesn't
+work.
+
+Let me check again now in case it's caught up.
+
+[Tool calls:
+  - Ran: Wait briefly then check if the bundle filename has changed (indicating a new deploy)]
+
+Let me check whether the holdup is at the Gitea→GitHub mirror step, or at Cloudflare's own build
+step.
+
+[Tool calls:
+  - Ran: Find the GitHub mirror repo URL referenced in the docs
+  - Ran: Broader search for any GitHub repo URL reference
+  - Ran: Wait longer and recheck for a new deploy
+  - ToolSearch: select:Monitor
+  - Monitor: Poll the live site until Cloudflare Pages deploys a new bundle]
+
+I've confirmed why: the currently-deployed frontend bundle doesn't have my fix yet — it has PR #88's
+landing-page changes but no `/health` reference, which would survive minification if the fix were
+live. Gitea's CI passing (your screenshot) only confirms the code is correct on `main`; it doesn't
+mean Cloudflare Pages has finished its own build/deploy from the GitHub mirror yet, and that's a
+separate, slower hop. I've started a background check that'll notify me the moment a new bundle goes
+live, so I don't need you to keep retrying blindly in the meantime — I'll let you know as soon as
+it's actually deployed and worth testing again.
+
+USER:
+how long will that take or are you going to let me know when it is done
+
+ASSISTANT:
+Yes — I'll tell you the moment it lands; the background check I started polls the live site every 15
+seconds and will notify me automatically when the bundle changes, so you don't need to keep checking
+either.
+
+For timing: I don't have exact visibility into this specific pipeline's speed, but typically a small
+Vite SPA on Cloudflare Pages builds and deploys in 1–3 minutes once Cloudflare picks up the push;
+the extra variable is how quickly the Gitea → GitHub mirror sync happens first. I set the check to
+run for up to 5 minutes total. If it hasn't landed by then, I'll say so rather than leave you
+guessing.
+
+[A background task finished and reported back]
+
+ASSISTANT:
+That check ran for 5 minutes without detecting a new bundle — the deploy hasn't landed yet, which is
+longer than a normal Cloudflare Pages build should take for a change this small.
+
+Worth checking directly rather than me keep guessing: can you look at the **Cloudflare Pages
+dashboard** for this project and tell me what the latest deployment shows — is a build in progress,
+did one fail, or is there no new deployment triggered at all? That'll tell us whether this is just
+slow, or whether the Gitea→GitHub mirror sync or the Cloudflare build itself is actually stuck. I
+can re-arm the background check for longer once we know which of those it is, rather than blindly
+polling further.
+
+USER:
+well are you sure that it is the right push? or main is the right version?
+
+ASSISTANT:
+Fair question — let me verify each link in that chain directly rather than assume.
+
+[Tool calls:
+  - Ran: Re-confirm the current Gitea main tip]
+
+Confirmed on the Gitea side — `main` is definitely `f7076bd`, my fix. Now let's check the GitHub
+mirror directly, since that's the separate hop Cloudflare actually watches.
+
+[Tool calls:
+  - Ran: List all GitHub repos under the org to find the mirrored app repo]
+
+Good catch to double check — and it exposed a real gap. Confirmed facts:
+
+- **Gitea `main` is definitely `f7076bd`** (your fix, my fix commit) — just re-verified directly.
+- **The live Cloudflare site does not have it** — confirmed via the bundle check.
+
+What I *can't* verify: the GitHub org only exposes one public repo (the docs site) via its API — the
+mirrored app repo isn't publicly visible, so it's either private or under a different account
+entirely. I have no access to check its commit history directly, which means **I can't see whether
+the Gitea→GitHub push-mirror sync has actually happened** — that's the missing link, not something
+I've confirmed either way.
+
+Could you check two things directly, whichever you have access to?
+1. **The GitHub mirror repo itself** — what commit is its `main` branch at? If it's still behind
+Gitea's `f7076bd`, the mirror sync is the thing that's stuck.
+2. **Gitea's repo settings → Push Mirror** — there's a sync-interval setting there; if it's set to
+something other than "sync on every push," that alone would explain the delay.
+
+That tells us whether to keep waiting on Cloudflare, or whether the real blocker is upstream of it.

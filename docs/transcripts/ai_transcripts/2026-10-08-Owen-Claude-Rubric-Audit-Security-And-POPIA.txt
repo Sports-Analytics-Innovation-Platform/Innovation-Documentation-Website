@@ -1,0 +1,1605 @@
+2026-10-08 to 2026-10-10 — Owen Pace + Claude Code (Claude Opus 5.5)
+Marking the project against the COMS3011A rubrics, fixing what the audit found, and a database security and POPIA check
+Sports Analytics Tool — COMS3011A Project 3
+
+AI Declaration: Claude Code, model claude-opus-5-5 ("Claude Opus 5.5"). Purpose: marking the project against the course rubrics, fixing the findings (API-key performance, OpenAPI docs, custom-statistic versions, lazy loading, Python CI, READMEs), checking database security and POPIA compliance, and writing follow-up instructions for the team.
+
+How to read this: generated from the saved session file. USER sections are what Owen typed and
+ASSISTANT sections are Claude's replies, both word for word. Each tool call Claude made is
+listed as one line saying what it did; the raw commands and their output are left out, as are
+Claude's internal reasoning, the contents of attached files and images, and sub-agent
+transcripts. The redaction pass found nothing to mask.
+
+Note: the session's last request, in which these transcripts were exported and checked for sensitive
+content, is not included.
+
+================================================================================
+
+[document attached]
+
+[document attached]
+
+USER:
+https://sdp.ms.wits.ac.za/innovation/sportsanalytics/branches https://github.com/Sports-Analytics-
+Innovation-Platform/Innovation-Documentation-Website I would like you to mark our project against
+these rubrics look at everything look at our documentation look at our program everything and then
+tabulize and give us a mark
+
+ASSISTANT:
+I'll start by surveying the repo, the docs site, and the Gitea branches, then score each rubric.
+
+[Tool calls:
+  - Ran: Show repo overview, branches, and README
+  - Ran: Read saved memory files]
+
+Local checkout is from mid-September; I'll fetch to grade the latest `main` rather than a stale
+copy.
+
+[Tool calls:
+  - Ran: Fetch latest remote state and show main's recent history]
+
+Local `main` is 52 commits behind. I'll grade `origin/main` in a separate detached worktree so your
+checkout stays untouched.
+
+[Tool calls:
+  - Ran: Create a read-only worktree of origin/main and summarize its layout
+  - Ran: List apps, CI workflows, and docs directories
+  - Ran: Read CI workflow, Render deploy config, and proxy function]
+
+CI covers lint/typecheck/coverage; deploy is Render (API) + Cloudflare Pages (web). Now the API
+itself.
+
+[Tool calls:
+  - Ran: List API source, tests, migrations, and package scripts]
+
+Substantial API. Let me check the key cross-cutting pieces: bootstrap, auth, API keys/rate limits,
+versioning, schema.
+
+[Tool calls:
+  - Ran: Read API bootstrap, root module, and auth config
+  - Ran: Read API key guard, rate limiting, versioning, and deprecation code
+  - Ran: Summarize Prisma models, enums, and indexes
+  - Ran: Read the core event, batch, stat, correction, and dataset models]
+
+The schema is well-indexed and heavily commented. Now the documentation site repo.
+
+[Tool calls:
+  - Ran: Fetch docs repo and list its pages and nav config]
+
+Docs repo is also behind locally; I'll read its `origin/main` via a worktree as well.
+
+[Tool calls:
+  - Ran: Create docs worktree and measure each page's word count]
+
+About 45k words across ~40 pages. Starting with the team's own rubric mapping and feature-tier
+claims, which I'll then verify against the code.
+
+[Tool calls:
+  - Ran: Read the docs site's rubric quick-links page
+  - Ran: Read the feature tiers page
+  - Ran: Check the live web app, API, Swagger, and docs site respond
+  - Ran: Install web and API dependencies in the worktree]
+
+Everything is live. Let me probe the API's actual behaviour: pagination, filtering, error envelopes,
+versioning, and the spec.
+
+[Tool calls:
+  - Ran: Analyze the live OpenAPI spec and sample player responses]
+
+Notable: the live OpenAPI spec has **zero response schemas** and 29/114 operations lack any summary.
+Let me check pagination params and the error envelope.
+
+[Tool calls:
+  - Ran: Probe pagination, errors, version negotiation, and deprecation headers]
+
+API behaves well: consistent error envelope, version negotiation, Deprecation/Sunset headers. Now
+the event-derived core: events, stats, `asOf`, datasets, diff/changes.
+
+[Tool calls:
+  - Ran: Probe player stats, asOf, game events, and dataset releases
+  - Ran: List query params for key endpoints and all dataset releases
+  - Ran: Probe stats, asOf validation, dataset diff/changes, and aggregates]
+
+Core API works live. Quick latency sample (cold vs. cached), measured from here through the Pages
+proxy:
+
+[Tool calls:
+  - Ran: Time repeated requests to key endpoints]
+
+Cached reads still take **2.6–4.5 s** while `/health` takes ~0.45 s. Let me pin down where the time
+goes.
+
+[Tool calls:
+  - Ran: Isolate latency: proxy vs API key guard vs network]
+
+Confirmed: the proxy and network add ~0.5 s; the remaining **~2–3 s on every data read comes from
+the guards running before the cache**. Checking which guard:
+
+[Tool calls:
+  - Ran: Read the session guard and how caching is applied to controllers
+  - Ran: Read the performance documentation page
+  - Ran: Analyze authorship, PR merges, direct commits, and message conventions]
+
+All six members have committed; 112 PRs merged, 314/336 commits follow Conventional Commits, 21
+direct commits to `main`. Now the Gitea side: issues, bug tracker, PR reviews, project board.
+
+[Tool calls:
+  - Ran: Query Gitea API for issue/PR counts and labels
+  - Ran: Download all Gitea issues and PRs and summarize usage]
+
+Some pages failed on a Windows encoding issue; re-running with UTF-8 to get complete numbers, plus
+PR review data.
+
+[Tool calls:
+  - Ran: Re-download issues/PRs with UTF-8 and count PR reviews
+  - Ran: Show the summary tail and check downloaded row counts]
+
+Only one of 124 PRs has a recorded Gitea review, and there are 14 PR comments total. Let me confirm
+that isn't an API artifact, then check what the git methodology doc promises.
+
+[Tool calls:
+  - Ran: Spot-check PR reviews/comments, branch protection, and git methodology doc]
+
+The doc says "direct pushes to `main` are disabled" and "at least one member reviews and approves",
+but branch protection is empty and there are 21 direct commits. Let me count real reviews properly.
+
+[Tool calls:
+  - Ran: Count merged PRs that received a real review
+  - Ran: Inspect review output format and one PR's reviews
+  - Ran: Recount reviewed PRs with numeric comparison
+  - Ran: Debug the review count for PR 186]
+
+Likely transient API errors swallowed by my try/except. Redoing it in one Python script with
+retries:
+
+[Tool calls:
+  - Ran: Count reviewed and self-merged PRs with retries]
+
+[A background task finished and reported back]
+
+ASSISTANT:
+Only 4/107 merged PRs have a formal approval; 28 were self-merged (79 were merged by someone other
+than the author, which is weaker evidence of review). The dependency install failed; checking why.
+
+[Tool calls:
+  - Ran: Read install logs]
+
+Both installs actually succeeded (the failure flag came from my trailing `tail`). Now running the
+real suites: web tests with coverage, plus lint and typecheck for both apps.
+
+[Tool calls:
+  - Ran: Read web scripts and the test/coverage config for both apps
+  - Ran: Run web tests with coverage, lint, typecheck, and build]
+
+While that runs, a unit-only API config (no DB) in the scratch worktree, so the API's non-e2e specs
+can run here too:
+
+[Tool calls:
+  - Wrote scratch:main-wt/apps/api/vitest.audit-unit.config.ts
+  - Ran: Run API unit tests, lint, and typecheck]
+
+While tests run, I'll verify the core claims in code, starting with the correction → recompute →
+stale-release chain.
+
+[Tool calls:
+  - Ran: Map the event correction service's flow
+  - Ran: Inspect stale-marking, custom-stat validation, and versioning]
+
+Custom-statistic "versioning" is only a counter: the old expression is overwritten, so a figure
+computed under v1 can't be reproduced after an edit. Checking the evaluator:
+
+[Tool calls:
+  - Ran: Read custom-statistic validator, service, and routes
+  - Ran: Inspect publication gating, event validation rules, and resume logic]
+
+Gating and resume look real. Does any human-facing submission path exist ("uploaded as a file or
+sent directly")?
+
+[Tool calls:
+  - Ran: List all write operations and file-upload handlers in the API
+  - Ran: List web pages, routes, and accessibility test coverage
+  - Ran: Run Google PageSpeed (Lighthouse mobile) on four live pages]
+
+The anonymous PageSpeed quota is exhausted. I'll try local Lighthouse once the test runs finish.
+Checking on those:
+
+[Tool calls:
+  - Ran: Check test/lint/build progress and whether Chrome or Edge is installed]
+
+API unit suite: **68 files, 787 tests, all passing** (the 20 e2e specs need Postgres; CI runs
+those). Web suite is still running. Meanwhile, the process docs: methodology and sprint log.
+
+[Tool calls:
+  - Ran: Read methodology and the start of the sprint log
+  - Ran: List meeting records and read the stakeholder log]
+
+Stakeholder log is strong. Note the client asked for a stress test and the one run only hit
+`/health`. Now user feedback, interviews, and improvements.
+
+[Tool calls:
+  - Ran: Skim survey, interview, and improvements evidence]
+
+Feedback process is formal and evidenced (11 survey responses with raw CSV, one hands-on interview,
+7–8 shipped improvements each tied to a finding). Checking the web test run:
+
+[Tool calls:
+  - Ran: Check results of web tests, lint, typecheck, and build]
+
+Still running. Meanwhile, testing and tech-stack docs (the latter is the "third-party code"
+evidence):
+
+[Tool calls:
+  - Ran: Outline testing, tech stack, CI/CD, ERD, API reference and security pages]
+
+Is CI actually green on `main`? Checking Gitea Actions run history:
+
+[Tool calls:
+  - Ran: Fetch recent CI task results and main HEAD's status]
+
+CI is green on `main` (1,765 runs total, all three jobs passing on the latest merge). Quick checks
+on READMEs, the Python test suites, and the stray files at repo root.
+
+[Tool calls:
+  - Ran: Check per-app READMEs and stray tracked files
+  - Ran: Check whether the tracked runner file contains a token, and the thin READMEs]
+
+[A background task finished and reported back]
+
+ASSISTANT:
+Fair enough. I only need to know whether a token field is present, not its value. Listing key names
+only:
+
+[Tool calls:
+  - Ran: List runner file key names, read thin READMEs, and check the API typecheck]
+
+**Security finding:** `ci-runner/data/.runner` with a `token` field is tracked on `main` right now,
+while `security.md` says it "never reached `main`". Checking how it got there:
+
+[Tool calls:
+  - Ran: Trace when the runner registration file entered main]
+
+It reached `main` via direct commit `020f4c6` (12 Sep), which bypassed review. All API checks
+passed: unit tests, lint (exit 0) and typecheck (exit 0). Web status:
+
+[Tool calls:
+  - Ran: Check web test summary and coverage]
+
+Web: **86 files, 848 tests passing, 92.2% lines / 84.7% branches**; lint passes with warnings only.
+Counting the Python tests statically rather than installing five sets of ML dependencies:
+
+[Tool calls:
+  - Ran: Count Python tests and check for Python CI and responsive/a11y patterns]
+
+~292 Python tests across five services, but **none run in CI** (no pytest step). Now local
+Lighthouse using Edge, for an independent read on the live pages:
+
+[Tool calls:
+  - Ran: Run Lighthouse mobile audits on five live pages with Edge]
+
+While Lighthouse runs: DB documentation accuracy (the ERD page claims 39 tables and 7 enums).
+
+[Tool calls:
+  - Ran: Compare ERD documentation against the actual Prisma models]
+
+[A background task finished and reported back]
+
+ASSISTANT:
+ERD is nearly current: 40 models vs 39 documented; only `UserSeenTutorial` (added 7 Oct) is missing.
+Web typecheck and build results:
+
+[Tool calls:
+  - Ran: Read web typecheck and production build output]
+
+Web typecheck and build pass, but the app ships as **one 1.14 MB JS bundle** (315 KB gzipped) with
+no route-level code splitting. Next, the AI ledger (the brief requires tool, model and purpose):
+
+[Tool calls:
+  - Ran: Read the AI usage ledger header and check pages for AI declarations]
+
+The AI ledger is thorough: 70+ sessions, each with tool, model, purpose, files touched and
+transcript link. To judge aesthetics I'll look at the team's own screenshots while Lighthouse
+finishes.
+
+[Tool calls:
+  - Read scratch:docs-wt/docs/assets/ui/player-profile-desktop.jpg
+  - Read scratch:docs-wt/docs/assets/ui/players-phone.jpg]
+
+The UI is distinctive and polished (warm palette, strong type, not template-looking) and the phone
+layout reflows properly. Spot-checking README accuracy, since a marker reads it first:
+
+[Tool calls:
+  - Ran: Find stale statements in the root README
+  - Ran: Summarize Lighthouse scores and accessibility failures]
+
+Lighthouse is still fetching its package on first run. Meanwhile, the open backlog: open bugs at
+submission matter for "Features" marks.
+
+[Tool calls:
+  - Ran: List open issues and the open PR
+  - Ran: Search commits since mid-September for fixes to the open bugs]
+
+No commits reference fixes for those, so four distinct medium-priority bugs appear to still be open.
+Checking Lighthouse:
+
+[Tool calls:
+  - Ran: Check Lighthouse progress]
+
+Still downloading. Meanwhile, checking what dataset `diff`/`changes` actually compare, since the
+brief wants consumers to "pull only the difference":
+
+[Tool calls:
+  - Ran: Read the dataset diff and change-feed implementations
+  - Ran: Read the release comparison function
+  - Ran: Check Lighthouse progress and running processes
+  - Ran: Check whether node/npx is still running
+  - Ran: Find what the Edit stats button on player profiles does
+  - Ran: Read the Edit stats state and UI block
+  - ToolSearch: select:Monitor
+  - Monitor: Lighthouse page audits finishing (or erroring)]
+
+While Lighthouse runs, counting e2e tests so I can reconcile with the docs' "974 API tests" figure:
+
+[Tool calls:
+  - Ran: Count e2e tests and read the contract test and load-test targets]
+
+API side now totals about **1,057 tests** (787 unit + ~270 e2e). That's more than the docs' "974",
+so the docs undersell it slightly. Waiting on Lighthouse for the last two App criteria.
+
+[Tool calls:
+  - Ran: Check whether any Lighthouse report has been written]
+
+Nothing written yet; npx is still installing. One more accessibility check meanwhile: skip link,
+focus styles, reduced motion.
+
+[Tool calls:
+  - Ran: Check for skip link, focus-visible styles, reduced-motion support, and main landmark
+  - Ran: Check npx cache for lighthouse and running node/Edge processes]
+
+Edge is running, so Lighthouse is auditing now. Waiting for the per-page results.
+
+[Tool calls:
+  - Ran: Wait until the first Lighthouse report is written
+  - Ran: Check docs deploy workflow and docs-repo contributors]
+
+[A background task finished and reported back]
+
+ASSISTANT:
+[Tool calls:
+  - Ran: Summarize the first Lighthouse report]
+
+Home: **Performance 82, Accessibility 100, Best Practices 100** (mobile, simulated throttling).
+That's a bit below the docs' 93 but in the same band. Waiting for the other four pages.
+
+[Tool calls:
+  - Ran: Wait until the last Lighthouse report is written]
+
+While those run, pulling Lighthouse's own mobile screenshot of the live home page to check the
+rendered layout:
+
+[Tool calls:
+  - Ran: Extract the final mobile screenshot from the home Lighthouse report
+  - Read scratch:lh/home-final.jpg
+  - Ran: Wait for all Lighthouse reports and summarize them]
+
+[A background task finished and reported back]
+
+ASSISTANT:
+Each Lighthouse page is taking ~10 minutes here, so four more would take about 40. Let me see what's
+finished.
+
+[Tool calls:
+  - Ran: List finished Lighthouse reports and current time]
+
+About 2 minutes per page now that the install is done. Players is in:
+
+[Tool calls:
+  - Ran: Wait for the remaining Lighthouse pages and summarize all]
+
+[A background task finished and reported back]
+
+ASSISTANT:
+[Tool calls:
+  - Ran: Summarize whichever Lighthouse reports exist so far
+  - ToolSearch: select:TaskStop
+  - TaskStop: be8g2czgj
+  - TaskStop: bnmj62e2k
+  - TaskStop: b05ulktke
+  - TaskStop: bonc7ri3u
+  - Ran: Find leftover Lighthouse or headless Edge processes]
+
+The stopped task left its child processes running. Before killing anything I'll confirm which Edge
+instance is Lighthouse's (temporary profile), not your own browser:
+
+[Tool calls:
+  - Ran: Verify the Edge root process belongs to Lighthouse]
+
+Confirmed: it's Lighthouse's headless Edge with a temp profile, child of the Lighthouse node
+process. Killing only that tree:
+
+[Tool calls:
+  - Ran: Kill the leftover Lighthouse process tree only
+  - Ran: List any remaining Lighthouse processes
+  - Ran: Stop the two orphaned headless Edge helpers]
+
+One orphaned headless GPU helper is left. It's harmless and will exit on its own. Analysis is done,
+so I'll remove the two temporary worktrees to leave both repos' git metadata as I found them.
+
+[Tool calls:
+  - Ran: Remove the temporary audit worktrees from both repos]
+
+I marked the current `main` (merged 8 Oct) against all four milestone rubrics. For Milestones 1–3,
+the deadlines have passed, so those marks are what you'd get if the project were marked as it stands
+today, not at each deadline. Sprints 3 and 4 have weights but no level descriptors, so I used the
+same three bands as the earlier sprints (Advanced 80–100, Intermediate 50–80, Basic 0–50).
+
+## Headline
+
+| Milestone | Mark |
+|---|---|
+| M1 Sprint 1 | **88%** |
+| M2 Sprint 2 | **83%** |
+| M3 Sprint 3 | **82%** |
+| M4 Submission (due Sat 11 Oct) | **82%** |
+
+Against the brief's tiers: Basic is about 90% done, Intermediate about 85%, Advanced about 35%. That
+puts the project in the upper Intermediate band, with a lot built beyond the brief.
+
+### What I actually checked
+- **Tests, run myself:**
+  - API: 787 unit tests pass, and lint and typecheck are clean.
+  - Web: 848 tests pass at 92% line coverage, and the build works.
+  - I couldn't run the ~270 API end-to-end tests here (they need Postgres), but all three CI jobs
+are green on `main`.
+- **Live app and API, probed directly:** pagination, the error format, version handling, `asOf`,
+datasets, and the live API spec.
+- **Gitea:** all 60 issues and 124 PRs, including who reviewed what.
+- **Docs:** all ~40 pages of the docs site.
+- **Lighthouse:** run locally on the home and players pages.
+
+## Milestone 1 (Sprint 1)
+| Criterion | Wt | Score | Evidence |
+|---|---|---|---|
+| Version Control | 10 | 90 | All 6 members committed; ESLint/oxlint/tsc run in CI; 93% of commits use the agreed format |
+| Documentation Site | 10 | 95 | Live MkDocs site, ~45k words, strict build |
+| Getting Started | 5 | 75 | Root README still says it's *"a base scaffold, not the finished product"*; `apps/similarity` has no README; the api and web READMEs are 2 lines each |
+| Work Tracker | 5 | 80 | Board, milestones, labels; but about 8 open issues are already-shipped work (#55, #60, #54, #76, #121…) |
+| Git Methodology | 5 | 70 | 107 PRs merged, but the doc's claims don't hold (see finding 4) |
+| Project Methodology | 10 | 85 | Scrum adaptation, justified against Kanban and XP; no retrospectives |
+| Tech Stack | 5 | 95 | Every dependency listed with a reason |
+| Stakeholder Interaction | 10 | 90 | Every client request mapped to an action and evidence |
+| Design & Dev Plan | 20 | 90 | Architecture, ERD, API design, wireframes, roadmap, 5 ADRs |
+| Implementation | 20 | 90 | All key requirements met (the lecturer waived password reset, and that's documented) |
+
+## Milestone 2 (Sprint 2)
+| Criterion | Wt | Score | Evidence |
+|---|---|---|---|
+| Core Features | 25 | 72 | 4 open medium bugs (#128, #163, #164, #175) plus slow live data reads put it in the "some non-severe bugs" band |
+| Automated Testing | 10 | 93 | Extensive, with an 80% coverage gate; but the ~290 Python tests aren't in CI |
+| Stakeholder Reviews | 10 | 92 | Feedback is evaluated and acted on |
+| API | 15 | 88 | Live, Swagger, reference page, external APIs integrated; Swagger has no response schemas |
+| User Feedback | 10 | 85 | Formal survey (11 responses, raw CSV) plus one interview; small sample |
+| Project Methodology | 10 | 80 | Followed, but the board has drifted from reality |
+| Bug Tracker | 5 | 65 | Only 9 bug issues, 5 still open, one duplicate, 1 comment across all issues |
+| DB Documentation | 5 | 92 | ERD and ADRs; misses one table (`UserSeenTutorial`) |
+| Third-party Code | 5 | 90 | |
+| Testing Docs | 5 | 90 | Thorough; test counts are out of date and undersell you (974/717 vs ~1,057/848 now) |
+
+## Milestone 3 (Sprint 3)
+| Criterion | Wt | Score | Evidence |
+|---|---|---|---|
+| User Feedback | 10 | 85 | |
+| Automated Testing | 10 | 92 | |
+| Feature Implementation | 20 | 78 | See the tier status above |
+| API Implementation | 20 | 82 | 114 operations, versioning, keys, quotas, deprecation headers, contract test. Swagger is shallow and lists the catch-all route; some filters and `asOf` are undocumented; dataset diff/changes only compare release metadata; no async jobs |
+| Performance | 5 | 55 | The docs state a 300 ms target; I measured ~2.7 s (finding 2) |
+| Improvement | 5 | 90 | 7 shipped changes, each with before/after |
+| Documentation | 15 | 85 | Excellent breadth, but several claims are contradicted by the repo |
+| Project Methodology | 15 | 80 | |
+
+## Milestone 4 (Submission)
+| Area | Criterion | Wt | Score | Note |
+|---|---|---|---|---|
+| DB | Data | 3 | 85 | Real data: 4,905 games, 530 players; one empty `2026-27.1` dataset release |
+| DB | Deployment | 2 | 90 | |
+| DB | Structure | 5 | 90 | 40 models, good indexes and constraints |
+| API | Availability | 3 | 90 | |
+| API | Architecture | 5 | 88 | |
+| API | Deployment | 2 | 90 | |
+| API | Performance | 5 | **50** | ~2.7 s per cached data read |
+| API | Design | 10 | 82 | |
+| App | Accessibility | 5 | 92 | Lighthouse 100 on both pages I ran; skip link, focus styles, axe tests |
+| App | Aesthetics | 3 | 90 | Distinctive, not template-looking |
+| App | UX | 5 | 75 | Every data view waits 3–4 s; landing page pitches a "Fantasy League Optimizer", not an analytics API platform |
+| App | Deployment | 2 | 92 | |
+| App | Performance | 5 | 65 | Lighthouse 82 (home), 59 (players) on my machine; one 1.1 MB JS bundle |
+| App | Features | 10 | 80 | |
+| App | Responsiveness | 5 | 78 | Two open mobile bugs |
+| App | Structure | 5 | 85 | |
+| Misc | Git Methodology | 5 | 70 | |
+| Misc | Integration | 7 | 92 | nba_api, The Odds API, NBA live feed, Google OAuth, Supabase |
+| Misc | Testing | 8 | 90 | |
+| Misc | Tools | 5 | 88 | |
+
+## Findings that cost marks, most serious first
+1. **A Gitea runner token is committed on `main`.** The file is `ci-runner/data/.runner`; it came in
+via direct commit `020f4c6` on 12 Sep. `security.md` says it "never reached `main`". Unregister the
+`kiran-backup` runner in Gitea, remove the file, add `ci-runner/` to `.gitignore`, and correct the
+doc.
+2. **Live data reads take 2.6–4.5 s, even when cached.** `/health` through the same path takes ~0.5
+s, so the extra time is server-side. The most likely cause is the API-key check: it runs 3 database
+queries plus a usage-log write on every request before the cache is consulted, and the site's own
+proxy always sends a key. So the "0 database statements on repeat" claim in `performance.md` isn't
+true in production. Keeping key lookups and rate-limit counters in memory should fix this.
+3. **No human submission path.** The brief's Basic tier is built around approved submitters
+uploading a file or posting events and being told why a submission was rejected. Here, data only
+arrives through the nba_api pipeline. `feature-tiers.md` marks this ✅; a strict marker won't.
+4. **Docs overclaim in places markers will check:**
+   - `git-methodology.md` says pushes to `main` are blocked and reviews are mandatory. In fact
+`main` has no branch protection, 21 commits went straight to `main`, only 4 of 107 merged PRs have a
+recorded approval, and 28 were merged by their own author.
+   - Custom-statistic "versioning" just increments a counter and overwrites the old formula, so a
+figure computed under an earlier version can't be reproduced.
+   - The README calls the project a "scaffold".
+5. **Swagger:** 0 response schemas, 29 of 114 operations have no description, and catch-all routes
+appear in the spec.
+6. **Board hygiene:** stale open issues, a duplicate (#175/#176), and medium bugs open for 3 weeks.
+
+## Highest-value fixes before Saturday
+- Fix the token (finding 1).
+- Fix the API-key check (finding 2), then publish real production response times. This affects about
+15 weight across API Performance, App Performance, UX and Features.
+- Make the docs match reality: README, git methodology, feature tiers, test counts, ERD, security.
+- Turn on branch protection now, and triage and close stale issues.
+- Add response schemas to Swagger and hide the catch-all routes.
+- Store each custom-statistic formula version instead of overwriting it.
+- Split the JS bundle by route and add pytest to CI.
+
+These would plausibly lift M4 by 4–6 points.
+
+A few caveats:
+- Marking is subjective, so treat these as ±5.
+- My local Lighthouse runs are probably pessimistic. The docs' PageSpeed scores are 93 and 88 for
+the same two pages, against my 82 and 59.
+- I changed nothing in either repo. Your local `main` is 52 commits behind `origin`.
+- To pull the Gitea data (issues, PRs, reviews), I used the Gitea credentials Git already had saved
+on this machine.
+
+I can turn this into a shareable page for the team, or start on any of these fixes.
+
+USER:
+can you make the fixes pls
+
+ASSISTANT:
+I'll work through the fix list. Code changes will go on feature branches with PRs. Gitea settings
+and anything outward-facing (runner unregistration, branch protection, closing issues) I'll check
+with you before touching. Loading the team's git workflow and your coding conventions first.
+
+[Tool calls:
+  - Loaded the team-git-workflow skill
+  - Loaded the coding-conventions skill]
+
+Bringing your local `main` up to date (fast-forward only; your untracked files don't collide with
+anything incoming) and checking installed dependencies:
+
+[Tool calls:
+  - Ran: Fast-forward local main and check dependencies and the local unit-test config]
+
+Main is current. Dependencies may be stale for the 52 new commits, so I'm reinstalling both apps in
+the background while I read code.
+
+[Tool calls:
+  - Ran: Reinstall API and web dependencies for the updated main]
+
+While that installs, fix 1 (the committed runner token). Checking what else references `ci-runner/`:
+
+[Tool calls:
+  - Ran: Find references to the ci-runner folder and read .gitignore
+  - Ran: Search tracked files for ci-runner references and read .gitignore
+  - TaskStop: b98u8pusb
+  - Ran: Read the API key guard spec and find where the guard is used]
+
+The Live controller's comment already hints the team noticed this cost. Reading it, plus the session
+guard's notes and how keys get revoked:
+
+[Tool calls:
+  - Ran: Read guard-related comments and key revocation/update code paths
+  - Ran: Check global module setup and e2e tests that rely on API keys or usage logs
+  - Ran: Read the e2e app factory and test DB reset helpers
+  - Ran: Read the test site consumer seed and e2e specs touching keys or limits
+  - Ran: Read the admin consumer service's write paths and how specs construct the services
+  - Ran: Read the admin consumer spec header and the personal API key service
+  - Wrote apps/api/src/common/api-key-lookup.service.ts
+  - Wrote apps/api/src/common/consumer-rate-limiter.service.ts
+  - Wrote apps/api/src/common/api-usage-recorder.service.ts]
+
+Now the global module that makes these three singletons, and the slimmed-down guard:
+
+[Tool calls:
+  - Wrote apps/api/src/common/api-key-access.module.ts
+  - Wrote apps/api/src/common/api-key.guard.ts]
+
+Registering the module and wiring eviction into the five places that revoke, purge, edit or delete
+keys:
+
+[Tool calls:
+  - Edited apps/api/src/app.module.ts
+  - Edited apps/api/src/app.module.ts
+  - Edited apps/api/src/admin/admin-consumers.service.ts
+  - Edited apps/api/src/admin/admin-consumers.service.ts
+  - Edited apps/api/src/admin/admin-consumers.service.ts
+  - Edited apps/api/src/admin/admin-consumers.service.ts
+  - Edited apps/api/src/admin/admin-consumers.service.ts
+  - Edited apps/api/src/admin/admin-consumers.service.ts]
+
+Same for the personal-key service:
+
+[Tool calls:
+  - Edited apps/api/src/me/api-keys/me-api-keys.service.ts
+  - Edited apps/api/src/me/api-keys/me-api-keys.service.ts
+  - Edited apps/api/src/me/api-keys/me-api-keys.service.ts
+  - Edited apps/api/src/me/api-keys/me-api-keys.service.ts]
+
+Updating the two existing specs that construct these services, then I'll write specs for the new
+pieces:
+
+[Tool calls:
+  - Ran: Read setup sections of the consumer and personal-key service specs
+  - Ran: Read the update/revoke/delete tests in both specs]
+
+Adding a lookup stub to the admin spec, with eviction assertions on each write path:
+
+[Tool calls:
+  - Ran: Add eviction assertions to the admin consumer service spec
+  - Read apps/api/src/me/api-keys/me-api-keys.service.spec.ts
+  - Edited apps/api/src/me/api-keys/me-api-keys.service.spec.ts
+  - Edited apps/api/src/me/api-keys/me-api-keys.service.spec.ts
+  - Edited apps/api/src/me/api-keys/me-api-keys.service.spec.ts
+  - Edited apps/api/src/me/api-keys/me-api-keys.service.spec.ts]
+
+Now the specs: guard (rewritten against the new collaborators), lookup cache, rate limiter, and
+recorder.
+
+[Tool calls:
+  - Wrote apps/api/src/common/api-key.guard.spec.ts
+  - Wrote apps/api/src/common/api-key-lookup.service.spec.ts
+  - Wrote apps/api/src/common/consumer-rate-limiter.service.spec.ts
+  - Wrote apps/api/src/common/api-usage-recorder.service.spec.ts]
+
+Specs written. Checking whether the dependency reinstall has finished so I can run them:
+
+[Tool calls:
+  - Ran: Check dependency reinstall progress]
+
+API deps are ready (web still installing). Running the whole API unit suite with your local no-DB
+config, plus lint and typecheck:
+
+[Tool calls:
+  - Ran: Run API unit tests, lint, and typecheck]
+
+[A background task finished and reported back]
+
+ASSISTANT:
+API: **71 files, 818 tests pass** (31 new), lint and typecheck clean. Checking the diff is limited
+to intended lines, with no line-ending churn:
+
+[Tool calls:
+  - Ran: Show working tree changes and line-ending config
+  - Ran: Read the OpenAPI contract e2e test
+  - Ran: Check PrismaService lifecycle hooks and the catch-all controller]
+
+I'll generate the spec with a throwaway script inside `apps/api`. It isn't committed and gets
+deleted afterwards. The script mirrors `main.ts`'s Swagger setup:
+
+[Tool calls:
+  - Wrote apps/api/audit-openapi.tmp.ts
+  - Ran: Generate the current OpenAPI document locally and list gaps]
+
+`tsx` doesn't emit decorator metadata, which Swagger needs. I'll build with `tsc` the way production
+does and run the script against `dist/`:
+
+[Tool calls:
+  - Ran: Build the API and generate the OpenAPI document from compiled output
+  - Ran: Strip the TypeScript cast and generate the OpenAPI document]
+
+That reproduces the live spec exactly (114 ops, 29 without summaries, 0 schemas), so I can verify
+changes locally. Reading the core public controllers to match their decorator style:
+
+[Tool calls:
+  - Ran: Read the games controller
+  - Ran: Read the rest of the games controller and the query params the service parses
+  - Ran: Read game filter parsing, pagination limits, and season-type parsing
+  - Ran: Fetch live response shapes for the endpoints getting schemas]
+
+Shapes confirmed. Reading the TypeScript types behind stats and market odds so nullability in the
+schemas is exact:
+
+[Tool calls:
+  - Ran: Read season averages and stats types plus the prediction and odds models
+  - Ran: Read stats response types and the players controller routes
+  - Ran: Read player detail, stats, splits, and batch handlers
+  - Ran: Find controller handlers taking a raw query object and the params their services read
+  - Ran: Check teams and datasets routes and which params the spec already lists
+  - Ran: Read Team and Player columns and the error filter's body shape
+  - Wrote apps/api/src/common/openapi/error-response.dto.ts
+  - Wrote apps/api/src/common/openapi/page.dto.ts
+  - Wrote apps/api/src/common/openapi/api-docs.decorators.ts]
+
+Now the resource models. Checking the dataset release select and the game-log entry so those match
+exactly:
+
+[Tool calls:
+  - Ran: Read dataset release select shapes and the game log entry type
+  - Wrote apps/api/src/teams/team.dto.ts
+  - Wrote apps/api/src/players/player.dto.ts
+  - Wrote apps/api/src/players/player-stats.dto.ts]
+
+I claimed the game log is "oldest first"; verifying before I publish that in the spec:
+
+[Tool calls:
+  - Ran: Check the game log's ordering]
+
+Confirmed oldest first. Game, event and dataset models:
+
+[Tool calls:
+  - Wrote apps/api/src/games/game.dto.ts
+  - Wrote apps/api/src/games/game-event.dto.ts
+  - Wrote apps/api/src/datasets/dataset-release.dto.ts]
+
+The `modelVersion` example is a placeholder, so I'll take a real value from production instead:
+
+[Tool calls:
+  - Ran: Read real prediction model versions from production]
+
+Production shows `"unversioned"` and `marginMethod: "regression"`, so I'm using those:
+
+[Tool calls:
+  - Edited apps/api/src/games/game.dto.ts
+  - Edited apps/api/src/games/game.dto.ts]
+
+Now applying these to the controllers, starting with `main.ts` (API-key security scheme) and the
+catch-all route (hidden from the spec):
+
+[Tool calls:
+  - Edited apps/api/src/main.ts
+  - Edited apps/api/src/main.ts
+  - Edited apps/api/src/not-found/not-found.controller.ts
+  - Ran: Locate the catch-all controller decorator
+  - Edited apps/api/src/not-found/not-found.controller.ts
+  - Ran: Read players controller imports, export, compare, batch, and aggregates handlers]
+
+Checking two semantics before documenting them: the batch size cap, and what an omitted `seasonType`
+means for `stats-batch`:
+
+[Tool calls:
+  - Ran: Check batch cap and seasonType handling in the stats batch]
+
+Omitted means every segment combined. Applying the players controller edits with exact-match
+replacements, so any drift fails loudly:
+
+[Tool calls:
+  - Ran: Apply Swagger documentation edits to the players controller]
+
+Teams controller next:
+
+[Tool calls:
+  - Ran: Read the teams controller
+  - Ran: Apply Swagger edits to the teams controller
+  - Edited apps/api/src/teams/teams.controller.ts]
+
+Games controller: filters, events paging, the live-poll cursor, and models.
+
+[Tool calls:
+  - Ran: Apply Swagger edits to the games controller and check event ordering]
+
+Event order (sequence ascending) and the list orderings match what I wrote. Next, analytics,
+datasets and archetypes:
+
+[Tool calls:
+  - Ran: Read analytics, archetypes, and datasets controller headers]
+
+Analytics also has no `@ApiTags`, so its two routes show under "default". Fixing that along with the
+other two:
+
+[Tool calls:
+  - Ran: Apply Swagger edits to analytics and archetypes, and inspect datasets routes
+  - Ran: Read the datasets controller's public routes
+  - Ran: Apply Swagger edits to the datasets controller]
+
+Now summaries for the signed-in `me/*` routes and the admin ingestion routes. Reading their handlers
+so each summary is accurate:
+
+[Tool calls:
+  - Ran: Read route comments and decorators in the personal controllers
+  - Ran: Compare decorator style of documented and undocumented personal controllers
+  - Ran: Add tags and summaries to the personal controllers]
+
+Admin ingestion routes:
+
+[Tool calls:
+  - Ran: Read admin ingestion controller routes and comments
+  - Ran: Read the admin ingestion handlers
+  - Ran: Document the admin ingestion routes, then typecheck and lint]
+
+Typecheck and lint pass. Rebuilding and regenerating the spec to compare with the "before" version:
+
+[Tool calls:
+  - Ran: Rebuild and inspect the improved OpenAPI document
+  - Ran: Read the custom statistics controller and service spec
+  - Ran: Read remaining custom-stat specs, web usage, and the original migration
+  - Ran: Read the CustomStatistic model and its e2e reset handling
+  - Ran: Add the CustomStatisticVersion model and generate its migration SQL]
+
+Prisma generated the exact migration SQL offline. Checking that `prisma format` didn't touch
+anything else in the schema, then writing the migration with a backfill:
+
+[Tool calls:
+  - Ran: Write the migration with a backfill and regenerate the Prisma client]
+
+Schema diff is only my 21 lines. Now the service:
+
+[Tool calls:
+  - Ran: Write version history into the custom statistics service]
+
+Controller: `?version=` parsing, the history route, and the four missing Swagger summaries:
+
+[Tool calls:
+  - Wrote apps/api/src/custom-statistics/custom-statistics.controller.ts]
+
+Updating the service spec for the new write shapes, plus tests that an old version evaluates its own
+formula:
+
+[Tool calls:
+  - Ran: Update custom statistics specs and run them]
+
+The shell wrapper trips on unbalanced apostrophes in heredocs. I'll put the edit script in a scratch
+file instead:
+
+[Tool calls:
+  - Wrote scratch:edit_custom_stat_specs.py
+  - Ran: Apply custom statistics spec edits and run those specs]
+
+Custom statistics: 26 tests pass, including the "old version reproduces the old figure" case. Next,
+**route-level code splitting** to cut the 1.1 MB bundle. Reading the router and its spec:
+
+[Tool calls:
+  - Ran: Read the app router, its spec, and other page imports
+  - Ran: Read the rest of the App spec and find an existing loading component
+  - Ran: Read the app shell and the spinner component
+  - Ran: Check React, router, and Vite versions]
+
+Router 7 with React 19: in-app navigations keep the current page on screen while the next chunk
+loads. Writing the change:
+
+[Tool calls:
+  - Ran: Lazy-load pages in the router and add a Suspense boundary in the shell]
+
+Typecheck passes. Updating the one App test that expected lazy pages to render synchronously:
+
+[Tool calls:
+  - Edited apps/web/src/App.spec.tsx
+  - Ran: Run the App spec and component specs]
+
+App and component tests pass. Building to see the effect on bundle size:
+
+[Tool calls:
+  - Ran: Build the web app and list output chunk sizes
+  - Ran: Build the web app and list output chunk sizes
+  - Ran: List Python service requirements and tests that might touch DB or network]
+
+Those test files mention a DB connection but likely mock it. I'll verify by actually running all
+five suites in one throwaway venv (outside the repo) with the union of their requirements:
+
+[Tool calls:
+  - Ran: Create a scratch venv with all Python service requirements]
+
+While that installs: the README fixes. Reading the current root README in full, plus the root
+`getting-started.md` it sits beside:
+
+[Tool calls:
+  - Ran: Read the root README and root getting-started guide
+  - Ran: Check what the seed script loads and that referenced env examples exist
+  - Ran: Check local setup for the site proxy API key
+  - Ran: Read the seed script's structure
+  - Read apps/api/prisma/seed.ts
+  - Read apps/api/prisma/seed.ts
+  - Ran: Read the seed's tsconfig and lint scope
+  - Ran: Make the seed create a fresh local site-proxy API key]
+
+Seed typechecks. Pointing the web env example at it:
+
+[Tool calls:
+  - Edited apps/web/.env.example]
+
+Now the root README. Reading the setup steps I need to amend:
+
+[Tool calls:
+  - Read README.md
+  - Wrote scratch:edit_readme.py
+  - Ran: Rewrite the README's stale sections]
+
+README now describes the real state, with honest known gaps. Next, the missing `apps/similarity`
+README. Reading its entry points so the usage is accurate:
+
+[Tool calls:
+  - Ran: Read the similarity service entry points and configuration
+  - Wrote apps/similarity/README.md]
+
+Verifying two README claims, the feature list and "tests need no database", against the code:
+
+[Tool calls:
+  - Ran: Read the archetype feature list and check the Python venv install]
+
+The features are per-36 rates, shot shares, usage and height. "Rebound split" isn't confirmed, so
+I'm correcting that line:
+
+[Tool calls:
+  - Edited apps/similarity/README.md]
+
+While pip installs, the two-line `apps/api` and `apps/web` READMEs get real getting-started content:
+
+[Tool calls:
+  - Ran: List API modules and web lib/test helpers
+  - Wrote apps/api/README.md
+  - Wrote apps/web/README.md]
+
+Both READMEs now describe real commands and layout. Checking the Python venv:
+
+[Tool calls:
+  - Ran: Check the Python dependency install
+  - Ran: Find where to insert the Python CI job
+  - Read .gitea/workflows/ci.yml
+  - Edited .gitea/workflows/ci.yml
+  - Ran: Read the README testing section to add the Python suites]
+
+I'll add the README line about Python CI after the README commit exists, to keep the two PRs from
+touching the same lines. Checking pip:
+
+[Tool calls:
+  - Ran: Check pip install progress]
+
+[A background task finished and reported back]
+
+ASSISTANT:
+Installed. Running all five suites exactly as the CI job will, from their own folders, with no
+`DATABASE_URL` set:
+
+[Tool calls:
+  - Ran: Run every Python service's tests without a database]
+
+All pass: **311 passed, 7 skipped**. Checking that the 7 skips are DB-only tests that skip cleanly
+in CI, and that no local `.env` influenced the run:
+
+[Tool calls:
+  - Ran: Show skip reasons and check for local env files]
+
+Two services have local `.env` files that `load_dotenv()` would pick up here but CI won't have. To
+be sure the result matches CI, I'll re-run those two from copies without the `.env`:
+
+[Tool calls:
+  - Ran: Re-run ingestion and optimizer tests from clean copies without .env files]
+
+Identical results from clean copies, so the CI job will behave the same. Kicking off the full API
+and web test runs in the background while I move to the **docs site**:
+
+[Tool calls:
+  - Ran: Run full API unit and web test suites plus lint
+  - Ran: Update the local docs repo to its latest main]
+
+Docs repo is current. Before editing docs I'll check two conventions: whether recent app commits
+carry the `Assisted-by:` trailer the git methodology asks for, and how docs pages declare AI use:
+
+[Tool calls:
+  - Ran: Check commit trailer conventions and the docs AI declaration format
+  - Ran: Read ERD summary, custom stats API reference, and operation counts]
+
+The ERD page is explicitly dated 28 Sep, so I'll bring it up to date rather than call it wrong.
+Reading its accounts section to add `UserSeenTutorial` in the same style:
+
+[Tool calls:
+  - Ran: Read the ERD accounts section and the UserSeenTutorial model]
+
+Reading the last few AI-ledger rows and the security incident paragraph, to match their format
+exactly:
+
+[Tool calls:
+  - Ran: Read recent AI ledger rows, the security incident, and CI doc Python mentions]
+
+I have what I need for the docs. Writing the "true today" corrections in one scripted pass:
+
+[Tool calls:
+  - Wrote scratch:edit_docs_now.py
+  - Ran: Apply the current-state docs corrections]
+
+Correcting the timing table to my exact measurements (the cold first request is excluded; events
+peaked at 4.65 s; health ran 0.49–0.55 s):
+
+[Tool calls:
+  - Ran: Correct the documented production timings to the measured values]
+
+Checking the full test runs:
+
+[Tool calls:
+  - Ran: Read the final API and web test results
+  - Wrote scratch:edit_docs_git_and_ledger.py
+  - Ran: Apply git methodology and AI ledger edits, and check AI declarations
+  - Ran: Build the docs site strictly into a scratch folder]
+
+[A background task finished and reported back]
+
+ASSISTANT:
+Docs build passes in strict mode. The API suite passes (**826 tests**), but **one web test failed**.
+Investigating:
+
+[Tool calls:
+  - Ran: Show the failing web test and its error
+  - Ran: Re-run the failing spec alone, then the full web suite with coverage and lint
+  - Ran: Typecheck and lint the API, remove temporary files, and show changes
+  - Ran: Verify which open issues describe already-shipped work
+  - Asked the user: How should I commit and push the fixes? (Your team workflow says to ask before
+committing.); The kiran-backup runner's token is in git history. Removing the file isn't enough: the
+runner must be deleted in Gitea, which invalidates the token. How should that be handled?; Should I
+turn on branch protection for main on Gitea? The docs currently claim direct pushes are blocked, and
+they aren't.; Should I tidy the Gitea issue board?]
+
+USER:
+(answering Claude's questions)
+Your questions have been answered: "How should I commit and push the fixes? (Your team workflow says
+to ask before committing.)"="7 focused PRs + docs (Recommended)", "The kiran-backup runner's token
+is in git history. Removing the file isn't enough: the runner must be deleted in Gitea, which
+invalidates the token. How should that be handled?"="Leave it", "Should I turn on branch protection
+for main on Gitea? The docs currently claim direct pushes are blocked, and they aren't."="Require
+PRs + green CI (Recommended)", "Should I tidy the Gitea issue board?"="Close the 12 shipped + 1 dup
+(Recommended)". You can now continue with these answers in mind.
+
+ASSISTANT:
+[Tool calls:
+  - Ran: Create the runner-removal branch, stop tracking the file, and ignore the folder]
+
+Staged diff is clean: one file deleted, `.gitignore` extended, no secrets added. I'll write commit
+messages to files, which sidesteps the shell's apostrophe handling:
+
+[Tool calls:
+  - Wrote scratch:msg-1-runner.txt
+  - Ran: Commit the runner removal and return to main]
+
+Branch 2, the API-key performance fix:
+
+[Tool calls:
+  - Wrote scratch:msg-2-apikey.txt
+  - Ran: Stage the API-key fix on its branch and scan the diff for secrets
+  - Ran: Commit the API-key fix and return to main]
+
+Those notices are expected: returning to `main` restores the original versions, and the changes now
+live on their branch. Branch 3, the OpenAPI documentation:
+
+[Tool calls:
+  - Wrote scratch:msg-3-openapi.txt
+  - Ran: Stage, scan, commit, and typecheck the OpenAPI branch on its own]
+
+My `cd` went one level too far, so the typecheck didn't run. The commit itself succeeded. Running
+the branch-alone typecheck properly:
+
+[Tool calls:
+  - Ran: Typecheck the OpenAPI and API-key branches independently]
+
+Both compile on their own. Branch 4, custom-statistic versions:
+
+[Tool calls:
+  - Wrote scratch:msg-4-customstat.txt
+  - Ran: Stage, scan, commit, and typecheck the custom-statistic versions branch]
+
+Branch 5, lazy-loaded pages:
+
+[Tool calls:
+  - Wrote scratch:msg-5-lazy.txt
+  - Ran: Commit the lazy-loading change on its own branch]
+
+Branch 6, the README refresh and the seed fix, as two commits:
+
+[Tool calls:
+  - Wrote scratch:msg-6a-seed.txt
+  - Wrote scratch:msg-6b-readme.txt
+  - Ran: Commit the seed fix and README refresh on their branch]
+
+Only the CI change remains. Branch 7: the Python CI job, plus a one-line mention in the README's CI
+paragraph (a part the README PR doesn't touch, so the two merge cleanly):
+
+[Tool calls:
+  - Wrote scratch:msg-7-ci.txt
+  - Ran: Commit the Python CI job with its README line
+  - Ran: Simulate merging all seven branches together to detect conflicts]
+
+All seven combine cleanly, and the combined code was already typechecked and tested as one working
+tree earlier. Pushing the branches:
+
+[Tool calls:
+  - Ran: Push the seven feature branches to Gitea]
+
+Six confirmed; the first branch's output didn't print. Checking it reached Gitea:
+
+[Tool calls:
+  - Ran: Confirm the runner-removal branch exists on Gitea
+  - Ran: Push the runner-removal branch and show the full result]
+
+All seven branches are on Gitea. Opening a PR for each with a reviewer-facing description (what,
+why, how it was tested, trade-offs). Writing the PR definitions to a script:
+
+[Tool calls:
+  - Wrote scratch:open_prs.py
+  - Ran: Open the seven pull requests on Gitea]
+
+PR #207 opened, then a 409 Conflict on the next. Checking Gitea's reason before retrying:
+
+[Tool calls:
+  - Ran: Read Gitea's conflict reason and list open PRs]
+
+Something else already opened PRs #204, #205, #206 and #208 for my branches; my script only created
+#207. Before doing anything more, checking who created them and with what content:
+
+[Tool calls:
+  - Ran: Inspect the authors, times, and bodies of the recent PRs
+  - Ran: Look for git or Claude Code hooks that create pull requests on push
+  - Ran: Inspect hook configuration in project and user Claude settings]
+
+No hooks locally or in Claude Code. I'll re-list the open PRs to see whether the remaining two
+branches got auto-PRs too:
+
+[Tool calls:
+  - Ran: List the most recent pull requests]
+
+PR #209 was auto-created for `readme-refresh` and is already **closed**, and `python-tests-in-ci`
+has none. Some process acting as your account is opening and closing PRs. Inspecting #209's history:
+
+[Tool calls:
+  - Ran: Inspect PR 209's state, timeline, and comments
+  - Ran: Fetch main and list the state of the new PRs
+  - Ran: Check each open branch merges cleanly with the updated main]
+
+All six still merge cleanly. PageHelper was large (50 files), so I'm checking it didn't add anything
+my branches interact with semantically: migrations, new routes, or new public controllers:
+
+[Tool calls:
+  - Ran: Check the PageHelper merge for migrations, routes, and controllers]
+
+No overlap with my changes. Now I'll put the full reviewer notes (testing, trade-offs, after-merge
+checks) into the PR descriptions, which currently carry only the commit message:
+
+[Tool calls:
+  - Ran: Fill in the full reviewer notes on all seven PRs
+  - Ran: Check Gitea version, repo permissions, and CI status names on a PR
+  - Ran: Enable branch protection on main requiring PRs and passing CI
+  - Wrote scratch:close_issues.py
+  - Ran: Comment on and close the 13 shipped or duplicate issues
+  - Ran: Add PR references and the protection note to the docs, then strict-build]
+
+Strict build passes. Committing and pushing to the docs repo's `main`, after checking nobody pushed
+there in the meantime:
+
+[Tool calls:
+  - Wrote scratch:msg-docs.txt
+  - Ran: Commit the docs corrections and push them to the docs repo's main]
+
+Docs are pushed, and GitHub Pages will redeploy them. Finally, I'll watch CI on the six open PRs.
+The Python job's first run on the shared runner is the main unknown:
+
+[Tool calls:
+  - Monitor: CI results on the six open audit PRs (pull_request checks)]
+
+While CI runs, saving a few things worth knowing in future sessions:
+
+[Tool calls:
+  - Wrote memory:main-branch-protected.md
+  - Wrote memory:owen-creates-prs-in-gitea-ui.md
+  - Wrote memory:bash-heredoc-apostrophes.md]
+
+I used "himself" in one memory description. Your pronouns haven't been stated, so I'm fixing it,
+then indexing the three new memories:
+
+[Tool calls:
+  - Edited memory:owen-creates-prs-in-gitea-ui.md
+  - Read memory:MEMORY.md
+  - Edited memory:MEMORY.md]
+
+Memory index updated. While CI runs, fast-forwarding your local `main` to include the merges that
+landed tonight (#203, #209), and checking the docs site has redeployed:
+
+[Tool calls:
+  - Ran: Fast-forward local main and check the docs site redeployed]
+
+The docs site is live with the corrections, and your local `main` is current. Waiting for the PR CI
+results:
+
+[Tool calls:
+  - Ran: Wait until the PR CI checks finish or one fails
+  - Read bb6wsuh8l.output]
+
+Monitor output doesn't land in a file I can read, so that wait would never finish. Stopping it and
+checking the PR statuses directly:
+
+[Tool calls:
+  - TaskStop: b9paxtrmy
+  - Ran: Read CI status for each audit branch and PR merge state]
+
+The fixes are made: seven PRs are open on Gitea, the Gitea and docs-site changes are done, and the
+docs site already shows the corrections. #209 (READMEs and seed key) was merged straight away from
+your account; the other six are waiting on CI. The shared runner is backed up, so most checks are
+still queued and could take a while. Because `main` is now protected, none of the six can merge
+until their PR checks pass.
+
+| PR | What it fixes | CI so far |
+|---|---|---|
+| [#204](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/204) | The slow API-key check (2.6–4.7 s per cached read). Key lookups and rate limits are now kept in memory instead of hitting the database on every request | **The branch's own run passed everything, including the end-to-end tests against Postgres**; PR checks queued |
+| [#205](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/205) | Swagger: 0 → 36 operations with response schemas, missing filters documented, API-key login in Swagger UI, catch-all route hidden | Lint and typecheck green; tests queued |
+| [#206](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/206) | Custom statistics keep every formula version; `?version=` re-runs an old one. Includes a database migration | Queued |
+| [#207](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/207) | Removes the runner token file from `main` | Queued |
+| [#208](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/208) | Pages load separately: main bundle 1,144 KB → 307 KB | Queued |
+| [#209](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/209) | READMEs rewritten; seed now prints a local site key (a fresh clone was getting 401s) | Merged |
+| [#210](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/210) | Python tests run in CI (first use of `setup-python` on the shared runner, so watch it) | Queued |
+
+**On Gitea and the docs site:**
+- `main` is protected: no direct pushes, and a PR needs green CI to merge. No approvals are
+required.
+- I closed 12 issues whose work has shipped, plus #176 as a duplicate of #175. Each got a comment
+saying where the work landed.
+- Seven docs pages now match reality: security, git methodology, feature tiers, performance,
+testing, ERD and the AI ledger.
+
+**Checked locally:** API typecheck, lint and 826 unit tests pass. Web has 848 tests passing at 92%
+coverage. All 311 Python tests pass (7 skipped because they need a database). The seven branches
+merge together without conflicts, and the docs site builds in strict mode.
+
+**Still open:**
+- **The runner token still works.** As you chose, I only removed the file. Deleting the `kiran-
+backup` runner in Gitea is what kills the token.
+- **Run `npm run prisma:seed` once.** #209 merged before anyone had run the new seed, and I couldn't
+run it here without a local database.
+- **Check the site key's rate limit.** All signed-out visitors share one key. If it's still on the
+default 100 requests a minute, a few markers browsing at once could get errors. Raise it on the
+admin page.
+- **Not fixed:** the four open medium bugs (#128, #163, #164, #175), the missing upload path for
+human submitters (the main Basic-tier gap), and the empty `2026-27.1` dataset release in production.
+- **Docs after merging:** once the PRs merge and redeploy, a few pages need updating with the new
+timings, test counts and operation count.
+
+If #204 brings live data reads down to about half a second, I'd expect the submission mark to rise
+from about 82% to the mid-to-high 80s. I'll know once I re-time the live site after it deploys.
+
+I'm watching CI on the open PRs for the next 30 minutes and will flag any failure. I can also do the
+post-merge docs pass, or build the submission endpoint, if you want.
+
+USER:
+Can you check that the database is at least semi secure and that we comply with popia at least the
+things that we can comply with relatively easily
+
+ASSISTANT:
+I'll check this in two parts: the code (what personal data you hold, how it's protected, deleted and
+exposed), and a read-only look at the production database's actual security settings. Starting with
+the code:
+
+[Tool calls:
+  - Ran: List personal-data fields and how each User relation behaves on account deletion
+  - Ran: Check FK actions, avatar deletion, leaderboard names, PII logging, IP tracking
+  - Ran: Confirm FK delete actions in migrations and see when avatars are removed
+  - Wrote scratch:db_security_check.py
+  - Ran: Run the read-only database security inspection]
+
+The direct host is IPv6-only and unreachable from here. Switching to the pooled URL, enforcing read-
+only per transaction instead of via a startup option:
+
+[Tool calls:
+  - Ran: Re-run the read-only inspection through the pooler
+  - Ran: List RLS policies, publications, and where RLS was set up
+  - Ran: Check the Supabase REST API is live and whether any Supabase key was ever committed
+  - Ran: Check grant ownership, default privileges, policy names, and BetterAuth IP option
+  - Ran: Find how BetterAuth stores session IPs and the option that disables it
+  - Ran: Read BetterAuth's getIp and the session creation code
+  - Ran: Create the database lockdown branch from the latest main
+  - Wrote apps/api/prisma/migrations/20261009120000_lock_down_supabase_data_api/migration.sql
+  - Ran: Validate the migration's SQL and PL/pgSQL syntax with Postgres's parser
+  - Ran: Parse the migration's PL/pgSQL body with the right pglast function]
+
+Both the outer SQL and the PL/pgSQL body parse. One more read-only check against production: confirm
+step 1's filter selects exactly the 39 allow-all policies and nothing else.
+
+[Tool calls:
+  - Ran: Confirm read-only which policies the migration would drop
+  - Ran: Read leaderboard naming, admin user deletion, scheduler setup, and session field usage]
+
+Nothing reads the stored IPs or user agents, so they can safely stop being kept. Next I need the
+avatar service's internals, to delete a photo when its account is deleted:
+
+[Tool calls:
+  - Ran: Read the avatar storage service and module wiring for admin user deletion
+  - Wrote apps/api/src/me/avatar-cleanup.ts
+  - Ran: Make the avatar service reuse the shared client helper]
+
+Now the BetterAuth config: avatar cleanup after self-service deletion, and sessions saved without IP
+or user agent:
+
+[Tool calls:
+  - Ran: Add avatar cleanup and session minimisation to the auth config and admin deletion]
+
+Typechecks. Next, the public leaderboard: show the chosen username instead of the real Google name.
+
+[Tool calls:
+  - Ran: Read the leaderboard naming constants and how tests reference names
+  - Ran: Read the leaderboard e2e user setup and unit spec
+  - Ran: Switch the leaderboard to usernames and update its specs
+  - Edited apps/api/test/analytics.e2e-spec.ts]
+
+Checking whether any other public endpoint exposes users' real names or emails:
+
+[Tool calls:
+  - Ran: Find other places that select users' names
+  - Wrote apps/api/src/privacy/data-retention.service.ts
+  - Wrote apps/api/src/privacy/data-retention.service.spec.ts
+  - Wrote apps/api/src/privacy/privacy.module.ts
+  - Ran: Register the privacy module and inspect the /v1/me controller]
+
+Now the **access right** (POPIA s23): a "download my data" export. Listing the User model's
+relations so the export covers everything a person owns:
+
+[Tool calls:
+  - Ran: List the User relations and fields of each personal-data model]
+
+Writing the export. It's a single read of everything the user owns, deliberately leaving out
+secrets: session tokens, OAuth tokens and API key hashes.
+
+[Tool calls:
+  - Wrote apps/api/src/me/data-export.service.ts
+  - Wrote apps/api/src/me/data-export.controller.ts
+  - Wrote apps/api/src/me/data-export.service.spec.ts
+  - Ran: Register the export in the Me module and typecheck]
+
+Prisma 5.22 doesn't support `omit` without a preview flag. The game and valuation rows have no
+secrets, so I'll include them whole:
+
+[Tool calls:
+  - Ran: Fix the export select, typecheck, and run the affected specs
+  - Ran: Move client creation inside the try and inspect the admin users spec
+  - Read apps/api/src/admin/admin-users.service.spec.ts
+  - Ran: Add admin deletion avatar-cleanup tests
+  - Wrote apps/api/src/me/avatar-cleanup.spec.ts
+  - Ran: Typecheck, lint, and run the full API unit suite on the privacy branch]
+
+API: **801 tests pass**, lint and typecheck clean. A one-off migration clears the IPs and user
+agents already stored (83 sessions):
+
+[Tool calls:
+  - Wrote apps/api/prisma/migrations/20261009130000_clear_session_ip_and_user_agent/migration.sql
+  - Ran: Locate the delete-account control, footers, API helpers, and sign-in button
+  - Ran: Read the profile account section, sign-in UI, and API base helpers
+  - Ran: Read the profile page's account section layout and imports
+  - Ran: Read the LockerButton component and its import
+  - Ran: Add the download-my-data link and privacy link to the profile page
+  - Ran: Read the API usage label and any test asserting it
+  - Ran: Update the usage label and look for a place to link the privacy notice]
+
+There's no footer anywhere in the app, so the notice needs a visible public link. Checking the end
+of the landing page for a natural spot:
+
+[Tool calls:
+  - Ran: Read the end of the landing page
+  - Ran: Check for trackers, how read-aloud works, and leaderboard thresholds
+  - Wrote apps/web/src/pages/PrivacyPage.tsx]
+
+One tweak (keep the constant module-private to avoid a fast-refresh lint warning), then the route,
+footer link and onboarding note:
+
+[Tool calls:
+  - Ran: Add the privacy route, landing footer, and check imports
+  - Ran: Read the onboarding username step to place a privacy note]
+
+A note at the username step tells people the username is what others see, which is the right moment
+to say it:
+
+[Tool calls:
+  - Ran: Add the onboarding privacy note, then typecheck and lint the web app]
+
+Typecheck and lint are clean. Adding a spec for the privacy page, using the repo's existing `axe`
+helper:
+
+[Tool calls:
+  - Ran: Read the accessibility test helper and an example of its use
+  - Wrote apps/web/src/pages/PrivacyPage.spec.tsx
+  - Ran: Run the privacy page spec and the specs of pages I changed]
+
+Adding a profile test so the download link is covered:
+
+[Tool calls:
+  - Ran: Find a profile test that renders the account section
+  - Ran: Read the delete-confirmation test to mirror its setup
+  - Edited apps/web/src/pages/ProfilePage.spec.tsx
+  - Ran: Run the full web suite with coverage and lint
+  - Asked the user: The privacy notice must name a contact for privacy requests (POPIA requires
+one). Which address should be published on the public /privacy page?; OK to commit and push these as
+two PRs? (Nothing is committed yet.)]
+
+USER:
+(answering Claude's questions)
+The user answered: "The privacy notice must name a contact for privacy requests (POPIA requires
+one). Which address should be published on the public /privacy
+page?"="analyticclaritycontact@gmail.com you can use this one if that is okay", "OK to commit and
+push these as two PRs? (Nothing is committed yet.)"="Two PRs, as below (Recommended)". Read the
+answers carefully — they may request clarification, changes, or that you not proceed — and follow
+what they actually say.
+
+ASSISTANT:
+A dedicated Gmail is a good choice. Filling it in, then committing. The lockdown branch first: it
+holds only the migration, which is still untracked in the working tree.
+
+[Tool calls:
+  - Ran: Set the privacy contact and list the changes to commit
+  - Wrote scratch:msg-lockdown.txt
+  - Ran: Commit the database lockdown migration on its branch
+  - Wrote scratch:popia_commits.py
+  - Ran: Scan for secrets, then create the six POPIA commits]
+
+Six commits, nothing left over, and no secrets in the diff. Verifying the `auth.config.ts` split
+landed correctly, then that both new branches merge cleanly alongside the six PRs still open:
+
+[Tool calls:
+  - Ran: Verify the commit split and simulate merging every open branch together
+  - Ran: Fold the import move into the privacy commit and re-check all merges]
+
+All eight open branches now combine without conflicts, and the merged `App.tsx` has both the privacy
+route and lazy loading. Pushing the two branches:
+
+[Tool calls:
+  - Ran: Push the database lockdown and POPIA branches]
+
+[A background task finished and reported back]
+
+ASSISTANT:
+Both pushed. Per what I learned last round, I'll check whether PRs already exist for them (you may
+open them in the Gitea UI) before creating any. Writing the descriptions:
+
+[Tool calls:
+  - Wrote scratch:open_privacy_prs.py
+  - Ran: Open or update the two PRs on Gitea
+  - Ran: Update the docs repo and read the security page outline
+  - Wrote scratch:edit_docs_privacy.py
+  - Ran: Apply the docs privacy edits and strict-build the site]
+
+The docs table describes changes that are still in review, so I'll say that explicitly rather than
+imply they're live. Then commit and push:
+
+[Tool calls:
+  - Ran: Clarify review status, rebuild, commit, and push the docs]
+
+Docs pushed (that banner is just MkDocs Material's notice about MkDocs 2.0). Finally, a status check
+on CI for all open PRs, since my earlier monitor ended without reporting:
+
+[Tool calls:
+  - Ran: Summarise CI status for every audit and privacy PR]
+
+A Windows line-ending bug in my loop (a trailing `\r` on each commit hash) broke the status URLs,
+and probably silenced the earlier monitor too. Redoing it in Python:
+
+[Tool calls:
+  - Wrote scratch:pr_ci_status.py
+  - Ran: Show PR CI status for every audit and privacy PR]
+
+Short answer: the database was **not** secure, and that's now fixed in a PR waiting to merge. Most
+POPIA requirements that code can cover are now handled in a second PR. Nothing has changed in
+production yet.
+
+**The serious finding: [#211](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/211),
+please merge this first.** Supabase automatically publishes your tables through a web API that
+anyone holding the project's public "anon" key can call. On production:
+- The roles that API uses had full read and write access to all 41 tables.
+- The 39 row-level security rules (all named `service_role_all`) were set to allow everyone, so they
+protected nothing.
+- Two tables had no row-level security at all.
+
+So anyone with that key could have read or changed user emails, login session tokens (enough to take
+over an account), Google sign-in tokens and API key hashes. The API is live, but the key was never
+committed to either repo or the web app, and nothing suggests it was used.
+
+The fix is one migration: it removes the allow-all rules, turns row-level security on for every
+table, and takes those roles' access away, including for future tables. It can't break the app,
+because the API and Python jobs connect as the tables' owner and the photo storage uses the service
+key, and both bypass these rules. I checked it read-only against production, and the SQL parses
+cleanly.
+
+**The rest of the database was fine:** private photo bucket, API keys stored only as hashes, and
+deleting a user correctly removes everything they own.
+
+**POPIA: [#212](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/212), six changes:**
+
+| POPIA section | Problem | Fix |
+|---|---|---|
+| s11, consent | The public leaderboard showed real Google names to anyone | It now shows the username each person chose |
+| s14, deletion | A deleted account's profile photo stayed in storage | Photos are now deleted with the account |
+| s10, minimality | IP address and browser info saved on every login session, never used | No longer stored, and the existing values are cleared |
+| s14, retention | Expired sessions (78 of 83) and API usage logs kept forever | Deleted daily (usage logs after 90 days) |
+| s18, notification | No privacy notice | A public `/privacy` page, linked from the landing, onboarding and profile pages, with analyticclaritycontact@gmail.com as the contact |
+| s23, access | No way to get a copy of your data | "Download my data" on the profile returns everything stored except passwords and sign-in tokens |
+
+**Tests:** API 801 and web 986, all passing locally; typecheck and lint are clean. #211 and #212
+merge cleanly with each other and with every other open PR. Their CI checks are queued; so far only
+#204 (the API-key speed fix) has finished, and it passed. The docs site's security page now records
+this finding and has a POPIA section.
+
+**A few things only you can do:**
+- **In the Supabase dashboard:** remove `public` from the API's exposed schemas, since the app
+doesn't use that API. Turn on enforced SSL, and add `sslmode=require` to `DATABASE_URL` and
+`DIRECT_URL` on Render.
+- **Check Supabase's API logs** for any requests using the anon key, to confirm nobody used the
+hole. If someone did, POPIA s22 requires notifying the Information Regulator and the affected users.
+- **Confirm Render's region.** The privacy notice says the US because `render.yaml` sets no region
+(Oregon is the default), but check the dashboard.
+- **Not covered:** registering an Information Officer with the Information Regulator and reviewing
+the hosting providers' data terms. These are paperwork rather than code; I've noted them in the
+docs.
+
+USER:
+can you create me full instructions for these as i have to pass this onto my teammates. 
+
+
+In the Supabase dashboard: remove public from the API's exposed schemas, since the app doesn't use
+that API. Turn on enforced SSL, and add sslmode=require to DATABASE_URL and DIRECT_URL on Render.
+Check Supabase's API logs for any requests using the anon key, to confirm nobody used the hole. If
+someone did, POPIA s22 requires notifying the Information Regulator and the affected users.
+Confirm Render's region. The privacy notice says the US because render.yaml sets no region (Oregon
+is the default), but check the dashboard.
+Not covered: registering an Information Officer with the Information Regulator and reviewing the
+hosting providers' data terms. These are paperwork rather than code; I've noted them in the docs.
+
+ASSISTANT:
+[Tool calls:
+  - Artifact: quickstart
+  - Loaded the anthropic-skills:docs skill
+  - Artifact: publish Database Security & POPIA Follow-ups
+  - Used the claude ai Claude Docs connector (guide)]
+
+Your doc is set up. Now its outline: title, a tracker table your teammates can tick off, and a
+placeholder for each task.
+
+[Tool calls:
+  - Used the claude ai Claude Docs connector (batch)]
+
+Outline is in. Filling Task 1, the urgent one:
+
+[Tool calls:
+  - Used the claude ai Claude Docs connector (update)]
+
+Task 2, SSL. The order matters: switch the app to SSL first, then make Supabase require it.
+
+[Tool calls:
+  - Used the claude ai Claude Docs connector (update)]
+
+Task 3, the log check. The key point: our app never calls Supabase's `/rest/v1` or `/graphql/v1`, so
+any request there came from someone else.
+
+[Tool calls:
+  - Used the claude ai Claude Docs connector (update)]
+
+Task 4 is short:
+
+[Tool calls:
+  - Used the claude ai Claude Docs connector (update)]
+
+Last section, Task 5: the paperwork. One easy extra that fits here: putting the new privacy notice
+link on Google's sign-in consent screen.
+
+[Tool calls:
+  - Used the claude ai Claude Docs connector (update)]
+
+Written for: your teammates, who'll do these steps without the context of our session.
+
+[Database Security & POPIA Follow-
+ups](https://claude.ai/code/artifact/1aecb7cf-d4a1-4dcf-9284-f703ec5505a9) is ready. It starts with
+a tracker table (Owner and Status columns to fill in), then step-by-step instructions for each task,
+each with a way to check it worked.
+
+Two things before you send it:
+- **It's private by default.** Use the doc's Share menu, or teammates won't be able to open the
+link.
+- **Task 1 is the urgent one:** about five minutes in the Supabase dashboard closes the exposed data
+with no deploy.
+
+I added one item you didn't list, under Task 5: setting the privacy notice link on Google's sign-in
+consent screen once PR #212 is live.
+
+[A background task finished and reported back]
