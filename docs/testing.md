@@ -4,15 +4,15 @@ What is tested, how the tests run, and the team's test policy. User testing is o
 
 ## At a glance
 
-| Suite | Where | Spec files | Tests on `main`, 8 Oct |
+| Suite | Where | Spec files on `main`, 10 Oct | Tests at the last full run (8 Oct) |
 |---|---|---|---|
-| API unit | `apps/api/src/**/*.spec.ts` | 68 | 787, all passing |
-| API end-to-end | `apps/api/test/*.e2e-spec.ts`, against a real Postgres | 20 | About 270, passing in CI's `coverage` job |
-| Web components | `apps/web/src/**/*.spec.{ts,tsx}` | 86 | 848, all passing, at 92.2% line and 84.7% branch coverage |
-| Python | `test_*.py` in `apps/ingestion`, `predictor`, `optimizer`, `valuation` and `similarity` | 25 | 311 passing, 7 skipped (those need a disposable test database); run locally with `pytest`; a CI job is in review ([PR #210](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/210)) |
+| API unit | `apps/api/src/**/*.spec.ts` | 91 | 787, all passing |
+| API end-to-end | `apps/api/test/*.e2e-spec.ts`, against a real Postgres | 19 | About 270, passing in CI's `coverage` job |
+| Web components | `apps/web/src/**/*.spec.{ts,tsx}` | 96 | 848, all passing, at 92.2% line and 84.7% branch coverage |
+| Python | `test_*.py` in `apps/ingestion`, `predictor`, `optimizer`, `valuation` and `similarity` | 27 | 311 passing, 7 skipped (those need a disposable test database); run by the `python` job in CI ([PR #210](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/210)) |
 | Live browser | Headless Edge against the real stack (27 Sep) | — | 65 of 65 checks passed |
 
-The API unit, web and Python counts come from running each suite on 8 October; the end-to-end count is the number of tests in its 20 spec files, which need Postgres and run in CI.
+The spec-file counts are read from the tip of `main` on 10 October. The test totals are from the last full local run, on 8 October: the twenty-five PRs merged on 9–10 October added specs for the optimizer solve, injuries, all-time leaders and the rest, so the suites are larger than these totals and CI is the current record.
 
 CI fails if any API or web test fails, or if either app drops below **80%** lines, statements, functions or branches.
 
@@ -113,7 +113,7 @@ Conventions:
 - End-to-end tests boot the real app, not a mock.
 - A flaky test is a bug.
 
-Python tests are not run in CI yet.
+Python tests run in CI too: the `python` job installs each service's requirements and runs `pytest` for all five (PR #210, 9 Oct).
 
 ## Bug tracking
 

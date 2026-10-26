@@ -80,19 +80,19 @@ The sample leans towards basketball novices on phones, but it includes one hardc
 | F1 | Show past prediction accuracy (Q13: 5 + 2) | Model accuracy card on Home (PR #94) | **Shipped** |
 | F2 | Explain how predictions are made (Q13: 1) | "How it works" on Predictions (PR #95) | **Shipped** |
 | F3 | Compare with ESPN or CBS (Q13: 2) | Evaluate the cost | Backlog |
-| F4 | Optimiser: "must include LeBron" constraints (Q17: 3) | Hard constraints in the MILP | Backlog |
+| F4 | Optimiser: "must include LeBron" constraints (Q17: 3) | Lock a player into every lineup, or exclude one, then solve again (PR #221) | **Shipped** |
 | F5 | Optimiser: projected points per player (Q17: 3) | Per-slot projections, also saved with lineups (PR #111) | **Shipped** |
-| F6 | Optimiser: alternative lineups (Q17: 3) | Next-best lineups from the solver | Backlog |
-| F7 | Stat abbreviations unexplained; small labels (Q9, Q21) | Explanations beside the traits radar; the stat tiles still have none | **Partly shipped** |
-| F8 | Landing copy is "wordy… LLM-esque" (Q6) | Plain-language pass | Backlog |
+| F6 | Optimiser: alternative lineups (Q17: 3) | Three alternative lineups under the same rules, each a different set of players (PR #221) | **Shipped** |
+| F7 | Stat abbreviations unexplained; small labels (Q9, Q21) | One shared glossary: every stat tile, the traits radar, Compare and the splits tables open the same definitions (PR #219) | **Shipped** |
+| F8 | Landing copy is "wordy… LLM-esque" (Q6) | The landing page rewritten in plain language (PR #223) | **Shipped** |
 | F9 | A beginner's guide (Q21, Q23) | Player Archetypes explains each player's style in plain words | **Shipped** |
-| F10 | Search "manon" should find "Mañón" (Q24) | Accent-insensitive search | Backlog |
-| F11 | All-time stat leaders (Q9) | Needs seasons beyond the three ingested | Backlog |
+| F10 | Search "manon" should find "Mañón" (Q24) | Accent-insensitive search on the players list and in the API (PR #224) | **Shipped** |
+| F11 | All-time stat leaders (Q9) | An All-Time page from the NBA's career totals: eleven categories, regular season or playoffs, bios on every card (PR #226) | **Shipped** |
 | F12 | Show player position (Q21) | Already in the profile header | **Already shown** |
 | F13 | More team details (Q11: 3 yes, 6 maybe) | Team pages with record, Elo, last five and roster (PR #123) | **Shipped** |
 | F14 | Daily or weekly Beat the Model games (Q23) | Evaluate | Backlog |
 | F15 | A volunteer for an interview (Q25) | Interviewed on 27 Sep | **Done** |
-| F16 | Injuries and return dates (Q9) | Needs an injury data source | Backlog |
+| F16 | Injuries and return dates (Q9) | ESPN's injury report on team and player pages, with its estimated return dates (PR #225) | **Shipped** |
 | F17 | Player-level predictions (Q13) | Matchup projection on each player profile (PR #105) | **Shipped** |
 | F18 | Some pages carry too much (Q21) | Lead with the headline numbers, keep detail one click away | Backlog |
 | F19 | Player height (Q9) | Already in the profile's Bio card | **Already shown** |

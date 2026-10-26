@@ -109,7 +109,7 @@ The script reads only `apps/valuation/.env`, never the repo's root `.env`, which
 
 **Retrain** when the 2026 draft class has about 20 games of 2026-27, and every summer when a new rookie scale is published (update `apps/valuation/rookie_scale.py` first).
 
-The 24 Python tests (`test_valuation.py`) run locally with `pytest`; CI doesn't run Python tests yet. `MINIMUM_GAMES_REQUIRED` (10) is defined in both `train_valuation_model.py` and the API's `valuation-state.ts`, and the two must match.
+The 24 Python tests (`test_valuation.py`) run with `pytest`, locally or in CI's `python` job ([PR #210](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/210)). `MINIMUM_GAMES_REQUIRED` (10) is defined in both `train_valuation_model.py` and the API's `valuation-state.ts`, and the two must match.
 
 ---
 

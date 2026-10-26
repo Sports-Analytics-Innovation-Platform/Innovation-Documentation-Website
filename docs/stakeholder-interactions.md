@@ -17,6 +17,7 @@ What the client asked for at each meeting and what the team did about it. The fu
 | Sprint 1 | 13, 18 and 21 Aug | 12 and 23 Aug |
 | Sprint 2 | 7 Sep | 7, 10 and 14 Sep |
 | Sprint 3 | 27 Sep | 28 Sep |
+| Submission | 9 Oct | 7 Oct |
 
 ## Client feedback and what the team did
 
@@ -48,9 +49,13 @@ What the client asked for at each meeting and what the team did about it. The fu
 | 27 Sep | Run Lighthouse on data-heavy pages, not only the landing page | Home, Teams, Players and Admin scored 88–95 for performance on mobile and 100 for accessibility | [Performance](design/performance.md#lighthouse-scores-2026-09-29) |
 | 27 Sep | Re-test the API now that keys are required, including rate limits | Live API tested with a consumer key: missing and invalid keys and rate limits | [AI Usage Ledger](ai-usage.md) (27 Sep) |
 | 27 Sep | Stress-test the API | One 10-user run (29 Sep) sent no API key, so it measured only the health route. Lighthouse and query counts are the performance evidence instead | [Performance](design/performance.md) |
-| 27 Sep | Ship and document at least one change that came from user feedback | Seven shipped, each with before and after | [Improvements Made](improvements.md) |
+| 27 Sep | Ship and document at least one change that came from user feedback | Twenty-four items traceable to the survey and interview have shipped, the last eighteen of them in PRs #219–#227 | [Improvements Made](improvements.md) |
+| 9 Oct | Pay for the database rather than copying it onto a free plan | Supabase moved to the paid plan, split six ways | — |
+| 9 Oct | Every operation on the Swagger page must return real data, and a health route has a purpose | All 120 operations return data | [API Reference](api-reference.md) |
+| 9 Oct | One or two user-feedback changes are enough for that rubric line | Twenty-four items shipped, well past that | [Improvements Made](improvements.md) |
+| 9 Oct | Present the site as recorded clips inside the slides, and expect a monetisation question | Slides with page clips planned for 19–23 Oct | [Demo Guide](demo-guide.md) |
 
-At the 27 Sep meeting the client said the docs site needed no changes and the Git and meeting process was being followed, and closed with "I'm happy. There's nothing left."
+At the 27 Sep meeting the client said the docs site needed no changes and the Git and meeting process was being followed, and closed with "I'm happy. There's nothing left." On 9 Oct he walked the Project Submission rubric section by section against the live site and API and found nothing outstanding: "everything looks good, there's nothing to do, well done."
 
 ---
 

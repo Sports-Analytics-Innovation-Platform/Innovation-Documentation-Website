@@ -1,6 +1,6 @@
 # ERD
 
-The platform's PostgreSQL database (Supabase), managed with Prisma. The production database has **40 tables and 7 enums**, all declared in `apps/api/prisma/schema.prisma` on the app repository's `main`; the newest migration is `20261007120000_add_page_tutorials`. Every table and constraint here was checked against `schema.prisma` on 28 September 2026, `UserSeenTutorial` (added 7 October) on 8 October, and the diagrams were regenerated on 3 October 2026, before `UserSeenTutorial` existed.
+The platform's PostgreSQL database (Supabase), managed with Prisma. The production database has **44 tables and 10 enums**, all declared in `apps/api/prisma/schema.prisma` on the app repository's `main`; the newest migration is `20261009180000_add_all_time_leaders`. Every table and constraint here was checked against `schema.prisma` on 28 September 2026 and `UserSeenTutorial` (added 7 October) on 8 October; the four tables added on 9 October are read from `schema.prisma` at `main`'s tip on 10 October. The diagrams were regenerated on 3 October 2026, so they don't show any of those.
 
 Why the database is designed this way: [ADR-001: Database](../decisions/adr-001-database.md). Where it runs: [ADR-003](../decisions/adr-003-hosting-topology.md). Why play-by-play is stored for one season only: [ADR-005](../decisions/adr-005-play-by-play-storage.md).
 
@@ -8,15 +8,15 @@ Unless stated otherwise, each table's primary key is `id`, a generated UUID. In 
 
 | Group | Tables | Written by |
 |---|---|---|
-| [NBA data and models](#nba-data-and-models) | 11 | Ingestion (`apps/ingestion`), predictor and optimizer scripts. The API writes NBA data only through admin corrections. |
+| [NBA data and models](#nba-data-and-models) | 13 | Ingestion (`apps/ingestion`), predictor and optimizer scripts. The API writes NBA data only through admin corrections. |
 | [Ingestion and review](#ingestion-and-review) | 5 | Ingestion scripts and the pull worker; the API for reviews, corrections and the schedule |
 | [Accounts and personal data](#accounts-and-personal-data) | 11 | BetterAuth, and the API when a user saves something |
-| [Publishing and API access](#publishing-and-api-access) | 5 | The API |
+| [Publishing and API access](#publishing-and-api-access) | 7 | The API |
 | [Become Pro](#become-pro) | 4 | The API; `apps/valuation` writes the trained model |
 
 ## Full diagrams
 
-Regenerated from `schema.prisma` on 3 October 2026, and checked by applying every migration to a scratch Postgres database. Click a diagram to enlarge it. The smaller diagrams in each section below show only the relationships.
+Regenerated from `schema.prisma` on 3 October 2026, and checked by applying every migration to a scratch Postgres database. Five tables added afterwards are described in their sections below but not drawn here: `UserSeenTutorial` (7 October), `CustomStatisticVersion` and `ExportRequest` (9 October), and the two all-time leader tables (9 October). Click a diagram to enlarge it. The smaller diagrams in each section below show only the relationships.
 
 ![Core NBA data ERD](diagrams/database-erd.svg)
 
@@ -47,6 +47,7 @@ erDiagram
     Player ||--o{ PlayerPrediction : "fantasy projection"
     Lineup ||--o{ LineupSlot : "five players"
     Player ||--o{ LineupSlot : ""
+    AllTimeLeaderPlayer ||--o{ AllTimeLeader : "one row per category"
 ```
 
 | Table | One row is | Key columns and constraints |
@@ -62,8 +63,12 @@ erDiagram
 | `PlayerPrediction` | A player's projected fantasy points | `(playerId, asOf)` index; the newest row is used |
 | `Lineup` | One optimizer run's best lineup | Total points, total salary, budget |
 | `LineupSlot` | One player in a `Lineup` | Unique `(lineupId, playerId)` |
+| `AllTimeLeaderPlayer` | A player who appears on at least one career leaderboard | Primary key is the NBA's own `nbaPlayerId`; name, plus bio fields (position, height, weight, birth date, school, country, career span, draft) that stay empty until the bio is fetched |
+| `AllTimeLeader` | One player's career total in one category | Unique `(category, seasonType, nbaPlayerId)`; `category` is one of eleven; `seasonType` is `REGULAR` or `PLAYOFFS` only, because the NBA's playoff totals already include the Finals; the NBA's own `rank`, so tied totals share a rank, and a whole-number `value`; `fetchedAt` |
 
 **Where the statistics come from.** Averages, TS%, eFG% and AST/TO are calculated from `PlayerGameStat` on each request; no averages are stored. For 2025-26, the counting stats in `PlayerGameStat` are derived from `GameEvent` rows (`derive_player_game_stats.py`); minutes and plus-minus come from the official box score. Earlier seasons have no play-by-play, so their rows come from the box score and have no rebound split or plus-minus. An empty optional stat means "not recorded" and shows as "—".
+
+**All-time leaders are the exception.** The two leader tables are written by `apps/ingestion/all_time_leaders.py` from the NBA's career totals, not from the app's own box scores, so they include players who retired long before the seasons the app ingests. Nothing is computed from them at request time: the API reads them back with the bio joined on.
 
 ## Ingestion and review
 
@@ -139,18 +144,24 @@ erDiagram
 erDiagram
     User |o--o{ DatasetRelease : "publishes"
     User ||--o{ CustomStatistic : "authors"
+    CustomStatistic ||--o{ CustomStatisticVersion : "every formula it has had"
     User |o--o| ApiConsumer : "own consumer"
     ApiConsumer ||--o{ ApiKey : ""
     ApiConsumer ||--o{ ApiUsageLog : "one row per request"
+    ExportRequest {
+        string id PK
+    }
 ```
 
 | Table | One row is | Key columns and constraints |
 |---|---|---|
 | `DatasetRelease` | A versioned season snapshot | `version` unique (for example `2025-26.1`); SHA-256 `checksum`; row counts; `fieldSchema`; `isStale` after a correction; the exact `csv` as published |
 | `CustomStatistic` | An analyst's formula | Unique `(authorId, name)`; `expression` checked by the API's own parser, never `eval`; `version` goes up on each edit |
+| `CustomStatisticVersion` | One past formula of a custom statistic | Unique `(statisticId, version)`; the `expression` exactly as it was, so a figure from an old version can still be recomputed (PR #206) |
 | `ApiConsumer` | A key holder | `rateLimit` per minute and `dailyQuota`; `userId` unique and set for a user's own consumer, empty for an external one |
 | `ApiKey` | A key | `keyHash` unique (SHA-256). The key itself is shown once and never stored. |
-| `ApiUsageLog` | One request made with a key | `(consumerId, calledAt)` index. The API writes rows in batches and reads them to restore its in-memory rate limits after a restart (PR #204). Nothing prunes it yet. |
+| `ApiUsageLog` | One request made with a key | `(consumerId, calledAt)` index. The API writes rows in batches, reads them to restore its in-memory rate limits after a restart (PR #204) and groups them for a key's usage breakdown (PR #215). A daily job deletes rows older than 90 days. |
+| `ExportRequest` | A queued CSV export | `status` (`QUEUED`, `RUNNING`, `SUCCEEDED`, `FAILED`), `resource` (`PLAYERS` or `GAMES`), the filters as `query` JSON, then the finished `csv`, its `rowCount` and `expiresAt`. No requester is recorded: the request id is the only credential a poll needs. A sweep clears rows 24 hours after they finish (PR #218). |
 
 ## Become Pro
 
@@ -182,6 +193,9 @@ Private to their owner. See [Become Pro](../become-pro/index.md).
 | `IngestionRequestStatus` | `QUEUED`, `RUNNING`, `SUCCEEDED`, `FAILED`, `CANCELLED` |
 | `IngestionFrequency` | `NEVER`, `HOURLY`, `DAILY`, `WEEKLY` |
 | `CompetitionLevel` | `NCAA_D1`, `NCAA_D2`, `NCAA_D3`, `NAIA`, `JUCO`, `INTERNATIONAL_PRO`, `SEMI_PRO`, `HIGH_SCHOOL`, `REC` |
+| `ExportRequestStatus` | `QUEUED`, `RUNNING`, `SUCCEEDED`, `FAILED` |
+| `ExportResource` | `PLAYERS`, `GAMES` |
+| `AllTimeLeaderCategory` | `GAMES_PLAYED`, `POINTS`, `ASSISTS`, `STEALS`, `OFFENSIVE_REBOUNDS`, `DEFENSIVE_REBOUNDS`, `REBOUNDS`, `BLOCKS`, `FIELD_GOALS_MADE`, `THREES_MADE`, `FREE_THROWS_MADE` |
 
 ## What happens on delete
 
@@ -191,7 +205,9 @@ Private to their owner. See [Become Pro](../become-pro/index.md).
 | A player or game that statistics, plays, predictions, odds, batches or corrections depend on, or a team that games refer to | Refused, so derived records never lose their source |
 | A player or game with only user data pointing at it | Users' follows, picks and saved items for it are deleted |
 | A team | Users with it as their favourite are left without one |
-| An API consumer | Its keys and usage log are deleted |
+| An API consumer | Its keys and usage log are deleted. A finished export is kept until it expires, because it belongs to no account. |
+| A custom statistic | Its past versions are deleted with it |
+| A player on the all-time leaderboards | Their bio row and leader rows are deleted with it |
 | A Become Pro season | Its games and valuations are deleted |
 | A valuation model | Valuations keep their figures; only the link is cleared |
 | An ingestion batch or a correction | Plays and undos keep their data; only the link is cleared. Batches are soft-deleted in normal use. |
@@ -212,7 +228,7 @@ PR #195 merged the migration unchanged, and nothing in the app repository record
 ## Open issues
 
 - **Next season's play-by-play** won't fit beside 2025-26's within the 500 MB limit. A decision is needed before it is loaded ([ADR-005](../decisions/adr-005-play-by-play-storage.md#the-next-season)).
-- **One automated submitter.** Ingestion is the only source of submissions, so there is no multi-person approval flow. This is deliberate.
+- **One automated submitter.** Ingestion is the only automated source; since PR #217 an analyst can also submit a game's play-by-play by hand, and it becomes a batch that goes through the same review. There is still no multi-person approval flow, which is deliberate.
 
 ## Known differences between the schema and the database
 

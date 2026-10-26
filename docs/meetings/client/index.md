@@ -5,6 +5,50 @@ hide:
 
 # Client Meetings
 
+??? note "2026-10-09 — Client meeting"
+
+    **Attendees:** Adrian, Owen, Josh, Kiran, Sanele, Kovendan Raman (client)
+    **Absent:** Daniel
+
+    ## Agenda
+
+    - Paying for Supabase: the egress limit and the monthly bill
+    - A section-by-section walkthrough of the Project Submission rubric
+    - The user-feedback requirement
+    - Group presentation format and venue
+
+    ## Decisions
+
+    - **Hosting:** the project hit Supabase's monthly egress quota in September, so the database now needs the $25-a-month plan. The team will pay it and split it six ways. Moving to a free database was rejected: copying every row across and re-pointing every endpoint is the bigger risk.
+    - **POPIA:** full compliance would need a registered information officer. The client agreed that is out of scope for the course project, and the privacy contact address already on the site is enough.
+    - **Rubric:** every Project Submission section the client walked through passed: production data, a deployed and well-structured database, the API open to external and internal callers behind a key from the site, HTTP methods, error handling, accessibility checked on a phone, Lighthouse, responsiveness, interface complexity, methodology, Git methodology, the external-API integration, testing, the work tracker and this documentation site.
+    - **No redundant endpoints:** every operation on the Swagger page must return something real. `GET /health` stays, because it serves a purpose rather than returning nothing.
+    - **Lighthouse floor:** the client's bar is "green", above 75. The team's scores are all above 90 except one at 88, so nothing to do.
+    - **Load:** the API has been tested but not stress-tested. The client doubted the marker would load-test it.
+    - **User feedback:** the rubric rewards one or two implemented items, not a large number. The per-page tours already go beyond that.
+    - **Presentation:** a slideshow with recorded clips of each page, voice-over done live in the room. It is more reliable than someone clicking through the site under time pressure.
+
+    ## Actions
+
+    | Action | Owner | Due |
+    |---|---|---|
+    | Pay the Supabase monthly fee and split it six ways | Josh / Team | Before 11 Oct |
+    | Implement the remaining items on the feedback list | Adrian, with Sanele | Before 11 Oct |
+    | Build the presentation as a slideshow with recorded clips of each page | Team | 19–23 Oct |
+    | Prepare answers for the Q&A, including how the product would be monetised | Team | Before the presentation |
+
+    ## Notes
+
+    - The client confirmed the deadline: submission 11 Oct, group presentations 19 to 23 Oct, and Innovation Day on 26 Oct if Brandon picks the project.
+    - He read the Project Submission rubric out loud and answered each line against the live site and API. His summary: "everything looks good, there's nothing to do, well done." He expects no knock-downs on a project that scored 100 in Sprint 3.
+    - The API drew the most comment. His own project had seven endpoints and lost marks on it; this API is much broader, with GET and POST routes across every resource.
+    - He singled out the per-page tutorials as the strongest answer to "how difficult is it to navigate to a new feature", and said he hadn't seen another group do it.
+    - He repeated the presentation advice from 27 Sep: slides with recorded clips of the site, a technical breakdown of the stack and why it was chosen, then questions. Sample question from his own presentation: how would you take the product further if you had to monetise it.
+    - Presentations are in a first-floor room in TWA (the MSB room), with Brandon and a second lecturer marking.
+    - The last few minutes were a general honours question-and-answer about module difficulty and supervisors, not project work. After the client left, Adrian relayed the outcome to Sanele and offered to share the feedback list.
+
+    **Raw transcript (Craig):** [2026-10-09-client.txt](../../transcripts/meeting-transcripts/2026-10-09-client.txt)
+
 ??? note "2026-09-27 — Client meeting"
 
     **Attendees:** Adrian, Owen, Josh, Daniel, Kovendan Raman (client)

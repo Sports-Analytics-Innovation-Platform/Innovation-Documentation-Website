@@ -15,7 +15,7 @@ The rules every route follows, and why. The full list of routes, with parameters
 | **Regular season and playoffs never mix** | Stat routes take `seasonType` (`REGULAR` by default) and echo it back. | A chart can't be labelled with the wrong segment. |
 | **Request bodies are validated** | The main write routes check their body with a Zod schema and return `400` with the reason. | Bad input is rejected at the edge, not in the database. |
 | **Public reads are cached briefly** | In memory, for up to 5 minutes (1 hour for teams and seasons). Nothing under `/v1/me` is cached ([ADR-004](../decisions/adr-004-caching-strategy.md)). | NBA data changes only when the batch jobs run, and every trip from Render to the database is slow. |
-| **Slow work doesn't block a request** | An admin's NBA pull returns at once and runs in the background or on the pull worker ([Data Ingestion](ingestion.md)), and its status shows on the admin page. `GET /v1/games/:id/live?afterSequence=` returns only plays newer than the caller's last one, with a suggested 5-second polling interval. | Requests stay fast, and a client never re-downloads what it already has. |
+| **Slow work doesn't block a request** | An admin's NBA pull returns at once and runs in the background or on the pull worker ([Data Ingestion](ingestion.md)), and its status shows on the admin page. A large CSV export can be queued instead of built in-request: `?async=true` returns `202` and the caller polls `GET /v1/exports/{id}` (PR #218). `GET /v1/games/:id/live?afterSequence=` returns only plays newer than the caller's last one, with a suggested 5-second polling interval. | Requests stay fast, and a client never re-downloads what it already has. |
 
 ## Auth model
 
@@ -23,7 +23,7 @@ Each route needs one of three things ([API Reference: Authentication](../api-ref
 
 - **A session or an API key** for public reads (players, teams, games, analytics, datasets). Keys are rate-limited per minute and per day. Signed-out visitors on the site use the site's own key, which the proxy adds ([ADR-003](../decisions/adr-003-hosting-topology.md#how-the-browser-reaches-the-api)).
 - **A session** for anything about the signed-in user (`/v1/me/*`), predictions and the optimizer.
-- **A role**: `ADMIN` for `/v1/admin/*`, `ANALYST` or `ADMIN` for custom statistics.
+- **A role**: `ADMIN` for `/v1/admin/*`, and `ANALYST` or `ADMIN` for custom statistics and for submitting a game's play-by-play by hand (`POST /v1/admin/games/{gameId}/submit-events`).
 
 Two further rules protect user data:
 
@@ -34,7 +34,7 @@ The request flow for an authenticated route, `GET /v1/games/:id/prediction`, is 
 
 ## Not built
 
-- **Asynchronous jobs for consumers.** A consumer's request, including dataset publishing, runs to completion within the request; there is no "submit, then poll" pattern outside admin pulls.
+- **Asynchronous jobs for consumers, except CSV exports.** Since PR #218 a large export can be queued: `?async=true` returns `202` with an export id, the caller polls `GET /v1/exports/{id}`, and downloads the file from `/{id}/download` before it expires 24 hours later. Everything else — a long stats query, dataset publishing — still runs to completion within the request.
 - **Real-time data in the database.** `GET /v1/games/:id/live` only has new plays when ingestion runs, and games are ingested after they finish. The Live tab (`/v1/live/games`, PR #201) shows games in progress, but it relays the NBA's live feed and stores nothing. The platform has one automated data source, not many competing submitters ([Feature Tiers](feature-tiers.md)).
 
 ---

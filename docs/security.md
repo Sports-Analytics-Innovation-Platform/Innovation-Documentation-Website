@@ -60,7 +60,7 @@ The headers were checked on the live API on 3 Oct.
 
 A Gitea runner registration file (`ci-runner/data/.runner`, runner `kiran-backup`) was committed on 11 Sep. Review caught it on the `LandingPageUpdates` branch, but the same file reached `main` the next day in a direct commit (`020f4c6`, 12 Sep) that bypassed review, and an 8 Oct audit found it still there.
 
-Deleting the file is not enough: the token stays in git history. What makes it useless is removing the `kiran-backup` runner on Gitea (and registering a new one if it is still needed). Removing the file from `main`, with `ci-runner/` added to `.gitignore` so a runner's local state can't be committed again, is in review ([PR #207](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/207)). Since 8 Oct `main` also refuses direct pushes, the route this file took.
+Deleting the file is not enough: the token stays in git history. What makes it useless is removing the `kiran-backup` runner on Gitea (and registering a new one if it is still needed). The file is gone from `main`, with `ci-runner/` in `.gitignore` so a runner's local state can't be committed again ([PR #207](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/207), merged 9 Oct). Since 8 Oct `main` also refuses direct pushes, the route this file took.
 
 ### Incident, 8 Oct: the Supabase Data API was open
 
@@ -72,7 +72,7 @@ There is no sign it was used: the `anon` key was never in either repo or in the 
 
 ## Privacy (POPIA)
 
-The platform keeps personal information about signed-in users only: what Google sign-in provides (name, email address, picture link, account ID and sign-in tokens), what they add (username, photo, follows, picks, saved items, Become Pro seasons, custom statistics, API keys), session start and expiry times, and API usage. Browsing without an account stores nothing. The [privacy notice](https://sportsanalytics.pages.dev/privacy) tells users this in plain language. How each POPIA condition is met (changes marked with a PR were in review on 9 Oct and go live when it merges):
+The platform keeps personal information about signed-in users only: what Google sign-in provides (name, email address, picture link, account ID and sign-in tokens), what they add (username, photo, follows, picks, saved items, Become Pro seasons, custom statistics, API keys), session start and expiry times, and API usage. Browsing without an account stores nothing. The [privacy notice](https://sportsanalytics.pages.dev/privacy) tells users this in plain language. How each POPIA condition is met (the changes marked with a PR are in PR #212, merged on 9 October and live):
 
 | Condition | How |
 |---|---|

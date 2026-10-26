@@ -1,0 +1,157 @@
+=== Meeting Transcript ===
+Server: SDP group (1529773053893148712) / Meeting room (1529773055407034369)
+Date: 2026-10-07T17:35:57.694Z
+Speakers: _danieldenial, drax9207, pace_runner, sanele_h_62233, soody_03, steveisfrench3744
+Duration: [17:43]
+
+[00:00] steveisfrench3744: my goat. Yeah, am I doing that if you guys need me to? And how are we doing on the documentation
+[00:00] soody_03: For me, I actually started working on creating the pop-up tutorials for each page, explaining
+[00:03] drax9207: We can if you want, there's still a lot of user feedback we can implement, but I don't think it's necessary.
+[00:11] soody_03: how to use them, what they do, and basically how it works is it pops up for the first time when you open that page. It highlights a section, points arrows to different buttons, explaining what each button does, and then you can either choose to skip that sequence of explanation, or you can just choose to completely skip all the tutorials for that page, and then I've done that for the home page so far. I'm working on the next ones now. Besides that, that's pretty much it. I think we can all agree for this sprint, we're not adding any features.
+[00:57] _danieldenial: Yeah, I think I would say I want to upload but I need to still finish the poppier stuff so I'm gonna upload it after that
+[01:01] soody_03: No, I saw what you said, yeah, but that's mostly enhancing our current features, no?
+[01:06] drax9207: Yeah, yeah basically. We're not going to really like add anything. That's if you even want to do it, use it, because yeah, in like one session, give it like two hours.
+[01:23] soody_03: Okay, I see. I feel like we could just copy-paste this into Claude, put it on UltraCode, and it could do all of this. I'm pretty sure, like all of this is pretty doable. Let me see how much you can jump to.
+[01:53] steveisfrench3744: side of things? I know I still need to upload some transcripts. I did that last print. I
+[01:59] drax9207: Yeah, I need to add Owens transcripts and we need to like add some images to the documentation site.
+[02:05] _danieldenial: Yeah for next. I don't think we can do a video
+[02:12] drax9207: And that's it. Yeah, the EOD diagram and the architect diagram and stuff needs to be changed as well. Oh, great, great. Very good. Otherwise, on my side, I've like halved the word character of the doc site because I thought it was all documented a bit, but it's still still confusing even after that.
+[02:33] steveisfrench3744: agree with that. It's okay, as long as it's better than it was before. Okay, cool. I don't really know what else to talk about. Like it's kind of the end of the sprint. I think the focus is just going to be on the presentation and stuff. No. Oh yeah, Kieran,
+[02:57] drax9207: Yeah, let's just let's just what are we going to do next?
+[03:01] steveisfrench3744: we're talking about maybe making a video, like where each of us just explains a thing in it. Like I feel like that's easier. Yeah. Yeah. But I don't think it'll be that deep.
+[03:06] soody_03: Yeah, that sounds good.
+[03:12] _danieldenial: It could we have to go present in person So maybe if we do a PowerPoint on each person with the slide to speak in front of Brandon Because I'm sure he might interrupt. I'm sure he might interrupt people when they're explaining their slide and ask questions
+[03:19] drax9207: We've got a lot more time. Yeah.
+[03:26] _danieldenial: Maybe so then at least every person will know what to do about that slide. They don't know this slide really
+[03:30] soody_03: Maybe we should all prep study docs for our project, just in case he does question us,
+[03:32] _danieldenial: Yeah
+[03:39] soody_03: and also make sure we do know what all of the other people's presentations are about and how they work. Because he could be like, okay, you stop presenting, now you explain what he's talking about.
+[03:48] drax9207: Yeah.
+[03:55] soody_03: We never know. You never know. I feel like Bremen's just trying things out.
+[04:01] steveisfrench3744: Yeah. Yeah, but Loki, Loki, it's, it's pretty chilled. Like it's better than if it was
+[04:03] drax9207: I don't think Brendan knows what he's doing dog. Even even in this test, what is he testing us on?
+[04:07] _danieldenial: How do you say I I literally don't understand the point of these tests and exams. It is such a it's a waste of time
+[04:08] drax9207: He doesn't even know he gave us a user feedback. He didn't teach us that.
+[04:18] _danieldenial: Yeah, me too, but he didn't even explain the requirements. Well, he just like listed it and it I was like, okay
+[04:20] drax9207: So I think he's just going to office random book there. I just wish I learned something.
+[04:27] steveisfrench3744: hard. We'll be complaining if it was hard, you know? Yeah. Yeah, dude. And I was vibe
+[04:32] drax9207: Like, I get that now the only real skill we have is like analytical problem solving, breaking torsks down and stuff like that. But it didn't even, it didn't even test us on that because we can just give it the rubric, give and then we're done. That's no thinking. Anyway.
+[04:49] steveisfrench3744: creating like crazy. I did your last minute. I decided to implement CICD stuff. And my
+[04:52] soody_03: I was actually stressing out so much in that test because I thought I was going to run out
+[04:53] drax9207: Oh, yeah.
+[04:56] soody_03: of time. I thought I was going to run out of tokens because I separated all my thing into slices,
+[05:00] drax9207: You didn't love me. Oh my God.
+[05:04] soody_03: so only by like the last 30 minutes did it actually all come together, so yeah, I was looking. Yeah, so you just get to leave it.
+[05:16] steveisfrench3744: whole app broke. My whole thing broke. Oh, no, no, no, no, I fixed it like with like
+[05:20] drax9207: I did.
+[05:23] steveisfrench3744: five minutes to spare. Then I was like, now I'm not touching anything else. Like
+[05:26] soody_03: Gee, yeah, that's why I started doing it at the end as well, when I realized my
+[05:27] steveisfrench3744: it's done. Yeah, same. Pretty much. And then I just the whole time I was just
+[05:32] drax9207: I did what you taught me here for the heck of fun. I like I took my my thing into like three parallel tasks that I can do at once. And then I ran through conversation. Yeah.
+[05:44] soody_03: token usage was fine.
+[05:46] drax9207: I got it done in like one hour. I think that's what he wanted.
+[05:56] steveisfrench3744: fixing UI. That's pretty much what I was doing. Yeah, the requirements were kind of shit. Yeah, from master over there. Apparently we got like 98% for the Google
+[06:09] _danieldenial: I'm just gonna just go with what I think is right. He gave us ridiculous formulas that made no sense I literally just gave it and I said, you know what the formulas do just use them
+[06:16] drax9207: Yeah.
+[06:20] _danieldenial: He tried to make it as complicated as he could I could tell he was really trying to complicate it
+[06:20] drax9207: I was like, what the hell is this bro? Why are you giving us formulas for like a user? Like sending them to if I like.
+[06:27] soody_03: Daniel, I know this, sorry, I was just asking Daniel, I know this isn't SDP related, but
+[06:33] drax9207: Yeah.
+[06:36] soody_03: for the CGV project, do we have the wooden planks on the doors?
+[06:41] _danieldenial: Yes Well, the level one
+[06:43] soody_03: Is that what you added in your last push? Okay, I haven't looked because I'm just reading through the story again, just writing
+[06:46] _danieldenial: No, I did that. I did the planks a few days ago. It should be there already I did I did update the animation though where it falls off the door. So if something broke, it might be that So do we do we have the
+[07:00] soody_03: like notes for things that we have or haven't done that are involved in the story. Yeah, sorry, how's our testing going, like API test, acceptance rates and all that stuff?
+[07:08] drax9207: Let's get back on track. Thanks. No, no, I mean, we were all like just talking about random stuff. Actually, you're mine. Yeah, like if it's below 80, it won't even, it won't pass the test apparently.
+[07:22] _danieldenial: he hasn't Did he post the
+[07:31] steveisfrench3744: one, whatever Google Lighthouse was that the performance tests. Pretty sure it's
+[07:34] soody_03: Okay, and then our code testing coverage, I think, yeah, let's just, it shouldn't
+[07:42] steveisfrench3744: up there. Haven't really checked in a while, to be honest with you, but I'm I think Claude does right. Yeah. Yeah, they did. Yeah. So I think maybe like
+[07:48] soody_03: accept below 80, no?
+[07:49] _danieldenial: Does anyone know if he posted our marks for sprint three and then I assume he's gonna tell us about the reporting stuff next
+[07:54] drax9207: That's how we set it up.
+[07:55] soody_03: If it's below 85, I'll just run an ultra code session right to get a bunch of tests so that it's done, just to get it over 90.
+[08:05] drax9207: Okay. Wow.
+[08:14] soody_03: We got 100 for all three, I think.
+[08:20] sanele_h_62233: Can you guys hear me?
+[08:24] soody_03: I think beyond that, we're fine with this. I don't think there's anything else for us to do, yeah.
+[08:35] steveisfrench3744: just say like by Friday, we just have off the Saturday, we have our transcripts or whatever we're going to speak about in the thing. Like I think it would be nice if we just decide what we're all going to speak about. And then we just
+[08:46] soody_03: So next week's submission is not, it's just the end of the sprint.
+[08:48] _danieldenial: Yeah No, this knows this week. Isn't it this week?
+[08:52] steveisfrench3744: Yes. No. Well, then I think that's just forgetting that I have to be a bit
+[08:52] soody_03: We don't actually have to have our presentation, okay, how is that possible?
+[08:55] _danieldenial: So I was checking. I think this week Sunday is the submission then the next week Sunday is our report one and Then the week after the next week Sunday is the whole week. It says is the group presentation week So we'll be somewhere in the week between the 19th and the 23rd. I don't know if he's gonna post times all over There's some time in there will be us. So we still have like two weeks Prep for that. Oh my god. He gave us he gave us 90 for sprint three. We didn't get a hundred
+[09:25] drax9207: Yeah.
+[09:26] steveisfrench3744: better than I don't know. Yeah. No, we've got a hundred. No, I saw we've got a
+[09:28] drax9207: Let's just do the user feedback stuff. Maybe go through the rubric.
+[09:38] _danieldenial: Yeah, I was gonna know why what do we do? I feel like he just I feel like he just did it because no one got a hundred
+[09:40] drax9207: As if we've made them wait.
+[09:42] steveisfrench3744: hundred. Oh, really? He gave us 90. Guy. Yeah, literally. I don't know. Yeah. I
+[09:42] drax9207: Yeah.
+[10:00] soody_03: Because we literally submitted the same thing, how much do you think it would affect our
+[10:04] _danieldenial: I don't think anyone got three hundreds in a row. Yeah, no one got a hundred three times in a row So they had to make it look I don't know that's just cheaper though And it's so stupid Well, I'm sure all this all this all the sprints are equal weighting. So
+[10:25] soody_03: mark?
+[10:32] _danieldenial: Assuming we get a hundred for the last one if we get a hundred for sprint four then
+[10:33] soody_03: Maybe we should query it, it's 98, yeah, maybe it's not worth querying, yeah.
+[10:40] _danieldenial: I'm not copying 98. Yeah So, I mean Yeah, I don't but that's if we don't get a hundred for sprint four then it's worth but then it'll be too late Yeah, oh, we should when we asked the guy that marked us
+[10:53] soody_03: Anyways, I guess we're done with the meeting, Loki. There isn't really anything else.
+[11:00] steveisfrench3744: don't know what else to say. We're basically done with the meeting. We're
+[11:00] drax9207: Yeah. We're just going to, we have two weeks for the presentation. So it's not going to be much time.
+[11:06] soody_03: Maybe, actually we do, maybe we should email him and ask him what went wrong in the previous
+[11:07] drax9207: Yeah.
+[11:13] soody_03: sprint so we know what to fix for the sprint, no, oh, and I was saying, yeah, something's
+[11:16] drax9207: It's 90%
+[11:17] pace_runner: Dude, not bad. How late am I?
+[11:21] drax9207: Yeah.
+[11:22] pace_runner: Yeah, can I get summary? Okay, but we're done otherwise. What?
+[11:22] drax9207: We're about to leave. It's an early sense and thing now.
+[11:28] sanele_h_62233: Can you guys hear me?
+[11:29] steveisfrench3744: just going to implement the user feedback pretty much. Yeah. Yeah, I
+[11:29] _danieldenial: Yeah, yeah, we're busy figuring out why we got 90 for sprint three
+[11:32] drax9207: Yeah. And we're going to start on the presentation. Yeah. And we got 90% four hours sprint three for some reason. Okay.
+[11:43] pace_runner: Did not he's just deducted for no reason dude. We just know if the hundred he literally had no problems
+[11:44] _danieldenial: Yeah, that's a bit crazy. I feel like 95 would have been fair for that
+[11:44] steveisfrench3744: crazy. Yeah. What don't you like about the app question? Maybe that's 10%. Yeah.
+[11:51] pace_runner: And that's maybe that You know, we don't have a freaking PD No, like we didn't have a PDF explaining to the user how to use the app, but like come on Yeah, that is that is a bit crazy
+[12:11] pace_runner: Dude, I feel like he just deducted because he could
+[12:14] steveisfrench3744: Yeah. Also, like, kind of that's a cool feature. I mean, it will also be cool to
+[12:14] _danieldenial: Yeah, I also see no one got a hundred for three in a row. So I feel like he was just doing it
+[12:15] pace_runner: He had no issues
+[12:21] pace_runner: Yeah, but no, we didn't deserve to lose marks there Dude, even mr. Sherlock's didn't deduct marks. What are we doing?
+[12:28] _danieldenial: Because there's another group that got a hundred for sprint one and sprint two and then sprint three. They also got 90 So I think they literally just doing it to be fair or something. I don't know. That's what she would yeah
+[12:36] soody_03: going on, something's going on, Sanele, he's muted, yeah, oh, oh.
+[12:48] drax9207: Well, let's move on. So nearly added some attachments now. You mind explaining them? Not, not well. What?
+[13:11] sanele_h_62233: Can you guys hear me?
+[13:17] drax9207: Or did he meet himself? No, it's not me. I think it's just a bad microphone.
+[13:45] sanele_h_62233: Can you hear me now?
+[13:46] soody_03: Yeah, what is going on?
+[13:46] drax9207: There you go. Yeah. Okay. So what's up, bro? Bro. There you go.
+[14:25] soody_03: Now he's gone, okay, now he's back.
+[14:25] sanele_h_62233: Can you hear me now? Can you?
+[14:28] soody_03: Yeah, we're waiting for Sanele to talk, nope, yep, and then CGV guys, let's stay please.
+[14:29] drax9207: Yeah. Okay. Not anymore. Okay. I'll speak for him because he's, he's sending messages. He says, I really don't know what's happening with my mic. It's okay, bro.
+[15:20] pace_runner: I haven't really done much this front. I will say I'm loving it. Thanks guys. I don't know
+[15:23] drax9207: What are these, what are these screenshots here in general? Go. Yeah.
+[15:32] sanele_h_62233: I don't know.
+[15:35] drax9207: Yeah. You just like spit up a bunch for some reason.
+[15:39] sanele_h_62233: Okay, cool. Okay, so I know you guys said no new features, but I started working on this last night. It's a dashboard for
+[15:52] drax9207: What is it?
+[15:54] sanele_h_62233: live fixtures and like recent games and upcoming games. I
+[16:02] drax9207: Okay.
+[16:04] sanele_h_62233: mentioned that initially when I was doing exploring there was this end point that I thought we weren't going to be able to use because the season starts on the 20th. But I found that there's pre-season games going on right now and that end point covers them so I thought I might as well It's still on a
+[16:36] drax9207: That's cool. Yeah.
+[16:37] sanele_h_62233: separate page.
+[16:39] steveisfrench3744: show off like when we're presenting. This is kind of like the fun stretch. Okay,
+[16:43] drax9207: That's dope.
+[16:43] sanele_h_62233: Okay.
+[16:44] pace_runner: We have a lot of features to be fair, but you know, if we want to win first Uh, we got to do our best, I guess
+[16:53] drax9207: I like it. It seems like it was also easy to implement. Yeah. Good job. Yeah, nothing.
+[17:01] sanele_h_62233: Kind of. Bye.
+[17:08] steveisfrench3744: cool. Anyone else? Nothing? Okay. Okay, cool. So are we done this meeting
+[17:16] pace_runner: No, I don't think so. I mean I just got you
+[17:25] steveisfrench3744: agenda? I'm happy. Okay. Bye, everybody.
+[17:26] pace_runner: I'm happy of you guys Yeah, we kind of need to have a chat about that
+[17:32] soody_03: Bye-bye.
+[17:34] drax9207: Okay. Okay. I'm going to stop the recording then. Bye.
+
+--- 149 entries | 6 speakers | transcribed in 4108.6s ---

@@ -2,15 +2,16 @@
 
 CI runs on **Gitea Actions** from one workflow, `.gitea/workflows/ci.yml` in the app repo, on every push and pull request. CD runs from a GitHub mirror of the Gitea repo, which Cloudflare Pages and Render deploy from. This meets the brief's CI/CD requirement (§2.1).
 
-## CI: three parallel jobs
+## CI: four parallel jobs
 
 | Job | Timeout | Steps |
 |---|---|---|
 | `api` (*API — lint, typecheck*) | 15 min | `npm ci` → `npm run prisma:generate` → `npm run lint` (ESLint) → `npx tsc --noEmit -p tsconfig.json` |
 | `web` (*Web — lint, typecheck*) | 15 min | `npm ci` → `npm run lint` (oxlint) → `npx tsc -b --noEmit` |
+| `python` (*Python services — tests*) | 15 min | One Python 3.12 environment with all five services' pinned requirements → `python -m pytest -q` in each service folder |
 | `coverage` (*API and Web — test coverage*) | 20 min | Start a disposable Postgres → install both apps → `prisma generate` → `npm run test:cov` in the API, then the web app → merge both reports → upload the `coverage-report` artifact → remove the database |
 
-All three run on `ubuntu-latest` (the label of the course's shared runner) with Node 24. None depends on another, so one push reports every failure at once. A newer push to the same branch or pull request cancels the run in progress.
+All four run on `ubuntu-latest` (the label of the course's shared runner), the three Node jobs on Node 24 and the Python job on 3.12. None depends on another, so one push reports every failure at once. A newer push to the same branch or pull request cancels the run in progress.
 
 ## What fails the build
 
@@ -21,6 +22,7 @@ All three run on `ubuntu-latest` (the label of the course's shared runner) with 
 | Typecheck | Any TypeScript error in either app |
 | API tests | Any failing unit or end-to-end test, run against a real Postgres |
 | Web tests | Any failing component test |
+| Python tests | Any failing `pytest` case in the five Python services |
 | Coverage | Either app below **80%** lines, statements, functions or branches, set in `apps/api/vitest.config.ts` and `apps/web/vite.config.ts` |
 | Report | The merged coverage report being empty (`if-no-files-found: error`) |
 
@@ -58,7 +60,6 @@ GitHub is only a deploy trigger: the code lives on Gitea, and CI runs there. Hos
 ## Not in CI yet
 
 - **No build step.** CI lints, typechecks and tests; the build itself is checked by the deploy.
-- **No Python tests.** The five Python services' `pytest` suites run locally only. A CI job for them is in review ([PR #210](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/210)).
 - **No secret scanning.** [Security](security.md) relies on review and the pre-commit check.
 - **No npm cache** and **no `upload-artifact@v4`**, until the runner's cache server and the Gitea version allow them.
 

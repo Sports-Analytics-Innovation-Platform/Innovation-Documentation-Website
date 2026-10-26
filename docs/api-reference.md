@@ -5,7 +5,9 @@ The NBA Analytics API is a NestJS service hosted at **[sportsanalytics-api.onren
 - **Swagger UI:** [/api/docs](https://sportsanalytics-api.onrender.com/api/docs). Every operation, its parameters and response shapes, with "Try it out".
 - **OpenAPI JSON:** [/api-json](https://sportsanalytics-api.onrender.com/api-json).
 
-This page summarises the conventions every route shares and lists all 109 live operations, grouped by area. The spec comes from `@nestjs/swagger` decorators (`@ApiTags`, `@ApiOperation`, `@ApiQuery`, `@ApiResponse`) on each controller, wired up in `apps/api/src/main.ts`. Since 9 Oct (PR #205) the spec also names the response models for the public reads (teams, players, games with predictions and odds, play-by-play, player stats, dataset releases, each list's page wrapper, and the error envelope), documents the games and stats filters, and registers the `X-API-Key` scheme, so Swagger UI's **Authorize** button can send a key.
+This page summarises the conventions every route shares and lists all 120 live operations, grouped by area. The spec comes from `@nestjs/swagger` decorators (`@ApiTags`, `@ApiOperation`, `@ApiQuery`, `@ApiResponse`) on each controller, wired up in `apps/api/src/main.ts`. Since 9 Oct (PR #205) the spec also names the response models for the public reads (teams, players, games with predictions and odds, play-by-play, player stats, dataset releases, each list's page wrapper, and the error envelope), documents the games and stats filters, and registers the `X-API-Key` scheme, so Swagger UI's **Authorize** button can send a key.
+
+The count went from 109 to 120 in the submission week's PRs (#206–#228), which added the routes for injuries, all-time career leaders, queued CSV exports, an on-demand optimizer solve, the API-usage breakdown, custom-statistic versions, an analyst's hand-entered play-by-play, and the account-data export.
 
 ---
 
@@ -98,7 +100,7 @@ Every error uses one envelope, applied globally by `AllExceptionsFilter`:
 | `GET` | `/v1/players/leaders` | Key or session | Leader in PPG, RPG, APG and TS% after a games-played floor (`minGames`, `asOf`) |
 | `GET` | `/v1/players/league-averages` | Key or session | League-wide averages for one segment |
 | `GET` | `/v1/players/aggregates` | Key or session | A metric averaged by team or position (`groupBy`, `metric`) |
-| `GET` | `/v1/players/export` | Key or session | The filtered list as CSV |
+| `GET` | `/v1/players/export` | Key or session | The filtered list as CSV. `async=true` queues it as a background job and returns `202` with an id for [Exports](#exports). |
 
 Example: `GET /v1/players/{id}/stats?seasonType=REGULAR` for Nikola Jokić. The response is shortened; `seasonAverages` has 24 fields.
 
@@ -141,16 +143,39 @@ All statistics are derived by the team from play-by-play events, not copied from
 | `GET` | `/v1/teams/records` | Key or session | Every team's win/loss record and recent form |
 | `GET` | `/v1/teams/elo-ratings` | Key or session | Every team's current Elo rating |
 | `GET` | `/v1/teams/{id}/suggested-players` | Key or session | The roster ranked by usage rate (`count`) |
+| `GET` | `/v1/teams/{id}/injuries` | Key or session | The team's injured players, from ESPN's report |
+
+### Injuries
+
+ESPN's injury report, cached by the API. A return date is ESPN's estimate, not something the platform works out.
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| `GET` | `/v1/injuries` | Key or session | Every team with its injured players |
+| `GET` | `/v1/players/{id}/injury` | Key or session | One player's injury entry, or `null` if ESPN lists none |
+
+The web app shows these on team and player pages. See [UI Overview](design/wireframes.md#injuries).
+
+### All-time leaders
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| `GET` | `/v1/all-time-leaders` | Key or session | One category's career leaders, best first, each with a short bio. `category` defaults to `POINTS`; `seasonType` picks regular-season or playoff career totals. |
+
+The app renders this on its own `/all-time` page. See [UI Overview](design/wireframes.md#all-time-leaders).
 
 ### Optimizer and analytics
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
 | `GET` | `/v1/optimizer/lineup` | Session | The latest fantasy lineup from the optimizer |
+| `POST` | `/v1/optimizer/solve` | Session | Solve on demand under the caller's own rules: locked players are in every lineup, excluded players in none, and `alternatives` also returns the next-best lineups, each a different set of players |
 | `GET` | `/v1/optimizer/predictions` | Session | Every player's latest projection |
 | `GET` | `/v1/optimizer/predictions/{playerId}` | Session | One player's latest projection |
 | `GET` | `/v1/analytics/model-accuracy` | Key or session | How the Elo model has scored on finished, predicted games |
 | `GET` | `/v1/analytics/leaderboard` | Key or session | Users ranked by prediction accuracy, with the model as the benchmark |
+
+The precomputed lineup comes from the Python optimizer's last run; `POST /v1/optimizer/solve` runs the solve over every player's latest projection when a caller changes the rules. Projections are estimates, not guarantees.
 
 ### Me
 
@@ -179,6 +204,8 @@ Every `/v1/me/**` route reads the user from the session. None takes a user id, s
 | `DELETE` | `/v1/me/api-keys/{keyId}` | Session | Revoke a key (kept, marked inactive) |
 | `DELETE` | `/v1/me/api-keys/{keyId}/purge` | Session | Permanently delete a key |
 | `PUT` | `/v1/me/seen-tutorials/{tutorialId}` | Session | Mark a page tutorial as seen (idempotent) |
+| `GET` | `/v1/me/api-keys/usage` | Session | The user's API usage, broken down by endpoint and by day |
+| `GET` | `/v1/me/export` | Session | Everything the platform stores about the account, as JSON (the POPIA data export) |
 
 ### Become Pro
 
@@ -214,6 +241,15 @@ A points total that disagrees with the shooting splits is saved, and the page fl
 | `GET` | `/v1/datasets/changes` | Key or session | Releases published after a timestamp (`since`) |
 | `POST` | `/v1/datasets/admin/publish` | Admin | Publish a new release |
 
+### Exports
+
+The two CSV export routes build the file inside the request by default. With `async=true` they queue a background job instead and return `202` with an export id; the job keeps the finished file for 24 hours.
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| `GET` | `/v1/exports/{id}` | Key or session | A queued export's status (`QUEUED`, `RUNNING`, `SUCCEEDED`, `FAILED`) and row count |
+| `GET` | `/v1/exports/{id}/download` | Key or session | The finished export as CSV |
+
 ### Custom statistics
 
 Analysts define a statistic as an expression over per-game fields: points, rebounds, assists, steals, blocks, turnovers and minutes. The expression is parsed by a hand-written recursive-descent parser (no `eval`). Unknown field names and division by zero are rejected before evaluation.
@@ -224,6 +260,7 @@ Analysts define a statistic as an expression over per-game fields: points, rebou
 | `POST` | `/v1/custom-statistics` | Analyst | Create a definition: `{ "name", "expression" }` |
 | `PUT` | `/v1/custom-statistics/{id}` | Analyst | Change the expression. This increments its `version`. |
 | `GET` | `/v1/custom-statistics/{id}/value` | Analyst | Evaluate it for one player (`playerId`, optional `seasonType`) |
+| `GET` | `/v1/custom-statistics/{id}/versions` | Analyst | Every expression the statistic has had, oldest first |
 
 ### Admin
 
@@ -267,6 +304,7 @@ Every `/v1/admin/**` route needs a session with the `ADMIN` role.
 | `POST` | `/v1/admin/games/{gameId}/events/{sequence}/correct` | Apply a correction (reason required). Recomputes affected stats in one transaction. |
 | `POST` | `/v1/admin/corrections/{id}/revert` | Undo a correction by applying its old values as a new correction |
 | `POST` | `/v1/admin/games/{gameId}/replay` | Re-derive a game's stats from its current events |
+| `POST` | `/v1/admin/games/{gameId}/submit-events` | Submit a whole game's play-by-play by hand, as a new `PENDING_REVIEW` batch. An `ANALYST` may call this one too. |
 | `GET` | `/v1/admin/games/{gameId}/corrections` | One game's correction history |
 | `GET` | `/v1/admin/events/corrections` | Paginated correction history (optional `gameId`) |
 

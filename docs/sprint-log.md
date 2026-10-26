@@ -165,31 +165,43 @@ About 35 merged PRs, mostly the brief's Intermediate and Advanced requirements.
 
 ## Submission week (to 11 Oct)
 
+Sprint 4 closed with twenty-five pull requests, #204 to #228, merged between 8 and 10 October. The seven branches still open on 9 October all landed, so nothing was left in review at the deadline.
+
 ### Merged to `main`
 
 | Task | Type | Owner |
 |---|---|---|
 | Player Archetypes merged (PR #195, 7 Oct) | `feat` | Sanele H. |
-| Live tab: live, upcoming and recent games from the NBA's live feed (PR #201, 8 Oct) | `feat` | Sanele H. |
 | The pull worker stops saving play-by-play (PR #200, 8 Oct) | `feat` | Sanele H. |
+| Live tab: live, upcoming and recent games from the NBA's live feed (PR #201, 8 Oct) | `feat` | Sanele H. |
 | Page tutorials: Home first (PR #202), then every page except the landing page (PR #203), 8 Oct | `feat` | Kiran Soodyall |
 | READMEs describe the platform as built; the seed prints a local site-proxy key (PR #209, 8 Oct) | `docs` | Owen Pace |
 | API keys and rate limits checked in memory, usage logged in batches (PR #204, 9 Oct) | `perf` | Owen Pace |
 | OpenAPI response models, filters and key auth (PR #205, 9 Oct) | `docs` | Owen Pace |
+| Every version of a custom statistic's formula kept (PR #206, 9 Oct) | `feat` | Owen Pace |
+| The CI runner's registration file is no longer tracked (PR #207, 9 Oct) | `chore` | Owen Pace |
+| Each page's code loaded only when its route is visited (PR #208, 9 Oct) | `perf` | Owen Pace |
+| The Python services' tests run in CI (PR #210, 9 Oct) | `ci` | Owen Pace |
+| Supabase's Data API closed to the `anon` and `authenticated` roles (PR #211, 9 Oct) | `fix` | Owen Pace |
+| POPIA: privacy notice, data download, retention job, no stored session IPs, usernames on the public leaderboard, avatar deletion (PR #212, 9 Oct) | `feat` | Owen Pace |
+| The landing scoreboard shows the biggest live game, picked by Elo (PR #213, 9 Oct) | `feat` | Sanele H. |
+| A real game's play-by-play replayed against its official box score (PR #214, 9 Oct) | `test` | Josh Sawyer |
+| A consumer's API usage broken down by endpoint and by day (PR #215, 10 Oct) | `feat` | Josh Sawyer |
+| A stat line far outside a player's own history is flagged (PR #216, 9 Oct) | `feat` | Josh Sawyer |
+| An analyst can submit a game's play-by-play by hand (PR #217, 9 Oct) | `feat` | Josh Sawyer |
+| Large CSV exports run as a background job (PR #218, 9 Oct) | `feat` | Josh Sawyer |
+| Stat abbreviations explained, Beat the Model and Become Pro introduced, predictions filters and headshots made readable (F7, F20, F21, F28, F29, F30) (PR #219, 10 Oct) | `feat` | Adrian Draxl |
+| Public API guide and a route-by-route audit of what needs a key (F31) (PR #220, 10 Oct) | `docs` | Adrian Draxl |
+| Optimizer: lock or exclude a player and solve again; three alternative lineups (F4, F6) (PR #221, 10 Oct) | `feat` | Adrian Draxl |
+| Datasets: seasons that haven't started are hidden, an edited season downloads again (F25, F26) (PR #222, 10 Oct) | `fix` | Adrian Draxl |
+| The landing page rewritten in plain language (F8) (PR #223, 10 Oct) | `docs` | Adrian Draxl |
+| Accent-insensitive player search; the leaders band follows the list filters (F10, F22) (PR #224, 10 Oct) | `feat` | Adrian Draxl |
+| Injury reports and expected return dates on team and player pages (F16) (PR #225, 10 Oct) | `feat` | Sanele H. |
+| All-time career leaders, with player bios (F11) (PR #226, 10 Oct) | `feat` | Sanele H. |
+| Teams: your own team above the list and an Elo explainer; Datasets explained on the page (F23, F24) (PR #227, 10 Oct) | `feat` | Sanele H. |
+| Flaky count-up animation tests fixed (PR #228, 10 Oct) | `fix` | Sanele H. |
 
-### In review on 9 Oct
-
-Open pull requests on Gitea, read from the branches mirrored from the app repository. A branch without a PR number links to the branch.
-
-| Task | Type | Owner | Branch |
-|---|---|---|---|
-| Keep every version of a custom statistic's formula ([PR #206](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/206)) | `feat` | Owen Pace | `custom-statistic-versions` |
-| Stop tracking the CI runner's registration file ([PR #207](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/207)) | `chore` | Owen Pace | `remove-runner-registration` |
-| Run the Python services' tests in CI ([PR #210](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/210)) | `ci` | Owen Pace | `python-tests-in-ci` |
-| Close Supabase's Data API to the `anon` and `authenticated` roles ([PR #211](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/211)) | `fix` | Owen Pace | `lock-down-supabase-data-api` |
-| POPIA basics: privacy notice, data download, retention job, no stored session IPs, usernames on the leaderboard, avatar deletion ([PR #212](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/pulls/212)) | `feat` | Owen Pace | `popia-privacy-basics` |
-| Load each page's code only when its route is visited | `perf` | Owen Pace | [`lazy-load-pages`](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/src/branch/lazy-load-pages) |
-| Show the biggest live game on the landing scoreboard | `feat` | Sanele H. | [`landing-live-scoreboard`](https://sdp.ms.wits.ac.za/innovation/sportsanalytics/src/branch/landing-live-scoreboard) |
+The merged work took the API from 109 to 120 live operations — injuries, all-time leaders, the optimizer solve, queued exports, the API-usage breakdown, custom-statistic versions, hand-submitted play-by-play and the account-data export — which is what [API Reference](api-reference.md) now lists.
 
 ---
 

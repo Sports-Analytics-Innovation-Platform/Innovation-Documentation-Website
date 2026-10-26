@@ -1,0 +1,143 @@
+=== Meeting Transcript ===
+Server: SDP group (1529773053893148712) / Meeting room (1529773055407034369)
+Date: 2026-10-09T15:09:09.062Z
+Speakers: drax9207, kovendanraman, pace_runner, sanele_h_62233, soody_03, steveisfrench3744
+Duration: [20:42]
+
+[00:00] kovendanraman: Yeah, okay. So anything you want to show me about the project first or any questions, but I think it's due like on Sunday or something for next week.
+[00:00] sanele_h_62233: Yeah, my incident was was tweaking the whole meeting
+[00:03] steveisfrench3744: Hey Craig. Yeah, it's still on Sunday. Yeah, we have to pay for super bass
+[00:17] drax9207: Yeah, we have a big problem. So basically we have to pay for our hosting software now and that just sucks
+[00:19] kovendanraman: Okay. Oh, is that a big the DB is.
+[00:35] drax9207: Yeah, yeah
+[00:35] steveisfrench3744: No, we hit our egress limit last. No, the DB is not big itself It but I think we're just making so many requests because we're all working on the project, especially me in the holidays I was like really refreshing and like checking the UI and stuff So I think we just really hit our egress limit last month That that thing that's all it is because this month. It's it's fine. I don't know
+[00:53] soody_03: Also, yeah, it's also because Claude and other AIs can actually run in the browser. So like, when we're probably running the script to just check anything,
+[01:00] steveisfrench3744: Yeah So it is what it is, but it's 25 dollars. I think yeah, we'll just split it six ways. I think it's worth it
+[01:03] soody_03: it's probably refreshing the page like a million times as well.
+[01:16] kovendanraman: Yeah, honestly, that's the best way because I mean making another database on a free one and copying everything over is a big risk and you have to change all of the points.
+[01:25] steveisfrench3744: Yep, yeah, it's even just getting all that freaking data in the database took forever
+[01:26] kovendanraman: Which I'm super based to like another platform. Yeah, well, yeah, you guys can pay for I don't know when you guys presents. Let me see this rubric.
+[01:33] steveisfrench3744: It's like I think it's just it's not worth it. No
+[01:46] kovendanraman: Does it say I don't think it says. Okay, well, Project Submission 11th October group presentation 19 to 23. Okay, so if you pay you'll be covered for that.
+[02:04] steveisfrench3744: Yeah
+[02:05] kovendanraman: Then by the time like innovation day comes, I think your limit should be fine if you get for that. I think it's on the 26th, but that's if Brandon picks you guys.
+[02:12] steveisfrench3744: Yeah Hopefully does It also thinks
+[02:22] pace_runner: Probably will because I think we have the highest mark right now. I think we like literally
+[02:22] kovendanraman: Yeah. Oh, was it 100 100 100.
+[02:27] steveisfrench3744: Yeah, I know that I'm pretty sure I know what the answer is to this
+[02:27] kovendanraman: Yeah.
+[02:29] drax9207: Yeah, yeah
+[02:29] kovendanraman: Okay, yeah, so any other things just like small niche things. No, I'm very sure we didn't do that as so yeah.
+[02:42] steveisfrench3744: But apparently in order to be popular compliant fully We need to freaking get an information officer or something and this guy like has to like monitor everything we do and whatever like check Our decisions. I obviously I don't think we have to do that, right? That's so I
+[02:53] pace_runner: Oh, yeah, that's fun. I did I did like put an email there for people to contact and stuff in order to comply with that as well but I
+[03:01] steveisfrench3744: Just think there's no way that that's a requirement
+[03:03] pace_runner: No, it's not a requirement. It's just like a would nice to have
+[03:09] kovendanraman: Yeah, I don't know if Brandon will even mark you based on that to even notice.
+[03:12] pace_runner: It's not in the scope. It's pretty well
+[03:15] steveisfrench3744: Okay. Yeah
+[03:25] kovendanraman: Yeah, so then I don't know if we can go through the whole milestone for Project Submission.
+[03:34] drax9207: Okay, cool. Yeah, there's just one caveat. I'd like to ask
+[03:36] kovendanraman: Yeah, so do you have production data? How much data is from testing? That's fine, right? You guys showed me your data releases and thing your database is deployed and available. Yeah, now that you guys will pay for that. How well structured is your database? Are you following the best practice for your database type? So what's your, did your DB schema like mirror your API usage? Like the one where you got all the data from?
+[04:09] steveisfrench3744: Not exactly because we had to make like user tables and stuff
+[04:09] kovendanraman: Or did you have to make a, okay, but for the bulk bits of the data.
+[04:15] steveisfrench3744: Yes. Yes. Yes for most of the up. Yeah
+[04:17] kovendanraman: Okay, then yeah, then this should be fine with Brandon. Is your API available for external and internal usage? Internally, it works because your website has data populated. Yeah, your swagger works, I'm sure.
+[04:37] steveisfrench3744: Yeah, yeah, I think Daniel would have done it
+[04:37] kovendanraman: Yeah, with all the data or just some.
+[04:41] drax9207: Is it okay if externally you need like an API key to reach the All the dark stuff. No, like all of it. It's locked behind an API key
+[04:57] drax9207: That you'll get from the website
+[05:00] kovendanraman: Okay, yeah, I forget it from the website. It's fine. If, yeah, if you needed it from, like, I don't know, from the ENVs or something, then no, but as long as a user can log in, gets API key in and works, yeah, then it's fine.
+[05:02] drax9207: Okay, there's only one I can think of
+[05:18] kovendanraman: So how well does your API follow and establish API architecture and all of its principles? I'm pretty sure AI does that. So API is deployed. Yes. How well does your API handle a significant load? How often does it crash or take time to process the first request? Have you guys tested that?
+[05:39] pace_runner: Yeah, I think that's fine as well. I think we've tested it We could probably test it again
+[05:45] steveisfrench3744: He said he did the API test
+[05:47] pace_runner: Yeah, but I don't think he's stress tested. I think he just tested it. Yeah, you just ask AI make a thousand requests
+[05:52] kovendanraman: Yeah, I don't know how Brandon's going to stress test it if you'll make bots, but I doubt he will. So that's fine. Does your API make use of different HTTP methods correctly? So we lost marks for our API when we presented. Your guys' API is a lot more in-depth than ours, though. We only had, like, seven endpoints. So you guys have a lot more and there's lots of, like, get and post stuff. I mean, get and post stuff. Yeah.
+[06:22] steveisfrench3744: Yeah, yeah
+[06:28] kovendanraman: No redundant endpoints. So, like, every endpoint that's on your Swagger needs to actually return something. So if it's not already tested, but it probably is, just make sure it doesn't do anything.
+[06:41] drax9207: The slash health Just too late. It doesn't really do anything
+[06:49] kovendanraman: There could be a redundant endpoint, though, but it does bring the purpose of health, but if it's missing it.
+[06:50] drax9207: I don't know Yeah, but you Okay
+[07:00] kovendanraman: So, yeah. Is your product accessible? Does it comply with best practices on contrast with your semantic HTML or ARIA?
+[07:04] drax9207: Okay, then it's fine
+[07:15] kovendanraman: Yeah, I don't think, I haven't seen your product. Oh, no, no, I have logged into my phone. So it's good there. All the buttons are clickable. Everything's fine. Does it look good? Yes. How do you handle errors through user experience? I think that's fine. These reopen tab things once an issue. Is it deployed? Yes, it's deployed. How long does it take to load? Did you guys run those Lighthouse tests? And were they all good? They all, like, above 80 or, like, 75.
+[07:53] drax9207: Yeah, we did if I can show you the results feel like
+[07:54] steveisfrench3744: Yeah, I'm pretty sure they're all above 90
+[08:00] kovendanraman: Yeah, that's really good. That's still good enough. I think Brandon was, even when we were marking your sprint three, he said as long as it's green, so, like, above 75, it's okay.
+[08:01] drax9207: Yeah
+[08:02] pace_runner: Yeah, I'm pretty sure they're like all above 90
+[08:02] steveisfrench3744: There's maybe one that hit 88, but that's it
+[08:04] pace_runner: Yeah, but I
+[08:07] steveisfrench3744: Okay, I've been testing it on an iPad. It looks good. Yeah, I'll cure under that
+[08:07] drax9207: Yeah, I don't think so
+[08:18] kovendanraman: Yeah.
+[08:20] pace_runner: Think it goes orange as soon as it goes into the 80s. Did our thing is so fire. Oh, yeah
+[08:23] kovendanraman: Oh, okay. Well, as long as it's all green and it's fine. Oh, well, we use experience deployed performance, we just did features. Yes, everything, your features are there. The fantasy thing is quite cool as well. That's, like, really nice, actually, that you have a fantasy with the real data and the ML algorithm. So that's good. How responsive is your UI? So this is on your mobile phone. I went through most of the app on my phone. I didn't see any issues. I didn't try it in, like, an iPad or something because I didn't have an iPad. Okay, yeah, so that's good. Landscape, I'm not sure, but I don't even know. I don't think you need it to be. Yeah, but I don't think that's necessary.
+[09:15] drax9207: I think we have man's game. That's fine then
+[09:19] kovendanraman: Yeah, because Brendan will just take out the inspect elements which to, like, iPhone 13 or something. Okay. How complex is the interface? How difficult is it to navigate to a new feature? What I did like, I forgot to tell you guys this, was that tour thing on each page. So when you go to a new page, yeah, so that's really nice.
+[09:45] steveisfrench3744: It's awesome. I think you just said let's go. I don't know
+[09:47] kovendanraman: That's what's on this whole part of the rubric. And yeah, that's good. Yeah, I don't think any other groups have something like that. So perfect.
+[09:50] soody_03: Yes, I did that. I did that. Okay.
+[09:55] drax9207: Well
+[10:02] kovendanraman: Your methodology, yeah. Okay.
+[10:10] steveisfrench3744: Like I'm pretty sure it's above 80 if it's below 80 it fails
+[10:12] kovendanraman: Git methodology. I'm sure Claude does whatever comments fine. Or like you say feet or butt. It's okay.
+[10:21] drax9207: Yeah, yeah
+[10:21] kovendanraman: Integration with an external API. Yes, that's how your database got populated. You're testing, I don't know, what's the code called, I'd say. Okay. Then the work tracker. That's good. That's in your site documentation. So you got 100 in sprint. So I doubt, I don't think he can give you knock down there. Yeah, that's it pretty much.
+[10:59] pace_runner: Already
+[10:59] steveisfrench3744: No, yeah, I know the map room. Yeah, okay. Cool. Yeah. Thank you. I'm all good. I'm happy
+[11:01] kovendanraman: Yeah. I don't know. Anything you wanted to ask me for your site?
+[11:11] drax9207: User feedback Like adding features from the user feedback. That's not important. Is it
+[11:18] kovendanraman: Um, it was, well, you got 100% for the sprint. So then you would have had this, but there is a section in our rubric when we mark for has implemented something from user feedback. So if there isn't something for that, you could get a friend or just do it yourself and say, I when I go on to a new page, I get confused.
+[11:36] drax9207: Okay Yeah
+[11:49] kovendanraman: Maybe can you add a site to a feature to each page? So I know how to navigate the page.
+[11:54] drax9207: Now we already did all that stuff. I just wanted to know like how much should be implement
+[12:00] kovendanraman: As long as you implement one thing or like two, maybe then it's fine. Yeah.
+[12:00] drax9207: From that Sure, then we're done
+[12:08] kovendanraman: Yeah, that's it. Basically group presentation. I know you guys know the Brendan tell you like how your group presentation would be. Okay, so he'll put out a spreadsheet or something. And he'll say the times when each group needs to come in, present, you'll go up to. What's that room called? It's like first floor. It's in, in TWA. And what's MSB the that room? Yeah, so you'll go present there. He'll have himself and you'll have like another lecturer. So maybe Devin, we had Ritesh, Devin Pravesh. Tyrone was there sometimes. So you just have to present to them. I think I told you guys this, but the best way we thought it was was for you to present through a slideshow and record you clicking through your website and then have the recorded clips on the slideshow. And then each one of you guys can just voice over in real life over that, that like page and say, Oh, this is the home page. You can log in here. It shows you this data, whatever that you need. All your important features there. That's the best way to do it. That's the way Brendan did it. So he liked it as well when he presented. Yeah, it's much better than having somebody flick through the website because then you get a bit confused or I don't know. Yeah, something goes wrong. So this way you, you know what you got to say and you have a time so that the clips are not too short or too long. So you don't stand there for too long. Technical breakdown is also just in the slideshow, explain your tech stack, explain why you chose these things, what was fun to do. Then they'll ask you some questions. These questions would just be, if you have a bad presentation, they'll ask you more questions. We only had like a couple questions. I remember one that asked us was like, how would you take this product further if you were to monetize it? So we obviously didn't think about that because it's a school project. We didn't want to, we didn't like anything into it prior. So then we were unsure of like how to monetize it. So maybe just before the session, you can just ask it like, oh, okay, Claude, how can we monetize this website? Or you guys can think like with your own minds, but that's our patient. But yeah, otherwise it's very good. Thank you. Yeah. So anything else or you guys done? Happy? I'm happy. Okay.
+[15:29] steveisfrench3744: Thank you. Okay, so we done guys. Yeah, same. Bye guys
+[15:29] drax9207: I'm happy
+[15:29] kovendanraman: Any questions for me if you want to do about anything in honors or something if you want to know? Thank you. So much. Okay.
+[15:44] drax9207: Oh, I do the question
+[15:44] kovendanraman: Yeah. Yeah. So I took the module.
+[15:46] drax9207: What honors Um, apparently the AI
+[15:48] kovendanraman: I got 75 for it, but the final exam was a lot harder than the test and the post papers.
+[15:51] drax9207: Um module is actually pretty Pretty bad I wanted to know if that's true
+[15:57] kovendanraman: So yeah, there's that. But it is, it's not extremely hard. Like your extremely hard modules are, you know, you're not going to be able to do that. So yeah, there's that. But it is, it's not extremely hard. Like your extremely hard modules are your MFDS and like reinforcement learning in second semester. And I don't know if HPC is hard. I think we all just got scored from Hirong from PC. So we didn't take that.
+[16:33] drax9207: He has talent
+[16:34] kovendanraman: Yeah. So yeah, it's not that difficult, honestly. There's a project is like, you make a chess bot or something, but it's not chess. It's some funny Steve's version of chess.
+[16:49] drax9207: But is it is it worth doing is what I'm trying to get at like
+[16:49] kovendanraman: So what it is is every lecture of AI is almost like a lecture from another course.
+[16:53] drax9207: Is it
+[17:01] kovendanraman: So it's a very broad subject. So you're doing lots of things you will repeat and doing like ACML, even like data privacy and ethics as an ethics part at the end of AI. I don't know if there's robotics, but I can't remember. But yeah, so it's not that bad.
+[17:20] pace_runner: Okay, I'm gonna head out. Thank you
+[17:20] drax9207: Okay All right
+[17:32] kovendanraman: You can do well in it. And yeah, if you want to know like the easiest subjects, I can tell you an honest.
+[17:38] drax9207: Okay, cool All right, then
+[17:46] kovendanraman: But it's just, okay.
+[17:47] drax9207: I don't know. I want to know what the hardest ones are I want to be suffering You know
+[17:53] kovendanraman: MFDS is very notoriously difficult. HPC is difficult. Computer vision is difficult.
+[18:03] drax9207: Let's go Oh, that's gonna sound so fun
+[18:06] kovendanraman: Reinforcement learning is difficult.
+[18:06] drax9207: Computer vision
+[18:10] kovendanraman: And yeah, if you don't choose Brandon or Proversa as your supervisors and you get someone who's like mean. I don't know who's mean though. Maybe Devon likes to make you guys work, but he'll be like useful. Then that's technically difficult for research. But yeah.
+[18:31] drax9207: Okay
+[18:32] kovendanraman: Okay, cool.
+[18:33] drax9207: All right, thank you
+[18:34] kovendanraman: Good luck with everything and the rest of your exam and stuff, guys. Thanks.
+[18:38] drax9207: I actually wanted to talk to the team, but they left now Yes, thank you. Good luck to you as well
+[18:44] kovendanraman: Bye.
+[18:46] drax9207: Bye Damn You'll you'll see with the With the craig bot summary, but basically he just said everything looks good There's nothing to do Well done And he told us to make the presentation By recording ourselves navigating through the app And then talking over that recording rather than Doing a live demo That's basically it
+[19:31] sanele_h_62233: So we're actually done like that It was
+[19:33] drax9207: Yeah, pretty much convincing some of the of the user feedback stuff though
+[19:37] sanele_h_62233: What what exactly what exactly are you adding right now?
+[19:41] drax9207: But uh, we don't even need that because we have we only needed to implement like one or two things
+[19:50] drax9207: What I sent that list of like 30 things to add
+[19:54] sanele_h_62233: But that yeah
+[19:58] drax9207: So i'm adding all of those Uh, I asked like five times or just a few times who wants to do it and no one said any things So I just decided I would You you can do them though if you if you'd like I'll I'll because like I'm only I've only done a few
+[20:16] sanele_h_62233: Let me look at those Let me let me look at the list
+[20:19] drax9207: Sorry Sure, bro Uh
+[20:28] sanele_h_62233: You can turn off
+[20:31] drax9207: Oh, yeah, let me turn off you city craig bot you
+
+--- 135 entries | 6 speakers | transcribed in 2184.4s ---

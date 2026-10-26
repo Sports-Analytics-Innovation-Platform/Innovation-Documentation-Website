@@ -4,6 +4,51 @@ hide:
 ---
 # Scrum Meetings
 
+??? note "2026-10-07 — Scrum"
+
+    **Attendees:** Josh, Kiran, Daniel, Sanele, Adrian, Owen (joined at 11:17)
+    **Absent:** None
+
+    ## Agenda
+
+    - First-visit page tutorials
+    - Sprint 4 scope: feedback only, no new features
+    - Documentation, diagrams and transcripts
+    - Sprint 3 mark
+    - Presentation planning
+
+    ## Decisions
+
+    - **No new features in Sprint 4.** The team agreed the sprint is for finishing the remaining user feedback and closing the project, not for new scope. Sanele's Live dashboard was already built, so it is kept as the one addition.
+    - **POPIA before upload.** Daniel will upload his work only once the POPIA work is finished.
+    - **One slide each, but everyone ready for any question.** The presentation is in person, with the client free to interrupt, so each member owns a slide and studies the others' so they can take over if asked.
+    - **The Sprint 3 mark is asked about, not queried.** The team got 90 for Sprint 3, and another group that had 100 for both earlier sprints also got 90, so the team will email the marker for what was missing rather than dispute it.
+    - **Performance and coverage floors.** A Lighthouse performance score under 80 fails the check, and if test coverage comes back under 85 the team will run a session to push it past 90.
+
+    ## Actions
+
+    | Action | Owner | Due |
+    |---|---|---|
+    | Finish the first-visit tutorials for the remaining pages | Kiran | Sprint 4 |
+    | Finish the POPIA work, then upload | Daniel | Sprint 4 |
+    | Upload the outstanding meeting transcripts | Josh | ASAP |
+    | Add Owen's transcripts and the screenshots to the documentation site | Adrian | ASAP |
+    | Update the ERD and architecture diagrams | Adrian | Submission |
+    | Email the marker about the Sprint 3 mark | Team | Before the next submission |
+    | Decide who presents each slide | All | Fri 9 Oct |
+
+    ## Notes
+
+    - **Kiran** built first-visit pop-up tutorials: the first time a page is opened it highlights a section, points at the controls and explains what each does, and the user can skip that sequence or every tutorial on the page. The Home page is done and the rest are in progress.
+    - **Daniel** raised that the presentation should be one slide per person, with preparation for interruptions, and said his POPIA work has to land before his upload. He also mapped the remaining timeline: the Sprint 4 submission is the coming Sunday, the report the Sunday after, and the group presentations fall in the week of 19–23 October.
+    - **Josh** still owes meeting transcripts and had spent the previous session on CI/CD, tying in the pipeline late.
+    - **Adrian** had halved the documentation site's word count because it still read as dense, and still owes Owen's transcripts, screenshots, and updates to the ERD and architecture diagrams.
+    - **Sanele**, after several minutes of microphone trouble, demoed a **Live** dashboard he had built the night before: live fixtures, recent games and upcoming games on its own page. He had assumed the endpoint was unusable because the season only starts on 20 October, then found it also covers the pre-season games running now. The team liked it and kept it.
+    - **Owen** joined late and had little to add, but backed the extra feature on the grounds that the team has enough features and should push for the best presentation.
+    - The first half of the meeting drifted into the AI-usage assessment the team had just written — coding in slices to stay inside the token budget, and a pipeline that broke and was fixed with five minutes to spare — before the team returned to the project.
+
+    **Raw transcript (Craig):** [2026-10-07-team-meeting-8.txt](../../transcripts/meeting-transcripts/2026-10-07-team-meeting-8.txt)
+
 ??? note "2026-09-28 — Scrum"
 
     **Attendees:** Kiran, Owen, Daniel, Josh, Sanele

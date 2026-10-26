@@ -1,6 +1,6 @@
 # UI Overview
 
-The web app as it stands at submission. The team skipped low-fidelity wireframes: it worked from reference dashboards and built the React pages directly, so this page documents the build itself. Screenshots were taken from the live site on 2026-10-03.
+The web app as it stands at submission. The team skipped low-fidelity wireframes: it worked from reference dashboards and built the React pages directly, so this page documents the build itself. Screenshots were taken from the live site on 2026-10-03. The All-Time page, the injury panels and the privacy notice were added on 10 Oct, after those screenshots, so they are described here without one.
 
 ![Landing page](../assets/ui/landing-desktop.jpg)
 
@@ -8,7 +8,7 @@ The web app as it stands at submission. The team skipped low-fidelity wireframes
 
 One header (`LandingHeader`) on every page:
 
-- Links: **Home**, **Players**, **Compare**, **Teams**, **Datasets**, **Optimizer**, **Predictions**, **Become Pro** and **Live**, plus **Admin** for an admin.
+- Links: **Home**, **Players**, **Compare**, **Teams**, **Datasets**, **Optimizer**, **Predictions**, **Become Pro**, **Live** and **All-Time**, plus **Admin** for an admin.
 - Sign in or out on the right.
 - Below the `xl` breakpoint the links move into a drawer behind a menu button.
 - A skip-to-content link comes first in the tab order.
@@ -27,6 +27,7 @@ One header (`LandingHeader`) on every page:
 | `/datasets` | Public | Versioned releases with schema, CSV download and a checksum check | `GET /v1/datasets`, `/{version}/download` |
 | `/live` | Public | Live, upcoming (next 24 hours) and recent (last 18 hours) NBA games | `GET /v1/live/games` |
 | `/live/:gameId` | Public | One live or recent game's box score, and its last five minutes of plays while it is live | `GET /v1/live/games/{gameId}` |
+| `/all-time` | Public | Career leaders for each of eleven categories, regular season or playoffs, each with a bio card | `GET /v1/all-time-leaders` |
 | `/home` | Signed in | Dashboard (see below) | `/v1/me/*`, `/v1/analytics/*` |
 | `/predictions` | Signed in | Games with Elo win probability and Four Factors margin | `GET /v1/games` |
 | `/games/:gameId` | Signed in | Prediction, bookmaker probability from The Odds API, and predicted top scorers on a court view | `GET /v1/games/{id}` |
@@ -35,6 +36,7 @@ One header (`LandingHeader`) on every page:
 | `/profile` | Signed in | Favourite team, followed players, avatar, API keys with usage, Become Pro card, account deletion. `/api-keys` redirects here. | `GET /v1/me`, `/v1/me/api-keys` |
 | `/onboarding` | Signed in | First run: pick a username, a favourite team and players to follow | `PATCH /v1/me` |
 | `/admin` | Admin | Batch review, event corrections, ingestion schedule, API consumers, reference data and users | `/v1/admin/*` |
+| `/privacy` | Public | The POPIA privacy notice | — |
 
 The [API Reference](../api-reference.md) lists every endpoint.
 
@@ -61,6 +63,12 @@ Each stat is a pair of bars, and a glossary under them explains every term.
 ![Teams](../assets/ui/teams-desktop.jpg)
 
 The Elo shown is the same pre-game rating stored on each prediction, so it is what the model saw.
+
+### Injuries
+
+Added on 10 Oct (PR #225). A team page shows its injured players beside the roster, and a player profile carries an injury badge next to the name. Three routes serve it: `GET /v1/injuries` for the league, `/v1/teams/:id/injuries` for one team and `/v1/players/:id/injury` for one player ([API Reference](../api-reference.md#injuries)).
+
+The report is ESPN's. Status (Out, Day-To-Day and so on) and severity are ESPN's, and a return date is ESPN's estimate rather than something the platform works out. A player ESPN doesn't list has no badge.
 
 ### Datasets
 
@@ -104,6 +112,10 @@ Only the signed-in user sees this page. [Become Pro](../become-pro/index.md) exp
 
 ![Profile](../assets/ui/profile-desktop.jpg)
 
+### Privacy notice
+
+Added on 10 Oct (PR #212). `/privacy` is the POPIA notice, linked from the landing page, the onboarding username step and the profile. It says what is stored, why, how long it is kept, and how to ask for a copy or for deletion. [Security](../security.md#privacy-popia) maps each condition to the code.
+
 ### Live
 
 Added on 8 Oct (PR #201). Three sections: **Live**, **Upcoming** and **Recent**, each with an empty message when there are no games. A game card opens `/live/:gameId`, which has each team's box score and, while the game is on, the plays from its last five minutes.
@@ -111,6 +123,12 @@ Added on 8 Oct (PR #201). Three sections: **Live**, **Upcoming** and **Recent**,
 The data comes straight from the NBA's public live feed (`cdn.nba.com`), including preseason, and none of it is stored. The list refreshes every 15 seconds while a game is live or past its start time, and every minute otherwise. A game page refreshes every 15 seconds while its game is live. If the feed is down, the page says so (`503 LIVE_DATA_UNAVAILABLE`).
 
 The live routes need no session or API key. Each request would otherwise cost a key check and a usage-log row, and viewers polling every 15 seconds would use up the site proxy's shared key quota. The API caches each feed file instead, and only ever requests games that are on the schedule.
+
+### All-Time leaders
+
+Added on 10 Oct (PR #226). Eleven category chips (points, assists, total, offensive and defensive rebounds, steals, blocks, threes made, field goals made, free throws made and games played) and a **Regular season / Playoffs** switch. Each leader gets a card with their rank, career total and a bio: position, height, weight, birth date, school and country, draft and career span.
+
+Where the NBA only began recording a category partway through its history, the card says when: offensive and defensive rebounds, steals and blocks from 1973-74, and threes from 1979-80. The leaderboard is built from the NBA's career totals by an ingestion script (`apps/ingestion/all_time_leaders.py`), not from the app's own play-by-play, so it covers players who never appear elsewhere in the app and names the date the figures were last fetched.
 
 ## Page tutorials
 

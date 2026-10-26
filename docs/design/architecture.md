@@ -17,12 +17,12 @@ Why these hosts: [ADR-003: Hosting Topology](../decisions/adr-003-hosting-topolo
 
 ![Deployment diagram](diagrams/deployment.svg)
 
-Regenerated against the current source on 3 Oct 2026. The production path is Cloudflare Pages → Pages Functions proxy → Render → Supabase. The proxy serves `/api` and `/auth` on the web app's own origin, so the session cookie is first-party, and it adds a first-party `X-API-Key` so a signed-out browser can still read public routes. Ingestion runs on a team member's machine because stats.nba.com blocks cloud networks: the API queues a pull and the pull worker runs it ([Data Ingestion](ingestion.md)). The Live tab is the exception: the API reads the NBA's live feed on `cdn.nba.com` directly, and that CDN doesn't block Render. Ingestion is the only Python job with any trigger; the predictor, optimizer and valuation jobs are run by hand when the game data changes.
+Regenerated against the current source on 3 Oct 2026. The production path is Cloudflare Pages → Pages Functions proxy → Render → Supabase. The proxy serves `/api` and `/auth` on the web app's own origin, so the session cookie is first-party, and it adds a first-party `X-API-Key` so a signed-out browser can still read public routes. Ingestion runs on a team member's machine because stats.nba.com blocks cloud networks: the API queues a pull and the pull worker runs it ([Data Ingestion](ingestion.md)). The Live tab is the exception: the API reads the NBA's live feed on `cdn.nba.com` directly, and that CDN doesn't block Render. Ingestion is the only Python job with any trigger; the predictor, optimizer and valuation jobs are run by hand when the game data changes. Two reads leave the platform at request time: the Live tab's feed on `cdn.nba.com`, and ESPN's injury report, which the API matches to its own teams and players and doesn't store.
 
 ## Frontend (`apps/web`)
 
 - **React 19 and Vite**, **Tailwind CSS v4** (theme tokens in `index.css`) and shadcn/ui components.
-- **React Router** with 18 routes. The [UI Overview](wireframes.md#pages) lists them.
+- **React Router** with 21 routes, including `/all-time` and `/privacy` (`/api-keys` redirects to `/profile`). The [UI Overview](wireframes.md#pages) lists them.
 - **TanStack Query** for fetching and caching. Every call goes through one wrapper in `lib/apiClient.ts`, with `credentials: "include"` for the session cookie.
 - **Recharts** for the traits radar and the points trend.
 
@@ -30,18 +30,19 @@ Regenerated against the current source on 3 Oct 2026. The production path is Clo
 
 - **NestJS, Prisma and PostgreSQL** ([ADR-001](../decisions/adr-001-database.md)). One module per feature, each with a controller and a service; every service uses the shared `PrismaService`.
 - **BetterAuth** with Google OAuth, mounted at `/auth/*` ([ADR-002](../decisions/adr-002-auth.md)).
-- **Guards:** public reads need a session or an `X-API-Key`; `/v1/me/*` and the optimizer need a session; `/v1/admin/*` needs the `ADMIN` role (`RolesGuard`). The [API Reference](../api-reference.md#authentication) has the details.
+- **Guards:** public reads need a session or an `X-API-Key`; `/v1/me/*` and the optimizer need a session; `/v1/admin/*` needs the `ADMIN` role (`RolesGuard`), except `POST /v1/admin/games/{gameId}/submit-events`, which an `ANALYST` may also use. The [API Reference](../api-reference.md#authentication) has the details.
 - **One error envelope** for every error response ([API Design](api-design.md)).
 - **An in-process response cache** for public reads ([ADR-004](../decisions/adr-004-caching-strategy.md), [Performance](performance.md)).
 - **API keys and rate limits checked in memory**, with usage rows written in batches (PR #204, [Performance](performance.md#the-api-key-check-without-the-database-9-oct)).
 - **A live-games module** (`apps/api/src/live/`) that reads the NBA's public live feed on `cdn.nba.com` and never touches the database. Each feed file is cached for 10 seconds to 24 hours, depending on how fast it changes ([UI Overview](wireframes.md#live)).
+- **An injuries module** (`apps/api/src/injuries/`) that reads ESPN's league-wide injury report, matches it to this app's teams and players by name, and stores nothing. The matched report is rebuilt at most once every 30 minutes, however many pages ask for it ([UI Overview](wireframes.md#injuries)).
 - **Health check** at [`/v1/health`](https://sportsanalytics-api.onrender.com/v1/health). A pinger keeps the free Render instance warm.
 
 ### Class diagram
 
 ![Backend class diagram](diagrams/class-diagram.svg)
 
-Regenerated on 3 Oct 2026 from the 15 feature modules under `apps/api/src/`, so it doesn't show the live-games module (PR #201) or the API-key services (PR #204), both added later. Controllers depend on their services, and every service goes through `PrismaService`. Each controller is labelled with its guards: `SessionAuthGuard` for signed-in routes, `OptionalSessionGuard` and `ApiKeyGuard` for public reads, and `SessionAuthGuard` with `RolesGuard` for the nine `/v1/admin/*` controllers (`ADMIN`). `CustomStatisticsController` requires `ANALYST` or `ADMIN`. `TeamsModule` uses `PlayersService` and `StatsService` directly, and both modules import `GamesModule`.
+Regenerated on 3 Oct 2026 from the 15 feature modules that existed then. The API now has 20 modules under `apps/api/src/`, so the diagram doesn't show the ones added in the submission week: live games (PR #201), injuries (PR #225), all-time leaders (PR #226), the privacy notice and account-data export (PR #212), or the export-request queue in `common` (PR #218). Controllers depend on their services, and every service goes through `PrismaService`. Each controller is labelled with its guards: `SessionAuthGuard` for signed-in routes, `OptionalSessionGuard` and `ApiKeyGuard` for public reads, and `SessionAuthGuard` with `RolesGuard` for the nine `/v1/admin/*` controllers (`ADMIN`). `CustomStatisticsController` requires `ANALYST` or `ADMIN`. `TeamsModule` uses `PlayersService` and `StatsService` directly, and both modules import `GamesModule`.
 
 ### Sequence diagram: `GET /v1/games/:id/prediction`
 
